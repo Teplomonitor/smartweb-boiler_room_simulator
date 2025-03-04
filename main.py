@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2.7
+#!/usr/bin/env python3
 # encoding: utf-8
 '''
  -- shortdesc
@@ -24,7 +24,8 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 #from .canbus import *
-import smartnet
+#import smartnet
+import can
 
 __all__ = []
 __version__ = 0.1
@@ -74,39 +75,21 @@ USAGE
 
 	try:
 		# Setup argument parser
-		parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
-		parser.add_argument("-r", "--recursive", dest="recurse", action="store_true", help="recurse into subfolders [default: %(default)s]")
-		parser.add_argument("-v", "--verbose", dest="verbose", action="count", help="set verbosity level [default: %(default)s]")
-		parser.add_argument("-i", "--include", dest="include", help="only include paths matching this regex pattern. Note: exclude is given preference over include. [default: %(default)s]", metavar="RE" )
-		parser.add_argument("-e", "--exclude", dest="exclude", help="exclude paths matching this regex pattern. [default: %(default)s]", metavar="RE" )
-		parser.add_argument('-V', '--version', action='version', version=program_version_message)
-		parser.add_argument(dest="paths", help="paths to folder(s) with source file(s) [default: %(default)s]", metavar="path", nargs='+')
+#		parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
 
 		# Process arguments
-		args = parser.parse_args()
+#		args = parser.parse_args()
 
-		paths = args.paths
-		verbose = args.verbose
-		recurse = args.recurse
-		inpat = args.include
-		expat = args.exclude
 
-		if verbose > 0:
-			print("Verbose mode on")
-			if recurse:
-				print("Recursive mode on")
-			else:
-				print("Recursive mode off")
-
-		if inpat and expat and inpat == expat:
-			raise CLIError("include and exclude pattern are equal! Nothing will be processed.")
-
-		for inpath in paths:
-			### do something with inpath ###
-			print(inpath)
+		
+		msg = can.Message(
+			arbitration_id=0xC0FFEE,
+			data=[0, 25, 0, 1, 3, 1, 4, 1],
+			is_extended_id=True
+		)
 			
-			
-			smartnet.Message()
+		with can.Bus() as bus:
+			bus.send(msg)
 			
 			
 		return 0
