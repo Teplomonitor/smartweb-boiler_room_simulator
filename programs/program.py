@@ -13,3 +13,6 @@ class Program(object):
 		Constructor
 		'''
 		
+		self.programType = params['PROGRAM_TYPE']
+		self.programId   = params['PROGRAM_ID']
+		

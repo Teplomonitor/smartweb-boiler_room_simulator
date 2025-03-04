@@ -23,6 +23,9 @@ import os
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
+#from .canbus import *
+import smartnet
+
 __all__ = []
 __version__ = 0.1
 __date__ = '2025-03-04'
@@ -101,6 +104,11 @@ USAGE
 		for inpath in paths:
 			### do something with inpath ###
 			print(inpath)
+			
+			
+			smartnet.Message()
+			
+			
 		return 0
 	except KeyboardInterrupt:
 		### handle keyboard interrupt ###

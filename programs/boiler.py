@@ -2,7 +2,9 @@
 @author: admin
 '''
 
-class Boiler(object):
+from .program import Program
+
+class Boiler(Program):
 	'''
 	classdocs
 	'''
@@ -12,4 +14,5 @@ class Boiler(object):
 		'''
 		Constructor
 		'''
-		
+		super().__init__(self, params)
+		addProgram()
