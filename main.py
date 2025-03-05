@@ -24,8 +24,7 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 #from .canbus import *
-#import smartnet
-import can
+from smartnet.message import Message as smartnetMessage
 
 __all__ = []
 __version__ = 0.1
@@ -80,18 +79,9 @@ USAGE
 		# Process arguments
 #		args = parser.parse_args()
 
-
-		
-		msg = can.Message(
-			arbitration_id=0xC0FFEE,
-			data=[0, 25, 0, 1, 3, 1, 4, 1],
-			is_extended_id=True
-		)
-			
-		with can.Bus() as bus:
-			bus.send(msg)
-			
-			
+		data = [0x01,0x02,0x03,0x04,0x05]
+		message = smartnetMessage(0xAB, 0xCD, 0xEF, 0, data)
+		message.send()
 		return 0
 	except KeyboardInterrupt:
 		### handle keyboard interrupt ###
