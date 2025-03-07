@@ -8,6 +8,7 @@ from threading import Event
 
 from smartnet.message import Message as smartnetMessage
 import smartnet.constants as snc
+import controllers.preset
 
 class Controller(can.Listener):
 	'''
@@ -41,37 +42,25 @@ class Controller(can.Listener):
 
 		message.send(self._bus)
 
-	def getProgramsAddList(self):
-		programsList = [
-			'OUTDOOR_SENSOR',
-			'CASCADE_MANAGER',
-			'BOILER',
-			'BOILER',
-			'BOILER',
-			'DHW',
-			'DHW',
-			'HEATING_CIRCUIT',
-			'HEATING_CIRCUIT',
-			'HEATING_CIRCUIT',
-			'HEATING_CIRCUIT',
-			'ROOM_DEVICE',
-			'ROOM_DEVICE',
-			'ROOM_DEVICE',
-			'ROOM_DEVICE',
-		]
+	def makeNewProgram(self, preset):
 		pass
 
+	def getProgramsAddList(self):
+		return controllers.preset.getPresetsList()
 
 	def run(self):
+		programList = self.getProgramsAddList()
 
-		self.getProgramsAddList()
-		self.sendProgramAddRequest()
+		for prg in programList:
+			self.makeNewProgram(prg)
+
 		self.waitEvent('STATE_WAIT_PROGRAM_ADD')
 
 		if self._state == 'STATE_WAIT_PROGRAM_ADD':
 			print('Bad!')
 		else:
 			print('Good!!')
+
 
 
 	def addProgram(self, programType, programId):
