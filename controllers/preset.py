@@ -1,5 +1,7 @@
-preset.py
 
+
+import smartnet.constants as snc
+from controllers.channelMapping import ChannelMapping as Mapping
 
 class ProgramPreset(object):
 	'''
@@ -17,16 +19,119 @@ class ProgramPreset(object):
 		self._inputs    = programInputs
 		self._outputs   = programOutputs
 
+	def getType     (self): return self._type
+	def getScheme   (self): return self._scheme
+	def getId       (self): return self._id
+	def getTitle    (self): return self._title
+	def getSettings (self): return self._settings
+	def getInputs   (self): return self._inputs
+	def getOutputs  (self): return self._outputs
+
+def getHostId():
+	return 123
+
+programList = [
+	'HEATING_CIRCUIT_1',
+	'HEATING_CIRCUIT_2',
+	'ROOM_DEVICE_1'    ,
+	'ROOM_DEVICE_2'    ,
+	'DHW'              ,
+	'BOILER'           ,
+	'CASCADE_MANAGER'  ,
+	'OUTDOOR_SENSOR'   ,
+]
+
+programType = {
+	'HEATING_CIRCUIT_1' : 'HEATING_CIRCUIT',
+	'HEATING_CIRCUIT_2' : 'HEATING_CIRCUIT',
+	'ROOM_DEVICE_1'     : 'ROOM_DEVICE'    ,
+	'ROOM_DEVICE_2'     : 'ROOM_DEVICE'    ,
+	'DHW'               : 'DHW'            ,
+	'BOILER'            : 'BOILER'         ,
+	'CASCADE_MANAGER'   : 'CASCADE_MANAGER',
+	'OUTDOOR_SENSOR'    : 'OUTDOOR_SENSOR' ,
+}
+
+programScheme = {
+	'HEATING_CIRCUIT_1' : 'SCHEME_MIXED' ,
+	'HEATING_CIRCUIT_2' : 'SCHEME_DIRECT',
+	'ROOM_DEVICE_1'     : 'DEFAULT'      ,
+	'ROOM_DEVICE_2'     : 'DEFAULT'      ,
+	'DHW'               : 'DEFAULT'      ,
+	'BOILER'            : 'DEFAULT'      ,
+	'CASCADE_MANAGER'   : 'DEFAULT'      ,
+	'OUTDOOR_SENSOR'    : 'DEFAULT'      ,
+}
+
+programTitle = {
+	'HEATING_CIRCUIT_1' :'Circ1'   ,
+	'HEATING_CIRCUIT_2' :'Circ2'   ,
+	'ROOM_DEVICE_1'     :'Room1'   ,
+	'ROOM_DEVICE_2'     :'Room2'   ,
+	'DHW'               :'DHW'     ,
+	'BOILER'            :'Boiler1' ,
+	'CASCADE_MANAGER'   :'Cascade' ,
+	'OUTDOOR_SENSOR'    :'OAT'     ,
+}
+
+programId = {
+	'HEATING_CIRCUIT_1' : 101,
+	'HEATING_CIRCUIT_2' : 102,
+	'ROOM_DEVICE_1'     : 103,
+	'ROOM_DEVICE_2'     : 104,
+	'DHW'               : 105,
+	'BOILER'            : 106,
+	'CASCADE_MANAGER'   : 107,
+	'OUTDOOR_SENSOR'    : 108,
+}
+
+programSettings = {
+	'HEATING_CIRCUIT_1' : {},
+	'HEATING_CIRCUIT_2' : {},
+	'ROOM_DEVICE_1'     : {},
+	'ROOM_DEVICE_2'     : {},
+	'DHW'               : {},
+	'BOILER'            : None,
+	'CASCADE_MANAGER'   : {},
+	'OUTDOOR_SENSOR'    : None,
+}
+
+programInputs = {
+	'HEATING_CIRCUIT_1' : [Mapping(0, 'CHANNEL_SENSOR', getHostId())],
+	'HEATING_CIRCUIT_2' : [Mapping(1, 'CHANNEL_SENSOR', getHostId())],
+	'ROOM_DEVICE_1'     : [Mapping(2, 'CHANNEL_SENSOR', getHostId())],
+	'ROOM_DEVICE_2'     : [Mapping(3, 'CHANNEL_SENSOR', getHostId())],
+	'DHW'               : [Mapping(4, 'CHANNEL_SENSOR', getHostId())],
+	'BOILER'            : None,
+	'CASCADE_MANAGER'   : [Mapping(6, 'CHANNEL_SENSOR', getHostId())],
+	'OUTDOOR_SENSOR'    : [Mapping(7, 'CHANNEL_SENSOR', getHostId())],
+}
+
+programOutputs = {
+	'HEATING_CIRCUIT_1' : [Mapping(0, 'CHANNEL_RELAY', getHostId())],
+	'HEATING_CIRCUIT_2' : [Mapping(1, 'CHANNEL_RELAY', getHostId())],
+	'ROOM_DEVICE_1'     : None,
+	'ROOM_DEVICE_2'     : None,
+	'DHW'               : [Mapping(4, 'CHANNEL_RELAY', getHostId())],
+	'BOILER'            : [Mapping(5, 'CHANNEL_RELAY', getHostId())],
+	'CASCADE_MANAGER'   : None,
+	'OUTDOOR_SENSOR'    : None,
+}
+
 
 def getPresetsList() :
-	return [
-		ProgramPreset(enumProgramTypes::HEATING_CIRCUIT_PROGRAM, heatingCircuit::SCHEME_MIXED  , heatingCircuit1::getId, LANG(langHntPreset1Circuit1Title ), &heatingCircuit1::settings, heatingCircuit1::inputs, heatingCircuit1::outputs),
-		ProgramPreset(enumProgramTypes::HEATING_CIRCUIT_PROGRAM, heatingCircuit::SCHEME_DIRECT , heatingCircuit2::getId, LANG(langHntPreset1DirectCircuit1), &heatingCircuit2::settings, None                   , heatingCircuit2::outputs),
-		ProgramPreset(enumProgramTypes::ROOM_DEVICE_PROGRAM    , 0                             , room ::getId          , LANG(langHntPreset1Room1         ), &room ::settings          , room ::inputs          , None                    ),
-		ProgramPreset(enumProgramTypes::ROOM_DEVICE_PROGRAM    , 0                             , roomD::getId          , LANG(langHntPreset1RoomDirect1   ), &roomD::settings          , roomD::inputs          , None                    ),
-		ProgramPreset(enumProgramTypes::DHW_PROGRAM            , 0                             , DHW::getId            , None                              , &DHW::settings            , DHW::inputs            , DHW::outputs            ),
-		ProgramPreset(enumProgramTypes::BOILER_PROGRAM         , 0                             , boiler::getId         , LANG(langHntPreset1Boiler1       ), None                      , None                   , boiler::outputs         ),
-		ProgramPreset(enumProgramTypes::CASCADE_MANAGER_PROGRAM, 0                             , cascade::getId        , LANG(langHntPreset1Cascade       ), &cascade::settings        , cascade::inputs        , None                    ),
-		ProgramPreset(enumProgramTypes::OUTDOOR_SENSOR_PROGRAM , 0                             , oat::getId            , LANG(langHntPreset1Oat           ), None                      , oat::inputs            , None                    ),
-	]
+	presetList = []
+	for prg in programList:
+		presetList.append(ProgramPreset(
+			programType    [prg],
+			programScheme  [prg],
+			programId      [prg],
+			programTitle   [prg],
+			programSettings[prg],
+			programInputs  [prg],
+			programOutputs [prg]
+			)
+		)
+
+	return presetList
 
