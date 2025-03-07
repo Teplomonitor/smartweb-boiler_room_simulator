@@ -10,11 +10,11 @@ class SWK(Controller):
 	'''
 
 
-	def __init__(self, controllerId):
+	def __init__(self, controllerId, bus):
 		'''
 		Constructor
 		'''
-		super().__init__(controllerId)
+		super().__init__(controllerId, bus)
 		
 	
 	def getOutputsNum(self):
