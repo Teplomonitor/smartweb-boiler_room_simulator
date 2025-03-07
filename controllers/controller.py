@@ -15,38 +15,56 @@ class Controller(can.Listener):
 	'''
 
 
-	def __init__(self, controllerId):
+	def __init__(self, controllerId, bus):
 		'''
 		Constructor
 		'''
 		self._controllerId = controllerId
 
-		self._bus = self.createBus()
+		self._bus = bus
 		self._notifier = can.Notifier(self._bus, [self])
 		self._event = Event()
 		self._state = 'STATE_IDLE'
 		
-
-	def createBus(self):
-		#TODO: don't listen own messages
-		return can.Bus(receive_own_messages=True)
-	
 	def waitEvent(self, state):
 		self._state = state
 		self._event.wait(timeout=5) # wait for 5 seconds
 
-	def sendProgramAddRequest(self, programId, programType):
-		data = [23, self._controllerId, 0x03,0x04,0x05]
+	def sendProgramAddRequest(self, programType, programId, programScheme):
+		data = [programType, programId, programScheme]
 		message = smartnetMessage(
 			snc.ProgramType['CONTROLLER'],
 			self._controllerId,
 			snc.ControllerFunction['ADD_NEW_PROGRAM'],
-			1,
+			'REQUEST',
 			data)
 
 		message.send(self._bus)
 
+	def getProgramsAddList(self):
+		programsList = [
+			'OUTDOOR_SENSOR',
+			'CASCADE_MANAGER',
+			'BOILER',
+			'BOILER',
+			'BOILER',
+			'DHW',
+			'DHW',
+			'HEATING_CIRCUIT',
+			'HEATING_CIRCUIT',
+			'HEATING_CIRCUIT',
+			'HEATING_CIRCUIT',
+			'ROOM_DEVICE',
+			'ROOM_DEVICE',
+			'ROOM_DEVICE',
+			'ROOM_DEVICE',
+		]
+		pass
+
+
 	def run(self):
+
+		self.getProgramsAddList()
 		self.sendProgramAddRequest()
 		self.waitEvent('STATE_WAIT_PROGRAM_ADD')
 
