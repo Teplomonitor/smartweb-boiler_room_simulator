@@ -22,11 +22,12 @@ class ChannelMapping(object):
 
 	def getChannelId   (self): return self._channelId  
 	def getChannelType (self): return self._channelType
-	def getHostId      (self): return self._hostId     
+	def getHostId      (self): return self._hostId
+	
 	def getRaw(self):
 		raw = (
-			(self._hostId      <<  0) |
-			(self._channelId   <<  8) |
-			(self._channelType << 13))
+			(     self._hostId       <<  0) |
+			(     self._channelId    <<  8) |
+			(Type[self._channelType] << 13))
 		return raw
 
