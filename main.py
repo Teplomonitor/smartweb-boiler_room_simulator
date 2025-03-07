@@ -19,11 +19,13 @@ It defines classes_and_methods
 
 import sys
 import os
+import can
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
-#from .canbus import *
+from smartnet.message import Message as smartnetMessage
+import smartnet.constants as snc
 from controllers.controllerSWK import SWK as SWK
 
 __all__ = []
@@ -44,6 +46,35 @@ class CLIError(Exception):
 		return self.msg
 	def __unicode__(self):
 		return self.msg
+
+
+def createBus():
+	#TODO: don't listen own messages
+	return can.Bus(receive_own_messages=True)
+
+def messageIsImHere(message):
+	if ((message.getProgramType() == snc.ProgramType['CONTROLLER']) and
+		(message.getFunctionId()  == snc.ControllerFunction['I_AM_HERE']) and
+		(message.getRequestFlag() == 'RESPONSE')):
+		return True
+
+	return False
+
+def findOnlineController(bus):
+	try:
+		msg = smartnetMessage()
+		while True:
+			# Read a message from the CAN bus
+			message = bus.recv()
+
+			if message is not None:
+				msg.parse(message)
+				if messageIsImHere(msg):
+					return msg.getProgramId()
+
+	except can.CanError as e:
+		print(f"CAN error: {e}")
+		sys.exit(1)
 
 def main(argv=None): # IGNORE:C0111
 	'''Command line options.'''
@@ -79,14 +110,22 @@ USAGE
 		# Process arguments
 #		args = parser.parse_args()
 
+		bus = createBus()
+
+		print('Searching controller')
+		controllerId = findOnlineController(bus)
 		
-		swk = SWK(123)
+		print('Controller %d found' %(controllerId))
+		swk = SWK(controllerId, bus)
 
 		swk.run()
 
 		return 0
+
 	except KeyboardInterrupt:
 		### handle keyboard interrupt ###
+		print('exit')
+		bus.shutdown()
 		return 0
 	except Exception as e:
 		if DEBUG or TESTRUN:
