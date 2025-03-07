@@ -33,7 +33,7 @@ class Message(object):
 		return self._data
 
 	def generateHeader(self):
-		if self._request:
+		if self._request == 'REQUEST':
 			flag = 0x00
 		else:
 			flag = 0x10
@@ -60,7 +60,7 @@ class Message(object):
 		self._programType = byte0
 		self._programId   = byte1
 		self._functionId  = byte2
-		self._request     = (byte3 & 0x10) != 0
+		self._request     = 'RESPONSE' if (byte3 & 0x10) != 0 else 'REQUEST'
 		
 	def send(self, bus=None):
 		header = self.generateHeader()
