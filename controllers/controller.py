@@ -32,6 +32,14 @@ class Controller(can.Listener):
 		self._event.wait(timeout=5) # wait for 5 seconds
 
 	def sendProgramAddRequest(self, programType, programId, programScheme):
+		programAddStatus = {
+			'STATUS_ADD_PROGRAM_OK'                 : 0,
+			'STATUS_ADD_PROGRAM_WRONG_PROGRAM_TYPE' : 1,
+			'STATUS_ADD_PROGRAM_TOO_MANY_PROGRAMS'  : 2,
+			'STATUS_ADD_PROGRAM_UNDEFINED_ERROR'    : 3,
+		}
+
+
 		data = [programType, programId, programScheme]
 		message = smartnetMessage(
 			snc.ProgramType['CONTROLLER'],
@@ -40,7 +48,22 @@ class Controller(can.Listener):
 			'REQUEST',
 			data)
 
-		message.send(self._bus)
+		response = message
+		response.setRequestFlag('RESPONSE')
+		response.setData([programType, programId])
+
+		response = message.send(self._bus, response, 10)
+		if response is None:
+			print('Program add timeout')
+			return False
+		else:
+			data = response.getData()
+			if data[2] == programAddStatus['STATUS_ADD_PROGRAM_OK']:
+				print('Program add ok!')
+				return True
+			else:
+				print('Program add error %d' %(data[2]))
+				return False
 
 	def makeNewProgram(self, preset):
 		pass
