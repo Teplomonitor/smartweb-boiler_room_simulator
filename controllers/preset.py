@@ -28,7 +28,10 @@ class ProgramPreset(object):
 	def getOutputs  (self): return self._outputs
 
 	def loadPreset(self, controller):
-		controller.sendProgramAddRequest(self._type, self._id, self._scheme)
+		result = controller.sendProgramAddRequest(self._type, self._id, self._scheme)
+		if not result:
+			print('Program %s add fail'%(self._title))
+			return False
 
 
 def getPresetsList():
