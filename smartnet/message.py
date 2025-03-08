@@ -21,16 +21,17 @@ class Message(object):
 		self._request     = request
 		self._data        = data
 	
-	def getProgramType(self):
-		return self._programType
-	def getProgramId(self):
-		return self._programId
-	def getFunctionId(self):
-		return self._functionId
-	def getRequestFlag(self):
-		return self._request
-	def getData(self):
-		return self._data
+	def getProgramType(self): return self._programType
+	def getProgramId  (self): return self._programId
+	def getFunctionId (self): return self._functionId
+	def getRequestFlag(self): return self._request
+	def getData       (self): return self._data
+
+	def setProgramType(self, value): self._programType = value
+	def setProgramId  (self, value): self._programId   = value
+	def setFunctionId (self, value): self._functionId  = value
+	def setRequestFlag(self, value): self._request     = value
+	def setData       (self, value): self._data        = value
 
 	def generateHeader(self):
 		if self._request == 'REQUEST':
@@ -62,26 +63,65 @@ class Message(object):
 		self._functionId  = byte2
 		self._request     = 'RESPONSE' if (byte3 & 0x10) != 0 else 'REQUEST'
 		
-	def send(self, bus=None):
+	def smartNetToCanMsg(self):
 		header = self.generateHeader()
 
-		
 		msg = can.Message(
-			arbitration_id =header,
-			data           =self._data,
-			is_extended_id =True
+			arbitration_id = header,
+			data           = self._data,
+			is_extended_id = True
 		)
+		return msg
 
-		if bus:
-			bus.send(msg)
-			return
+	def compare(self, responseFilter):
+		val = responseFilter.getRequestFlag()
+		if (val is not None) and (val is not self.getRequestFlag()): return False
+
+		val = responseFilter.getProgramType()
+		if (val is not None) and (val is not self.getProgramType()): return False
+
+		val = responseFilter.getProgramId()
+		if (val is not None) and (val is not self.getProgramId()  ): return False
+
+		val = responseFilter.getFunctionId()
+		if (val is not None) and (val is not self.getFunctionId() ): return False
+
+		val = responseFilter.getData()
+		if val is not None:
+			val_size = len(val)
+			data = self.getData()
+			data_cut = data[:val_size]
+			if val is not data_cut:
+				return False
+
+		return True
 
 
-		#bus config loaded from ~/can.conf file
-		#if you don't have it you should make one
-		#https://python-can.readthedocs.io/en/stable/configuration.html
-		with can.Bus() as bus:
-			bus.send(msg)
+	def waitResponse(self, bus, responseFilter, timeout = None):
+		smartnet = Message()
+		while True:
+			# Read a message from the CAN bus
+			message = bus.recv(timeout)
+
+			if message is not None:
+				smartnet.parse(message)
+				if smartnet.compare(responseFilter):
+					return smartnet
+			else:
+				return None
+
+
+	def send(self, bus = None, responseFilter = None, timeout = None):
+		msg = self.smartNetToCanMsg()
+
+		if not bus:
+			bus = can.Bus()
+
+		bus.send(msg)
+
+		if responseFilter:
+			response = self.waitResponse(bus, responseFilter, timeout)
+			return response
 			
 	def parse(self, message):
 		if not message.is_extended_id or message.is_remote_frame:
@@ -90,4 +130,4 @@ class Message(object):
 		
 		self.parseHeader(message.arbitration_id)
 		self._data = message.data
-		
+	
