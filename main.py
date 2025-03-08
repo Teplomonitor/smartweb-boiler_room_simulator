@@ -26,7 +26,7 @@ from argparse import RawDescriptionHelpFormatter
 
 from smartnet.message import Message as smartnetMessage
 import smartnet.constants as snc
-from controllers.controllerSWK import SWK as SWK
+from controllers.controller import Controller as Controller
 
 __all__ = []
 __version__ = 0.1
@@ -61,6 +61,7 @@ def messageIsImHere(message):
 	return False
 
 def findOnlineController(bus):
+#	return 42
 	try:
 		msg = smartnetMessage()
 		while True:
@@ -116,9 +117,9 @@ USAGE
 		controllerId = findOnlineController(bus)
 		
 		print('Controller %d found' %(controllerId))
-		swk = SWK(controllerId, bus)
+		controller = Controller(controllerId, bus)
 
-		swk.run()
+		controller.run()
 
 		return 0
 
