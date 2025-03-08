@@ -20,6 +20,8 @@ It defines classes_and_methods
 import sys
 import os
 import can
+import threading
+ 
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
@@ -48,9 +50,46 @@ class CLIError(Exception):
 		return self.msg
 
 
+
+
+class debug_thread(threading.Thread):
+	def __init__(self, thread_name, thread_ID):
+		threading.Thread.__init__(self)
+		self.thread_name = thread_name
+		self.thread_ID   = thread_ID
+		self._canbus     = createBus()
+
+	def sendImHere(self):
+		dummyControllerId = 123
+		msg = smartnetMessage(
+			snc.ProgramType['CONTROLLER'],
+			dummyControllerId,
+			snc.ControllerFunction['I_AM_HERE'],
+			'RESPONSE'
+			)
+		msg.send(self._canbus)
+
+	# helper function to execute the threads
+	def run(self):
+		timeout = 10
+
+		while True:
+			# Read a message from the CAN bus
+			self.sendImHere()
+
+			message = self._canbus.recv(timeout)
+
+			if message is not None:
+				smartnet.parse(message)
+
+
+
+
+
+
 def createBus():
 	#TODO: don't listen own messages
-	return can.Bus(receive_own_messages=True)
+	return can.Bus()
 
 def messageIsImHere(message):
 	if ((message.getProgramType() == snc.ProgramType['CONTROLLER']) and
@@ -110,6 +149,10 @@ USAGE
 
 		# Process arguments
 #		args = parser.parse_args()
+
+		thread1 = debug_thread("debug", 1000) 
+		thread1.start()
+
 
 		bus = createBus()
 
