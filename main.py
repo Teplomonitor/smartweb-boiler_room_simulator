@@ -118,8 +118,7 @@ USAGE
 		# Process arguments
 #		args = parser.parse_args()
 
-		thread1 = debug.debug_thread("debug", 1000) 
-		thread1.start()
+		dbgThread = debug.debug_thread()
 
 
 		bus = createBus()

@@ -33,51 +33,46 @@ class i_am_here_thread(threading.Thread):
 			time.sleep(10)
 			self.sendImHere()
 
-class debug_thread(threading.Thread):
-	def __init__(self, thread_name, thread_ID):
-		threading.Thread.__init__(self)
-		self.thread_name = thread_name
-		self.thread_ID   = thread_ID
+class debug_thread(can.Listener):
+	def __init__(self):
 		self._canbus     = createBus()
+		self._notifier = can.Notifier(self._canbus, [self])
+
 		thread1 = i_am_here_thread("IMH", 1001) 
 		thread1.start()
 
 	# helper function to execute the threads
-	def run(self):
-
+	def on_message_received(self, message):
 		msg = smartnetMessage()
-		while True:
-			# Read a message from the CAN bus
-			message = self._canbus.recv()
+		msg.parse(message)
 
-			if message is not None:
+		if message is not None:
+			print(f"rx: {message.arbitration_id:08X} - {' '.join(format(x, '02x') for x in message.data)}")
 
-				print(f"rx: {message.arbitration_id:08X} - {' '.join(format(x, '02x') for x in message.data)}")
+			msg.parse(message)
 
-				msg.parse(message)
+			if (
+				(msg.getProgramType() == snc.ProgramType['CONTROLLER']) and
+				(msg.getFunctionId () == snc.ControllerFunction['RESET_PROGRAMS']) and
+				(msg.getRequestFlag() == snc.requestFlag['REQUEST'])):
+					msg.setRequestFlag(snc.requestFlag['RESPONSE'])
+					msg.send(self._canbus)
 
-				if (
-					(msg.getProgramType() == snc.ProgramType['CONTROLLER']) and
-					(msg.getFunctionId () == snc.ControllerFunction['RESET_PROGRAMS']) and
-					(msg.getRequestFlag() == snc.requestFlag['REQUEST'])):
-						msg.setRequestFlag(snc.requestFlag['RESPONSE'])
-						msg.send(self._canbus)
-
-				
-				if (
-					(msg.getProgramType() == snc.ProgramType['CONTROLLER']) and
-					(msg.getFunctionId () == snc.ControllerFunction['ADD_NEW_PROGRAM']) and
-					(msg.getRequestFlag() == snc.requestFlag['REQUEST'])):
-						programAddStatus = {
-							'STATUS_ADD_PROGRAM_OK'                 : 0,
-							'STATUS_ADD_PROGRAM_WRONG_PROGRAM_TYPE' : 1,
-							'STATUS_ADD_PROGRAM_TOO_MANY_PROGRAMS'  : 2,
-							'STATUS_ADD_PROGRAM_UNDEFINED_ERROR'    : 3,
-						}
-						msg.setRequestFlag(snc.requestFlag['RESPONSE'])
-						data = msg.getData()
-						data[2] = programAddStatus['STATUS_ADD_PROGRAM_OK']
-						msg.send(self._canbus)
+			
+			if (
+				(msg.getProgramType() == snc.ProgramType['CONTROLLER']) and
+				(msg.getFunctionId () == snc.ControllerFunction['ADD_NEW_PROGRAM']) and
+				(msg.getRequestFlag() == snc.requestFlag['REQUEST'])):
+					programAddStatus = {
+						'STATUS_ADD_PROGRAM_OK'                 : 0,
+						'STATUS_ADD_PROGRAM_WRONG_PROGRAM_TYPE' : 1,
+						'STATUS_ADD_PROGRAM_TOO_MANY_PROGRAMS'  : 2,
+						'STATUS_ADD_PROGRAM_UNDEFINED_ERROR'    : 3,
+					}
+					msg.setRequestFlag(snc.requestFlag['RESPONSE'])
+					data = msg.getData()
+					data[2] = programAddStatus['STATUS_ADD_PROGRAM_OK']
+					msg.send(self._canbus)
 
 
 
