@@ -20,7 +20,6 @@ It defines classes_and_methods
 import sys
 import os
 import can
-import threading
  
 
 from argparse import ArgumentParser
@@ -29,6 +28,8 @@ from argparse import RawDescriptionHelpFormatter
 from smartnet.message import Message as smartnetMessage
 import smartnet.constants as snc
 from controllers.controller import Controller as Controller
+import debug
+
 
 __all__ = []
 __version__ = 0.1
@@ -52,39 +53,6 @@ class CLIError(Exception):
 
 
 
-class debug_thread(threading.Thread):
-	def __init__(self, thread_name, thread_ID):
-		threading.Thread.__init__(self)
-		self.thread_name = thread_name
-		self.thread_ID   = thread_ID
-		self._canbus     = createBus()
-
-	def sendImHere(self):
-		dummyControllerId = 123
-		msg = smartnetMessage(
-			snc.ProgramType['CONTROLLER'],
-			dummyControllerId,
-			snc.ControllerFunction['I_AM_HERE'],
-			'RESPONSE'
-			)
-		msg.send(self._canbus)
-
-	# helper function to execute the threads
-	def run(self):
-		timeout = 10
-
-		while True:
-			# Read a message from the CAN bus
-			self.sendImHere()
-
-			message = self._canbus.recv(timeout)
-
-			if message is not None:
-				smartnet.parse(message)
-
-
-
-
 
 
 def createBus():
@@ -94,7 +62,7 @@ def createBus():
 def messageIsImHere(message):
 	if ((message.getProgramType() == snc.ProgramType['CONTROLLER']) and
 		(message.getFunctionId()  == snc.ControllerFunction['I_AM_HERE']) and
-		(message.getRequestFlag() == 'RESPONSE')):
+		(message.getRequestFlag() == snc.requestFlag['RESPONSE'])):
 		return True
 
 	return False
@@ -150,7 +118,7 @@ USAGE
 		# Process arguments
 #		args = parser.parse_args()
 
-		thread1 = debug_thread("debug", 1000) 
+		thread1 = debug.debug_thread("debug", 1000) 
 		thread1.start()
 
 
