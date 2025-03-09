@@ -1,7 +1,7 @@
 
-smartNetHeaderFlag = {
-	'Request' :0, 
-	'Response':1, 
+requestFlag = {
+	'REQUEST' :0x00, 
+	'RESPONSE':0x10, 
 }
 
 ControllerType = {
@@ -89,6 +89,15 @@ ProgramParameter = {
 	'TRAINING_ENABLED'   : 7,                
 	'MANUAL_MODE_ENABLED': 8,                   
 	'OUTPUT_MANUAL_STATE': 9,                   
+}
+
+ProgramScheme = {
+	'DEFAULT' : 0,
+
+	'CIRCUIT_MIXED'         : 0,
+	'CIRCUIT_HEAT_EXCHANGE' : 1,
+	'CIRCUIT_DIRECT'        : 2,
+	'CIRCUIT_HEATING_LINE'  : 3,
 }
 
 RoomDeviceParameter = {                             
