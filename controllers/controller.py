@@ -5,6 +5,7 @@
 import time
 import can
 from threading import Event
+from copy import copy
 
 from smartnet.message import Message as smartnetMessage
 import smartnet.constants as snc
@@ -32,46 +33,85 @@ class Controller(can.Listener):
 		self._event.wait(timeout=5) # wait for 5 seconds
 
 	def sendProgramAddRequest(self, programType, programId, programScheme):
-		programAddStatus = {
-			'STATUS_ADD_PROGRAM_OK'                 : 0,
-			'STATUS_ADD_PROGRAM_WRONG_PROGRAM_TYPE' : 1,
-			'STATUS_ADD_PROGRAM_TOO_MANY_PROGRAMS'  : 2,
-			'STATUS_ADD_PROGRAM_UNDEFINED_ERROR'    : 3,
-		}
-
-
-		data = [programType, programId, programScheme]
-		message = smartnetMessage(
+		print('Send program add request')
+		def generateRequest(programType, programId, programScheme):
+			request = smartnetMessage(
 			snc.ProgramType['CONTROLLER'],
 			self._controllerId,
 			snc.ControllerFunction['ADD_NEW_PROGRAM'],
-			'REQUEST',
-			data)
+			snc.requestFlag['REQUEST'],
+			[programType, programId, programScheme])
+			return request
 
-		response = message
-		response.setRequestFlag('RESPONSE')
-		response.setData([programType, programId])
+		def generateRequiredResponse(request):
+			response = copy(request)
+			response.setRequestFlag(snc.requestFlag['RESPONSE'])
+			response.setData([programType, programId])
+			return response
 
-		response = message.send(self._bus, response, 10)
-		if response is None:
-			print('Program add timeout')
-			return False
-		else:
-			data = response.getData()
-			if data[2] == programAddStatus['STATUS_ADD_PROGRAM_OK']:
-				print('Program add ok!')
-				return True
-			else:
-				print('Program add error %d' %(data[2]))
+		def handleResponse(response):
+			if response is None:
+				print('Program add timeout')
 				return False
+			else:
+				programAddStatus = {
+					'STATUS_ADD_PROGRAM_OK'                 : 0,
+					'STATUS_ADD_PROGRAM_WRONG_PROGRAM_TYPE' : 1,
+					'STATUS_ADD_PROGRAM_TOO_MANY_PROGRAMS'  : 2,
+					'STATUS_ADD_PROGRAM_UNDEFINED_ERROR'    : 3,
+				}
+				data = response.getData()
+				if data[2] == programAddStatus['STATUS_ADD_PROGRAM_OK']:
+					print('Program add ok!')
+					return True
+				else:
+					print('Program add error %d' %(data[2]))
+					return False
+
+
+		request        = generateRequest(programType, programId, programScheme)
+		responseFilter = generateRequiredResponse(request)
+
+		response = request.send(self._bus, responseFilter, 10)
+
+		return handleResponse(response)
 
 	def makeNewProgram(self, preset):
-		pass
+		preset.loadPreset(self)
 
 	def getProgramsAddList(self):
 		return controllers.preset.getPresetsList()
 
+	def resetConfig(self):
+		print('send Controller reset request')
+		def generateRequest():
+			request = smartnetMessage(
+			snc.ProgramType['CONTROLLER'],
+			self._controllerId,
+			snc.ControllerFunction['RESET_PROGRAMS'],
+			snc.requestFlag['REQUEST'])
+			return request
+
+		def generateRequiredResponse(request):
+			response = copy(request)
+			response.setRequestFlag(snc.requestFlag['RESPONSE'])
+			return response
+
+		request        = generateRequest()
+		responseFilter = generateRequiredResponse(request)
+
+		response = request.send(self._bus, responseFilter, 10)
+
+		if response is None:
+			print('Program reset timeout')
+			return False
+		else:
+			return True
+
+
 	def run(self):
+		self.resetConfig()
+
 		programList = self.getProgramsAddList()
 
 		for prg in programList:
@@ -110,5 +150,4 @@ class Controller(can.Listener):
 				self._event.set()
 				return
 
-		print('Wow!')
 		pass
