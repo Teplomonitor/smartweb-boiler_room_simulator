@@ -20,6 +20,8 @@ class Message(object):
 		self._functionId  = functionId
 		self._request     = request
 		self._data        = data
+	def __copy__(self):
+		return type(self)(self._programType, self._programId, self._functionId, self._request, self._data)
 	
 	def getProgramType(self): return self._programType
 	def getProgramId  (self): return self._programId
@@ -34,15 +36,10 @@ class Message(object):
 	def setData       (self, value): self._data        = value
 
 	def generateHeader(self):
-		if self._request == 'REQUEST':
-			flag = 0x00
-		else:
-			flag = 0x10
-
 		byte0 = self._programType
 		byte1 = self._programId
 		byte2 = self._functionId
-		byte3 = flag
+		byte3 = self._request
 
 		header = (
 			(byte0 <<  0) |
@@ -61,7 +58,7 @@ class Message(object):
 		self._programType = byte0
 		self._programId   = byte1
 		self._functionId  = byte2
-		self._request     = 'RESPONSE' if (byte3 & 0x10) != 0 else 'REQUEST'
+		self._request     = byte3
 		
 	def smartNetToCanMsg(self):
 		header = self.generateHeader()
@@ -90,10 +87,16 @@ class Message(object):
 		if val is not None:
 			val_size = len(val)
 			data = self.getData()
-			data_cut = data[:val_size]
-			if val is not data_cut:
+			int_array = [byte for byte in data]
+			data_cut = int_array[:val_size]
+			
+			if val == data_cut:
+#				print('good')
+				pass
+			else:
+#				print('Oh!')
 				return False
-
+				
 		return True
 
 
@@ -105,8 +108,13 @@ class Message(object):
 
 			if message is not None:
 				smartnet.parse(message)
+				print(f"compare response: {message.arbitration_id:08X} - {' '.join(format(x, '02x') for x in message.data)}")
 				if smartnet.compare(responseFilter):
+#					print('compare ok')
 					return smartnet
+				else:
+#					print('not match')
+					pass
 			else:
 				return None
 
@@ -116,6 +124,11 @@ class Message(object):
 
 		if not bus:
 			bus = can.Bus()
+
+
+		print(f"tx: {msg.arbitration_id:08X} - {' '.join(format(x, '02x') for x in msg.data)}")
+#		test = [1,2,3]
+#		print(f"tx: {msg.arbitration_id:08X} - {' '.join(str(x) for x in test)}")
 
 		bus.send(msg)
 
