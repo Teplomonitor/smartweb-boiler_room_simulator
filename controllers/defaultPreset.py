@@ -1,6 +1,7 @@
 
 from controllers.channelMapping import ChannelMapping as Mapping
 
+import smartnet.constants as snc
 import controllers.preset
 
 def getHostId():
@@ -18,25 +19,25 @@ programList = [
 ]
 
 programType = {
-	'HEATING_CIRCUIT_1' : 'HEATING_CIRCUIT',
-	'HEATING_CIRCUIT_2' : 'HEATING_CIRCUIT',
-	'ROOM_DEVICE_1'     : 'ROOM_DEVICE'    ,
-	'ROOM_DEVICE_2'     : 'ROOM_DEVICE'    ,
-	'DHW'               : 'DHW'            ,
-	'BOILER'            : 'BOILER'         ,
-	'CASCADE_MANAGER'   : 'CASCADE_MANAGER',
-	'OUTDOOR_SENSOR'    : 'OUTDOOR_SENSOR' ,
+	'HEATING_CIRCUIT_1' : snc.ProgramType['HEATING_CIRCUIT'],
+	'HEATING_CIRCUIT_2' : snc.ProgramType['HEATING_CIRCUIT'],
+	'ROOM_DEVICE_1'     : snc.ProgramType['ROOM_DEVICE'    ],
+	'ROOM_DEVICE_2'     : snc.ProgramType['ROOM_DEVICE'    ],
+	'DHW'               : snc.ProgramType['DHW'            ],
+	'BOILER'            : snc.ProgramType['BOILER'         ],
+	'CASCADE_MANAGER'   : snc.ProgramType['CASCADE_MANAGER'],
+	'OUTDOOR_SENSOR'    : snc.ProgramType['OUTDOOR_SENSOR' ],
 }
 
 programScheme = {
-	'HEATING_CIRCUIT_1' : 'SCHEME_MIXED' ,
-	'HEATING_CIRCUIT_2' : 'SCHEME_DIRECT',
-	'ROOM_DEVICE_1'     : 'DEFAULT'      ,
-	'ROOM_DEVICE_2'     : 'DEFAULT'      ,
-	'DHW'               : 'DEFAULT'      ,
-	'BOILER'            : 'DEFAULT'      ,
-	'CASCADE_MANAGER'   : 'DEFAULT'      ,
-	'OUTDOOR_SENSOR'    : 'DEFAULT'      ,
+	'HEATING_CIRCUIT_1' : snc.ProgramScheme['CIRCUIT_MIXED' ],
+	'HEATING_CIRCUIT_2' : snc.ProgramScheme['CIRCUIT_DIRECT'],
+	'ROOM_DEVICE_1'     : snc.ProgramScheme['DEFAULT'       ],
+	'ROOM_DEVICE_2'     : snc.ProgramScheme['DEFAULT'       ],
+	'DHW'               : snc.ProgramScheme['DEFAULT'       ],
+	'BOILER'            : snc.ProgramScheme['DEFAULT'       ],
+	'CASCADE_MANAGER'   : snc.ProgramScheme['DEFAULT'       ],
+	'OUTDOOR_SENSOR'    : snc.ProgramScheme['DEFAULT'       ],
 }
 
 programTitle = {
