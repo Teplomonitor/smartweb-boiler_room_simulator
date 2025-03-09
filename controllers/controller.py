@@ -11,7 +11,7 @@ from smartnet.message import Message as smartnetMessage
 import smartnet.constants as snc
 import controllers.preset
 
-class Controller(can.Listener):
+class Controller(object):
 	'''
 	classdocs
 	'''
@@ -24,14 +24,17 @@ class Controller(can.Listener):
 		self._controllerId = controllerId
 
 		self._bus = bus
-		self._notifier = can.Notifier(self._bus, [self])
-		self._event = Event()
 		self._state = 'STATE_IDLE'
-		
-	def waitEvent(self, state):
-		self._state = state
-		self._event.wait(timeout=5) # wait for 5 seconds
 
+		self.resetConfig()
+
+		programList = self.getProgramsAddList()
+
+		for prg in programList:
+			if self.makeNewProgram(prg) == False:
+				print('shit!')
+
+		
 	def sendProgramAddRequest(self, programType, programId, programScheme):
 		print('Send program add request')
 		def generateRequest(programType, programId, programScheme):
@@ -77,7 +80,7 @@ class Controller(can.Listener):
 		return handleResponse(response)
 
 	def makeNewProgram(self, preset):
-		preset.loadPreset(self)
+		return preset.loadPreset(self)
 
 	def getProgramsAddList(self):
 		return controllers.preset.getPresetsList()
@@ -110,21 +113,8 @@ class Controller(can.Listener):
 
 
 	def run(self):
-		self.resetConfig()
-
-		programList = self.getProgramsAddList()
-
-		for prg in programList:
-			self.makeNewProgram(prg)
-
-		self.waitEvent('STATE_WAIT_PROGRAM_ADD')
-
-		if self._state == 'STATE_WAIT_PROGRAM_ADD':
-			print('Bad!')
-		else:
-			print('Good!!')
-
-
+		while True:
+			time.sleep(5)
 
 	def addProgram(self, programType, programId):
 		pass
@@ -134,20 +124,3 @@ class Controller(can.Listener):
 	
 	def getInputsNum(self):
 		return 0
-
-	def on_message_received(self, message):
-		msg = smartnetMessage()
-		msg.parse(message)
-
-		programType = msg.getProgramType()
-
-
-		if self._state == 'STATE_WAIT_PROGRAM_ADD':
-			if programType == snc.ProgramType['CONTROLLER']:
-				print('Good!')
-				self.addProgram(12, 34)
-				self._state = 'STATE_IDLE'
-				self._event.set()
-				return
-
-		pass
