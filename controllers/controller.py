@@ -17,21 +17,21 @@ class Controller(object):
 	'''
 
 
-	def __init__(self, controllerId, bus):
+	def __init__(self, controllerId):
 		'''
 		Constructor
 		'''
 		self._controllerId = controllerId
 
-		self._bus = bus
 		self._state = 'STATE_IDLE'
+		self._programList = []
 
 		self.resetConfig()
 
-		programList = self.getProgramsAddList()
+		presetList = self.getProgramsAddList()
 
-		for prg in programList:
-			if self.makeNewProgram(prg) == False:
+		for preset in presetList:
+			if self.makeNewProgram(preset) == False:
 				print('shit!')
 
 		
@@ -75,7 +75,7 @@ class Controller(object):
 		request        = generateRequest(programType, programId, programScheme)
 		responseFilter = generateRequiredResponse(request)
 
-		response = request.send(self._bus, responseFilter, 10)
+		response = request.send(responseFilter, 10)
 
 		return handleResponse(response)
 
@@ -103,7 +103,7 @@ class Controller(object):
 		request        = generateRequest()
 		responseFilter = generateRequiredResponse(request)
 
-		response = request.send(self._bus, responseFilter, 10)
+		response = request.send(responseFilter, 10)
 
 		if response is None:
 			print('Program reset timeout')
@@ -116,8 +116,8 @@ class Controller(object):
 		while True:
 			time.sleep(5)
 
-	def addProgram(self, programType, programId):
-		pass
+	def addProgram(self, program):
+		self._programList.append(program)
 	
 	def getOutputsNum(self):
 		return 0
