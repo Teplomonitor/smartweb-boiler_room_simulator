@@ -19,7 +19,6 @@ It defines classes_and_methods
 
 import sys
 import os
-import can
  
 
 from argparse import ArgumentParser
@@ -54,35 +53,19 @@ class CLIError(Exception):
 
 
 
+def messageIsImHere():
+	return smartnetMessage(
+		snc.ProgramType['CONTROLLER'], None, 
+		snc.ControllerFunction['I_AM_HERE'], 
+		snc.requestFlag['RESPONSE'])
 
-def createBus():
-	#TODO: don't listen own messages
-	return can.Bus()
 
-def messageIsImHere(message):
-	if ((message.getProgramType() == snc.ProgramType['CONTROLLER']) and
-		(message.getFunctionId()  == snc.ControllerFunction['I_AM_HERE']) and
-		(message.getRequestFlag() == snc.requestFlag['RESPONSE'])):
-		return True
-
-	return False
-
-def findOnlineController(bus):
-#	return 42
-	try:
-		msg = smartnetMessage()
-		while True:
-			# Read a message from the CAN bus
-			message = bus.recv()
-
-			if message is not None:
-				msg.parse(message)
-				if messageIsImHere(msg):
-					return msg.getProgramId()
-
-	except can.CanError as e:
-		print(f"CAN error: {e}")
-		sys.exit(1)
+def findOnlineController():
+	result = smartnetMessage.recv(15, messageIsImHere())
+	if result:
+		return result.getProgramId()
+	else:
+		return None
 
 def main(argv=None): # IGNORE:C0111
 	'''Command line options.'''
@@ -120,14 +103,15 @@ USAGE
 
 		dbgThread = debug.debug_thread()
 
-
-		bus = createBus()
-
 		print('Searching controller')
-		controllerId = findOnlineController(bus)
+		controllerId = findOnlineController()
+
+		if controllerId is None:
+			print("shit")
+			return 1
 		
 		print('Controller %d found' %(controllerId))
-		controller = Controller(controllerId, bus)
+		controller = Controller(controllerId)
 
 		controller.run()
 
@@ -135,8 +119,8 @@ USAGE
 
 	except KeyboardInterrupt:
 		### handle keyboard interrupt ###
+		smartnetMessage.exit()
 		print('exit')
-		bus.shutdown()
 		return 0
 	except Exception as e:
 		if DEBUG or TESTRUN:
