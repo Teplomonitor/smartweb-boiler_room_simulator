@@ -3,13 +3,18 @@
 '''
 
 import can
+import time
 
+def createBus():
+	return can.Bus()
 
 class Message(object):
 	'''
 	classdocs
 	'''
-
+	#this for debug purpose. We need to hear own messages
+	_rxbus = createBus()
+	_txbus = createBus()
 
 	def __init__(self, programType=None, programId=None, functionId=None, request=None, data=None):
 		'''
@@ -89,53 +94,66 @@ class Message(object):
 			data = self.getData()
 			int_array = [byte for byte in data]
 			data_cut = int_array[:val_size]
-			
+
 			if val == data_cut:
 #				print('good')
 				pass
 			else:
 #				print('Oh!')
 				return False
-				
+
 		return True
 
 
-	def waitResponse(self, bus, responseFilter, timeout = None):
-		smartnet = Message()
-		while True:
-			# Read a message from the CAN bus
-			message = bus.recv(timeout)
-
-			if message is not None:
-				smartnet.parse(message)
-				print(f"compare response: {message.arbitration_id:08X} - {' '.join(format(x, '02x') for x in message.data)}")
-				if smartnet.compare(responseFilter):
-#					print('compare ok')
-					return smartnet
-				else:
-#					print('not match')
-					pass
-			else:
-				return None
-
-
-	def send(self, bus = None, responseFilter = None, timeout = None):
+	def send(self, responseFilter = None, timeout = None, bus = None):
 		msg = self.smartNetToCanMsg()
 
-		if not bus:
-			bus = can.Bus()
-
-
 		print(f"tx: {msg.arbitration_id:08X} - {' '.join(format(x, '02x') for x in msg.data)}")
-#		test = [1,2,3]
-#		print(f"tx: {msg.arbitration_id:08X} - {' '.join(str(x) for x in test)}")
 
-		bus.send(msg)
+		if bus:
+			txbus = bus
+		else:
+			txbus = Message._txbus
+
+		txbus.send(msg)
 
 		if responseFilter:
-			response = self.waitResponse(bus, responseFilter, timeout)
-			return response
-			
+			return Message.recv(timeout, responseFilter, txbus)
+
+	@staticmethod
+	def recv(timeout = None, messageFilter = None, bus = None):
+		start_time = time.time()
+		snmsg = Message()
+
+		if bus:
+			rxbus = bus
+		else:
+			rxbus = Message._rxbus
+
+		while True:
+			try:
+				# Read a message from the CAN bus
+				message = rxbus.recv(timeout)
+			except can.CanError as e:
+				print(f"CAN error: {e}")
+				return None
+
+			if timeout:
+				if (time.time() - start_time) > timeout:
+					return None
+
+			if message:
+				print(f"rx: {message.arbitration_id:08X} - {' '.join(format(x, '02x') for x in message.data)}")
+
+				snmsg.parse(message)
+				if messageFilter:
+					if snmsg.compare(messageFilter):
+						return snmsg
+					else:
+						continue
+				return snmsg
+			return None
+
 	def parse(self, message):
 		if not message.is_extended_id or message.is_remote_frame:
 			print('wrong message type')
@@ -144,3 +162,10 @@ class Message(object):
 		self.parseHeader(message.arbitration_id)
 		self._data = message.data
 	
+
+
+	@staticmethod
+	def exit():
+		Message._txbus.shutdown()
+		Message._rxbus.shutdown()
+		
