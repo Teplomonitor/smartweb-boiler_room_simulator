@@ -163,9 +163,7 @@ class Message(object):
 		self._data = message.data
 	
 
-
 	@staticmethod
 	def exit():
 		Message._txbus.shutdown()
 		Message._rxbus.shutdown()
-		
