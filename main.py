@@ -123,6 +123,8 @@ USAGE
 		print('exit')
 		return 0
 	except Exception as e:
+		smartnetMessage.exit()
+		
 		if DEBUG or TESTRUN:
 			raise(e)
 		indent = len(program_name) * " "
