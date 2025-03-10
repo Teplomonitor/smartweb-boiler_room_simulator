@@ -2,6 +2,7 @@
 
 import smartnet.constants as snc
 import controllers.defaultPreset
+from programs.program import Program as Program
 
 class ProgramPreset(object):
 	'''
@@ -32,6 +33,19 @@ class ProgramPreset(object):
 		if not result:
 			print('Program %s add fail'%(self._title))
 			return False
+
+		prg = Program(self._type, self._id, self._scheme)
+		controller.addProgram(prg)
+
+		if self._inputs:
+			i = 0
+			for inputMapping in self._inputs:
+				if inputMapping:
+					prg.bindInput(i, inputMapping)
+				i = i + 1
+
+
+
 
 
 def getPresetsList():
