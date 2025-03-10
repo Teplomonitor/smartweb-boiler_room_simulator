@@ -24,15 +24,15 @@ class Program(object):
 		self._inputs  = []
 		self._outputs = []
 	
-	def bindInput(self, inputId, mapping):
-		print(f'bind program input {inputId}')
-		def generateRequest(inputId, mapping):
+	def bindInput(self, id, mapping):
+		print(f'bind program input {id}')
+		def generateRequest(id, mapping):
 			request = smartnetMessage(
 			snc.ProgramType['REMOTE_CONTROL'],
 			self._id,
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
 			snc.requestFlag['REQUEST'],
-			[snc.ProgramType['PROGRAM'], snc.ProgramParameter['INPUT_MAPPING'], inputId, mapping.getRaw(0), mapping.getRaw(1)])
+			[snc.ProgramType['PROGRAM'], snc.ProgramParameter['INPUT_MAPPING'], id, mapping.getRaw(0), mapping.getRaw(1)])
 			return request
 
 		def generateRequiredResponse(request):
@@ -56,7 +56,50 @@ class Program(object):
 					return False
 
 
-		request        = generateRequest(inputId, mapping)
+		request        = generateRequest(id, mapping)
+		responseFilter = generateRequiredResponse(request)
+
+		response = request.send(responseFilter, 10)
+
+		return handleResponse(response)
+
+
+		pass
+	
+
+	def bindOutput(self, id, mapping):
+		print(f'bind program output {id}')
+		def generateRequest(id, mapping):
+			request = smartnetMessage(
+			snc.ProgramType['REMOTE_CONTROL'],
+			self._id,
+			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
+			snc.requestFlag['REQUEST'],
+			[snc.ProgramType['PROGRAM'], snc.ProgramParameter['OUTPUT_MAPPING'], id, mapping.getRaw(0), mapping.getRaw(1)])
+			return request
+
+		def generateRequiredResponse(request):
+			response = copy(request)
+			response.setRequestFlag(snc.requestFlag['RESPONSE'])
+			return response
+
+		def handleResponse(response):
+			if response is None:
+				print('bind output timeout')
+				return False
+			else:
+				data = response.getData()
+				resultPos = len(data) - 1
+				result = data[resultPos]
+				if result == snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK']:
+					print('bind ok!')
+					return True
+				else:
+					print('bind error %d' %(result))
+					return False
+
+
+		request        = generateRequest(id, mapping)
 		responseFilter = generateRequiredResponse(request)
 
 		response = request.send(responseFilter, 10)
