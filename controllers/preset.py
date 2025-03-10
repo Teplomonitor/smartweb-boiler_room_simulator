@@ -39,10 +39,21 @@ class ProgramPreset(object):
 
 		if self._inputs:
 			i = 0
-			for inputMapping in self._inputs:
-				if inputMapping:
-					prg.bindInput(i, inputMapping)
+			for mapping in self._inputs:
+				if mapping:
+					prg.bindInput(i, mapping)
 				i = i + 1
+
+		if self._outputs:
+			i = 0
+			for mapping in self._outputs:
+				if mapping:
+					prg.bindOutput(i, mapping)
+				i = i + 1
+
+
+
+
 
 
 
