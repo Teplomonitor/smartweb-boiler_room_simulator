@@ -5,10 +5,8 @@ import time
 
 import smartnet.constants as snc
 from smartnet.message import Message as smartnetMessage
+from smartnet.message import createBus as createBus
 
-def createBus():
-	#TODO: don't listen own messages
-	return can.Bus()
 
 class i_am_here_thread(threading.Thread):
 	def __init__(self, thread_name, thread_ID):
@@ -26,19 +24,44 @@ class i_am_here_thread(threading.Thread):
 			snc.requestFlag['RESPONSE'],
 			[snc.ControllerType['SWK'],]
 			)
-		msg.send(self._canbus)
+		msg.send(bus = self._canbus)
 
 	def run(self):
 		while True:
 			time.sleep(10)
 			self.sendImHere()
 
+def programsResetFilter(msg):
+	return ((msg.getProgramType() == snc.ProgramType['CONTROLLER']) and
+			(msg.getFunctionId () == snc.ControllerFunction['RESET_PROGRAMS']) and
+			(msg.getRequestFlag() == snc.requestFlag['REQUEST']))
+
+def programAddFilter(msg):
+	return ((msg.getProgramType() == snc.ProgramType['CONTROLLER']) and
+			(msg.getFunctionId () == snc.ControllerFunction['ADD_NEW_PROGRAM']) and
+			(msg.getRequestFlag() == snc.requestFlag['REQUEST']))
+
+def remoteControlRequest(msg):
+	return ((msg.getProgramType() == snc.ProgramType['REMOTE_CONTROL']) and
+			(msg.getFunctionId () == snc.RemoteControlFunction['SET_PARAMETER_VALUE']) and
+			(msg.getRequestFlag() == snc.requestFlag['REQUEST']))
+
+def programInputMappingFilter(msg):
+	if not remoteControlRequest(msg):
+		return False
+
+	data = msg.getData()
+	return ((data[0] == snc.ProgramType['PROGRAM']) and
+			(data[1] == snc.ProgramParameter['INPUT_MAPPING']))
+
 class debug_thread(can.Listener):
 	def __init__(self):
-		self._canbus     = createBus()
+		self._canbus   = createBus()
 		self._notifier = can.Notifier(self._canbus, [self])
 
-		thread1 = i_am_here_thread("IMH", 1001) 
+		thread1 = i_am_here_thread("IMH", 1001)
+		#to kill thread on sys.exit()
+		thread1.daemon = True
 		thread1.start()
 
 	# helper function to execute the threads
@@ -47,32 +70,31 @@ class debug_thread(can.Listener):
 		msg.parse(message)
 
 		if message is not None:
-			print(f"rx: {message.arbitration_id:08X} - {' '.join(format(x, '02x') for x in message.data)}")
+			print(f"db: {message.arbitration_id:08X} - {' '.join(format(x, '02x') for x in message.data)}")
 
 			msg.parse(message)
 
-			if (
-				(msg.getProgramType() == snc.ProgramType['CONTROLLER']) and
-				(msg.getFunctionId () == snc.ControllerFunction['RESET_PROGRAMS']) and
-				(msg.getRequestFlag() == snc.requestFlag['REQUEST'])):
-					msg.setRequestFlag(snc.requestFlag['RESPONSE'])
-					msg.send(self._canbus)
+			if programsResetFilter(msg):
+				msg.setRequestFlag(snc.requestFlag['RESPONSE'])
+				msg.send(bus = self._canbus)
 
-			
-			if (
-				(msg.getProgramType() == snc.ProgramType['CONTROLLER']) and
-				(msg.getFunctionId () == snc.ControllerFunction['ADD_NEW_PROGRAM']) and
-				(msg.getRequestFlag() == snc.requestFlag['REQUEST'])):
-					programAddStatus = {
-						'STATUS_ADD_PROGRAM_OK'                 : 0,
-						'STATUS_ADD_PROGRAM_WRONG_PROGRAM_TYPE' : 1,
-						'STATUS_ADD_PROGRAM_TOO_MANY_PROGRAMS'  : 2,
-						'STATUS_ADD_PROGRAM_UNDEFINED_ERROR'    : 3,
-					}
-					msg.setRequestFlag(snc.requestFlag['RESPONSE'])
-					data = msg.getData()
-					data[2] = programAddStatus['STATUS_ADD_PROGRAM_OK']
-					msg.send(self._canbus)
+			if programAddFilter(msg):
+				programAddStatus = {
+					'STATUS_ADD_PROGRAM_OK'                 : 0,
+					'STATUS_ADD_PROGRAM_WRONG_PROGRAM_TYPE' : 1,
+					'STATUS_ADD_PROGRAM_TOO_MANY_PROGRAMS'  : 2,
+					'STATUS_ADD_PROGRAM_UNDEFINED_ERROR'    : 3,
+				}
+				msg.setRequestFlag(snc.requestFlag['RESPONSE'])
+				data = msg.getData()
+				data[2] = programAddStatus['STATUS_ADD_PROGRAM_OK']
+				msg.send(bus = self._canbus)
+
+			if programInputMappingFilter(msg):
+				msg.setRequestFlag(snc.requestFlag['RESPONSE'])
+				data = msg.getData()
+				data.append(snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK'])
+				msg.send(bus = self._canbus)
 
 
 
