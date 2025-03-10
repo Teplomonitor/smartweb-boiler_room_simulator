@@ -285,6 +285,11 @@ RemoteControlFunction = {
 	'GET_PARAMETER_UNIT'           : 8,
 }
 
+RemoteControlSetParameterResult = {
+	'SET_PARAMETER_STATUS_OK'    : 0,
+	'SET_PARAMETER_STATUS_ERROR' : 1,
+}
+
 TemperatureSourceFunction = {
 	'REQUEST_TEMPERATURE' : 0,
 	'GET_TEMPERATURE'     : 1,
