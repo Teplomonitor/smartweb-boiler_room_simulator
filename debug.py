@@ -9,11 +9,11 @@ from smartnet.message import createBus as createBus
 
 
 class i_am_here_thread(threading.Thread):
-	def __init__(self, thread_name, thread_ID):
+	def __init__(self, thread_name, thread_ID, canbus):
 		threading.Thread.__init__(self)
 		self.thread_name = thread_name
 		self.thread_ID   = thread_ID
-		self._canbus     = createBus()
+		self._canbus     = canbus
 
 	def sendImHere(self):
 		dummyControllerId = 123
@@ -54,12 +54,20 @@ def programInputMappingFilter(msg):
 	return ((data[0] == snc.ProgramType['PROGRAM']) and
 			(data[1] == snc.ProgramParameter['INPUT_MAPPING']))
 
+def programOutputMappingFilter(msg):
+	if not remoteControlRequest(msg):
+		return False
+
+	data = msg.getData()
+	return ((data[0] == snc.ProgramType['PROGRAM']) and
+			(data[1] == snc.ProgramParameter['OUTPUT_MAPPING']))
+
 class debug_thread(can.Listener):
 	def __init__(self):
 		self._canbus   = createBus()
 		self._notifier = can.Notifier(self._canbus, [self])
 
-		thread1 = i_am_here_thread("IMH", 1001)
+		thread1 = i_am_here_thread("IMH", 1001, self._canbus)
 		#to kill thread on sys.exit()
 		thread1.daemon = True
 		thread1.start()
@@ -77,6 +85,7 @@ class debug_thread(can.Listener):
 			if programsResetFilter(msg):
 				msg.setRequestFlag(snc.requestFlag['RESPONSE'])
 				msg.send(bus = self._canbus)
+				return
 
 			if programAddFilter(msg):
 				programAddStatus = {
@@ -89,12 +98,14 @@ class debug_thread(can.Listener):
 				data = msg.getData()
 				data[2] = programAddStatus['STATUS_ADD_PROGRAM_OK']
 				msg.send(bus = self._canbus)
+				return
 
-			if programInputMappingFilter(msg):
+			if programInputMappingFilter(msg) or programOutputMappingFilter(msg):
 				msg.setRequestFlag(snc.requestFlag['RESPONSE'])
 				data = msg.getData()
 				data.append(snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK'])
 				msg.send(bus = self._canbus)
+				return
 
 
 
