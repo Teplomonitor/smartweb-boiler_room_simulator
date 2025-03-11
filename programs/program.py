@@ -26,7 +26,7 @@ class Program(object):
 	
 	def bindInput(self, id, mapping):
 		print(f'bind program input {id}')
-		def generateRequest(id, mapping):
+		def generateRequest():
 			request = smartnetMessage(
 			snc.ProgramType['REMOTE_CONTROL'],
 			self._id,
@@ -35,12 +35,12 @@ class Program(object):
 			[snc.ProgramType['PROGRAM'], snc.ProgramParameter['INPUT_MAPPING'], id, mapping.getRaw(0), mapping.getRaw(1)])
 			return request
 
-		def generateRequiredResponse(request):
+		def generateRequiredResponse():
 			response = copy(request)
 			response.setRequestFlag(snc.requestFlag['RESPONSE'])
 			return response
 
-		def handleResponse(response):
+		def handleResponse():
 			if response is None:
 				print('bind input timeout')
 				return False
@@ -56,12 +56,12 @@ class Program(object):
 					return False
 
 
-		request        = generateRequest(id, mapping)
-		responseFilter = generateRequiredResponse(request)
+		request        = generateRequest()
+		responseFilter = generateRequiredResponse()
 
 		response = request.send(responseFilter, 10)
 
-		return handleResponse(response)
+		return handleResponse()
 
 
 		pass
@@ -69,7 +69,7 @@ class Program(object):
 
 	def bindOutput(self, id, mapping):
 		print(f'bind program output {id}')
-		def generateRequest(id, mapping):
+		def generateRequest():
 			request = smartnetMessage(
 			snc.ProgramType['REMOTE_CONTROL'],
 			self._id,
@@ -78,12 +78,12 @@ class Program(object):
 			[snc.ProgramType['PROGRAM'], snc.ProgramParameter['OUTPUT_MAPPING'], id, mapping.getRaw(0), mapping.getRaw(1)])
 			return request
 
-		def generateRequiredResponse(request):
+		def generateRequiredResponse():
 			response = copy(request)
 			response.setRequestFlag(snc.requestFlag['RESPONSE'])
 			return response
 
-		def handleResponse(response):
+		def handleResponse():
 			if response is None:
 				print('bind output timeout')
 				return False
@@ -99,12 +99,9 @@ class Program(object):
 					return False
 
 
-		request        = generateRequest(id, mapping)
-		responseFilter = generateRequiredResponse(request)
+		request        = generateRequest()
+		responseFilter = generateRequiredResponse()
 
 		response = request.send(responseFilter, 10)
 
-		return handleResponse(response)
-
-
-		pass
+		return handleResponse()
