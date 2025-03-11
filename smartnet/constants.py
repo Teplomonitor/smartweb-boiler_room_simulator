@@ -206,12 +206,24 @@ HeatingCircuitParameter = {
 	'VALVE_POSITION'                : 10,
 }                       
 
+ConsumerParameter = {
+	'PRIORITY'                  :  1,
+	'GENERATOR_ID'              :  2,
+	'DUMMY1'                    :  3,
+	'DUMMY2'                    :  4,
+	'TEMPERATURE_COMPENSATION'  :  5,
+	'REQUIRED_TEMPERATURE'      :  6,
+	'GENERATOR_TEMPERATURE'     :  7,
+	'HEAT_EXTRICATION_ENABLED'  :  8,
+}                       
+
 
 ParameterDict = {
 	'PROGRAM'        : ProgramParameter,
 	'ROOM_DEVICE'    : RoomDeviceParameter,
 	'CONTROLLER'     : ControllerParameter,
 	'HEATING_CIRCUIT': HeatingCircuitParameter,
+	'CONSUMER'       : ConsumerParameter,
 }
 
 
