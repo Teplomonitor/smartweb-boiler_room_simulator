@@ -217,6 +217,26 @@ ConsumerParameter = {
 	'HEAT_EXTRICATION_ENABLED'  :  8,
 }                       
 
+CascadeManagerParameter = {
+	'PARAM_ROTATION_PERIOD'                        :  1,
+	'PARAM_TEMPERATURE_SOURCE_ID'                  :  2,
+	'PARAM_TEMPERATURE_SOURCE_TYPE'                :  3,
+	'PARAM_TEMPERATURE_SOURCE_POWER'               :  4,
+	'PARAM_TEMPERATURE_SOURCE_WORKTIME'            :  5,
+	'PARAM_TEMPERATURE_SOURCE_PRIORITY'            :  6,
+	'PARAM_P_FACTOR'                               :  7,
+	'PARAM_I_FACTOR'                               :  8,
+	'PARAM_D_FACTOR'                               :  9,
+	'SCHEDULE'                                     : 10,
+	'REQUIRED_POWER'                               : 11,
+	'NEXT_TEMPERATURE_SRC_ON_DELAY'                : 12,
+	'ROTATION_TYPE'                                : 13,
+	'TEMPERATURE_OFFSET'                           : 14,
+	'MINIMUM_REQUIRED_TEMPERATURE'                 : 15,
+	'MAXIMUM_REQUIRED_TEMPERATURE'                 : 16,
+	'WORK_FUNCTION'                                : 17,
+	'TEMPERATURE_SOURCE_OFF_DELAY_BY_TEMPERATURE'  : 18,
+}
 
 ParameterDict = {
 	'PROGRAM'        : ProgramParameter,
@@ -224,6 +244,7 @@ ParameterDict = {
 	'CONTROLLER'     : ControllerParameter,
 	'HEATING_CIRCUIT': HeatingCircuitParameter,
 	'CONSUMER'       : ConsumerParameter,
+	'CASCADE_MANAGER': CascadeManagerParameter,
 }
 
 
