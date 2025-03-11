@@ -28,8 +28,8 @@ class i_am_here_thread(threading.Thread):
 
 	def run(self):
 		while True:
-			time.sleep(10)
 			self.sendImHere()
+			time.sleep(10)
 
 def programsResetFilter(msg):
 	return ((msg.getProgramType() == snc.ProgramType['CONTROLLER']) and
@@ -72,47 +72,39 @@ class debug_thread(can.Listener):
 		thread1.daemon = True
 		thread1.start()
 
-	# helper function to execute the threads
 	def on_message_received(self, message):
+		if message is None:
+			return
+
+		print(f"db: {message.arbitration_id:08X} - {' '.join(format(x, '02x') for x in message.data)}")
+
 		msg = smartnetMessage()
 		msg.parse(message)
 
-		if message is not None:
-			print(f"db: {message.arbitration_id:08X} - {' '.join(format(x, '02x') for x in message.data)}")
+		if programsResetFilter(msg):
+			msg.setRequestFlag(snc.requestFlag['RESPONSE'])
+			msg.send(bus = self._canbus)
+			return
 
-			msg.parse(message)
+		if programAddFilter(msg):
+			programAddStatus = {
+				'STATUS_ADD_PROGRAM_OK'                 : 0,
+				'STATUS_ADD_PROGRAM_WRONG_PROGRAM_TYPE' : 1,
+				'STATUS_ADD_PROGRAM_TOO_MANY_PROGRAMS'  : 2,
+				'STATUS_ADD_PROGRAM_UNDEFINED_ERROR'    : 3,
+			}
+			msg.setRequestFlag(snc.requestFlag['RESPONSE'])
+			data = msg.getData()
+			data[2] = programAddStatus['STATUS_ADD_PROGRAM_OK']
+			msg.send(bus = self._canbus)
+			return
 
-			if programsResetFilter(msg):
-				msg.setRequestFlag(snc.requestFlag['RESPONSE'])
-				msg.send(bus = self._canbus)
-				return
-
-			if programAddFilter(msg):
-				programAddStatus = {
-					'STATUS_ADD_PROGRAM_OK'                 : 0,
-					'STATUS_ADD_PROGRAM_WRONG_PROGRAM_TYPE' : 1,
-					'STATUS_ADD_PROGRAM_TOO_MANY_PROGRAMS'  : 2,
-					'STATUS_ADD_PROGRAM_UNDEFINED_ERROR'    : 3,
-				}
-				msg.setRequestFlag(snc.requestFlag['RESPONSE'])
-				data = msg.getData()
-				data[2] = programAddStatus['STATUS_ADD_PROGRAM_OK']
-				msg.send(bus = self._canbus)
-				return
-
-#			if programInputMappingFilter(msg) or programOutputMappingFilter(msg):
-#				msg.setRequestFlag(snc.requestFlag['RESPONSE'])
-#				data = msg.getData()
-#				data.append(snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK'])
-#				msg.send(bus = self._canbus)
-#				return
-
-			if remoteControlRequest(msg):
-				msg.setRequestFlag(snc.requestFlag['RESPONSE'])
-				data = msg.getData()
-				data.append(snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK'])
-				msg.send(bus = self._canbus)
-				return
+		if remoteControlRequest(msg):
+			msg.setRequestFlag(snc.requestFlag['RESPONSE'])
+			data = msg.getData()
+			data.append(snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK'])
+			msg.send(bus = self._canbus)
+			return
 
 
 
