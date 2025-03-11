@@ -39,14 +39,14 @@ class ProgramPreset(object):
 
 		if self._inputs:
 			i = 0
-			for value in self._inputs:
+			for value in self._inputs.get():
 				if value:
 					prg.bindInput(i, value)
 				i = i + 1
 
 		if self._outputs:
 			i = 0
-			for value in self._outputs:
+			for value in self._outputs.get():
 				if value:
 					prg.bindOutput(i, value)
 				i = i + 1

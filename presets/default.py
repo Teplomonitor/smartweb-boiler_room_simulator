@@ -95,25 +95,25 @@ def outputMapping(id): return Mapping(id, 'CHANNEL_RELAY' , getHostId())
 
 
 programInputs = {
-	'HEATING_CIRCUIT_1' : hcInputMapping     (inputMapping(0)).get(),
-	'HEATING_CIRCUIT_2' : hcInputMapping     (inputMapping(1)).get(),
-	'ROOM_DEVICE_1'     : roomInputMapping   (inputMapping(2)).get(),
-	'ROOM_DEVICE_2'     : roomInputMapping   (inputMapping(3)).get(),
-	'DHW'               : dhwInputMapping    (inputMapping(4)).get(),
-	'BOILER'            : boilerInputMapping (inputMapping(5)).get(),
-	'CASCADE_MANAGER'   : cascadeInputMapping(inputMapping(6)).get(),
-	'OUTDOOR_SENSOR'    : oatInputMapping    (inputMapping(7)).get(),
+	'HEATING_CIRCUIT_1' : hcInputMapping     (inputMapping(0)),
+	'HEATING_CIRCUIT_2' : hcInputMapping     (inputMapping(1)),
+	'ROOM_DEVICE_1'     : roomInputMapping   (inputMapping(2)),
+	'ROOM_DEVICE_2'     : roomInputMapping   (inputMapping(3)),
+	'DHW'               : dhwInputMapping    (inputMapping(4)),
+	'BOILER'            : boilerInputMapping (inputMapping(5)),
+	'CASCADE_MANAGER'   : cascadeInputMapping(inputMapping(6)),
+	'OUTDOOR_SENSOR'    : oatInputMapping    (inputMapping(7)),
 }
 
 programOutputs = {
-	'HEATING_CIRCUIT_1' : hcOutputMapping(analogValve = outputMapping(0), pump = outputMapping(1)).get(),
-	'HEATING_CIRCUIT_2' : hcOutputMapping(analogValve = outputMapping(2), pump = outputMapping(3)).get(),
-	'ROOM_DEVICE_1'     : roomOutputMapping().get(),
-	'ROOM_DEVICE_2'     : roomOutputMapping().get(),
-	'DHW'               : dhwOutputMapping(outputMapping(4), outputMapping(5)).get(),
-	'BOILER'            : boilerOutputMapping(pump = outputMapping(6), burner1 = outputMapping(7)).get(),
-	'CASCADE_MANAGER'   : cascadeOutputMapping().get(),
-	'OUTDOOR_SENSOR'    : oatOutputMapping().get(),
+	'HEATING_CIRCUIT_1' : hcOutputMapping(analogValve = outputMapping(0), pump = outputMapping(1)),
+	'HEATING_CIRCUIT_2' : hcOutputMapping(analogValve = outputMapping(2), pump = outputMapping(3)),
+	'ROOM_DEVICE_1'     : roomOutputMapping(),
+	'ROOM_DEVICE_2'     : roomOutputMapping(),
+	'DHW'               : dhwOutputMapping(outputMapping(4), outputMapping(5)),
+	'BOILER'            : boilerOutputMapping(pump = outputMapping(6), burner1 = outputMapping(7)),
+	'CASCADE_MANAGER'   : cascadeOutputMapping(),
+	'OUTDOOR_SENSOR'    : oatOutputMapping(),
 }
 
 def getPresetsList() :
