@@ -39,24 +39,21 @@ class ProgramPreset(object):
 
 		if self._inputs:
 			i = 0
-			for mapping in self._inputs:
-				if mapping:
-					prg.bindInput(i, mapping)
+			for value in self._inputs:
+				if value:
+					prg.bindInput(i, value)
 				i = i + 1
 
 		if self._outputs:
 			i = 0
-			for mapping in self._outputs:
-				if mapping:
-					prg.bindOutput(i, mapping)
+			for value in self._outputs:
+				if value:
+					prg.bindOutput(i, value)
 				i = i + 1
 
-
-
-
-
-
-
+		if self._settings:
+			for value in self._settings.get():
+				value.write(self._id)
 
 
 def getPresetsList():
