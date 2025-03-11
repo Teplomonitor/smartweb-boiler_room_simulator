@@ -37,7 +37,7 @@ class Controller(object):
 		
 	def sendProgramAddRequest(self, programType, programId, programScheme):
 		print('Send program add request')
-		def generateRequest(programType, programId, programScheme):
+		def generateRequest():
 			request = smartnetMessage(
 			snc.ProgramType['CONTROLLER'],
 			self._controllerId,
@@ -46,13 +46,13 @@ class Controller(object):
 			[programType, programId, programScheme])
 			return request
 
-		def generateRequiredResponse(request):
+		def generateRequiredResponse():
 			response = copy(request)
 			response.setRequestFlag(snc.requestFlag['RESPONSE'])
 			response.setData([programType, programId])
 			return response
 
-		def handleResponse(response):
+		def handleResponse():
 			if response is None:
 				print('Program add timeout')
 				return False
@@ -72,12 +72,12 @@ class Controller(object):
 					return False
 
 
-		request        = generateRequest(programType, programId, programScheme)
-		responseFilter = generateRequiredResponse(request)
+		request        = generateRequest()
+		responseFilter = generateRequiredResponse()
 
 		response = request.send(responseFilter, 10)
 
-		return handleResponse(response)
+		return handleResponse()
 
 	def makeNewProgram(self, preset):
 		return preset.loadPreset(self)
@@ -95,21 +95,24 @@ class Controller(object):
 			snc.requestFlag['REQUEST'])
 			return request
 
-		def generateRequiredResponse(request):
+		def generateRequiredResponse():
 			response = copy(request)
 			response.setRequestFlag(snc.requestFlag['RESPONSE'])
 			return response
 
+		def handleResponse():
+			if response is None:
+				print('Program reset timeout')
+				return False
+			else:
+				return True
+
 		request        = generateRequest()
-		responseFilter = generateRequiredResponse(request)
+		responseFilter = generateRequiredResponse()
 
 		response = request.send(responseFilter, 10)
 
-		if response is None:
-			print('Program reset timeout')
-			return False
-		else:
-			return True
+		return handleResponse()
 
 
 	def run(self):
