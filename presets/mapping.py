@@ -226,6 +226,7 @@ class OatInputMapping(object):
 		return [
 			self._temperature   ,
 		]
+	def getOat(self): return self._temperature
 
 class OatOutputMapping(object):
 	def __init__(self):
