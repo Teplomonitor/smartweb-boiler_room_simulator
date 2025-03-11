@@ -100,7 +100,14 @@ class debug_thread(can.Listener):
 				msg.send(bus = self._canbus)
 				return
 
-			if programInputMappingFilter(msg) or programOutputMappingFilter(msg):
+#			if programInputMappingFilter(msg) or programOutputMappingFilter(msg):
+#				msg.setRequestFlag(snc.requestFlag['RESPONSE'])
+#				data = msg.getData()
+#				data.append(snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK'])
+#				msg.send(bus = self._canbus)
+#				return
+
+			if remoteControlRequest(msg):
 				msg.setRequestFlag(snc.requestFlag['RESPONSE'])
 				data = msg.getData()
 				data.append(snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK'])
