@@ -8,12 +8,14 @@ from controllers.presetMapping import DhwInputMapping  as dhwInputMapping
 from controllers.presetMapping import DhwOutputMapping as dhwOutputMapping
 from controllers.presetMapping import BoilerInputMapping  as boilerInputMapping
 from controllers.presetMapping import BoilerOutputMapping as boilerOutputMapping
-
 from controllers.presetMapping import CascadeInputMapping  as cascadeInputMapping
 from controllers.presetMapping import CascadeOutputMapping as cascadeOutputMapping
-
 from controllers.presetMapping import OatInputMapping  as oatInputMapping
 from controllers.presetMapping import OatOutputMapping as oatOutputMapping
+
+from controllers.presetSettings import HeatingCircuitSettings as hcSettings
+from controllers.presetSettings import DhwSettings as dhwSettings
+from controllers.presetSettings import CascadeSettings as cascadeSettings
 
 import smartnet.constants as snc
 import controllers.preset
@@ -77,13 +79,13 @@ programId = {
 }
 
 programSettings = {
-	'HEATING_CIRCUIT_1' : {},
-	'HEATING_CIRCUIT_2' : {},
-	'ROOM_DEVICE_1'     : {},
-	'ROOM_DEVICE_2'     : {},
-	'DHW'               : {},
+	'HEATING_CIRCUIT_1' : hcSettings(programId['CASCADE_MANAGER']),
+	'HEATING_CIRCUIT_2' : hcSettings(programId['CASCADE_MANAGER']),
+	'ROOM_DEVICE_1'     : None,
+	'ROOM_DEVICE_2'     : None,
+	'DHW'               : dhwSettings(programId['CASCADE_MANAGER']),
 	'BOILER'            : None,
-	'CASCADE_MANAGER'   : {},
+	'CASCADE_MANAGER'   : cascadeSettings(programId['BOILER']),
 	'OUTDOOR_SENSOR'    : None,
 }
 
