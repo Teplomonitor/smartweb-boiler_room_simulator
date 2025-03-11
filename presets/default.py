@@ -1,24 +1,25 @@
 
 from controllers.channelMapping import ChannelMapping as Mapping
-from controllers.presetMapping import HeatingCircuitInputMapping  as hcInputMapping
-from controllers.presetMapping import HeatingCircuitOutputMapping as hcOutputMapping
-from controllers.presetMapping import RoomInputMapping  as roomInputMapping
-from controllers.presetMapping import RoomOutputMapping as roomOutputMapping
-from controllers.presetMapping import DhwInputMapping  as dhwInputMapping
-from controllers.presetMapping import DhwOutputMapping as dhwOutputMapping
-from controllers.presetMapping import BoilerInputMapping  as boilerInputMapping
-from controllers.presetMapping import BoilerOutputMapping as boilerOutputMapping
-from controllers.presetMapping import CascadeInputMapping  as cascadeInputMapping
-from controllers.presetMapping import CascadeOutputMapping as cascadeOutputMapping
-from controllers.presetMapping import OatInputMapping  as oatInputMapping
-from controllers.presetMapping import OatOutputMapping as oatOutputMapping
 
-from controllers.presetSettings import HeatingCircuitSettings as hcSettings
-from controllers.presetSettings import DhwSettings as dhwSettings
-from controllers.presetSettings import CascadeSettings as cascadeSettings
+from presets.mapping import HeatingCircuitInputMapping  as hcInputMapping
+from presets.mapping import HeatingCircuitOutputMapping as hcOutputMapping
+from presets.mapping import RoomInputMapping            as roomInputMapping
+from presets.mapping import RoomOutputMapping           as roomOutputMapping
+from presets.mapping import DhwInputMapping             as dhwInputMapping
+from presets.mapping import DhwOutputMapping            as dhwOutputMapping
+from presets.mapping import BoilerInputMapping          as boilerInputMapping
+from presets.mapping import BoilerOutputMapping         as boilerOutputMapping
+from presets.mapping import CascadeInputMapping         as cascadeInputMapping
+from presets.mapping import CascadeOutputMapping        as cascadeOutputMapping
+from presets.mapping import OatInputMapping             as oatInputMapping
+from presets.mapping import OatOutputMapping            as oatOutputMapping
+
+from presets.settings import HeatingCircuitSettings as hcSettings
+from presets.settings import DhwSettings            as dhwSettings
+from presets.settings import CascadeSettings        as cascadeSettings
 
 import smartnet.constants as snc
-import controllers.preset
+import presets.preset
 
 def getHostId():
 	return 123
@@ -118,7 +119,7 @@ programOutputs = {
 def getPresetsList() :
 	presetList = []
 	for prg in programList:
-		presetList.append(controllers.preset.ProgramPreset(
+		presetList.append(presets.preset.ProgramPreset(
 			programType    [prg],
 			programScheme  [prg],
 			programId      [prg],

@@ -1,7 +1,7 @@
 
 
 import smartnet.constants as snc
-import controllers.defaultPreset
+import presets.default
 from programs.program import Program as Program
 
 class ProgramPreset(object):
@@ -57,4 +57,4 @@ class ProgramPreset(object):
 
 
 def getPresetsList():
-	return controllers.defaultPreset.getPresetsList()
+	return presets.default.getPresetsList()
