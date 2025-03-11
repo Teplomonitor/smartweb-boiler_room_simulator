@@ -51,7 +51,6 @@ class HeatingCircuitOutputMapping(object):
 			self._analogPump    ,
 		]
 
-
 class RoomInputMapping(object):
 	def __init__(self,
 			roomTemperature  = None,
@@ -110,6 +109,129 @@ class RoomOutputMapping(object):
 			self._ventilation,
 		]
 
+class DhwInputMapping(object):
+	def __init__(self,
+			temperature         = None,
+			flow                = None,
+			backwardTemperature = None,
+			):
+		self._temperature         = temperature        
+		self._flow                = flow               
+		self._backwardTemperature = backwardTemperature  
 
+	def get(self):
+		return [
+			self._temperature        ,
+			self._flow               ,
+			self._backwardTemperature,
+		]
+
+class DhwOutputMapping(object):
+	def __init__(self,
+			supplyPump       = None,
+			circPump         = None,
+			analogSupplyPump = None,
+			tptValveOpen     = None,
+			tptValveClose    = None,
+			):
+		self._supplyPump       = supplyPump          
+		self._circPump         = circPump            
+		self._analogSupplyPump = analogSupplyPump    
+		self._tptValveOpen     = tptValveOpen        
+		self._tptValveClose    = tptValveClose       
+
+	def get(self):
+		return [
+			self._supplyPump      ,
+			self._circPump        ,
+			self._analogSupplyPump,
+			self._tptValveOpen    ,
+			self._tptValveClose   ,
+		]
+
+class BoilerInputMapping(object):
+	def __init__(self,
+			temperature         = None,
+			backwardTemperature = None,
+			outsideRequest      = None,
+			error               = None,
+			):
+		self._temperature         = temperature        
+		self._backwardTemperature = backwardTemperature
+		self._outsideRequest      = outsideRequest     
+		self._error               = error              
+
+	def get(self):
+		return [
+			self._temperature        ,
+			self._backwardTemperature,
+			self._outsideRequest     ,
+			self._error              ,
+		]
+
+class BoilerOutputMapping(object):
+	def __init__(self,
+			pump                = None,
+			burner1             = None,
+			burner2             = None,
+			power               = None,
+			temperature         = None,
+			backwardTemperature = None,
+			):
+		self._pump                = pump               
+		self._burner1             = burner1            
+		self._burner2             = burner2            
+		self._power               = power              
+		self._temperature         = temperature        
+		self._backwardTemperature = backwardTemperature
+
+	def get(self):
+		return [
+			self._pump               ,
+			self._burner1            ,
+			self._burner2            ,
+			self._power              ,
+			self._temperature        ,
+			self._backwardTemperature,
+		]
+
+class CascadeInputMapping(object):
+	def __init__(self,
+			temperature         = None,
+			outsideRequest      = None,
+			):
+		self._temperature    = temperature   
+		self._outsideRequest = outsideRequest
+
+	def get(self):
+		return [
+			self._temperature   ,
+			self._outsideRequest,
+		]
+
+class CascadeOutputMapping(object):
+	def __init__(self):
+		pass
+
+	def get(self):
+		return []
+
+class OatInputMapping(object):
+	def __init__(self,
+			temperature = None,
+			):
+		self._temperature = temperature
+
+	def get(self):
+		return [
+			self._temperature   ,
+		]
+
+class OatOutputMapping(object):
+	def __init__(self):
+		pass
+
+	def get(self):
+		return []
 
 
