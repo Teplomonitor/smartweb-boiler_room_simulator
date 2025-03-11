@@ -27,6 +27,8 @@ from argparse import RawDescriptionHelpFormatter
 from smartnet.message import Message as smartnetMessage
 import smartnet.constants as snc
 from controllers.controller import Controller as Controller
+from simulator.simulator import Simulator as Simulator
+
 import debug
 
 
@@ -112,9 +114,9 @@ USAGE
 		
 		print('Controller %d found' %(controllerId))
 		controller = Controller(controllerId)
+		simulator  = Simulator(controller)
 
-		controller.run()
-
+		simulator.run()
 		return 0
 
 	except KeyboardInterrupt:
@@ -124,7 +126,7 @@ USAGE
 		return 0
 	except Exception as e:
 		smartnetMessage.exit()
-		
+
 		if DEBUG or TESTRUN:
 			raise(e)
 		indent = len(program_name) * " "
