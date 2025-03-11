@@ -3,8 +3,6 @@
 '''
 
 import time
-import can
-from threading import Event
 from copy import copy
 
 from smartnet.message import Message as smartnetMessage
