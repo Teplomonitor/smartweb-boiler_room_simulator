@@ -7,7 +7,7 @@ from copy import copy
 
 from smartnet.message import Message as smartnetMessage
 import smartnet.constants as snc
-import controllers.preset
+import presets.preset
 
 class Controller(object):
 	'''
@@ -81,7 +81,7 @@ class Controller(object):
 		return preset.loadPreset(self)
 
 	def getProgramsAddList(self):
-		return controllers.preset.getPresetsList()
+		return presets.preset.getPresetsList()
 
 	def resetConfig(self):
 		print('send Controller reset request')
