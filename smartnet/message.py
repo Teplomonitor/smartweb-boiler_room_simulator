@@ -130,8 +130,6 @@ class Message(object):
 
 				time.sleep(1)
 
-
-
 		if responseFilter:
 			return Message.recv(timeout, responseFilter, txbus)
 
@@ -158,7 +156,7 @@ class Message(object):
 					return None
 
 			if message:
-				print(f"rx: {message.arbitration_id:08X} - {' '.join(format(x, '02x') for x in message.data)}")
+#				print(f"rx: {message.arbitration_id:08X} - {' '.join(format(x, '02x') for x in message.data)}")
 
 				snmsg.parse(message)
 				if messageFilter:
