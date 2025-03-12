@@ -37,9 +37,9 @@ __version__ = 0.1
 __date__ = '2025-03-04'
 __updated__ = '2025-03-04'
 
-DEBUG = 1
-TESTRUN = 0
-PROFILE = 0
+DEBUG = 0
+
+
 
 class CLIError(Exception):
 	'''Generic exception to raise and log different fatal errors.'''
@@ -50,10 +50,6 @@ class CLIError(Exception):
 		return self.msg
 	def __unicode__(self):
 		return self.msg
-
-
-
-
 
 def messageIsImHere():
 	return smartnetMessage(
@@ -98,12 +94,18 @@ USAGE
 
 	try:
 		# Setup argument parser
-#		parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
+		parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
+		parser.add_argument('-d', '--debug', action='store_true')  # on/off flag
+		parser.add_argument('-p', '--preset',  action='store_true') # init controller with preset
 
 		# Process arguments
-#		args = parser.parse_args()
+		args = parser.parse_args()
 
-		dbgThread = debug.debug_thread()
+		run_simulator_debug         = args.debug
+		init_controller_with_preset = args.preset
+
+		if run_simulator_debug:
+			dbgThread = debug.debug_thread()
 
 		print('Searching controller')
 		controllerId = findOnlineController()
@@ -113,7 +115,7 @@ USAGE
 			return 1
 		
 		print('Controller %d found' %(controllerId))
-		controller = Controller(controllerId)
+		controller = Controller(controllerId, init_controller_with_preset)
 		simulator  = Simulator(controller)
 
 		simulator.run()
@@ -127,7 +129,7 @@ USAGE
 	except Exception as e:
 		smartnetMessage.exit()
 
-		if DEBUG or TESTRUN:
+		if DEBUG:
 			raise(e)
 		indent = len(program_name) * " "
 		sys.stderr.write(program_name + ": " + repr(e) + "\n")
@@ -136,21 +138,6 @@ USAGE
 
 if __name__ == "__main__":
 	if DEBUG:
-		sys.argv.append("-h")
-		sys.argv.append("-v")
-		sys.argv.append("-r")
-	if TESTRUN:
-		import doctest
-		doctest.testmod()
-	if PROFILE:
-		import cProfile
-		import pstats
-		profile_filename = '_profile.txt'
-		cProfile.run('main()', profile_filename)
-		statsfile = open("profile_stats.txt", "wb")
-		p = pstats.Stats(profile_filename, stream=statsfile)
-		stats = p.strip_dirs().sort_stats('cumulative')
-		stats.print_stats()
-		statsfile.close()
-		sys.exit(0)
+		sys.argv.append("-d")
+
 	sys.exit(main())
