@@ -115,7 +115,22 @@ class Message(object):
 		else:
 			txbus = Message._txbus
 
-		txbus.send(msg)
+		i = 0
+		while True:
+			try:
+				txbus.send(msg)
+				break
+			except can.CanError as e:
+				print(f"CAN error: {e}")
+				i = i + 1
+
+				if i >= 10:
+					print('fail to send')
+					return None
+
+				time.sleep(1)
+
+
 
 		if responseFilter:
 			return Message.recv(timeout, responseFilter, txbus)
