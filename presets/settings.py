@@ -125,8 +125,8 @@ class CascadeSettings(object):
 			if source:
 				result.append(
 					RemoteControlParameter(
-						snc.ProgramType['CONSUMER'], 
-						snc.ConsumerParameter['GENERATOR_ID'], 
+						snc.ProgramType['CASCADE_MANAGER'], 
+						snc.CascadeManagerParameter['PARAM_TEMPERATURE_SOURCE_ID'], 
 						source, i)
 				)
 			i = i + 1
