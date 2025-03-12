@@ -21,6 +21,7 @@ class HeatingCircuitInputMapping(object):
 			self._pumpControl        ,
 			self._backwardTemperature,
 		]
+	def getTemperature(self): return self._temperature
 
 class HeatingCircuitOutputMapping(object):
 	def __init__(self,
@@ -68,6 +69,7 @@ class RoomInputMapping(object):
 		self._humidity         = humidity              
 		self._co2              = co2                   
 		self._motion           = motion           
+	def getTemperature(self): return self._roomTemperature
 
 	def get(self):
 		return [
@@ -125,6 +127,7 @@ class DhwInputMapping(object):
 			self._flow               ,
 			self._backwardTemperature,
 		]
+	def getTemperature(self): return self._temperature
 
 class DhwOutputMapping(object):
 	def __init__(self,
@@ -168,6 +171,7 @@ class BoilerInputMapping(object):
 			self._outsideRequest     ,
 			self._error              ,
 		]
+	def getTemperature(self): return self._temperature
 
 class BoilerOutputMapping(object):
 	def __init__(self,
@@ -208,6 +212,7 @@ class CascadeInputMapping(object):
 			self._temperature   ,
 			self._outsideRequest,
 		]
+	def getTemperature(self): return self._temperature
 
 class CascadeOutputMapping(object):
 	def __init__(self):
@@ -226,7 +231,7 @@ class OatInputMapping(object):
 		return [
 			self._temperature   ,
 		]
-	def getOat(self): return self._temperature
+	def getTemperature(self): return self._temperature
 
 class OatOutputMapping(object):
 	def __init__(self):
