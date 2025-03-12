@@ -15,7 +15,7 @@ class Controller(object):
 	'''
 
 
-	def __init__(self, controllerId):
+	def __init__(self, controllerId, initPreset):
 		'''
 		Constructor
 		'''
@@ -24,13 +24,12 @@ class Controller(object):
 		self._state = 'STATE_IDLE'
 		self._programList = []
 
-		self.resetConfig()
-
-		presetList = self.getProgramsAddList()
-
-		for preset in presetList:
-			if self.makeNewProgram(preset) == False:
-				print('shit!')
+		if initPreset:
+			self.resetConfig()
+			presetList = self.getProgramsAddList()
+			for preset in presetList:
+				if self.makeNewProgram(preset) == False:
+					print('shit!')
 
 		
 	def sendProgramAddRequest(self, programType, programId, programScheme):
