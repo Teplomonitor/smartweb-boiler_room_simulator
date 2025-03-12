@@ -12,18 +12,24 @@ class Program(object):
 	classdocs
 	'''
 
-	def __init__(self, programType, programId, programScheme = snc.ProgramScheme['DEFAULT']):
+	def __init__(self, preset):
 		'''
 		Constructor
 		'''
 		
-		self._type    = programType
-		self._id      = programId
-		self._scheme  = programScheme
-		self._title   = None
-		self._inputs  = []
-		self._outputs = []
+		self._type    = preset.getType()
+		self._id      = preset.getId()
+		self._scheme  = preset.getScheme()
+		self._title   = preset.getTitle()
+		self._inputs  = [None] * 10
+		self._outputs = [0] * 10
 	
+	def getInput (self, i): return self._inputs [i]
+	def setInput (self, i, value): self._inputs [i] = value
+	
+	def getOutput(self, i): return self._outputs[i]
+	def setOutput(self, i, value): self._outputs[i] = value
+
 	def bindInput(self, id, mapping):
 		print(f'bind program input {id}')
 		def generateRequest():
