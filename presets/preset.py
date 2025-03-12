@@ -34,7 +34,7 @@ class ProgramPreset(object):
 			print('Program %s add fail'%(self._title))
 			return False
 
-		prg = Program(self._type, self._id, self._scheme)
+		prg = Program(self)
 		controller.addProgram(prg)
 
 		if self._inputs:
