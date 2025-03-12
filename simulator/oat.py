@@ -15,7 +15,7 @@ class Simulator(threading.Thread):
 		self._time_start    = time.time()
 		
 		inputs = self._preset.getInputs()
-		oatInput = inputs.getOat()
+		oatInput = inputs.getTemperature()
 		self._sensorMapping = oatInput
 
 	def getElapsedTime(self):
