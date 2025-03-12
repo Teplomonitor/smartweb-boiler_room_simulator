@@ -95,8 +95,8 @@ USAGE
 	try:
 		# Setup argument parser
 		parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
-		parser.add_argument('-d', '--debug', action='store_true')  # on/off flag
-		parser.add_argument('-p', '--preset',  action='store_true') # init controller with preset
+		parser.add_argument('-d', '--debug' , action='store_true', help='start debugger that will reply on simulator commands') 
+		parser.add_argument('-p', '--preset', action='store_true', help='enable erase all settings on controller and load the new one')
 
 		# Process arguments
 		args = parser.parse_args()
