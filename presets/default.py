@@ -17,6 +17,7 @@ from presets.mapping import OatOutputMapping            as oatOutputMapping
 from presets.settings import HeatingCircuitSettings as hcSettings
 from presets.settings import DhwSettings            as dhwSettings
 from presets.settings import CascadeSettings        as cascadeSettings
+from presets.settings import RoomSettings           as roomSettings
 
 import smartnet.constants as snc
 import presets.preset
@@ -82,8 +83,8 @@ programId = {
 programSettings = {
 	'HEATING_CIRCUIT_1' : hcSettings(programId['CASCADE_MANAGER']),
 	'HEATING_CIRCUIT_2' : hcSettings(programId['CASCADE_MANAGER']),
-	'ROOM_DEVICE_1'     : None,
-	'ROOM_DEVICE_2'     : None,
+	'ROOM_DEVICE_1'     : roomSettings(None                          , programId['HEATING_CIRCUIT_1']),
+	'ROOM_DEVICE_2'     : roomSettings(programId['HEATING_CIRCUIT_2'], programId['HEATING_CIRCUIT_1']),
 	'DHW'               : dhwSettings(programId['CASCADE_MANAGER']),
 	'BOILER'            : None,
 	'CASCADE_MANAGER'   : cascadeSettings(programId['BOILER']),

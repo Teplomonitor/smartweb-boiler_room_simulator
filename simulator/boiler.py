@@ -5,6 +5,10 @@ import time
 from smartnet.units import TEMPERATURE as TEMPERATURE
 from simulator.sensorReport import reportSensorValue as reportSensorValue
 
+BROADCAST_ID = 0
+
+def limit(lower_bound, value, upper_bound):
+	return max(min(value, upper_bound), lower_bound)
 
 class Simulator(threading.Thread):
 	def __init__(self, thread_name, thread_ID, program, canbus, control):
@@ -28,10 +32,13 @@ class Simulator(threading.Thread):
 		return time.time() - self._time_start
 
 	def getConsumersPower(self):
-		programList = self._control.getActiveProgramsList()
+		programList = self._control.getConsumerList()
 		consumerList = []
 		for program in programList:
-			pass
+			sourceList = program.getPreset().getSettings().getSource()
+			if ((self._program.getId() in sourceList) or
+				(BROADCAST_ID in sourceList) ):
+				consumerList.append(program)
 
 		return -5
 
@@ -50,6 +57,9 @@ class Simulator(threading.Thread):
 	def computeTemperature(self):
 		temp = self.getTemperature()
 		temp = temp + self.getTotalPower() * 0.1
+
+		temp = limit(-30, temp, 120)
+
 		return temp
 
 	def run(self):

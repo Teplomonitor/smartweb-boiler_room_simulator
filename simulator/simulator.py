@@ -48,10 +48,14 @@ class Simulator(can.Listener):
 
 		sourceTypesList = [
 			'BOILER',
-			'ROOM_DEVICE',
+			'CASCADE_MANAGER',
 		]
 
 		self._activeProgramsList = []
+		self._roomList       = []
+		self._consumersList  = []
+		self._generatorsList = []
+		self._oat = None
 
 		for program in self._programsList:
 			if program.getType() in simulatorType:
@@ -60,9 +64,6 @@ class Simulator(can.Listener):
 				thread.daemon = True
 				thread.start()
 
-		self._consumersList  = []
-		self._generatorsList = []
-		self._oat = None
 
 		for program in self._activeProgramsList:
 			if program.getType() in consumerTypesList:
@@ -77,9 +78,14 @@ class Simulator(can.Listener):
 				self._oat = program
 				continue
 
+			if program.getType() == 'ROOM_DEVICE':
+				self._roomList.append(program)
+				continue
+
 	def getActiveProgramsList(self): return self._activeProgramsList
 	def getConsumerList      (self): return self._consumersList
 	def getSourceList        (self): return self._generatorsList
+	def getRoomList          (self): return self._roomList
 	def getOat               (self): return self._oat
 
 	def on_message_received(self, message):
@@ -92,8 +98,6 @@ class Simulator(can.Listener):
 		if msg is None:
 			return
 			
-
-
 		def programOutputFilter():
 			headerOk = ((msg.getProgramType() == snc.ProgramType['REMOTE_CONTROL']) and
 					(msg.getFunctionId () == snc.ControllerFunction['GET_PARAMETER_VALUE']) and

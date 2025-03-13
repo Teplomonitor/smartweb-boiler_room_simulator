@@ -66,7 +66,6 @@ class RemoteControlParameter(object):
 		return handleResponse()
 
 
-
 class HeatingCircuitSettings(object):
 	def __init__(self,
 			source         = None,
@@ -80,6 +79,8 @@ class HeatingCircuitSettings(object):
 				snc.ConsumerParameter['GENERATOR_ID'], 
 				self._source),
 		]
+	def getSource(self):
+		return [self._source]
 
 class DhwSettings(object):
 	def __init__(self,
@@ -94,6 +95,8 @@ class DhwSettings(object):
 				snc.ConsumerParameter['GENERATOR_ID'], 
 				self._source),
 		]
+	def getSource(self):
+		return [self._source]
 
 class CascadeSettings(object):
 	def __init__(self,
@@ -132,3 +135,38 @@ class CascadeSettings(object):
 			i = i + 1
 
 		return result
+
+	def getSource(self):
+		return self._sourceList
+
+
+class RoomSettings(object):
+	def __init__(self,
+			source_1 = None,
+			source_2 = None,
+			source_3 = None,
+			):
+
+		self._sourceList = [
+			source_1,
+			source_2,
+			source_3,
+			]
+
+	def get(self):
+		result = []
+		i = 0
+		for source in self._sourceList:
+			if source:
+				result.append(
+					RemoteControlParameter(
+						snc.ProgramType['ROOM_DEVICE'], 
+						snc.RoomDeviceParameter['RESPONSIBLE_CIRCUIT_1'] + i, 
+						source)
+				)
+			i = i + 1
+
+		return result
+		
+	def getSource(self):
+		return self._sourceList
