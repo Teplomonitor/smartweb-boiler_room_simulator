@@ -7,6 +7,25 @@ from copy import copy
 import smartnet.constants as snc
 from smartnet.message import Message as smartnetMessage
 
+class Channel(object):
+	'''
+	classdocs
+	'''
+
+	def __init__(self, mapping = None, value = None):
+		'''
+		Constructor
+		'''
+		self._mapping = mapping
+		self._value   = value
+
+	def getMapping(self): return self._mapping
+	def getValue  (self): return self._value
+
+	def setMapping(self, mapping): self._mapping = mapping
+	def setValue  (self, value  ): self._value   = value
+
+
 class Program(object):
 	'''
 	classdocs
@@ -21,14 +40,26 @@ class Program(object):
 		self._id      = preset.getId()
 		self._scheme  = preset.getScheme()
 		self._title   = preset.getTitle()
-		self._inputs  = [None] * 10
-		self._outputs = [0] * 10
+		self._preset  = preset
+
+		inputMappings  = preset.getInputs ().get()
+		outputMappings = preset.getOutputs().get()
+
+		self._inputs  = [Channel(mapping, None) for mapping in inputMappings ]
+		self._outputs = [Channel(mapping, None) for mapping in outputMappings]
 	
+	def getInputs(self   ): return self._inputs
 	def getInput (self, i): return self._inputs [i]
 	def setInput (self, i, value): self._inputs [i] = value
-	
+
 	def getOutput(self, i): return self._outputs[i]
 	def setOutput(self, i, value): self._outputs[i] = value
+
+	def getType     (self): return self._type
+	def getScheme   (self): return self._scheme
+	def getId       (self): return self._id
+	def getTitle    (self): return self._title
+	def getPreset   (self): return self._preset
 
 	def bindInput(self, id, mapping):
 		print(f'bind program input {id}')
@@ -69,8 +100,6 @@ class Program(object):
 
 		return handleResponse()
 
-
-		pass
 	
 
 	def bindOutput(self, id, mapping):

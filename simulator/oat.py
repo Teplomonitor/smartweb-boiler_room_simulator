@@ -2,27 +2,18 @@
 import threading
 import math
 import time
-from smartnet.units import TEMPERATURE as TEMPERATURE
 from simulator.sensorReport import reportSensorValue as reportSensorValue
 
 class Simulator(threading.Thread):
-	def __init__(self, thread_name, thread_ID, preset, canbus):
+	def __init__(self, thread_name, thread_ID, program, canbus, control):
 		threading.Thread.__init__(self)
 		self.thread_name = thread_name
 		self.thread_ID   = thread_ID
-		self._preset     = preset
-		self._canbus        = canbus
-		self._time_start    = time.time()
-		
-		inputs = self._preset.getInputs()
-		oatInput = inputs.getTemperature()
-		self._sensorMapping = oatInput
+		self._program    = program
+		self._time_start = time.time()
 
 	def getElapsedTime(self):
 		return time.time() - self._time_start
-
-	def reportOat(self, value):
-		reportSensorValue(self._sensorMapping, value, self._canbus)
 
 	def computeOat(self):
 		pi = 3.14
@@ -32,5 +23,5 @@ class Simulator(threading.Thread):
 
 	def run(self):
 		while True:
-			self.reportOat(TEMPERATURE(self.computeOat()))
+			self._program.getInput(0).setValue(self.computeOat())
 			time.sleep(5)

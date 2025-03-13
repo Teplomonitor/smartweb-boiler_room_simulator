@@ -4,8 +4,8 @@ import time
 
 import smartnet.constants as snc
 from smartnet.message import createBus as createBus
-from controllers.channelMapping import ChannelMapping as Mapping
 from smartnet.message import Message as smartnetMessage
+from simulator.sensorReport import reportSensorValue as reportSensorValue
 
 import simulator.oat
 import simulator.boiler
@@ -13,6 +13,8 @@ import simulator.cascade
 import simulator.heating_circuit
 import simulator.room
 import simulator.dhw
+
+
 
 class Simulator(can.Listener):
 	'''
@@ -28,30 +30,69 @@ class Simulator(can.Listener):
 		self._canbus   = createBus()
 		self._notifier = can.Notifier(self._canbus, [self])
 
-		self._programsList = self._controller.getProgramsAddList()
+		self._programsList = self._controller.getProgramList()
 
 		simulatorType = {
-			snc.ProgramType['OUTDOOR_SENSOR' ] : simulator.oat            .Simulator,
-			snc.ProgramType['BOILER'         ] : simulator.boiler         .Simulator,
-			snc.ProgramType['CASCADE_MANAGER'] : simulator.cascade        .Simulator,
-			snc.ProgramType['ROOM_DEVICE'    ] : simulator.room           .Simulator,
-			snc.ProgramType['HEATING_CIRCUIT'] : simulator.heating_circuit.Simulator,
-
+			'OUTDOOR_SENSOR'  : simulator.oat            .Simulator,
+			'BOILER'          : simulator.boiler         .Simulator,
+			'CASCADE_MANAGER' : simulator.cascade        .Simulator,
+			'ROOM_DEVICE'     : simulator.room           .Simulator,
+			'HEATING_CIRCUIT' : simulator.heating_circuit.Simulator,
+			'DHW'             : simulator.dhw            .Simulator,
 		}
+
+		consumerTypesList = [
+			'HEATING_CIRCUIT', 
+			'DHW',
+		]
+
+		sourceTypesList = [
+			'BOILER',
+			'ROOM_DEVICE',
+		]
+
+		self._activeProgramsList = []
 
 		for program in self._programsList:
 			if program.getType() in simulatorType:
-				thread = simulatorType[program.getType()](f'{program.getTitle()} {program.getId()}', program.getId(), program, self._canbus)
+				self._activeProgramsList.append(program)
+				thread = simulatorType[program.getType()](f'{program.getTitle()} {program.getId()}', program.getId(), program, self._canbus, self)
 				thread.daemon = True
 				thread.start()
+
+		self._consumersList  = []
+		self._generatorsList = []
+		self._oat = None
+
+		for program in self._activeProgramsList:
+			if program.getType() in consumerTypesList:
+				self._consumersList.append(program)
+				continue
+
+			if program.getType() in sourceTypesList:
+				self._generatorsList.append(program)
+				continue
+
+			if program.getType() == 'OUTDOOR_SENSOR':
+				self._oat = program
+				continue
+
+	def getActiveProgramsList(self): return self._activeProgramsList
+	def getConsumerList      (self): return self._consumersList
+	def getSourceList        (self): return self._generatorsList
+	def getOat               (self): return self._oat
 
 	def on_message_received(self, message):
 		if message is None:
 			return
 
 		msg = smartnetMessage()
-
 		msg.parse(message)
+
+		if msg is None:
+			return
+			
+
 
 		def programOutputFilter():
 			headerOk = ((msg.getProgramType() == snc.ProgramType['REMOTE_CONTROL']) and
@@ -75,8 +116,13 @@ class Simulator(can.Listener):
 					program.setOutput(outputId, outputValue)
 					break
 
-
-
 	def run(self):
 		while True:
-			time.sleep(5)
+			for program in self._programsList:
+				for programInput in program.getInputs():
+					if reportSensorValue(programInput):
+						time.sleep(0.1)
+
+			time.sleep(1)
+
+
