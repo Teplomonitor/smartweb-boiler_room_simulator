@@ -49,7 +49,7 @@ programType = {
 
 programScheme = {
 	'HEATING_CIRCUIT_1' : 'CIRCUIT_MIXED' ,
-	'HEATING_CIRCUIT_2' : 'CIRCUIT_DIRECT',
+	'HEATING_CIRCUIT_2' : 'CIRCUIT_MIXED',
 	'ROOM_DEVICE_1'     : 'DEFAULT'       ,
 	'ROOM_DEVICE_2'     : 'DEFAULT'       ,
 	'DHW'               : 'DEFAULT'       ,
