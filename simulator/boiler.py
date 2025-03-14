@@ -40,7 +40,7 @@ class Simulator(object):
 		return self._program.getInput(self._inputId['temperature']).getValue()
 
 	def setTemperature(self, value):
-		print(f'boiler: {value}')
+#		print(f'boiler: {value}')
 		self._program.getInput(self._inputId['temperature']).setValue(value)
 
 	def getElapsedTime(self):
@@ -109,4 +109,4 @@ class Simulator(object):
 	def run(self):
 		if self.temperatureInputIsMapped():
 			self.setTemperature(self.computeTemperature())
-			
+

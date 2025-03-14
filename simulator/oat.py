@@ -23,7 +23,7 @@ class Simulator(object):
 		return self._program.getInput(self._inputId['temperature']).getValue()
 
 	def setTemperature(self, value):
-		print(f'oat: {value}')
+#		print(f'oat: {value}')
 		self._program.getInput(self._inputId['temperature']).setValue(value)
 
 	def computeTemperature(self):

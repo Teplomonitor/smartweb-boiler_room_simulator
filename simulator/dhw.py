@@ -40,7 +40,7 @@ class Simulator(object):
 		return self._program.getInput(self._inputId['temperature']).getValue()
 
 	def setTemperature(self, value):
-		print(f'dhw: {value}')
+#		print(f'dhw: {value}')
 		self._program.getInput(self._inputId['temperature']).setValue(value)
 
 	def getElapsedTime(self):
