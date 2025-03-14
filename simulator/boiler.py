@@ -110,6 +110,6 @@ class Simulator(threading.Thread):
 
 	def run(self):
 		while True:
-			if (self.temperatureInputIsMapped())
+			if self.temperatureInputIsMapped():
 				self.setTemperature(self.computeTemperature())
 				time.sleep(1)
