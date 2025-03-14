@@ -98,4 +98,4 @@ class Simulator(threading.Thread):
 	def run(self):
 		while True:
 			self.setTemperature(self.computeTemperature())
-			time.sleep(2)
+			time.sleep(1)
