@@ -21,14 +21,30 @@ class Simulator(threading.Thread):
 		self._time_start    = time.time()
 		self._control    = control
 		
+		self._inputId = {
+			'temperature'         : 0,
+			'backwardTemperature' : 1,
+			'outsideRequest'      : 2,
+			'error'               : 3,
+		}
+
+		self._outputId = {
+			'pump'                : 0,
+			'burner1'             : 1,
+			'burner2'             : 2,
+			'power'               : 3,
+			'temperature'         : 4,
+			'backwardTemperature' : 5,
+		}
+
 		self.setTemperature(30)
 
 	def getTemperature(self):
-		return self._program.getInput(0).getValue()
+		return self._program.getInput(self._inputId['temperature']).getValue()
 
 	def setTemperature(self, value):
 		print(f'boiler: {value}')
-		self._program.getInput(0).setValue(value)
+		self._program.getInput(self._inputId['temperature']).setValue(value)
 
 	def getElapsedTime(self):
 		return time.time() - self._time_start
@@ -37,7 +53,7 @@ class Simulator(threading.Thread):
 		programList = self._control.getConsumerList()
 		consumerList = []
 		for program in programList:
-			sourceList = program._program.getPreset().getSettings().getSource()
+			sourceList = program._program.getPreset().getSettings().getSourceList()
 			if ((self._program.getId() in sourceList) or
 				(BROADCAST_ID in sourceList) ):
 				consumerList.append(program)
@@ -49,7 +65,14 @@ class Simulator(threading.Thread):
 		return consumerPower
 
 	def getStageState(self):
-		return 1
+		stage = self._program.getOutput(self._outputId['burner1'])
+		if stage.getMapping() is None:
+			return 1
+
+		if stage.getValue():
+			return 1
+
+		return 0
 
 	def getMaxPower(self):
 		return self._preset.getPower()
