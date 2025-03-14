@@ -101,7 +101,7 @@ programInputs = {
 	'ROOM_DEVICE_1'     : roomInputMapping   (inputMapping(2)),
 	'ROOM_DEVICE_2'     : roomInputMapping   (inputMapping(3)),
 	'DHW'               : dhwInputMapping    (inputMapping(4)),
-	'BOILER'            : boilerInputMapping (inputMapping(5)),
+	'BOILER'            : boilerInputMapping (),
 	'CASCADE_MANAGER'   : cascadeInputMapping(inputMapping(6)),
 	'OUTDOOR_SENSOR'    : oatInputMapping    (inputMapping(7)),
 }
@@ -123,7 +123,7 @@ programPower = {
 	'ROOM_DEVICE_1'     : -1,
 	'ROOM_DEVICE_2'     : -2,
 	'DHW'               : -4,
-	'BOILER'            : 20,
+	'BOILER'            : 10,
 	'CASCADE_MANAGER'   : 0,
 	'OUTDOOR_SENSOR'    : None,
 }
