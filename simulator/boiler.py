@@ -4,6 +4,7 @@ import math
 import time
 from smartnet.units import TEMPERATURE as TEMPERATURE
 from simulator.sensorReport import reportSensorValue as reportSensorValue
+from enum import Enum
 
 BROADCAST_ID = 0
 
@@ -26,6 +27,7 @@ class Simulator(threading.Thread):
 		return self._program.getInput(0).getValue()
 
 	def setTemperature(self, value):
+		print(f'boiler: {value}')
 		self._program.getInput(0).setValue(value)
 
 	def getElapsedTime(self):
@@ -35,24 +37,34 @@ class Simulator(threading.Thread):
 		programList = self._control.getConsumerList()
 		consumerList = []
 		for program in programList:
-			sourceList = program.getPreset().getSettings().getSource()
+			sourceList = program._program.getPreset().getSettings().getSource()
 			if ((self._program.getId() in sourceList) or
 				(BROADCAST_ID in sourceList) ):
 				consumerList.append(program)
 
-		return -5
+		consumerPower = 0
+		for consumer in consumerList:
+			consumerPower = consumerPower + consumer.getPower()
+
+		return consumerPower
 
 	def getStageState(self):
 		return 1
 
+	def getMaxPower(self):
+		return self._preset.getPower()
+
 	def getPower(self):
 		if self.getStageState():
-			return self._preset.getPower()
+			return self.getMaxPower()
 		else:
 			return 0
 
+	def getCoolDownPower(self):
+		return -1
+
 	def getTotalPower(self):
-		return self.getPower() + self.getConsumersPower()
+		return self.getPower() + self.getConsumersPower() + self.getCoolDownPower()
 
 	def computeTemperature(self):
 		temp = self.getTemperature()
