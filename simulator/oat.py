@@ -16,6 +16,8 @@ class Simulator(threading.Thread):
 			'temperature': 0,
 		}
 
+		self.setTemperature(-10)
+
 	def getElapsedTime(self):
 		return time.time() - self._time_start
 
@@ -33,7 +35,7 @@ class Simulator(threading.Thread):
 		oat = math.cos(self.getElapsedTime()/1000.0 + pi/2)
 
 		temp = temp + oat
-		
+
 		return temp
 
 	def run(self):
