@@ -34,7 +34,7 @@ class Simulator(threading.Thread):
 		pi = 3.14
 		oat = math.cos(self.getElapsedTime()/1000.0 + pi/2)
 
-		temp = temp + oat
+		temp = temp + oat * 0.1
 
 		return temp
 
