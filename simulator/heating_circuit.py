@@ -42,6 +42,9 @@ class Simulator(threading.Thread):
 
 	def getOat(self):
 		oat = self._control.getOat()
+		if oat is None:
+			oat = 0
+			
 		return oat.getTemperature()
 
 	def getTemperature(self):
