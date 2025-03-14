@@ -79,8 +79,8 @@ class HeatingCircuitSettings(object):
 				snc.ConsumerParameter['GENERATOR_ID'], 
 				self._source),
 		]
-	def getSource(self):
-		return [self._source]
+	def getSource    (self): return  self._source
+	def getSourceList(self): return [self._source]
 
 class DhwSettings(object):
 	def __init__(self,
@@ -95,8 +95,8 @@ class DhwSettings(object):
 				snc.ConsumerParameter['GENERATOR_ID'], 
 				self._source),
 		]
-	def getSource(self):
-		return [self._source]
+	def getSource    (self): return  self._source
+	def getSourceList(self): return [self._source]
 
 class CascadeSettings(object):
 	def __init__(self,
@@ -136,7 +136,7 @@ class CascadeSettings(object):
 
 		return result
 
-	def getSource(self):
+	def getSourceList(self):
 		return self._sourceList
 
 
@@ -168,5 +168,5 @@ class RoomSettings(object):
 
 		return result
 		
-	def getSource(self):
+	def getSourceList(self):
 		return self._sourceList
