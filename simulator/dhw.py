@@ -4,6 +4,7 @@ import math
 import time
 from smartnet.units import TEMPERATURE as TEMPERATURE
 from simulator.sensorReport import reportSensorValue as reportSensorValue
+from functions.periodPulse import PeriodPulse as PeriodPulse
 
 def limit(lower_bound, value, upper_bound):
 	return max(min(value, upper_bound), lower_bound)
@@ -18,6 +19,7 @@ class Simulator(threading.Thread):
 		self._canbus        = canbus
 		self._time_start    = time.time()
 		self._control    = control
+		self._washTime   = PeriodPulse()
 		
 		self._inputId = {
 			'temperature'         : 0,
@@ -84,6 +86,9 @@ class Simulator(threading.Thread):
 		return dT * 0.01 * self.getPumpState()
 
 	def getCooling(self):
+		if self._washTime.Get(1*60, 10*60):
+			return -0.1
+
 		return -0.01 # should depend on shower time and so on
 
 	def computeTemperature(self):
