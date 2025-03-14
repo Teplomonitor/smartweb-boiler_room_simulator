@@ -104,7 +104,7 @@ class Simulator(threading.Thread):
 		pump  = self.getPumpState()
 
 		dT = sourceTemp - temp
-		return dT * valve * pump * 0.1
+		return dT * valve * pump 
 
 	def getCooling(self):
 		temp = self.getTemperature()
