@@ -6,6 +6,7 @@ import smartnet.constants as snc
 from smartnet.message import createBus as createBus
 from smartnet.message import Message as smartnetMessage
 from simulator.sensorReport import reportSensorValue as reportSensorValue
+from simulator.outputRead import outputRead as outputRead
 
 import simulator.oat
 import simulator.boiler
@@ -58,6 +59,14 @@ class Simulator(can.Listener):
 		self._oat = None
 
 		for program in self._programsList:
+			i = 0
+			for output in program.getOutputs():
+				if output.getMapping():
+					outputRead(program.getId(), i)
+					time.sleep(0.1)
+				i = i + 1
+
+		for program in self._programsList:
 			if program.getType() in simulatorType:
 				sim = simulatorType[program.getType()](
 					f'{program.getTitle()} {program.getId()}',
@@ -65,7 +74,6 @@ class Simulator(can.Listener):
 				self._simList.append(sim)
 				sim.daemon = True
 				sim.start()
-
 
 		for sim in self._simList:
 			program = sim._program
