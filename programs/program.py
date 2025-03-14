@@ -52,8 +52,9 @@ class Program(object):
 	def getInput (self, i): return self._inputs [i]
 	def setInput (self, i, value): self._inputs [i] = value
 
-	def getOutput(self, i): return self._outputs[i]
-	def setOutput(self, i, value): self._outputs[i] = value
+	def getOutputs(self   ): return self._outputs
+	def getOutput (self, i): return self._outputs[i]
+	def setOutput (self, i, value): self._outputs[i] = value
 
 	def getType     (self): return self._type
 	def getScheme   (self): return self._scheme
