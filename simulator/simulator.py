@@ -69,6 +69,7 @@ class Simulator(can.Listener):
 
 		for sim in self._simList:
 			program = sim._program
+
 			if program.getType() in consumerTypesList:
 				self._consumersList.append(sim)
 				continue
@@ -84,6 +85,8 @@ class Simulator(can.Listener):
 			if program.getType() == 'ROOM_DEVICE':
 				self._roomList.append(sim)
 				continue
+
+
 
 	def getConsumerList      (self): return self._consumersList
 	def getSourceList        (self): return self._generatorsList
@@ -102,8 +105,8 @@ class Simulator(can.Listener):
 			
 		def programOutputFilter():
 			headerOk = ((msg.getProgramType() == snc.ProgramType['REMOTE_CONTROL']) and
-					(msg.getFunctionId () == snc.ControllerFunction['GET_PARAMETER_VALUE']) and
-					(msg.getRequestFlag() == snc.requestFlag['MSG_RESPONSE']))
+					(msg.getFunctionId () == snc.RemoteControlFunction['GET_PARAMETER_VALUE']) and
+					(msg.getRequestFlag() == snc.requestFlag['RESPONSE']))
 
 			if headerOk:
 				data = msg.getData()
@@ -114,12 +117,13 @@ class Simulator(can.Listener):
 
 		if programOutputFilter():
 			programId   = msg.getProgramId()
+			data        = msg.getData()
 			outputId    = data[2]
 			outputValue = data[3]
 
 			for program in self._programsList:
 				if program.getId() == programId:
-					program.setOutput(outputId, outputValue)
+					program.getOutput(outputId).setValue(outputValue)
 					break
 
 	def run(self):
