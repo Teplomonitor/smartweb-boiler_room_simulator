@@ -83,7 +83,7 @@ class Simulator(threading.Thread):
 		temp  = self.getTemperature()
 
 		dT = sourceTemp - temp
-		return dT * 0.01 * self.getPumpState()
+		return dT * 0.001 * self.getPumpState()
 
 	def getCooling(self):
 		if self._washTime.Get(1*60, 10*60):
