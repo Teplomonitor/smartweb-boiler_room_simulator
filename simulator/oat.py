@@ -12,16 +12,31 @@ class Simulator(threading.Thread):
 		self._program    = program
 		self._time_start = time.time()
 
+		self._inputId = {
+			'temperature': 0,
+		}
+
 	def getElapsedTime(self):
 		return time.time() - self._time_start
 
-	def computeOat(self):
+	def getTemperature(self):
+		return self._program.getInput(self._inputId['temperature']).getValue()
+
+	def setTemperature(self, value):
+		print(f'oat: {value}')
+		self._program.getInput(self._inputId['temperature']).setValue(value)
+
+	def computeTemperature(self):
+		temp  = self.getTemperature()
+
 		pi = 3.14
-		oat = math.cos(self.getElapsedTime()/1000.0 + pi/2) * 20
-		print(f'oat = {oat}')
-		return oat
+		oat = math.cos(self.getElapsedTime()/1000.0 + pi/2)
+
+		temp = temp + oat
+		
+		return temp
 
 	def run(self):
 		while True:
-			self._program.getInput(0).setValue(self.computeOat())
+			self.setTemperature(self.computeTemperature())
 			time.sleep(5)
