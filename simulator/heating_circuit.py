@@ -40,6 +40,9 @@ class Simulator(threading.Thread):
 
 		self.setTemperature(20)
 
+	def getOat(self):
+		oat = self._control.getOat()
+		return oat.getTemperature()
 
 	def getTemperature(self):
 		return self._program.getInput(self._inputId['temperature']).getValue()
@@ -101,7 +104,11 @@ class Simulator(threading.Thread):
 		return dT * valve * pump * 0.1
 
 	def getCooling(self):
-		return self.getMaxPower() * self.getPumpState() * 0.5 - 0.1 # should depend on weather and room temp
+		temp = self.getTemperature()
+		oat  = self.getOat()
+		dT = temp - oat
+
+		return self.getMaxPower() * dT * 0.05 # should depend on weather and room temp
 
 	def computeTemperature(self):
 		temp  = self.getTemperature()
