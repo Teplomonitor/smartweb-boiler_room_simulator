@@ -51,7 +51,7 @@ class Simulator(can.Listener):
 			'CASCADE_MANAGER',
 		]
 
-		self._activeProgramsList = []
+		self._simList        = []
 		self._roomList       = []
 		self._consumersList  = []
 		self._generatorsList = []
@@ -59,30 +59,32 @@ class Simulator(can.Listener):
 
 		for program in self._programsList:
 			if program.getType() in simulatorType:
-				self._activeProgramsList.append(program)
-				thread = simulatorType[program.getType()](f'{program.getTitle()} {program.getId()}', program.getId(), program, self._canbus, self)
-				thread.daemon = True
-				thread.start()
+				sim = simulatorType[program.getType()](
+					f'{program.getTitle()} {program.getId()}',
+					 program.getId(), program, self._canbus, self)
+				self._simList.append(sim)
+				sim.daemon = True
+				sim.start()
 
 
-		for program in self._activeProgramsList:
+		for sim in self._simList:
+			program = sim._program
 			if program.getType() in consumerTypesList:
-				self._consumersList.append(program)
+				self._consumersList.append(sim)
 				continue
 
 			if program.getType() in sourceTypesList:
-				self._generatorsList.append(program)
+				self._generatorsList.append(sim)
 				continue
 
 			if program.getType() == 'OUTDOOR_SENSOR':
-				self._oat = program
+				self._oat = sim
 				continue
 
 			if program.getType() == 'ROOM_DEVICE':
-				self._roomList.append(program)
+				self._roomList.append(sim)
 				continue
 
-	def getActiveProgramsList(self): return self._activeProgramsList
 	def getConsumerList      (self): return self._consumersList
 	def getSourceList        (self): return self._generatorsList
 	def getRoomList          (self): return self._roomList
