@@ -123,8 +123,8 @@ programPower = {
 	'ROOM_DEVICE_1'     : -1,
 	'ROOM_DEVICE_2'     : -2,
 	'DHW'               : -4,
-	'BOILER'            : 10,
-	'CASCADE_MANAGER'   : 0,
+	'BOILER'            : 11,
+	'CASCADE_MANAGER'   :  0,
 	'OUTDOOR_SENSOR'    : None,
 }
 
