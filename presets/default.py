@@ -31,7 +31,8 @@ programList = [
 	'ROOM_DEVICE_1'    ,
 	'ROOM_DEVICE_2'    ,
 	'DHW'              ,
-	'BOILER'           ,
+	'BOILER_1'         ,
+	'BOILER_2'         ,
 	'CASCADE_MANAGER'  ,
 	'OUTDOOR_SENSOR'   ,
 ]
@@ -42,7 +43,8 @@ programType = {
 	'ROOM_DEVICE_1'     : 'ROOM_DEVICE'    ,
 	'ROOM_DEVICE_2'     : 'ROOM_DEVICE'    ,
 	'DHW'               : 'DHW'            ,
-	'BOILER'            : 'BOILER'         ,
+	'BOILER_1'          : 'BOILER'         ,
+	'BOILER_2'          : 'BOILER'         ,
 	'CASCADE_MANAGER'   : 'CASCADE_MANAGER',
 	'OUTDOOR_SENSOR'    : 'OUTDOOR_SENSOR' ,
 }
@@ -53,7 +55,8 @@ programScheme = {
 	'ROOM_DEVICE_1'     : 'DEFAULT'       ,
 	'ROOM_DEVICE_2'     : 'DEFAULT'       ,
 	'DHW'               : 'DEFAULT'       ,
-	'BOILER'            : 'DEFAULT'       ,
+	'BOILER_1'          : 'DEFAULT'       ,
+	'BOILER_2'          : 'DEFAULT'       ,
 	'CASCADE_MANAGER'   : 'DEFAULT'       ,
 	'OUTDOOR_SENSOR'    : 'DEFAULT'       ,
 }
@@ -64,7 +67,8 @@ programTitle = {
 	'ROOM_DEVICE_1'     :'Room1'   ,
 	'ROOM_DEVICE_2'     :'Room2'   ,
 	'DHW'               :'DHW'     ,
-	'BOILER'            :'Boiler1' ,
+	'BOILER_1'          :'Boiler1' ,
+	'BOILER_2'          :'Boiler2' ,
 	'CASCADE_MANAGER'   :'Cascade' ,
 	'OUTDOOR_SENSOR'    :'OAT'     ,
 }
@@ -75,9 +79,10 @@ programId = {
 	'ROOM_DEVICE_1'     : 103,
 	'ROOM_DEVICE_2'     : 104,
 	'DHW'               : 105,
-	'BOILER'            : 106,
-	'CASCADE_MANAGER'   : 107,
-	'OUTDOOR_SENSOR'    : 108,
+	'BOILER_1'          : 106,
+	'BOILER_2'          : 107,
+	'CASCADE_MANAGER'   : 108,
+	'OUTDOOR_SENSOR'    : 109,
 }
 
 programSettings = {
@@ -86,8 +91,9 @@ programSettings = {
 	'ROOM_DEVICE_1'     : roomSettings(None                          , programId['HEATING_CIRCUIT_1']),
 	'ROOM_DEVICE_2'     : roomSettings(programId['HEATING_CIRCUIT_2'], programId['HEATING_CIRCUIT_1']),
 	'DHW'               : dhwSettings(programId['CASCADE_MANAGER']),
-	'BOILER'            : None,
-	'CASCADE_MANAGER'   : cascadeSettings(programId['BOILER']),
+	'BOILER_1'          : None,
+	'BOILER_2'          : None,
+	'CASCADE_MANAGER'   : cascadeSettings(programId['BOILER_1'], programId['BOILER_2']),
 	'OUTDOOR_SENSOR'    : None,
 }
 
@@ -101,7 +107,8 @@ programInputs = {
 	'ROOM_DEVICE_1'     : roomInputMapping   (inputMapping(2)),
 	'ROOM_DEVICE_2'     : roomInputMapping   (inputMapping(3)),
 	'DHW'               : dhwInputMapping    (inputMapping(4)),
-	'BOILER'            : boilerInputMapping (),
+	'BOILER_1'          : boilerInputMapping (),
+	'BOILER_2'          : boilerInputMapping (),
 	'CASCADE_MANAGER'   : cascadeInputMapping(inputMapping(6)),
 	'OUTDOOR_SENSOR'    : oatInputMapping    (inputMapping(7)),
 }
@@ -112,7 +119,8 @@ programOutputs = {
 	'ROOM_DEVICE_1'     : roomOutputMapping(),
 	'ROOM_DEVICE_2'     : roomOutputMapping(),
 	'DHW'               : dhwOutputMapping(outputMapping(4), outputMapping(5)),
-	'BOILER'            : boilerOutputMapping(pump = outputMapping(6), burner1 = outputMapping(7)),
+	'BOILER_1'          : boilerOutputMapping(pump = outputMapping(6), burner1 = outputMapping(7)),
+	'BOILER_2'          : boilerOutputMapping(pump = outputMapping(8), burner1 = outputMapping(9)),
 	'CASCADE_MANAGER'   : cascadeOutputMapping(),
 	'OUTDOOR_SENSOR'    : oatOutputMapping(),
 }
@@ -123,7 +131,8 @@ programPower = {
 	'ROOM_DEVICE_1'     : -1,
 	'ROOM_DEVICE_2'     : -2,
 	'DHW'               : -4,
-	'BOILER'            : 11,
+	'BOILER_1'          :  6,
+	'BOILER_2'          :  6,
 	'CASCADE_MANAGER'   :  0,
 	'OUTDOOR_SENSOR'    : None,
 }
