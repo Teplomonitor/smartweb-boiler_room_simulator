@@ -108,7 +108,7 @@ class Message(object):
 	def send(self, responseFilter = None, timeout = None, bus = None):
 		msg = self.smartNetToCanMsg()
 
-		print(f"tx: {msg.arbitration_id:08X} - {' '.join(format(x, '02x') for x in msg.data)}")
+#		print(f"tx: {msg.arbitration_id:08X} - {' '.join(format(x, '02x') for x in msg.data)}")
 
 		if bus:
 			txbus = bus
