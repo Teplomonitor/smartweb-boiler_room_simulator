@@ -72,8 +72,6 @@ class Simulator(can.Listener):
 					f'{program.getTitle()} {program.getId()}',
 					 program.getId(), program, self._canbus, self)
 				self._simList.append(sim)
-				sim.daemon = True
-				sim.start()
 
 		for sim in self._simList:
 			program = sim._program
@@ -136,7 +134,10 @@ class Simulator(can.Listener):
 
 	def run(self):
 		while True:
-			for program in self._programsList:
+			for sim in self._simList:
+				sim.run()
+
+				program = sim._program
 				for programInput in program.getInputs():
 					if reportSensorValue(programInput):
 						time.sleep(0.1)
