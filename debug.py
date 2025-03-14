@@ -76,7 +76,7 @@ class debug_thread(can.Listener):
 		if message is None:
 			return
 
-		print(f"db: {message.arbitration_id:08X} - {' '.join(format(x, '02x') for x in message.data)}")
+#		print(f"db: {message.arbitration_id:08X} - {' '.join(format(x, '02x') for x in message.data)}")
 
 		msg = smartnetMessage()
 		msg.parse(message)
