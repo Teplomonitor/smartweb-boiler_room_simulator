@@ -95,12 +95,13 @@ class Simulator(threading.Thread):
 
 		temp  = self.getTemperature()
 		valve = self.getValveState()
+		pump  = self.getPumpState()
 
 		dT = sourceTemp - temp
-		return dT * valve * 0.1
+		return dT * valve * pump * 0.1
 
 	def getCooling(self):
-		return -0.1 # should depend on weather and room temp
+		return self.getPower()*0.1 # should depend on weather and room temp
 
 	def computeTemperature(self):
 		temp  = self.getTemperature()

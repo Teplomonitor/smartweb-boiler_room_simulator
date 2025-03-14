@@ -4,7 +4,6 @@ import math
 import time
 from smartnet.units import TEMPERATURE as TEMPERATURE
 from simulator.sensorReport import reportSensorValue as reportSensorValue
-from enum import Enum
 
 BROADCAST_ID = 0
 
@@ -64,6 +63,18 @@ class Simulator(threading.Thread):
 
 		return consumerPower
 
+	def temperatureInputIsMapped(self):
+		temp = self._program.getInput(self._inputId['temperature'])
+		mapping = temp.getMapping()
+		if mapping is None:
+			return False
+
+		if mapping.getChannelType() == 'CHANNEL_UNDEFINED':
+			return False
+
+		return True
+
+
 	def getStageState(self):
 		stage = self._program.getOutput(self._outputId['burner1'])
 		if stage.getMapping() is None:
@@ -99,5 +110,6 @@ class Simulator(threading.Thread):
 
 	def run(self):
 		while True:
-			self.setTemperature(self.computeTemperature())
-			time.sleep(1)
+			if (self.temperatureInputIsMapped())
+				self.setTemperature(self.computeTemperature())
+				time.sleep(1)

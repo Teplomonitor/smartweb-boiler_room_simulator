@@ -81,7 +81,7 @@ class Simulator(threading.Thread):
 		temp  = self.getTemperature()
 
 		dT = sourceTemp - temp
-		return dT * 0.01
+		return dT * 0.01 * self.getPumpState()
 
 	def getCooling(self):
 		return -0.01 # should depend on shower time and so on
