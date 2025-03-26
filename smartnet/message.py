@@ -25,6 +25,7 @@ class Message(object):
 		self._functionId  = functionId
 		self._request     = request
 		self._data        = data
+		
 	def __copy__(self):
 		return type(self)(self._programType, self._programId, self._functionId, self._request, self._data)
 	
@@ -33,12 +34,14 @@ class Message(object):
 	def getFunctionId (self): return self._functionId
 	def getRequestFlag(self): return self._request
 	def getData       (self): return self._data
+	def getHeader     (self): return self.generateHeader()
 
 	def setProgramType(self, value): self._programType = value
 	def setProgramId  (self, value): self._programId   = value
 	def setFunctionId (self, value): self._functionId  = value
 	def setRequestFlag(self, value): self._request     = value
 	def setData       (self, value): self._data        = value
+	def setHeader     (self, value): self.parseHeader(value)
 
 	def generateHeader(self):
 		byte0 = self._programType
