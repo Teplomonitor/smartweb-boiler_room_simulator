@@ -30,6 +30,7 @@ from controllers.controller import Controller as Controller
 from simulator.simulator import Simulator as Simulator
 
 import debug
+import udp.udp
 
 
 __all__ = []
@@ -97,13 +98,27 @@ USAGE
 		parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
 		parser.add_argument('-d', '--debug' , action='store_true', help='start debugger that will reply on simulator commands') 
 		parser.add_argument('-p', '--preset', action='store_true', help='enable erase all settings on controller and load the new one')
+		parser.add_argument('-u', '--udp'   , action='store_true', help='enable CAN-UDP bridge')
 
 		# Process arguments
 		args = parser.parse_args()
 
 		run_simulator_debug         = args.debug
 		init_controller_with_preset = args.preset
+#		udp_bridge                  = args.udp
+		udp_bridge                  = True
 
+#		UDP_PORT = 5005
+		UDP_PORT = 31927
+		if udp_bridge:
+			thread1 = udp.udp.udp_listen_thread("UDP_listen", 123, UDP_PORT)
+			thread1.daemon = True
+			thread1.start()
+			thread2 = udp.udp.udp_send_thread  ("UDP_send", 456, UDP_PORT)
+			thread2.daemon = True
+			thread2.start()
+		
+		
 		if run_simulator_debug:
 			dbgThread = debug.debug_thread()
 
