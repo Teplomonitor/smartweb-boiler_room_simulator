@@ -36,13 +36,21 @@ class udp_send_thread(threading.Thread):
 
 	def run(self):
 		while True:
-			time.sleep(0.3)
 			messages = get_send_queue()
-			if len(messages):
+			queue_size = len(messages)
+			
+			if queue_size:
 				for ip in ip_list:
 					self.sendUdpPacket(bytes(messages), ip, self._port)
 				
 				clear_send_queue()
+				
+			rand_delay = queue_size/10
+			if rand_delay > 0.3:
+				rand_delay = 0.3
+			
+			dt = 0.3 - rand_delay
+			time.sleep(dt)
 				
 			
 class udp_listen_thread(threading.Thread):
