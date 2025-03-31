@@ -4,6 +4,7 @@ Created on 24 мар. 2025 г.
 @author: admin
 '''
 
+import uuid
 import socket
 import can
 import struct
@@ -32,7 +33,6 @@ BODY_STRUCT   = 'I??Bx8sI'
 BODY_STRUCT_SCAN = '16s'
 
 
-SELF_ID = b'123456789012345\x00'
 
 def make_header(action):
 	signature    = BRIDGE_SIGNATURE
@@ -150,18 +150,28 @@ def send_broadcast_udp_packet(data, port):
 ip_list      = {}
 self_ip_list = {}
 
+SELF_ID = uuid.uuid4()
+self_id_bytes = SELF_ID.bytes
+self_id_bytes = bytearray(self_id_bytes[:16])
+self_id_bytes[15] = 0;
+
 def update_ip_list(data, addr):
 	body = get_scan_id(data)
 	ip   = addr[0]
-	if body == SELF_ID:
+	if body == self_id_bytes:
 		self_ip_list.append(ip)
+		print(f'add self ip {ip}')
 	else:
 		now = time.time()
-		if ip in ip_list:
-			ip_list[ip] = now
-		else:
-			...
-			ip_list.append(ip)
+		ip_list[ip] = now
+		print(f'update {ip}')
+		
+		timeout = 10*60
+		
+		for ip in ip_list:
+			if now - ip_list[ip] > timeout:
+				print(f'delete {ip}')
+				del ip_list[ip]
 
 class udp_listen_thread(threading.Thread):
 	
@@ -189,15 +199,7 @@ class udp_listen_thread(threading.Thread):
 				print(f'recv{data} from {addr}')
 
 			if udp_msg_is_scan(data):
-				body = get_scan_id(data)
-				if body == SELF_ID:
-					self_ip_list.append(addr[0])
-					continue
-				else:
-					if addr[0] in ip_list:
-						pass
-					else:
-						ip_list.append(addr[0])
+				update_ip_list(data, addr)
 			
 
 def main():
@@ -225,7 +227,7 @@ def main():
 	for can_msg in can_messages:
 		print(can_msg)
 	
-	scan_msg = scan_to_udp(udp_listen_thread.self_id)
+	scan_msg = scan_to_udp(self_id_bytes)
 	
 	print(scan_msg)
 	
