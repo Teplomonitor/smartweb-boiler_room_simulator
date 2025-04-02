@@ -130,7 +130,7 @@ class udp_listen_thread(threading.Thread):
 		self._sock       = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		self._canbus     = can_udp_bus
 		self._scan_msg   = make_scan_message(self_id_bytes)
-		self._send_scan_time = time.time()
+		self._send_scan_time = time.time() - 100
 		
 		ip_any = '0.0.0.0'
 
@@ -149,6 +149,11 @@ class udp_listen_thread(threading.Thread):
 	def run(self):
 		while True:
 			now = time.time()
+			
+			if now - self._send_scan_time > 60:
+				self._send_scan_time = now
+				send_broadcast_udp_packet(self._scan_msg, self._port)
+			
 			data, addr = self._sock.recvfrom(1024)
 			
 			if addr[0] in self_ip_list:
@@ -163,10 +168,6 @@ class udp_listen_thread(threading.Thread):
 				update_ip_list(data, addr)
 				send_broadcast_udp_packet(self._scan_msg, self._port)
 				continue
-			
-			if now - self._send_scan_time > 60:
-				self._send_scan_time = now
-				send_broadcast_udp_packet(self._scan_msg, self._port)
 			
 			if len(ip_list) == 0:
 				continue
