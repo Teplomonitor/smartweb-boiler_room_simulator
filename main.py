@@ -60,7 +60,7 @@ def messageIsImHere():
 
 
 def findOnlineController():
-	result = smartnetMessage.recv(15, messageIsImHere())
+	result = smartnetMessage.recv(130, messageIsImHere())
 	if result:
 		return result.getProgramId()
 	else:
@@ -96,25 +96,24 @@ USAGE
 	try:
 		# Setup argument parser
 		parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
-		parser.add_argument('-d', '--debug' , action='store_true', help='start debugger that will reply on simulator commands') 
-		parser.add_argument('-p', '--preset', action='store_true', help='enable erase all settings on controller and load the new one')
-		parser.add_argument('-u', '--udp'   , action='store_true', help='enable CAN-UDP bridge')
+		parser.add_argument('-d', '--debug' , action='store_true' , help='start debugger that will reply on simulator commands') 
+		parser.add_argument('-p', '--preset', action='store_true' , help='enable erase all settings on controller and load the new one')
+		parser.add_argument('-u', '--udp'   , nargs='?', const=31927, default=0, help='enable CAN-UDP bridge. Can be value from 0 to 65535. 0 - disable CAN-UDP bridge')
 
 		# Process arguments
 		args = parser.parse_args()
 
 		run_simulator_debug         = args.debug
 		init_controller_with_preset = args.preset
-#		udp_bridge                  = args.udp
-		udp_bridge                  = True
+		udp_bridge_enable           = int(args.udp)
 
-#		UDP_PORT = 5005
-		UDP_PORT = 31927
-		if udp_bridge:
+		UDP_PORT = udp_bridge_enable
+		
+		if udp_bridge_enable:
 			thread1 = udp.udp.udp_listen_thread("UDP_listen", 123, UDP_PORT)
 			thread1.daemon = True
 			thread1.start()
-			thread2 = udp.udp.udp_send_thread  ("UDP_send", 456, UDP_PORT)
+			thread2 = udp.udp.can_thread  ("UDP_CAN_send", 456, UDP_PORT)
 			thread2.daemon = True
 			thread2.start()
 		
