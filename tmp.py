@@ -10,7 +10,6 @@ import can
 import struct
 import time
 import threading
-from can.interfaces.ixxat.constants import TRUE
 
 
 BRIDGE_SIGNATURE = 0x66ab
@@ -20,7 +19,8 @@ HEADER_SIZE = 4
 BODY_SIZE   = 20
 PACKET_SIZE = HEADER_SIZE + BODY_SIZE
 
-SCAN_PACKET_SIZE = HEADER_SIZE + 16
+SCAN_PACKET_DATA_SIZE = 16
+SCAN_PACKET_SIZE = HEADER_SIZE + SCAN_PACKET_DATA_SIZE
 
 BridgeAction = {
 	'SCAN' : 0,
@@ -28,7 +28,7 @@ BridgeAction = {
 }
 
 HEADER_STRUCT = 'hBc'
-BODY_STRUCT   = 'I??Bx8sI'
+BODY_STRUCT   = '=I??B8sIx'
 
 BODY_STRUCT_SCAN = '16s'
 
@@ -89,7 +89,7 @@ def udp_to_can(data):
 			return messages
 		
 		action = check_header(data[offset :(offset + HEADER_SIZE)])
-		
+
 		if action == BridgeAction['SEND_CAN']:
 			body = struct.unpack(BODY_STRUCT, data[(offset + HEADER_SIZE) : (offset + PACKET_SIZE)])
 			msg = can.Message(
@@ -100,6 +100,8 @@ def udp_to_can(data):
 				data            = body[4],
 			)
 			messages.append(msg)
+		else:
+			return messages
 
 		
 		offset = offset + PACKET_SIZE
@@ -135,25 +137,23 @@ def send_broadcast_udp_packet(data, port):
 	interfaces = socket.getaddrinfo(host=socket.gethostname(), port=None, family=socket.AF_INET)
 	allips = [ip[-1][0] for ip in interfaces]
 	
-	while True:
-		for ip in allips:
-			print(f'sending on {ip}')
-			sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)  # UDP
-			sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-			sock.bind((ip,0))
-			sock.sendto(data, ("255.255.255.255", port))
-			sock.close()
+	for ip in allips:
+		print(f'sending on {ip}')
+		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)  # UDP
+		sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+		sock.bind((ip,0))
+		sock.sendto(data, ("255.255.255.255", port))
+		sock.close()
 
-		time.sleep(2)
 
 
 ip_list      = {}
-self_ip_list = {}
+self_ip_list = []
 
 SELF_ID = uuid.uuid4()
 self_id_bytes = SELF_ID.bytes
-self_id_bytes = bytearray(self_id_bytes[:16])
-self_id_bytes[15] = 0;
+self_id_bytes = bytearray(self_id_bytes[:SCAN_PACKET_DATA_SIZE])
+self_id_bytes[SCAN_PACKET_DATA_SIZE-1] = 0;
 
 def update_ip_list(data, addr):
 	body = get_scan_id(data)
@@ -195,11 +195,13 @@ class udp_listen_thread(threading.Thread):
 			
 			if addr[0] in self_ip_list:
 				print(f'skip {addr}')
+				continue
 			else:
 				print(f'recv{data} from {addr}')
 
 			if udp_msg_is_scan(data):
 				update_ip_list(data, addr)
+				continue
 			
 
 def main():
@@ -239,8 +241,8 @@ def main():
 	thread1.start()
 	
 	while True:
-		time.sleep(2)
-#	send_broadcast_udp_packet(scan_msg, BRIDGE_PORT)
+		time.sleep(5)
+		send_broadcast_udp_packet(scan_msg, BRIDGE_PORT)
 	
 	
 	
