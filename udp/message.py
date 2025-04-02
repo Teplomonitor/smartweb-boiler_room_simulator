@@ -6,11 +6,14 @@
 import can
 import struct
 
-BRIDGE_SIGNATURE = 0x66AB
+BRIDGE_SIGNATURE = 0x66ab
 
 HEADER_SIZE = 4
 BODY_SIZE   = 20
 PACKET_SIZE = HEADER_SIZE + BODY_SIZE
+
+SCAN_PACKET_DATA_SIZE = 16
+SCAN_PACKET_SIZE = HEADER_SIZE + SCAN_PACKET_DATA_SIZE
 
 BridgeAction = {
 	'SCAN' : 0,
@@ -18,10 +21,35 @@ BridgeAction = {
 }
 
 HEADER_STRUCT = 'hBc'
-BODY_STRUCT   = 'I??Bx8sI'
+BODY_STRUCT   = '=I??B8sIx'
+
+BODY_STRUCT_SCAN = '16s'
+
+def check_header(data):
+	header = struct.unpack(HEADER_STRUCT, data)
+	signature = header[0]
+
+	if signature == BRIDGE_SIGNATURE:
+		pass
+	else:
+		print('Wrong signature!')
+		return None
+	
+	return header[1]
+	
+
+def make_header(action):
+	signature    = BRIDGE_SIGNATURE
+	reserve      = b'\x00'
+	
+	header       = struct.pack(HEADER_STRUCT,
+							signature,
+							action,
+							reserve)
+	return header
 
 
-def udp_to_can(data, addr = None):
+def udp_to_can(data):
 	offset = 0
 	data_size = len(data)
 	
@@ -31,19 +59,8 @@ def udp_to_can(data, addr = None):
 		if (offset + PACKET_SIZE) > data_size:
 			return messages
 		
-		header = struct.unpack(HEADER_STRUCT, data[offset :(offset + HEADER_SIZE)])
-		signature = header[0]
-		if len(data) < PACKET_SIZE:
-			print('Wrong packet format!')
-			return messages
+		action = check_header(data[offset :(offset + HEADER_SIZE)])
 		
-		if signature == BRIDGE_SIGNATURE:
-			print('Ok!')
-		else:
-			print('Wrong signature!')
-			return messages
-		
-		action = header[1]
 		if action == BridgeAction['SEND_CAN']:
 			body = struct.unpack(BODY_STRUCT, data[(offset + HEADER_SIZE) : (offset + PACKET_SIZE)])
 			msg = can.Message(
@@ -54,21 +71,16 @@ def udp_to_can(data, addr = None):
 				data            = body[4],
 			)
 			messages.append(msg)
+		else:
+			return messages
 		
 		offset = offset + PACKET_SIZE
 	
 	return messages
 	
 def can_to_udp(msg):
-	signature    = BRIDGE_SIGNATURE
-	action       = BridgeAction['SEND_CAN']
-	reserve      = b'\x00'
 	source       = 0
-	
-	header       = struct.pack(HEADER_STRUCT,
-							signature,
-							action,
-							reserve)
+	header       = make_header(BridgeAction['SEND_CAN'])
 	
 	body         = struct.pack(BODY_STRUCT,
 							msg.arbitration_id,
@@ -84,7 +96,38 @@ def can_to_udp(msg):
 	return udp_msg
 
 	
+
+def get_body(data):
+	return data[HEADER_SIZE:]
+
+def get_scan_id(data):
+	return data[HEADER_SIZE:SCAN_PACKET_SIZE]
+
+def udp_msg_is_scan(data):
+	action = check_header(data[:HEADER_SIZE])
 	
+	if action == BridgeAction['SCAN']:
+		if len(data) >= SCAN_PACKET_SIZE:
+			dataLoggerId = struct.unpack(BODY_STRUCT_SCAN, data[HEADER_SIZE: SCAN_PACKET_SIZE])
+			print(dataLoggerId)
+		else:
+			print('small body?')
+		
+		return True
+	else:
+		return False
+	
+def make_scan_message(dataLoggerId):
+	
+	header = make_header(BridgeAction['SCAN'])
+	
+	array = bytearray(header)
+	array.extend(dataLoggerId)
+	
+#	print(f'make udp scan msg {array}')
+	
+	return array
+
 	
 	
 	
