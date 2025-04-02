@@ -61,9 +61,16 @@ class RemoteControlParameter(object):
 		request        = generateRequest()
 		responseFilter = generateRequiredResponse()
 
-		response = request.send(responseFilter, 10)
-
-		return handleResponse()
+		i = 0
+		while i < 3:
+			response = request.send(responseFilter, 10)
+			result = handleResponse()
+			if result:
+				break;
+			print('retry')
+			i = i + 1
+			
+		return result
 
 
 class HeatingCircuitSettings(object):
