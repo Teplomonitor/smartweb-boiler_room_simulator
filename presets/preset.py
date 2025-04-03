@@ -1,7 +1,7 @@
 
 
 import smartnet.constants as snc
-import presets.default
+import presets.list.default
 from programs.program import Program as Program
 
 class ProgramPreset(object):
@@ -65,4 +65,4 @@ class ProgramPreset(object):
 
 
 def getPresetsList():
-	return presets.default.getPresetsList()
+	return presets.list.default.getPresetsList()
