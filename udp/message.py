@@ -109,7 +109,7 @@ def udp_msg_is_scan(data):
 	if action == BridgeAction['SCAN']:
 		if len(data) >= SCAN_PACKET_SIZE:
 			dataLoggerId = struct.unpack(BODY_STRUCT_SCAN, data[HEADER_SIZE: SCAN_PACKET_SIZE])
-			print(dataLoggerId)
+#			print(dataLoggerId)
 		else:
 			print('small body?')
 		
