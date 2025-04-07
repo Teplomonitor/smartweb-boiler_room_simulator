@@ -18,6 +18,10 @@ class RemoteControlParameter(object):
 	def getValue(self): return self._parameterValue
 
 	def write(self, programId):
+		if self._parameterValue is None:
+			print(f'prg {self._parameterId} skip parameter {self._programType}.{self._parameterId}')
+			return
+		
 		if self._parameterIndex is None:
 			print(f'prg {self._parameterId} write parameter {self._programType}.{self._parameterId} = {self._parameterValue}')
 		else:
@@ -76,8 +80,10 @@ class RemoteControlParameter(object):
 class HeatingCircuitSettings(object):
 	def __init__(self,
 			source         = None,
+			heatingSlope   = None,
 			):
 		self._source         = source
+		self._heatingSlope   = heatingSlope
 
 	def get(self):
 		return [
@@ -85,6 +91,10 @@ class HeatingCircuitSettings(object):
 				snc.ProgramType['CONSUMER'], 
 				snc.ConsumerParameter['GENERATOR_ID'], 
 				self._source),
+			RemoteControlParameter(
+				snc.ProgramType['CIRCUIT'], 
+				snc.CircuitParameter['HEATING_SLOPE'], 
+				self._heatingSlope),
 		]
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]
