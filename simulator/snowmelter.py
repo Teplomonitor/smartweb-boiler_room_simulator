@@ -49,21 +49,21 @@ class Simulator(object):
 		return self._program.getInput(self._inputId['directFlowTemperature']).getValue()
 
 	def setDirectFlowTemperature(self, value):
-		print(f'sm: direct flow temp = {value}')
+#		print(f'sm: direct flow temp = {value}')
 		self._program.getInput(self._inputId['directFlowTemperature']).setValue(value)
 
 	def getBackwardFlowTemperature(self):
 		return self._program.getInput(self._inputId['backwardTemperature']).getValue()
 
 	def setBackwardFlowTemperature(self, value):
-		print(f'sm: back flow temp = {value}')
+#		print(f'sm: back flow temp = {value}')
 		self._program.getInput(self._inputId['backwardTemperature']).setValue(value)
 
 	def getPlateTemperature(self):
 		return self._program.getInput(self._inputId['plateTemperature']).getValue()
 
 	def setPlateTemperature(self, value):
-		print(f'sm: plate temp = {value}')
+#		print(f'sm: plate temp = {value}')
 		self._program.getInput(self._inputId['plateTemperature']).setValue(value)
 
 	def getSnowSensor(self):
@@ -128,9 +128,8 @@ class Simulator(object):
 	def getHeating(self):
 		sourceTemp = self.getSourceTemperature()
 		sourceTemp = sourceTemp - 5 # we loose some temp coming from source
-
 		
-		print(f'sm: source temp = {sourceTemp}')
+#		print(f'sm: source temp = {sourceTemp}')
 		temp       = self.getDirectFlowTemperature()
 		backTemp   = self.getBackwardFlowTemperature()
 		
@@ -158,8 +157,8 @@ class Simulator(object):
 			dT = (temp - plateTemp)*0.8
 			backTemp = plateTemp + dT * signal
 		else:
-			backTemp = sourceTemp
-			
+			dT = sourceTemp - backTemp
+			backTemp = backTemp + dT * signal
 			
 		return backTemp
 
