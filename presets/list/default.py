@@ -97,8 +97,8 @@ programSettings = {
 	'OUTDOOR_SENSOR'    : None,
 }
 
-def inputMapping (id): return Mapping(id, 'CHANNEL_SENSOR', getHostId())
-def outputMapping(id): return Mapping(id, 'CHANNEL_RELAY' , getHostId())
+def inputMapping (channel_id): return Mapping(channel_id, 'CHANNEL_SENSOR', getHostId())
+def outputMapping(channel_id): return Mapping(channel_id, 'CHANNEL_RELAY' , getHostId())
 
 
 programInputs = {
