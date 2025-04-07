@@ -96,16 +96,18 @@ USAGE
 	try:
 		# Setup argument parser
 		parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
-		parser.add_argument('-d', '--debug' , action='store_true' , help='start debugger that will reply on simulator commands') 
-		parser.add_argument('-p', '--preset', action='store_true' , help='enable erase all settings on controller and load the new one')
-		parser.add_argument('-u', '--udp'   , nargs='?', const=31987, default=0, help='enable CAN-UDP bridge. Can be value from 0 to 65535. 0 - disable CAN-UDP bridge')
+		parser.add_argument('-d', '--debug' , action='store_true'                          , help='start debugger that will reply on simulator commands') 
+		parser.add_argument(      '--init'  , action='store_true'                          , help='init controller with preset') 
+		parser.add_argument('-p', '--preset', nargs='?', const='default', default='default', help='enable erase all settings on controller and load the new one')
+		parser.add_argument('-u', '--udp'   , nargs='?', const=31987    , default=0        , help='enable CAN-UDP bridge. Can be value from 0 to 65535. 0 - disable CAN-UDP bridge')
 
 		# Process arguments
 		args = parser.parse_args()
 
 		run_simulator_debug         = args.debug
-		init_controller_with_preset = args.preset
+		init_controller_with_preset = args.init
 		udp_bridge_enable           = int(args.udp)
+		preset                      = args.preset
 
 		UDP_PORT = udp_bridge_enable
 		
@@ -129,7 +131,7 @@ USAGE
 			return 1
 		
 		print('Controller %d found' %(controllerId))
-		controller = Controller(controllerId, init_controller_with_preset)
+		controller = Controller(controllerId, init_controller_with_preset, preset)
 		simulator  = Simulator(controller)
 
 		simulator.run()
