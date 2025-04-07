@@ -206,6 +206,27 @@ HeatingCircuitParameter = {
 	'VALVE_POSITION'                : 10,
 }                       
 
+CircuitParameter = {
+		'REQUIRED_CONSTANT_FLOW_TEMPERATURE'                 :  1,
+		'HEAT_CALCULATION_MODE'                              :  2,
+		'HEATING_SLOPE'                                      :  3,
+		'ROOM_SENSOR_INFLUENCE'                              :  4,
+		'OUTDOOR_TEMPERATURE'                                :  5,
+		'ANALOG_PUMP_CONTORL_MODE'                           :  6,
+		'ANALOG_PUMP_MINIMUM_SPEED'                          :  7,
+		'ANALOG_PUMP_CONSTANT_SPEED'                         :  8,
+		'ROOM_SENSOR_INFLUENCE_MIN'                          :  9,
+		'ROOM_SENSOR_INFLUENCE_MAX'                          : 10,
+		'CURRENT_SUPPORTED_ROOM_DEVICE_TEMPERATURE'          : 11,
+		'CURRENT_SUPPORTED_ROOM_DEVICE_REQUIRED_TEMPERATURE' : 12,
+		'CURRENT_SUPPORTED_ROOM_DEVICE_ID'                   : 13,
+		'OUTSIDE_TEMPERATURE_REQUEST_VALUE'                  : 14,
+		'MINIMUM_FLOW_TEMPERATURE'                           : 15,
+		'MAXIMUM_FLOW_TEMPERATURE'                           : 16,
+		'ANALOG_PUMP_MAXIMUM_SPEED'                          : 17,
+		'FLOW_CIRCULATION_IS_ACTIVE'                         : 18,
+}
+
 ConsumerParameter = {
 	'PRIORITY'                  :  1,
 	'GENERATOR_ID'              :  2,
