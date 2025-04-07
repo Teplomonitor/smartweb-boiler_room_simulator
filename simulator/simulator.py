@@ -13,6 +13,7 @@ import simulator.boiler
 import simulator.cascade
 import simulator.heating_circuit
 import simulator.room
+import simulator.snowmelter
 import simulator.dhw
 
 
@@ -39,11 +40,13 @@ class Simulator(can.Listener):
 			'CASCADE_MANAGER' : simulator.cascade        .Simulator,
 			'ROOM_DEVICE'     : simulator.room           .Simulator,
 			'HEATING_CIRCUIT' : simulator.heating_circuit.Simulator,
+			'SNOWMELT'        : simulator.snowmelter     .Simulator,
 			'DHW'             : simulator.dhw            .Simulator,
 		}
 
 		consumerTypesList = [
 			'HEATING_CIRCUIT', 
+			'SNOWMELT', 
 			'DHW',
 		]
 
