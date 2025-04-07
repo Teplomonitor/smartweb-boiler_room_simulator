@@ -16,7 +16,7 @@ class Controller(object):
 	'''
 
 
-	def __init__(self, controllerId, initPreset):
+	def __init__(self, controllerId, initPreset, presetId):
 		'''
 		Constructor
 		'''
@@ -25,13 +25,13 @@ class Controller(object):
 		self._state = 'STATE_IDLE'
 		self._programList = []
 
-		presetList = self.getProgramsAddList()
+		presetList = self.getProgramsAddList(presetId)
 
 		if initPreset:
 			self.resetConfig()
 			for preset in presetList:
 				if self.makeNewProgram(preset) == False:
-					print('shit!')
+					print(f'Preset: program {preset.getType()}_{preset.getId()} make fail!')
 		else:
 			for preset in presetList:
 				prg = Program(preset)
@@ -85,8 +85,8 @@ class Controller(object):
 	def makeNewProgram(self, preset):
 		return preset.loadPreset(self)
 
-	def getProgramsAddList(self):
-		return presets.preset.getPresetsList()
+	def getProgramsAddList(self, presetId):
+		return presets.preset.getPresetsList(presetId)
 
 	def getProgramList(self): return self._programList
 
