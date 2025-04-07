@@ -108,7 +108,10 @@ class Simulator(object):
 		temp = self.getTemperature()
 		oat  = self.getOat()
 		dT = temp - oat
-
+		
+		if self.getPumpState() == 0:
+			return -dT*0.01
+		
 		return self.getMaxPower() * dT * 0.05 # should depend on weather and room temp
 
 	def computeTemperature(self):
