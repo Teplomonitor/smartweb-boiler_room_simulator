@@ -94,7 +94,7 @@ programId = {
 
 programSettings = {
 	'HEATING_CIRCUIT_1' : hcSettings(programId['CASCADE_MANAGER']),
-	'HEATING_CIRCUIT_2' : hcSettings(programId['CASCADE_MANAGER']),
+	'HEATING_CIRCUIT_2' : hcSettings(programId['CASCADE_MANAGER'], 60),
 	'ROOM_DEVICE_1'     : roomSettings(None                          , programId['HEATING_CIRCUIT_1']),
 	'ROOM_DEVICE_2'     : roomSettings(programId['HEATING_CIRCUIT_2'], programId['HEATING_CIRCUIT_1']),
 	'DHW'               : dhwSettings(programId['CASCADE_MANAGER']),
@@ -141,8 +141,8 @@ programPower = {
 	'ROOM_DEVICE_1'     : -1,
 	'ROOM_DEVICE_2'     : -2,
 	'DHW'               : -4,
-	'BOILER_1'          :  6,
-	'BOILER_2'          :  6,
+	'BOILER_1'          :  7,
+	'BOILER_2'          :  7,
 	'CASCADE_MANAGER'   :  0,
 	'OUTDOOR_SENSOR'    : None,
 	'SNOW_MELTER'       : -4,
