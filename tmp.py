@@ -3,6 +3,8 @@ Created on 24 мар. 2025 г.
 
 @author: admin
 '''
+from os.path import dirname, basename, isfile, join
+import glob
 
 import uuid
 import socket
@@ -203,8 +205,29 @@ class udp_listen_thread(threading.Thread):
 				update_ip_list(data, addr)
 				continue
 			
+def getPresetsList(presetId):
+	regex = join(dirname(__file__), 'presets','list', "*.py")
+	moduleId = 'presets.list.%s' % presetId
+	print(regex)
+	print(moduleId)
+	modules = glob.glob(regex)
+	__all__ = [ basename(f)[:-3] for f in modules if isfile(f) and not f.endswith('__init__.py')]
+	
+	print(__all__)
+	
+	if presetId in __all__:
+		preset_module = __import__(moduleId, fromlist=["presets.list"])
+
+		return preset_module.getPresetsList()
+	print('shit')
+	return None
+
 
 def main():
+	getPresetsList('default')
+	
+	return
+	
 	msg = can.Message(
 		arbitration_id  = 0x12131415,
 		is_remote_frame = False,
