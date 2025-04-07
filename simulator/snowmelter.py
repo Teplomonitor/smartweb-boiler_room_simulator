@@ -144,6 +144,9 @@ class Simulator(object):
 		return temp
 
 	def getCooling(self):
+		sourceTemp = self.getSourceTemperature()
+		sourceTemp = sourceTemp - 5 # we loose some temp coming from source
+		
 		temp       = self.getDirectFlowTemperature()
 		backTemp   = self.getBackwardFlowTemperature()
 		plateTemp  = self.getPlateTemperature()
@@ -154,7 +157,10 @@ class Simulator(object):
 		if pump:
 			dT = (temp - plateTemp)*0.8
 			backTemp = plateTemp + dT * signal
-		
+		else:
+			backTemp = sourceTemp
+			
+			
 		return backTemp
 
 	def getPlateHeating(self):
@@ -163,7 +169,7 @@ class Simulator(object):
 		plateTemp  = self.getPlateTemperature()
 		oat        = self.getOat()
 		
-		alpha = 0.5
+		alpha = 0.3
 		beta  = 1 - alpha
 		
 		plateTemp = plateTemp * beta + oat * alpha
