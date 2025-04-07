@@ -57,6 +57,7 @@ class Simulator(can.Listener):
 
 		self._simList        = []
 		self._roomList       = []
+		self._heatingCircuitList = []
 		self._consumersList  = []
 		self._generatorsList = []
 		self._oat = None
@@ -81,23 +82,23 @@ class Simulator(can.Listener):
 
 			if program.getType() in consumerTypesList:
 				self._consumersList.append(sim)
-				continue
 
 			if program.getType() in sourceTypesList:
 				self._generatorsList.append(sim)
-				continue
 
 			if program.getType() == 'OUTDOOR_SENSOR':
 				self._oat = sim
-				continue
 
 			if program.getType() == 'ROOM_DEVICE':
 				self._roomList.append(sim)
-				continue
+			
+			if program.getType() == 'HEATING_CIRCUIT':
+				self._heatingCircuitList.append(sim)
 
 
 
 	def getConsumerList      (self): return self._consumersList
+	def getHeatingCircuitList(self): return self._heatingCircuitList
 	def getSourceList        (self): return self._generatorsList
 	def getRoomList          (self): return self._roomList
 	def getOat               (self): return self._oat
