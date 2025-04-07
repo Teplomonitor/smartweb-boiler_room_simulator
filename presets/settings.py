@@ -105,6 +105,22 @@ class DhwSettings(object):
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]
 
+class SnowMelterSettings(object):
+	def __init__(self,
+			source         = None,
+			):
+		self._source         = source
+
+	def get(self):
+		return [
+			RemoteControlParameter(
+				snc.ProgramType['CONSUMER'], 
+				snc.ConsumerParameter['GENERATOR_ID'], 
+				self._source),
+		]
+	def getSource    (self): return  self._source
+	def getSourceList(self): return [self._source]
+
 class CascadeSettings(object):
 	def __init__(self,
 			source_1 = None,
@@ -177,3 +193,4 @@ class RoomSettings(object):
 		
 	def getSourceList(self):
 		return self._sourceList
+	

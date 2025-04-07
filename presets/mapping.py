@@ -240,4 +240,43 @@ class OatOutputMapping(object):
 	def get(self):
 		return []
 
+class SnowMelterInputMapping(object):
+	def __init__(self,
+			directFlowTemperature = None,
+			backwardTemperature   = None,
+			plateTemperature      = None,
+			snowSensor            = None,
+			):
+		self._directFlowTemperature = directFlowTemperature
+		self._backwardTemperature   = backwardTemperature
+		self._plateTemperature      = plateTemperature
+		self._snowSensor            = snowSensor
+
+	def get(self):
+		return [
+			self._directFlowTemperature,
+			self._backwardTemperature  ,
+			self._plateTemperature     ,
+			self._snowSensor           ,
+		]
+	def getTemperature(self): return self._directFlowTemperature
+
+class SnowMelterOutputMapping(object):
+	def __init__(self,
+			primaryPump               = None,
+			secondaryPump             = None,
+			primaryPumpAnalogSignal   = None,
+			):
+		self._primaryPump             = primaryPump                        
+		self._secondaryPump           = secondaryPump                      
+		self._primaryPumpAnalogSignal = primaryPumpAnalogSignal
+		
+
+	def get(self):
+		return [
+			self._primaryPump            ,
+			self._secondaryPump          ,
+			self._primaryPumpAnalogSignal,
+		]
+
 
