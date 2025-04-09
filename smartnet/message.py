@@ -14,7 +14,8 @@ class Message(object):
 	'''
 	#this for debug purpose. We need to hear own messages
 	_rxbus = createBus()
-	_txbus = createBus()
+#	_txbus = createBus()
+	_txbus = _rxbus
 
 	def __init__(self, programType=None, programId=None, functionId=None, request=None, data=None):
 		'''
