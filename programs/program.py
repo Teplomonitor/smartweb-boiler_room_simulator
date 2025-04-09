@@ -110,15 +110,15 @@ class Program(object):
 
 	
 
-	def bindOutput(self, id, mapping):
-		print(f'bind program output {id}')
+	def bindOutput(self, channel_id, mapping):
+		print(f'bind program output {channel_id}')
 		def generateRequest():
 			request = smartnetMessage(
 			snc.ProgramType['REMOTE_CONTROL'],
 			self._id,
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
 			snc.requestFlag['REQUEST'],
-			[snc.ProgramType['PROGRAM'], snc.ProgramParameter['OUTPUT_MAPPING'], id, mapping.getRaw(0), mapping.getRaw(1)])
+			[snc.ProgramType['PROGRAM'], snc.ProgramParameter['OUTPUT_MAPPING'], channel_id, mapping.getRaw(0), mapping.getRaw(1)])
 			return request
 
 		def generateRequiredResponse():
