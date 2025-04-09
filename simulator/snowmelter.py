@@ -178,7 +178,7 @@ class Simulator(object):
 
 		if pump:
 			tempAver = (temp + backTemp)/2
-			dT = (tempAver - plateTemp) * 0.05
+			dT = (tempAver - plateTemp) * 0.5
 			plateTemp = plateTemp + dT * signal
 		
 		return plateTemp
