@@ -112,7 +112,7 @@ class Simulator(can.Listener):
 
 		if msg is None:
 			return
-			
+		
 		def programOutputFilter():
 			headerOk = ((msg.getProgramType() == snc.ProgramType['REMOTE_CONTROL']) and
 					(msg.getFunctionId () == snc.RemoteControlFunction['GET_PARAMETER_VALUE']) and
@@ -135,7 +135,8 @@ class Simulator(can.Listener):
 				if program.getId() == programId:
 					program.getOutput(outputId).setValue(outputValue)
 					break
-
+			return
+		
 	def run(self):
 		while True:
 			for sim in self._simList:
