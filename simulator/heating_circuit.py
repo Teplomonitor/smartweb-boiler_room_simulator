@@ -19,13 +19,13 @@ class Simulator(object):
 		self._control    = control
 		
 		self._outputId = {
-			'analogValve'         : 0,
-			'tptValveOpen'        : 1,
-			'tptValveClose'       : 2,
-			'pump'                : 3,
-			'thermomotor'         : 4,
-			'heatchangePump'      : 5,
-			'analogPump'          : 6,
+			'analogValve'     : 0,
+			'tptValveOpen'    : 1,
+			'tptValveClose'   : 2,
+			'pump'            : 3,
+			'thermomotor'     : 4,
+			'heatchangePump'  : 5,
+			'analogPump'      : 6,
 		}
 
 		self._inputId = {
@@ -36,7 +36,9 @@ class Simulator(object):
 			'backwardTemperature' : 4,
 		}
 
+		self._roomTemp = 24
 		self.setTemperature(20)
+		self.setBackwardTemperature(20)
 
 	def getOat(self):
 		oat = self._control.getOat()
@@ -44,13 +46,21 @@ class Simulator(object):
 			oat = 0
 			
 		return oat.getTemperature()
+	
+	def getRoomTemp(self):
+		return self._roomTemp
 
 	def getTemperature(self):
 		return self._program.getInput(self._inputId['temperature']).getValue()
 
 	def setTemperature(self, value):
-#		print(f'circuit: {value}')
 		self._program.getInput(self._inputId['temperature']).setValue(value)
+
+	def getBackwardTemperature(self):
+		return self._program.getInput(self._inputId['backwardTemperature']).getValue()
+
+	def setBackwardTemperature(self, value):
+		self._program.getInput(self._inputId['backwardTemperature']).setValue(value)
 
 	def getElapsedTime(self):
 		return time.time() - self._time_start
@@ -93,35 +103,49 @@ class Simulator(object):
 
 		return 60
 
-	def getHeating(self):
+	def computeTemperature(self):
+		tempBakward = self.getBackwardTemperature()
+		temp        = self.getTemperature()
+		roomTemp    = self.getRoomTemp()
+
+		if self.getPumpState() == 0:
+			alpha = 0.01
+			beta  = 1 - alpha
+			return temp*beta + roomTemp*alpha
+
 		sourceTemp = self.getSourceTemperature()
 		sourceTemp = sourceTemp - 5 # we loose some temp coming from source
 
-		temp  = self.getTemperature()
 		valve = self.getValveState()
-		pump  = self.getPumpState()
+		
+		temp = tempBakward + (sourceTemp - tempBakward) * valve
 
-		dT = sourceTemp - temp
-		return dT * valve * pump 
+		temp = limit(-30, temp, 120)
 
-	def getCooling(self):
-		temp = self.getTemperature()
-		oat  = self.getOat()
-		dT = temp - oat
+		return temp
+	
+	def computeBackwardTemperature(self):
+		temp       = self.getBackwardTemperature()
+		roomTemp   = self.getRoomTemp()
+		oat        = self.getOat()
+		
+		avrRoomTemp = (roomTemp + oat)/2
 		
 		if self.getPumpState() == 0:
-			return -dT*0.01
+			alpha = 0.01
+			beta  = 1 - alpha
+			return temp*beta + avrRoomTemp*alpha
 		
-		return self.getMaxPower() * dT * 0.05 # should depend on weather and room temp
-
-	def computeTemperature(self):
-		temp  = self.getTemperature()
-
-		temp = temp + self.getHeating() + self.getCooling()
-
+		tempDirect = self.getTemperature()
+		
+		alpha = 0.1
+		beta  = 1 - alpha
+		
+		temp = tempDirect*beta + avrRoomTemp*alpha
 		temp = limit(-30, temp, 120)
 
 		return temp
 
 	def run(self):
-		self.setTemperature(self.computeTemperature())
+		self.setTemperature        (self.computeTemperature())
+		self.setBackwardTemperature(self.computeBackwardTemperature())
