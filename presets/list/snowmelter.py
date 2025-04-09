@@ -12,9 +12,6 @@ from presets.settings import SnowMelterSettings as smSettings
 
 import presets.preset
 
-def getHostId():
-	return 123
-
 hostList = [
 	'HOST_1',
 	'HOST_2',
@@ -72,19 +69,19 @@ programSettings = {
 	'OUTDOOR_SENSOR': None,
 }
 
-def inputMapping (channel_id): return Mapping(channel_id, 'CHANNEL_SENSOR', getHostId())
-def outputMapping(channel_id): return Mapping(channel_id, 'CHANNEL_RELAY' , getHostId())
+def inputMapping (channel_id, host_id): return Mapping(channel_id, 'CHANNEL_SENSOR', host_id)
+def outputMapping(channel_id, host_id): return Mapping(channel_id, 'CHANNEL_RELAY' , host_id)
 
 
 programInputs = {
-	'SNOW_MELTER'   : smInputMapping     (inputMapping(0), inputMapping(1), inputMapping(2)),
-	'BOILER'        : boilerInputMapping (inputMapping(3)),
-	'OUTDOOR_SENSOR': oatInputMapping    (inputMapping(4)),
+	'SNOW_MELTER'   : smInputMapping     (inputMapping(0, hostId['HOST_1']), inputMapping(1, hostId['HOST_1']), inputMapping(2, hostId['HOST_1'])),
+	'BOILER'        : boilerInputMapping (inputMapping(3, hostId['HOST_1'])),
+	'OUTDOOR_SENSOR': oatInputMapping    (inputMapping(4, hostId['HOST_1'])),
 }
 
 programOutputs = {
-	'SNOW_MELTER'   : smOutputMapping(outputMapping(0), outputMapping(1), outputMapping(2)),
-	'BOILER'        : boilerOutputMapping(pump = outputMapping(3), burner1 = outputMapping(4)),
+	'SNOW_MELTER'   : smOutputMapping(None, outputMapping(1, hostId['HOST_1']), outputMapping(6, hostId['HOST_1'])),
+	'BOILER'        : boilerOutputMapping(pump = outputMapping(3, hostId['HOST_1']), burner1 = outputMapping(4, hostId['HOST_1'])),
 	'OUTDOOR_SENSOR': oatOutputMapping(),
 }
 

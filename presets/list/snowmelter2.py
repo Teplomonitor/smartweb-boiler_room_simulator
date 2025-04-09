@@ -126,34 +126,34 @@ programSettings = {
 	'SNOW_MELTER'       : smSettings(programId['CASCADE_MANAGER']),
 }
 
-def inputMapping (channel_id): return Mapping(channel_id, 'CHANNEL_SENSOR', getHostId())
-def outputMapping(channel_id): return Mapping(channel_id, 'CHANNEL_RELAY' , getHostId())
+def inputMapping (channel_id, host_id): return Mapping(channel_id, 'CHANNEL_SENSOR', host_id)
+def outputMapping(channel_id, host_id): return Mapping(channel_id, 'CHANNEL_RELAY' , host_id)
 
 
 programInputs = {
-	'HEATING_CIRCUIT_1' : hcInputMapping     (inputMapping(0)),
-	'HEATING_CIRCUIT_2' : hcInputMapping     (inputMapping(1)),
-	'ROOM_DEVICE_1'     : roomInputMapping   (inputMapping(2)),
-	'ROOM_DEVICE_2'     : roomInputMapping   (inputMapping(3)),
-	'DHW'               : dhwInputMapping    (inputMapping(4)),
+	'HEATING_CIRCUIT_1' : hcInputMapping     (inputMapping(0, hostId['HOST_1'])),
+	'HEATING_CIRCUIT_2' : hcInputMapping     (inputMapping(1, hostId['HOST_1'])),
+	'ROOM_DEVICE_1'     : roomInputMapping   (inputMapping(2, hostId['HOST_1'])),
+	'ROOM_DEVICE_2'     : roomInputMapping   (inputMapping(3, hostId['HOST_1'])),
+	'DHW'               : dhwInputMapping    (inputMapping(4, hostId['HOST_1'])),
 	'BOILER_1'          : boilerInputMapping (),
 	'BOILER_2'          : boilerInputMapping (),
-	'CASCADE_MANAGER'   : cascadeInputMapping(inputMapping(6)),
-	'OUTDOOR_SENSOR'    : oatInputMapping    (inputMapping(7)),
-	'SNOW_MELTER'       : smInputMapping     (inputMapping(8), inputMapping(9), inputMapping(10)),
+	'CASCADE_MANAGER'   : cascadeInputMapping(inputMapping(0, hostId['HOST_2'])),
+	'OUTDOOR_SENSOR'    : oatInputMapping    (inputMapping(1, hostId['HOST_2'])),
+	'SNOW_MELTER'       : smInputMapping     (inputMapping(2, hostId['HOST_2']), inputMapping(3, hostId['HOST_2']), inputMapping(4, hostId['HOST_2'])),
 }
 
 programOutputs = {
-	'HEATING_CIRCUIT_1' : hcOutputMapping(analogValve = outputMapping(0), pump = outputMapping(1)),
-	'HEATING_CIRCUIT_2' : hcOutputMapping(analogValve = outputMapping(2), pump = outputMapping(3)),
+	'HEATING_CIRCUIT_1' : hcOutputMapping(analogValve = outputMapping(6, hostId['HOST_1']), pump = outputMapping(0, hostId['HOST_1'])),
+	'HEATING_CIRCUIT_2' : hcOutputMapping(analogValve = outputMapping(7, hostId['HOST_1']), pump = outputMapping(1, hostId['HOST_1'])),
 	'ROOM_DEVICE_1'     : roomOutputMapping(),
 	'ROOM_DEVICE_2'     : roomOutputMapping(),
-	'DHW'               : dhwOutputMapping(outputMapping(4), outputMapping(5)),
-	'BOILER_1'          : boilerOutputMapping(pump = outputMapping(6), burner1 = outputMapping(7)),
-	'BOILER_2'          : boilerOutputMapping(pump = outputMapping(8), burner1 = outputMapping(9)),
+	'DHW'               : dhwOutputMapping(outputMapping(2, hostId['HOST_1']), outputMapping(3, hostId['HOST_1'])),
+	'BOILER_1'          : boilerOutputMapping(pump = outputMapping(0, hostId['HOST_2']), burner1 = outputMapping(1, hostId['HOST_2'])),
+	'BOILER_2'          : boilerOutputMapping(pump = outputMapping(2, hostId['HOST_2']), burner1 = outputMapping(3, hostId['HOST_2'])),
 	'CASCADE_MANAGER'   : cascadeOutputMapping(),
 	'OUTDOOR_SENSOR'    : oatOutputMapping(),
-	'SNOW_MELTER'       : smOutputMapping(None, outputMapping(11), outputMapping(12)),
+	'SNOW_MELTER'       : smOutputMapping(None, outputMapping(4, hostId['HOST_2']), outputMapping(6, hostId['HOST_2'])),
 }
 
 programPower = {

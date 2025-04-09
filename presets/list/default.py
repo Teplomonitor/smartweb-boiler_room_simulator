@@ -127,8 +127,8 @@ programInputs = {
 	'DHW'               : dhwInputMapping    (inputMapping(4, hostId['HOST_1'])),
 	'BOILER_1'          : boilerInputMapping (),
 	'BOILER_2'          : boilerInputMapping (),
-	'CASCADE_MANAGER'   : cascadeInputMapping(inputMapping(6, hostId['HOST_2'])),
-	'OUTDOOR_SENSOR'    : oatInputMapping    (inputMapping(7, hostId['HOST_2'])),
+	'CASCADE_MANAGER'   : cascadeInputMapping(inputMapping(0, hostId['HOST_2'])),
+	'OUTDOOR_SENSOR'    : oatInputMapping    (inputMapping(1, hostId['HOST_2'])),
 }
 
 programOutputs = {
