@@ -6,25 +6,7 @@ from copy import copy
 
 import smartnet.constants as snc
 from smartnet.message import Message as smartnetMessage
-
-class Channel(object):
-	'''
-	classdocs
-	'''
-
-	def __init__(self, mapping = None, value = None):
-		'''
-		Constructor
-		'''
-		self._mapping = mapping
-		self._value   = value
-
-	def getMapping(self): return self._mapping
-	def getValue  (self): return self._value
-
-	def setMapping(self, mapping): self._mapping = mapping
-	def setValue  (self, value  ): self._value   = value
-
+from controllers.channelMapping import Channel as Channel
 
 class Program(object):
 	'''
