@@ -2,7 +2,6 @@ from os.path import dirname, basename, isfile, join
 import glob
 
 import smartnet.constants as snc
-import presets.list.default
 from programs.program import Program as Program
 
 class ProgramPreset(object):
@@ -64,20 +63,33 @@ class ProgramPreset(object):
 			for value in self._settings.get():
 				value.write(self._id)
 
+class ControllerPreset(object):
+	'''
+	classdocs
+	'''
+	def __init__(self,
+			programType, programId,
+			programTitle):
+		self._type      = programType
+		self._id        = programId
+		self._title     = programTitle
+
+	def getType     (self): return self._type
+	def getId       (self): return self._id
+	def getTitle    (self): return self._title
+
 
 def getPresetsList(presetId):
 	regex = join(dirname(__file__),'list', "*.py")
 	moduleId = 'presets.list.%s' % presetId
-	print(regex)
-	print(moduleId)
+	
 	modules = glob.glob(regex)
 	__all__ = [ basename(f)[:-3] for f in modules if isfile(f) and not f.endswith('__init__.py')]
-	
-	print(__all__)
 	
 	if presetId in __all__:
 		preset_module = __import__(moduleId, fromlist=["presets.list"])
 
 		return preset_module.getPresetsList()
-	print('shit')
+	
+	print(f'wrong preset {presetId}')
 	return None
