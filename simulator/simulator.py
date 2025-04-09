@@ -8,6 +8,8 @@ from smartnet.message import Message as smartnetMessage
 from simulator.sensorReport import reportSensorValue as reportSensorValue
 from simulator.outputRead import outputRead as outputRead
 
+from controllers.channelMapping import ChannelMapping as ChannelMapping
+
 import simulator.oat
 import simulator.boiler
 import simulator.cascade
@@ -23,13 +25,16 @@ class Simulator(can.Listener):
 	classdocs
 	'''
 
-	def __init__(self, controller):
+	def __init__(self, controller, controllerIo):
 		'''
 		Constructor
 		'''
-		self._controller = controller
+		self._controller   = controller
+		self._controllerIo = controllerIo
 
-		self._canbus   = createBus()
+#		self._canbus   = createBus()
+		self._canbus   = smartnetMessage._txbus
+		
 		self._notifier = can.Notifier(self._canbus, [self])
 
 		self._programsList = self._controller.getProgramList()
@@ -65,7 +70,15 @@ class Simulator(can.Listener):
 		for program in self._programsList:
 			i = 0
 			for output in program.getOutputs():
-				if output.getMapping():
+				mapping = output.getMapping()
+				if mapping:
+					
+					for ctrlIo in self._controllerIo:
+						if (ctrlIo.getId() == mapping.getHostId()) and (mapping.getChannelType() == 'CHANNEL_RELAY'):
+							ctrlOutputMapping = ChannelMapping(i, 'CHANNEL_OUTPUT', program.getId())
+							ctrlIo.setOutputMapping(mapping.getChannelId(), ctrlOutputMapping)
+							ctrlIo.reportOutputMapping(mapping.getChannelId())
+					
 					outputRead(program.getId(), i)
 					time.sleep(0.1)
 				i = i + 1
@@ -113,6 +126,8 @@ class Simulator(can.Listener):
 		if msg is None:
 			return
 		
+#		print(f"rx: {msg.generateHeader():08X} - {' '.join(format(x, '02x') for x in msg._data)}")
+		
 		def programOutputFilter():
 			headerOk = ((msg.getProgramType() == snc.ProgramType['REMOTE_CONTROL']) and
 					(msg.getFunctionId () == snc.RemoteControlFunction['GET_PARAMETER_VALUE']) and
@@ -137,6 +152,9 @@ class Simulator(can.Listener):
 					break
 			return
 		
+		for ctrlIo in self._controllerIo:
+			ctrlIo.on_message_received(message)
+		
 	def run(self):
 		while True:
 			for sim in self._simList:
@@ -147,6 +165,9 @@ class Simulator(can.Listener):
 					if reportSensorValue(programInput):
 						time.sleep(0.1)
 
+			for ctrlIo in self._controllerIo:
+				ctrlIo.run()
+				
 			time.sleep(1)
 
 

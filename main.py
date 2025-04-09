@@ -115,10 +115,10 @@ USAGE
 
 		programList, controllerIoList = presets.preset.getPresetsList(preset)
 		
+		ctrlIo = []
 		if controllerIoList is None:
 			pass
 		else:
-			ctrlIo = []
 			for ctrl in controllerIoList:
 				ctrlIo.append(ControllerIO(ctrl.getId(), ctrl.getType(), ctrl.getTitle()))
 		
@@ -150,7 +150,7 @@ USAGE
 		print('Controller %d found' %(controllerId))
 		
 		controller = Controller(controllerId, init_controller_with_preset, programList)
-		simulator  = Simulator(controller)
+		simulator  = Simulator(controller, ctrlIo)
 
 		simulator.run()
 		return 0
