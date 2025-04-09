@@ -121,7 +121,7 @@ class Simulator(object):
 		dTfloor = floorTemp    - temp
 		dTwall  = wallTemp     - temp
 		
-		return dTfloor*0.002 + dTrad*0.001 + dTwall*0.001
+		return dTfloor*0.0015 + dTrad*0.001 + dTwall*0.001
 
 	def getCooling(self):
 		temp  = self.getTemperature()
