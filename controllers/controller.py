@@ -10,13 +10,14 @@ from smartnet.message import Message as smartnetMessage
 import smartnet.constants as snc
 import presets.preset
 
+
 class Controller(object):
 	'''
 	classdocs
 	'''
 
 
-	def __init__(self, controllerId, initPreset, presetId):
+	def __init__(self, controllerId, initPreset, programList):
 		'''
 		Constructor
 		'''
@@ -25,19 +26,18 @@ class Controller(object):
 		self._state = 'STATE_IDLE'
 		self._programList = []
 
-		presetList = self.getProgramsAddList(presetId)
 
 		if initPreset:
 			self.resetConfig()
-			for preset in presetList:
-				if self.makeNewProgram(preset) == False:
-					print(f'Preset: program {preset.getType()}_{preset.getId()} make fail!')
+			for program in programList:
+				if self.makeNewProgram(program) == False:
+					print(f'Preset: program {program.getType()}_{program.getId()} make fail!')
 		else:
-			for preset in presetList:
-				prg = Program(preset)
+			for program in programList:
+				prg = Program(program)
 				self.addProgram(prg)
 
-		
+
 	def sendProgramAddRequest(self, programType, programId, programScheme):
 		print('Send program add request')
 		def generateRequest():
@@ -85,7 +85,7 @@ class Controller(object):
 	def makeNewProgram(self, preset):
 		return preset.loadPreset(self)
 
-	def getProgramsAddList(self, presetId):
+	def getPresetsList(self, presetId):
 		return presets.preset.getPresetsList(presetId)
 
 	def getProgramList(self): return self._programList
