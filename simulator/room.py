@@ -129,7 +129,7 @@ class Simulator(object):
 		
 		dT = oat - temp
 		
-		return dT*0.001
+		return dT*0.002
 		
 
 	def computeTemperature(self):
