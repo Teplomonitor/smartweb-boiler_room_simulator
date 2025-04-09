@@ -24,9 +24,13 @@ import os
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
+import presets.preset
 from smartnet.message import Message as smartnetMessage
 import smartnet.constants as snc
-from controllers.controller import Controller as Controller
+from controllers.controller    import Controller   as Controller
+from controllers.controller_io import ControllerIO as ControllerIO
+
+
 from simulator.simulator import Simulator as Simulator
 
 import debug
@@ -109,6 +113,19 @@ USAGE
 		udp_bridge_enable           = int(args.udp)
 		preset                      = args.preset
 
+		programList, controllerIoList = presets.preset.getPresetsList(preset)
+		
+		if controllerIoList is None:
+			pass
+		else:
+			ctrlIo = []
+			for ctrl in controllerIoList:
+				ctrlIo.append(ControllerIO(ctrl.getId(), ctrl.getType(), ctrl.getTitle()))
+		
+		if programList is None:
+			print('wrong preset. Exit')
+			return 1
+		
 		UDP_PORT = udp_bridge_enable
 		
 		if udp_bridge_enable:
@@ -127,11 +144,12 @@ USAGE
 		controllerId = findOnlineController()
 
 		if controllerId is None:
-			print("shit")
+			print('controller not found. Exit')
 			return 1
 		
 		print('Controller %d found' %(controllerId))
-		controller = Controller(controllerId, init_controller_with_preset, preset)
+		
+		controller = Controller(controllerId, init_controller_with_preset, programList)
 		simulator  = Simulator(controller)
 
 		simulator.run()
