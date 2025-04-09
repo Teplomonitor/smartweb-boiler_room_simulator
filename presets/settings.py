@@ -19,13 +19,13 @@ class RemoteControlParameter(object):
 
 	def write(self, programId):
 		if self._parameterValue is None:
-			print(f'prg {self._parameterId} skip parameter {self._programType}.{self._parameterId}')
+			print(f'prg {programId} skip parameter {self._programType}.{self._parameterId}')
 			return
 		
 		if self._parameterIndex is None:
-			print(f'prg {self._parameterId} write parameter {self._programType}.{self._parameterId} = {self._parameterValue}')
+			print(f'prg {programId} write parameter {self._programType}.{self._parameterId} = {self._parameterValue}')
 		else:
-			print(f'prg {self._parameterId} write parameter {self._programType}.{self._parameterId}.{self._parameterIndex} = {self._parameterValue}')
+			print(f'prg {programId} write parameter {self._programType}.{self._parameterId}.{self._parameterIndex} = {self._parameterValue}')
 
 		def generateRequest():
 
