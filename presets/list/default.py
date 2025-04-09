@@ -19,11 +19,29 @@ from presets.settings import DhwSettings            as dhwSettings
 from presets.settings import CascadeSettings        as cascadeSettings
 from presets.settings import RoomSettings           as roomSettings
 
-import smartnet.constants as snc
 import presets.preset
 
-def getHostId():
-	return 123
+
+hostList = [
+	'HOST_1',
+	'HOST_2',
+]
+
+hostId = {
+	'HOST_1' : 123,
+	'HOST_2' : 124,
+}
+
+hostType = {
+	'HOST_1' : 'SWK_1',
+	'HOST_2' : 'SWK_1',
+}
+
+hostTitle = {
+	'HOST_1' : 'SWK_%d' % (hostId['HOST_1']),
+	'HOST_2' : 'SWK_%d' % (hostId['HOST_2']),
+}
+
 
 programList = [
 	'HEATING_CIRCUIT_1',
@@ -97,30 +115,30 @@ programSettings = {
 	'OUTDOOR_SENSOR'    : None,
 }
 
-def inputMapping (channel_id): return Mapping(channel_id, 'CHANNEL_SENSOR', getHostId())
-def outputMapping(channel_id): return Mapping(channel_id, 'CHANNEL_RELAY' , getHostId())
+def inputMapping (channel_id, host_id): return Mapping(channel_id, 'CHANNEL_SENSOR', host_id)
+def outputMapping(channel_id, host_id): return Mapping(channel_id, 'CHANNEL_RELAY' , host_id)
 
 
 programInputs = {
-	'HEATING_CIRCUIT_1' : hcInputMapping     (inputMapping(0)),
-	'HEATING_CIRCUIT_2' : hcInputMapping     (inputMapping(1)),
-	'ROOM_DEVICE_1'     : roomInputMapping   (inputMapping(2)),
-	'ROOM_DEVICE_2'     : roomInputMapping   (inputMapping(3)),
-	'DHW'               : dhwInputMapping    (inputMapping(4)),
+	'HEATING_CIRCUIT_1' : hcInputMapping     (inputMapping(0, hostId['HOST_1'])),
+	'HEATING_CIRCUIT_2' : hcInputMapping     (inputMapping(1, hostId['HOST_1'])),
+	'ROOM_DEVICE_1'     : roomInputMapping   (inputMapping(2, hostId['HOST_1'])),
+	'ROOM_DEVICE_2'     : roomInputMapping   (inputMapping(3, hostId['HOST_1'])),
+	'DHW'               : dhwInputMapping    (inputMapping(4, hostId['HOST_1'])),
 	'BOILER_1'          : boilerInputMapping (),
 	'BOILER_2'          : boilerInputMapping (),
-	'CASCADE_MANAGER'   : cascadeInputMapping(inputMapping(6)),
-	'OUTDOOR_SENSOR'    : oatInputMapping    (inputMapping(7)),
+	'CASCADE_MANAGER'   : cascadeInputMapping(inputMapping(6, hostId['HOST_2'])),
+	'OUTDOOR_SENSOR'    : oatInputMapping    (inputMapping(7, hostId['HOST_2'])),
 }
 
 programOutputs = {
-	'HEATING_CIRCUIT_1' : hcOutputMapping(analogValve = outputMapping(0), pump = outputMapping(1)),
-	'HEATING_CIRCUIT_2' : hcOutputMapping(analogValve = outputMapping(2), pump = outputMapping(3)),
+	'HEATING_CIRCUIT_1' : hcOutputMapping(analogValve = outputMapping(6, hostId['HOST_1']), pump = outputMapping(0, hostId['HOST_1'])),
+	'HEATING_CIRCUIT_2' : hcOutputMapping(analogValve = outputMapping(7, hostId['HOST_1']), pump = outputMapping(1, hostId['HOST_1'])),
 	'ROOM_DEVICE_1'     : roomOutputMapping(),
 	'ROOM_DEVICE_2'     : roomOutputMapping(),
-	'DHW'               : dhwOutputMapping(outputMapping(4), outputMapping(5)),
-	'BOILER_1'          : boilerOutputMapping(pump = outputMapping(6), burner1 = outputMapping(7)),
-	'BOILER_2'          : boilerOutputMapping(pump = outputMapping(8), burner1 = outputMapping(9)),
+	'DHW'               : dhwOutputMapping(outputMapping(2, hostId['HOST_1']), outputMapping(3, hostId['HOST_1'])),
+	'BOILER_1'          : boilerOutputMapping(pump = outputMapping(0, hostId['HOST_2']), burner1 = outputMapping(1, hostId['HOST_2'])),
+	'BOILER_2'          : boilerOutputMapping(pump = outputMapping(2, hostId['HOST_2']), burner1 = outputMapping(3, hostId['HOST_2'])),
 	'CASCADE_MANAGER'   : cascadeOutputMapping(),
 	'OUTDOOR_SENSOR'    : oatOutputMapping(),
 }
@@ -137,10 +155,10 @@ programPower = {
 	'OUTDOOR_SENSOR'    : None,
 }
 
-def getPresetsList() :
-	presetList = []
+def getPresetsList():
+	programPresetList = []
 	for prg in programList:
-		presetList.append(presets.preset.ProgramPreset(
+		programPresetList.append(presets.preset.ProgramPreset(
 			programType    [prg],
 			programScheme  [prg],
 			programId      [prg],
@@ -152,4 +170,14 @@ def getPresetsList() :
 			)
 		)
 
-	return presetList
+	controllerPresetList = []
+	for ctrl in hostList:
+		controllerPresetList.append(presets.preset.ControllerPreset(
+			hostType    [ctrl],
+			hostId      [ctrl],
+			hostTitle   [ctrl],
+			)
+		)
+
+	return programPresetList, controllerPresetList
+

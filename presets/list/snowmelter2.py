@@ -27,6 +27,27 @@ import presets.preset
 def getHostId():
 	return 123
 
+hostList = [
+	'HOST_1',
+	'HOST_2',
+]
+
+hostId = {
+	'HOST_1' : 123,
+	'HOST_2' : 124,
+}
+
+hostType = {
+	'HOST_1' : 'SWK_1',
+	'HOST_2' : 'SWK_1',
+}
+
+hostTitle = {
+	'HOST_1' : 'SWK_%d' % (hostId['HOST_1']),
+	'HOST_2' : 'SWK_%d' % (hostId['HOST_2']),
+}
+
+
 programList = [
 	'HEATING_CIRCUIT_1',
 	'HEATING_CIRCUIT_2',
@@ -50,7 +71,7 @@ programType = {
 	'BOILER_2'          : 'BOILER'         ,
 	'CASCADE_MANAGER'   : 'CASCADE_MANAGER',
 	'OUTDOOR_SENSOR'    : 'OUTDOOR_SENSOR' ,
-	'SNOW_MELTER'       : 'SNOWMELT',
+	'SNOW_MELTER'       : 'SNOWMELT'       ,
 }
 
 programScheme = {
@@ -63,7 +84,7 @@ programScheme = {
 	'BOILER_2'          : 'DEFAULT'       ,
 	'CASCADE_MANAGER'   : 'DEFAULT'       ,
 	'OUTDOOR_SENSOR'    : 'DEFAULT'       ,
-	'SNOW_MELTER'     : 'DEFAULT',
+	'SNOW_MELTER'       : 'DEFAULT'       ,
 }
 
 programTitle = {
@@ -132,7 +153,7 @@ programOutputs = {
 	'BOILER_2'          : boilerOutputMapping(pump = outputMapping(8), burner1 = outputMapping(9)),
 	'CASCADE_MANAGER'   : cascadeOutputMapping(),
 	'OUTDOOR_SENSOR'    : oatOutputMapping(),
-	'SNOW_MELTER'       : smOutputMapping(outputMapping(10), outputMapping(11), outputMapping(12)),
+	'SNOW_MELTER'       : smOutputMapping(None, outputMapping(11), outputMapping(12)),
 }
 
 programPower = {
@@ -149,9 +170,9 @@ programPower = {
 }
 
 def getPresetsList() :
-	presetList = []
+	programPresetList = []
 	for prg in programList:
-		presetList.append(presets.preset.ProgramPreset(
+		programPresetList.append(presets.preset.ProgramPreset(
 			programType    [prg],
 			programScheme  [prg],
 			programId      [prg],
@@ -163,4 +184,13 @@ def getPresetsList() :
 			)
 		)
 
-	return presetList
+	controllerPresetList = []
+	for ctrl in hostList:
+		controllerPresetList.append(presets.preset.ControllerPreset(
+			hostType    [ctrl],
+			hostId      [ctrl],
+			hostTitle   [ctrl],
+			)
+		)
+
+	return programPresetList, controllerPresetList

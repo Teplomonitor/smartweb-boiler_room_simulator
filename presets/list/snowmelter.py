@@ -10,11 +10,31 @@ from presets.mapping import SnowMelterOutputMapping     as smOutputMapping
 
 from presets.settings import SnowMelterSettings as smSettings
 
-import smartnet.constants as snc
 import presets.preset
 
 def getHostId():
 	return 123
+
+hostList = [
+	'HOST_1',
+	'HOST_2',
+]
+
+hostId = {
+	'HOST_1' : 123,
+	'HOST_2' : 124,
+}
+
+hostType = {
+	'HOST_1' : 'SWK_1',
+	'HOST_2' : 'SWK_1',
+}
+
+hostTitle = {
+	'HOST_1' : 'SWK_%d' % (hostId['HOST_1']),
+	'HOST_2' : 'SWK_%d' % (hostId['HOST_2']),
+}
+
 
 programList = [
 	'SNOW_MELTER'   ,
@@ -75,9 +95,9 @@ programPower = {
 }
 
 def getPresetsList() :
-	presetList = []
+	programPresetList = []
 	for prg in programList:
-		presetList.append(presets.preset.ProgramPreset(
+		programPresetList.append(presets.preset.ProgramPreset(
 			programType    [prg],
 			programScheme  [prg],
 			programId      [prg],
@@ -89,4 +109,13 @@ def getPresetsList() :
 			)
 		)
 
-	return presetList
+	controllerPresetList = []
+	for ctrl in hostList:
+		controllerPresetList.append(presets.preset.ControllerPreset(
+			hostType    [ctrl],
+			hostId      [ctrl],
+			hostTitle   [ctrl],
+			)
+		)
+
+	return programPresetList, controllerPresetList
