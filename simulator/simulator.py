@@ -146,17 +146,22 @@ class Simulator(can.Listener):
 			outputId    = data[2]
 			outputValue = data[3]
 
+			if self._programsList is None:
+				return
 			for program in self._programsList:
 				if program.getId() == programId:
 					program.getOutput(outputId).setValue(outputValue)
 					break
 			return
 		
+		if self._controllerIo is None:
+			return
 		for ctrlIo in self._controllerIo:
 			ctrlIo.on_message_received(message)
 		
 	def run(self):
 		while True:
+			time_start = time.time()
 			for sim in self._simList:
 				sim.run()
 
@@ -167,7 +172,9 @@ class Simulator(can.Listener):
 
 			for ctrlIo in self._controllerIo:
 				ctrlIo.run()
-				
-			time.sleep(1)
+			
+			dt = time.time() - time_start
+			
+			time.sleep(1 - dt)
 
 
