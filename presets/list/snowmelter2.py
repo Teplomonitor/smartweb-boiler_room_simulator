@@ -162,11 +162,11 @@ programPower = {
 	'ROOM_DEVICE_1'     : -1,
 	'ROOM_DEVICE_2'     : -2,
 	'DHW'               : -4,
-	'BOILER_1'          :  7,
-	'BOILER_2'          :  7,
+	'BOILER_1'          : 10,
+	'BOILER_2'          : 10,
 	'CASCADE_MANAGER'   :  0,
 	'OUTDOOR_SENSOR'    : None,
-	'SNOW_MELTER'       : -4,
+	'SNOW_MELTER'       : -6,
 }
 
 def getPresetsList() :
