@@ -222,8 +222,66 @@ def getPresetsList(presetId):
 	print('shit')
 	return None
 
+S = 5*4
+h = 0.15
+p = 2200
+
+V = S*h
+M = V*p
+
+concreteHeatCapacity = 880
+
+CHCM = concreteHeatCapacity * M
+
+heatTransferCoefficient = 10
+A = 15
+
+
+def computeNHeating(Tavr, Tplate):
+	return heatTransferCoefficient*S*(Tavr-Tplate)
+
+def computeNCooling(Toat, Tplate):
+	return A*S*(Toat - Tplate)
+
+def limit(lower_bound, value, upper_bound):
+	return max(min(value, upper_bound), lower_bound)
+
+def getDirectFlowTemperature():
+	return 50
+
+def getBackwardFlowTemperature():
+	return 30
+
+def getOat():
+	return -10
+
+def computePlateTemperature(temp):
+	directTemp = getDirectFlowTemperature()
+	backTemp   = getBackwardFlowTemperature()
+	oat        = getOat()
+
+	Tavr = (directTemp + backTemp)/2
+	nHeating = computeNHeating(Tavr, temp)
+	nCooling = computeNCooling(oat , temp)
+	n = nCooling + nHeating
+	
+	temp = temp + n / CHCM
+	
+	temp = limit(-30, temp, 120)
+
+	return temp
 
 def main():
+	
+	temp = -5
+	for i in range(0,60*100):
+		temp = computePlateTemperature(temp)
+		if (i % 120) == 0:
+			print(f'{i}: plate T = {temp}')
+	
+	
+	return
+	
 	getPresetsList('default')
 	
 	return
