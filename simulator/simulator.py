@@ -65,6 +65,7 @@ class Simulator(can.Listener):
 		self._heatingCircuitList = []
 		self._consumersList  = []
 		self._generatorsList = []
+		self._cascadeList    = []
 		self._oat = None
 
 		for program in self._programsList:
@@ -107,6 +108,9 @@ class Simulator(can.Listener):
 			
 			if program.getType() == 'HEATING_CIRCUIT':
 				self._heatingCircuitList.append(sim)
+				
+			if program.getType() == 'CASCADE_MANAGER':
+				self._cascadeList.append(sim)
 
 
 
@@ -168,12 +172,15 @@ class Simulator(can.Listener):
 				program = sim._program
 				for programInput in program.getInputs():
 					if reportSensorValue(programInput):
-						time.sleep(0.1)
+						time.sleep(0.05)
 
 			for ctrlIo in self._controllerIo:
 				ctrlIo.run()
 			
 			dt = time.time() - time_start
+			
+			if dt > 1:
+				dt = 1 
 			
 			time.sleep(1 - dt)
 
