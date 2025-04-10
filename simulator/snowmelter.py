@@ -169,9 +169,6 @@ class Simulator(object):
 		return temp
 
 	def getCooling(self):
-		sourceTemp = self.getSourceTemperature()
-		sourceTemp = sourceTemp - 5 # we loose some temp coming from source
-		
 		temp       = self.getDirectFlowTemperature()
 		backTemp   = self.getBackwardFlowTemperature()
 		plateTemp  = self.getPlateTemperature()
@@ -180,34 +177,15 @@ class Simulator(object):
 		pump   = self.getSecondaryPumpState()
 		
 		if pump:
-			dT = (temp - plateTemp)*0.8
+			dT = temp - plateTemp
 			backTemp = plateTemp + dT * signal
 		else:
+			sourceTemp = self.getSourceTemperature()
+			sourceTemp = sourceTemp - 5 # we loose some temp coming from source
 			dT = sourceTemp - backTemp
 			backTemp = backTemp + dT * signal
 			
 		return backTemp
-
-	def getPlateHeating(self):
-		temp       = self.getDirectFlowTemperature()
-		backTemp   = self.getBackwardFlowTemperature()
-		plateTemp  = self.getPlateTemperature()
-		oat        = self.getOat()
-		
-		alpha = 0.3
-		beta  = 1 - alpha
-		
-		plateTemp = plateTemp * beta + oat * alpha
-		
-		signal = self.getAnalogPumpSignal()
-		pump   = self.getSecondaryPumpState()
-
-		if pump:
-			tempAver = (temp + backTemp)/2
-			dT = (tempAver - plateTemp) * 0.5
-			plateTemp = plateTemp + dT * signal
-		
-		return plateTemp
 
 	def computeDirectFlowTemperature(self):
 		temp       = self.getDirectFlowTemperature()
@@ -238,9 +216,14 @@ class Simulator(object):
 		directTemp = self.getDirectFlowTemperature()
 		backTemp   = self.getBackwardFlowTemperature()
 		oat        = self.getOat()
+		pump       = self.getSecondaryPumpState()
 
-		Tavr = (directTemp + backTemp)/2
-		nHeating = computeNHeating(temp, Tavr)
+		if pump:
+			Tavr = (directTemp + backTemp)/2
+			nHeating = computeNHeating(temp, Tavr)
+		else:
+			nHeating = 0
+			
 		nCooling = computeNCooling(temp, oat)
 		n = nHeating + nCooling
 		
