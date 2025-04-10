@@ -5,6 +5,27 @@ from smartnet.units import TEMPERATURE as TEMPERATURE
 from simulator.sensorReport import reportSensorValue as reportSensorValue
 from functions.periodPulse import PeriodPulse as PeriodPulse
 
+S = 5*4
+h = 0.15
+p = 2200
+
+V = S*h
+M = V*p
+
+concreteHeatCapacity = 880
+
+CHCM = concreteHeatCapacity * M
+
+heatTransferCoefficient = 10
+A = 15
+
+
+def computeNHeating(Tplate, Tavr):
+	return heatTransferCoefficient*S*(Tavr-Tplate)
+
+def computeNCooling(Tplate, Toat):
+	return A*S*(Toat - Tplate)
+
 def limit(lower_bound, value, upper_bound):
 	return max(min(value, upper_bound), lower_bound)
 
@@ -18,6 +39,8 @@ class Simulator(object):
 		self._time_start = time.time()
 		self._control    = control
 		self._snowTime   = PeriodPulse()
+		self._cnt        = 0
+
 		
 		self._inputId = {
 			'directFlowTemperature'  : 0,
@@ -34,10 +57,11 @@ class Simulator(object):
 
 		self.setDirectFlowTemperature  (20)
 		self.setBackwardFlowTemperature(20)
-		self.setPlateTemperature       ( 5)
+		self.setPlateTemperature       (-5)
 		self.setSnowSensor             ( 0)
 		
 	def getOat(self):
+#		return -10
 		oat = self._control.getOat()
 		if oat is None:
 			oat = 0
@@ -46,6 +70,7 @@ class Simulator(object):
 
 
 	def getDirectFlowTemperature(self):
+#		return 50
 		return self._program.getInput(self._inputId['directFlowTemperature']).getValue()
 
 	def setDirectFlowTemperature(self, value):
@@ -53,6 +78,7 @@ class Simulator(object):
 		self._program.getInput(self._inputId['directFlowTemperature']).setValue(value)
 
 	def getBackwardFlowTemperature(self):
+#		return 30
 		return self._program.getInput(self._inputId['backwardTemperature']).getValue()
 
 	def setBackwardFlowTemperature(self, value):
@@ -208,14 +234,19 @@ class Simulator(object):
 		return temp
 
 	def computePlateTemperature(self):
-		temp = self.getPlateTemperature()
+		temp       = self.getPlateTemperature()
+		directTemp = self.getDirectFlowTemperature()
+		backTemp   = self.getBackwardFlowTemperature()
+		oat        = self.getOat()
 
-		alpha = 0.001
-		beta  = 1 - alpha
-
-		temp = temp * beta + self.getPlateHeating() * alpha
+		Tavr = (directTemp + backTemp)/2
+		nHeating = computeNHeating(temp, Tavr)
+		nCooling = computeNCooling(temp, oat)
+		n = nHeating + nCooling
 		
-		temp = limit(-30, temp, 120)
+		temp = temp + n / CHCM
+		
+		temp = limit(oat, temp, 80)
 
 		return temp
 
