@@ -34,6 +34,8 @@ class Simulator(object):
 			'backwardTemperature' : 5,
 		}
 
+		self._tMax = 75
+		self._tMin = 20
 		self.setTemperature(30)
 
 	def getTemperature(self):
@@ -88,12 +90,17 @@ class Simulator(object):
 
 	def getPower(self):
 		if self.getStageState():
-			return self.getMaxPower()
+			Pmax = self.getMaxPower()
+			Pmin = Pmax*0.5
+			dt = self._tMax - self.getTemperature() 
+			P = Pmin + (Pmax - Pmin) * dt/self._tMax
+			return P
 		else:
 			return 0
 
 	def getCoolDownPower(self):
-		return -1
+		dt = self.getTemperature() - self._tMin
+		return -1 * dt/self._tMax
 
 	def getTotalPower(self):
 		return self.getPower() + self.getConsumersPower() + self.getCoolDownPower()
@@ -102,11 +109,12 @@ class Simulator(object):
 		temp = self.getTemperature()
 		temp = temp + self.getTotalPower() * 0.1
 
-		temp = limit(-30, temp, 120)
+		temp = limit(self._tMin, temp, self._tMax)
 
+		print(f'b{self._program.getId()} t = {temp}')
+		
 		return temp
 
 	def run(self):
-		if self.temperatureInputIsMapped():
-			self.setTemperature(self.computeTemperature())
+		self.setTemperature(self.computeTemperature())
 
