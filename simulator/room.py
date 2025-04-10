@@ -121,7 +121,7 @@ class Simulator(object):
 		dTfloor = floorTemp    - temp
 		dTwall  = wallTemp     - temp
 		
-		return dTfloor*0.0015 + dTrad*0.001 + dTwall*0.001
+		return dTfloor*0.15 + dTrad*0.1 + dTwall*0.1
 
 	def getCooling(self):
 		temp  = self.getTemperature()
@@ -129,14 +129,12 @@ class Simulator(object):
 		
 		dT = oat - temp
 		
-		return dT*0.002
+		return dT*0.1
 		
 
 	def computeTemperature(self):
-		temp  = self.getTemperature()
-
-		temp = temp + self.getHeating() + self.getCooling()
-
+		temp = self.getTemperature()
+		temp = temp + (self.getHeating() + self.getCooling())*0.0005
 		temp = limit(-10, temp, 50)
 
 		return temp
