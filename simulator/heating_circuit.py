@@ -104,7 +104,7 @@ class Simulator(object):
 		return 60
 
 	def computeTemperature(self):
-		tempBakward = self.getBackwardTemperature()
+		tempBackward = self.getBackwardTemperature()
 		temp        = self.getTemperature()
 		roomTemp    = self.getRoomTemp()
 
@@ -118,7 +118,7 @@ class Simulator(object):
 
 		valve = self.getValveState()
 		
-		temp = tempBakward + (sourceTemp - tempBakward) * valve
+		temp = tempBackward + (sourceTemp - tempBackward) * valve
 
 		temp = limit(-30, temp, 120)
 
@@ -129,7 +129,7 @@ class Simulator(object):
 		roomTemp   = self.getRoomTemp()
 		oat        = self.getOat()
 		
-		avrRoomTemp = (roomTemp + oat)/2
+		avrRoomTemp = (roomTemp*1.5 + oat*0.5)/2
 		
 		if self.getPumpState() == 0:
 			alpha = 0.01
