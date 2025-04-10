@@ -65,7 +65,7 @@ class Simulator(object):
 
 	def computeTemperature(self):
 		temp = self.getTemperature()
-		temp = temp + self.getTotalPower() * 0.1
+		temp = temp + self.getTotalPower() * 0.05
 
 		temp = limit(-30, temp, 120)
 
