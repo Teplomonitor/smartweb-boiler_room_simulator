@@ -94,7 +94,7 @@ class Simulator(object):
 
 		temp = temp + self.getHeating() + self.getCooling()
 
-		temp = limit(-30, temp, 120)
+		temp = limit(10, temp, 120)
 
 		return temp
 
