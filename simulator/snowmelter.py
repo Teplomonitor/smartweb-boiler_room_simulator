@@ -163,8 +163,12 @@ class Simulator(object):
 		pump   = self.getSecondaryPumpState()
 		
 		if pump:
-			dT = sourceTemp - backTemp
-			temp = backTemp + dT * signal
+			if signal:
+				dT = sourceTemp - backTemp
+				temp = backTemp + dT * signal
+			else:
+				plateTemp = self.getPlateTemperature()
+				temp = (temp + plateTemp)/2
 		
 		return temp
 
