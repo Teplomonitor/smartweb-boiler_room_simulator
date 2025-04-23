@@ -1,8 +1,6 @@
 
 import math
 import time
-from smartnet.units import TEMPERATURE as TEMPERATURE
-from simulator.sensorReport import reportSensorValue as reportSensorValue
 
 BROADCAST_ID = 0
 

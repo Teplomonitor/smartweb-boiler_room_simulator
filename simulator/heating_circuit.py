@@ -2,8 +2,6 @@
 import math
 import time
 
-from smartnet.units import TEMPERATURE as TEMPERATURE
-from simulator.sensorReport import reportSensorValue as reportSensorValue
 
 def limit(lower_bound, value, upper_bound):
 	return max(min(value, upper_bound), lower_bound)

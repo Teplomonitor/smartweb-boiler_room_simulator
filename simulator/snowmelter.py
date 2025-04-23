@@ -1,8 +1,7 @@
 
 import math
 import time
-from smartnet.units import TEMPERATURE as TEMPERATURE
-from simulator.sensorReport import reportSensorValue as reportSensorValue
+
 from functions.periodPulse import PeriodPulse as PeriodPulse
 
 S = 5*4

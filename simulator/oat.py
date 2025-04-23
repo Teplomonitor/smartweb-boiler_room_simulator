@@ -1,7 +1,7 @@
 
 import math
 import time
-from simulator.sensorReport import reportSensorValue as reportSensorValue
+
 
 class Simulator(object):
 	def __init__(self, thread_name, thread_ID, program, canbus, control):
