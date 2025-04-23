@@ -111,7 +111,7 @@ class Simulator(object):
 
 		temp = limit(self._tMin, temp, self._tMax)
 
-		print(f'b{self._program.getId()} t = {temp}')
+#		print(f'b{self._program.getId()} t = {temp}')
 		
 		return temp
 
