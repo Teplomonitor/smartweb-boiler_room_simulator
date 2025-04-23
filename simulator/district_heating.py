@@ -1,8 +1,6 @@
 
 import math
 import time
-from smartnet.units import TEMPERATURE as TEMPERATURE
-from simulator.sensorReport import reportSensorValue as reportSensorValue
 
 BROADCAST_ID = 0
 
@@ -19,31 +17,73 @@ class Simulator(object):
 		self._control    = control
 		
 		self._inputId = {
-			'temperature'         : 0,
-			'backwardTemperature' : 1,
-			'outsideRequest'      : 2,
-			'error'               : 3,
+			'supply_direct_temp'   : 0,
+			'supply_backward_temp' : 1,
+			'direct_temp'          : 2,
+			'backward_temp'        : 3,
+			'thermal_output'       : 4,
+			'volume_flow'          : 5,
+			'outside_request'      : 6,
 		}
 
 		self._outputId = {
-			'pump'                : 0,
-			'burner1'             : 1,
-			'burner2'             : 2,
-			'power'               : 3,
-			'temperature'         : 4,
-			'backwardTemperature' : 5,
+			'supply_pump'         : 0,
+			'circulation_pump'    : 1,
+			'valve'               : 2,
+			'analog_valve'        : 3,
 		}
 
 		self._tMax = 75
 		self._tMin = 20
-		self.setTemperature(30)
+		self.setSupplyDirectTemperature(30)
+		self.setSupplyBackwardTemperature(30)
+		self.setDirectTemperature(30)
+		self.setBackwardTemperature(30)
+		self.setThermalOutputSensor(0)
+		self.setVolumeFlowSensor(0)
+		self.setOutsideRequestSensor(0)
 
-	def getTemperature(self):
-		return self._program.getInput(self._inputId['temperature']).getValue()
+	def getSupplyDirectTemperature(self):
+		return self._program.getInput(self._inputId['supply_direct_temp']).getValue()
 
-	def setTemperature(self, value):
-#		print(f'boiler: {value}')
-		self._program.getInput(self._inputId['temperature']).setValue(value)
+	def setSupplyDirectTemperature(self, value):
+		self._program.getInput(self._inputId['supply_direct_temp']).setValue(value)
+
+	def getSupplyBackwardTemperature(self):
+		return self._program.getInput(self._inputId['supply_backward_temp']).getValue()
+
+	def setSupplyBackwardTemperature(self, value):
+		self._program.getInput(self._inputId['supply_backward_temp']).setValue(value)
+
+	def getDirectTemperature(self):
+		return self._program.getInput(self._inputId['direct_temp']).getValue()
+
+	def setDirectTemperature(self, value):
+		self._program.getInput(self._inputId['direct_temp']).setValue(value)
+
+	def getBackwardTemperature(self):
+		return self._program.getInput(self._inputId['backward_temp']).getValue()
+
+	def setBackwardTemperature(self, value):
+		self._program.getInput(self._inputId['backward_temp']).setValue(value)
+
+	def getThermalOutputSensor(self):
+		return self._program.getInput(self._inputId['thermal_output']).getValue()
+
+	def setThermalOutputSensor(self, value):
+		self._program.getInput(self._inputId['thermal_output']).setValue(value)
+
+	def getVolumeFlowSensor(self):
+		return self._program.getInput(self._inputId['volume_flow']).getValue()
+
+	def setVolumeFlowSensor(self, value):
+		self._program.getInput(self._inputId['volume_flow']).setValue(value)
+
+	def getOutsideRequestSensor(self):
+		return self._program.getInput(self._inputId['outside_request']).getValue()
+
+	def setOutsideRequestSensor(self, value):
+		self._program.getInput(self._inputId['outside_request']).setValue(value)
 
 	def getElapsedTime(self):
 		return time.time() - self._time_start
