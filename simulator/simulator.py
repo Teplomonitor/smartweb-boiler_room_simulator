@@ -17,8 +17,10 @@ import simulator.heating_circuit
 import simulator.room
 import simulator.snowmelter
 import simulator.dhw
+import simulator.district_heating
 
 
+BROADCAST_ID = 0
 
 class Simulator(can.Listener):
 	'''
@@ -40,13 +42,14 @@ class Simulator(can.Listener):
 		self._programsList = self._controller.getProgramList()
 
 		simulatorType = {
-			'OUTDOOR_SENSOR'  : simulator.oat            .Simulator,
-			'BOILER'          : simulator.boiler         .Simulator,
-			'CASCADE_MANAGER' : simulator.cascade        .Simulator,
-			'ROOM_DEVICE'     : simulator.room           .Simulator,
-			'HEATING_CIRCUIT' : simulator.heating_circuit.Simulator,
-			'SNOWMELT'        : simulator.snowmelter     .Simulator,
-			'DHW'             : simulator.dhw            .Simulator,
+			'OUTDOOR_SENSOR'  : simulator.oat             .Simulator,
+			'BOILER'          : simulator.boiler          .Simulator,
+			'CASCADE_MANAGER' : simulator.cascade         .Simulator,
+			'ROOM_DEVICE'     : simulator.room            .Simulator,
+			'HEATING_CIRCUIT' : simulator.heating_circuit .Simulator,
+			'SNOWMELT'        : simulator.snowmelter      .Simulator,
+			'DHW'             : simulator.dhw             .Simulator,
+			'DISTRICT_HEATING': simulator.district_heating.Simulator,
 		}
 
 		consumerTypesList = [
@@ -58,6 +61,7 @@ class Simulator(can.Listener):
 		sourceTypesList = [
 			'BOILER',
 			'CASCADE_MANAGER',
+			'DISTRICT_HEATING',
 		]
 
 		self._simList        = []
@@ -118,8 +122,24 @@ class Simulator(can.Listener):
 	def getHeatingCircuitList(self): return self._heatingCircuitList
 	def getSourceList        (self): return self._generatorsList
 	def getRoomList          (self): return self._roomList
+	def getCascadeList       (self): return self._cascadeList
 	def getOat               (self): return self._oat
+	
+	def getConsumersPower(self, sourceId):
+		programList = self.getConsumerList()
+		consumerList = []
+		for program in programList:
+			sourceList = program._program.getPreset().getSettings().getSourceList()
+			if ((sourceId in sourceList) or
+				(BROADCAST_ID in sourceList) ):
+				consumerList.append(program)
 
+		consumerPower = 0
+		for consumer in consumerList:
+			consumerPower = consumerPower + consumer.getPower()
+
+		return consumerPower
+	
 	def on_message_received(self, message):
 		if message is None:
 			return
