@@ -39,7 +39,7 @@ ProgramType = {
 	'CIRCUIT'                    : 12,
 	'SCHEDULE'                   : 13,
 	'HEATING_CIRCUIT'            : 14,
-	'DIRECT_CIRCUIT'             : 15,
+	'DISTRICT_HEATING'           : 15,
 	'DHW'                        : 16,
 	'FLOW_THROUGH_DHW'           : 17,
 	'TEMPERATURE_GENERATOR'      : 18,
