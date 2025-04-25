@@ -47,19 +47,8 @@ class Simulator(object):
 		return time.time() - self._time_start
 
 	def getConsumersPower(self):
-		programList = self._control.getConsumerList()
-		consumerList = []
-		for program in programList:
-			sourceList = program._program.getPreset().getSettings().getSourceList()
-			if ((self._program.getId() in sourceList) or
-				(BROADCAST_ID in sourceList) ):
-				consumerList.append(program)
-
-		consumerPower = 0
-		for consumer in consumerList:
-			consumerPower = consumerPower + consumer.getPower()
-
-		return consumerPower
+		consumersPower = self._control.getConsumersPower(self._program.getId())
+		return consumersPower
 
 	def temperatureInputIsMapped(self):
 		temp = self._program.getInput(self._inputId['temperature'])
