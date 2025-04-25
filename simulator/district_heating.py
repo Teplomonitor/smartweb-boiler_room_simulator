@@ -4,6 +4,13 @@ import time
 
 BROADCAST_ID = 0
 
+# https://proteplo.org/blog/teplovoy-raschet-teploobmennika
+# Q = G*c*(T2-T1)
+G = 500 #kg/h
+c = 4200 # Joule/kg*C
+Gc = G*c/1000/3.6 # kWatt
+
+
 def limit(lower_bound, value, upper_bound):
 	return max(min(value, upper_bound), lower_bound)
 
@@ -15,6 +22,8 @@ class Simulator(object):
 		self._preset     = self._program.getPreset()
 		self._time_start    = time.time()
 		self._control    = control
+		
+		self._district_heating_scenario = 'default'
 		
 		self._inputId = {
 			'supply_direct_temp'   : 0,
@@ -35,8 +44,10 @@ class Simulator(object):
 
 		self._tMax = 75
 		self._tMin = 20
-		self.setSupplyDirectTemperature(30)
-		self.setSupplyBackwardTemperature(30)
+		self._district_temperature = 65
+		
+		self.setSupplyDirectTemperature(60)
+		self.setSupplyBackwardTemperature(50)
 		self.setDirectTemperature(30)
 		self.setBackwardTemperature(30)
 		self.setThermalOutputSensor(0)
@@ -88,73 +99,146 @@ class Simulator(object):
 	def getElapsedTime(self):
 		return time.time() - self._time_start
 
-	def getConsumersPower(self):
-		programList = self._control.getConsumerList()
+	def getCascadePower(self):
+		programList = self._control.getCascadeList()
 		consumerList = []
+		programId = self._program.getId()
 		for program in programList:
 			sourceList = program._program.getPreset().getSettings().getSourceList()
-			if ((self._program.getId() in sourceList) or
+			if ((programId in sourceList) or
 				(BROADCAST_ID in sourceList) ):
 				consumerList.append(program)
 
 		consumerPower = 0
 		for consumer in consumerList:
-			consumerPower = consumerPower + consumer.getPower()
+			consumerPower = consumerPower + (consumer.getPower() - self.getPower()) # exclude own district heating power
 
 		return consumerPower
-
-	def temperatureInputIsMapped(self):
-		temp = self._program.getInput(self._inputId['temperature'])
-		mapping = temp.getMapping()
-		if mapping is None:
-			return False
-
-		if mapping.getChannelType() == 'CHANNEL_UNDEFINED':
-			return False
-
-		return True
+	
+	def getConsumersPower(self):
+		consumersPower = self._control.getConsumersPower(self._program.getId())
+		cascadePower = self.getCascadePower()
+		return consumersPower + cascadePower
 
 
-	def getStageState(self):
-		stage = self._program.getOutput(self._outputId['burner1'])
-		if stage.getMapping() is None:
+	def getPumpState(self, pumpId):
+		pump = self._program.getOutput(self._outputId[pumpId])
+		if pump.getMapping() is None:
 			return 1
 
-		if stage.getValue():
+		if pump.getValue():
 			return 1
 
 		return 0
+	
+	def getSupplyPumpState(self):
+		return self.getPumpState('supply_pump')
+	
+	def getValveState(self):
+		valve        = self._program.getOutput(self._outputId['valve'])
+		analog_valve = self._program.getOutput(self._outputId['analog_valve'])
+		
+		if (valve.getMapping() is None) and (analog_valve.getMapping() is None ):
+			return 1
+
+		valve = analog_valve.getValue()
+		if valve is None:
+			return 1
+		# TODO: add binary valve use case
+		return valve / 254
+	
+	def getCirculationPumpState(self):
+		return self.getPumpState('circulation_pump')
 
 	def getMaxPower(self):
 		return self._preset.getPower()
 
 	def getPower(self):
-		if self.getStageState():
-			Pmax = self.getMaxPower()
-			Pmin = Pmax*0.5
-			dt = self._tMax - self.getTemperature() 
-			P = Pmin + (Pmax - Pmin) * dt/self._tMax
-			return P
+		if self.supplyFlowIsStopped():
+			Q = 0
 		else:
-			return 0
+			t1 = self.getSupplyDirectTemperature()
+			t2 = self.getSupplyBackwardTemperature()
+			Q = Gc * (t1 - t2)
+			
+		print(f'District heating power {Q}')
+		return Q
 
-	def getCoolDownPower(self):
-		dt = self.getTemperature() - self._tMin
-		return -1 * dt/self._tMax
-
-	def getTotalPower(self):
-		return self.getPower() + self.getConsumersPower() + self.getCoolDownPower()
-
-	def computeTemperature(self):
-		temp = self.getTemperature()
-		temp = temp + self.getTotalPower() * 0.1
-
-		temp = limit(self._tMin, temp, self._tMax)
-
-		print(f'b{self._program.getId()} t = {temp}')
+	def tempSlowCooling(self, temp):
+		alpha = 0.1
+		beta  = 1 - alpha
+		roomTemp = 24
+		temp = temp*beta + roomTemp*alpha
+		temp = limit(20, temp, 80)
 		
 		return temp
+		
+	def supplyFlowIsStopped(self):
+		return (self.getSupplyPumpState() == 0) or (self.getValveState() == 0)
+	
+	def secondaryFlowIsStopped(self):
+		return self.getPumpState() == 0
+	
+	def computeSupplyDirectTemperature(self):
+		temp = self.getSupplyDirectTemperature()
+		if self.supplyFlowIsStopped():
+			temp = self.tempSlowCooling(temp)
+			return temp
+		
+		if self._district_heating_scenario == 'default':
+			return 60
 
+		return 50
+	
+	def computeSupplyBackwardTemperature(self):
+		temp = self.getSupplyBackwardTemperature()
+		if self.supplyFlowIsStopped():
+			temp = self.tempSlowCooling(temp)
+			return temp
+		
+		supplyDirectTemp = self.getSupplyDirectTemperature()
+		backwardTemp     = self.getBackwardTemperature()
+
+		valve = self.getValveState()
+
+		supplyBackwardTemp = backwardTemp + valve*(supplyDirectTemp - backwardTemp)
+		
+		return supplyBackwardTemp
+
+	def computeDirectTemperature(self):
+		temp = self.getDirectTemperature()
+		if self.secondaryFlowIsStopped():
+			temp = self.tempSlowCooling(temp)
+			return temp
+		
+		valve = self.getValveState()
+		supplyDirectTemp = self.getSupplyDirectTemperature()
+		backwardTemp     = self.getBackwardTemperature()
+		
+		directTemp = backwardTemp + valve*(supplyDirectTemp - backwardTemp)
+		
+		return directTemp
+	
+	def computeBackwardTemperature(self):
+		temp = self.getBackwardTemperature()
+		if self.secondaryFlowIsStopped():
+			temp = self.tempSlowCooling(temp)
+			return temp
+		
+		totalPower = self.getConsumersPower() + self.getPower()
+		print(f'dh total power: {totalPower}')
+		
+		temp = temp + totalPower/3600
+		
+		temp = limit(20, temp, 80)
+		
+		print(f'dh bacward temp {temp}')
+		
+		return temp
+		
 	def run(self):
-		self.setTemperature(self.computeTemperature())
+		self.setSupplyDirectTemperature  (self.computeSupplyDirectTemperature())
+		self.setSupplyBackwardTemperature(self.computeSupplyBackwardTemperature())
+		self.setDirectTemperature        (self.computeDirectTemperature())
+		self.setBackwardTemperature      (self.computeBackwardTemperature())
 
