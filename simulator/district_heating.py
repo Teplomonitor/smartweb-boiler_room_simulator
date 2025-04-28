@@ -15,10 +15,10 @@ def limit(lower_bound, value, upper_bound):
 	return max(min(value, upper_bound), lower_bound)
 
 class Simulator(object):
-	def __init__(self, thread_name, thread_ID, program, canbus, control):
+	def __init__(self, thread_name, thread_ID, program_config, canbus, control):
 		self.thread_name = thread_name
 		self.thread_ID   = thread_ID
-		self._program    = program
+		self._program    = program_config
 		self._preset     = self._program.getPreset()
 		self._time_start    = time.time()
 		self._control    = control
@@ -95,6 +95,9 @@ class Simulator(object):
 
 	def setOutsideRequestSensor(self, value):
 		self._program.getInput(self._inputId['outside_request']).setValue(value)
+
+	def getTemperature(self):
+		return self.getDirectTemperature()
 
 	def getElapsedTime(self):
 		return time.time() - self._time_start
@@ -177,7 +180,7 @@ class Simulator(object):
 		return (self.getSupplyPumpState() == 0) or (self.getValveState() == 0)
 	
 	def secondaryFlowIsStopped(self):
-		return self.getPumpState() == 0
+		return self.getCirculationPumpState() == 0
 	
 	def computeSupplyDirectTemperature(self):
 		temp = self.getSupplyDirectTemperature()
