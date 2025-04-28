@@ -35,6 +35,7 @@ from simulator.simulator import Simulator as Simulator
 
 import debug
 import udp.udp
+import gui.frame as guiFrameThread
 
 
 __all__ = []
@@ -112,6 +113,7 @@ USAGE
 		init_controller_with_preset = args.init
 		udp_bridge_enable           = int(args.udp)
 		preset                      = args.preset
+		enable_gui                  = 0
 
 		programList, controllerIoList = presets.preset.getPresetsList(preset)
 		
@@ -136,6 +138,10 @@ USAGE
 			thread2.daemon = True
 			thread2.start()
 		
+		if enable_gui:
+			guiThread = guiFrameThread.guiThread("GUI_Thread", 789)
+			guiThread.daemon = True
+			guiThread.start()
 		
 		if run_simulator_debug:
 			dbgThread = debug.debug_thread()

@@ -13,6 +13,143 @@ import struct
 import time
 import threading
 
+import curses
+
+import pytermgui as ptg
+
+import wx
+
+
+def testTUI1(stdscr):
+	# Clear screen
+	stdscr.clear()
+
+	# This raises ZeroDivisionError when i == 10.
+	for i in range(0, 11):
+		v = i-10
+		stdscr.addstr(i, 0, '10 divided by {} is {}'.format(v, 10/v))
+
+		stdscr.refresh()
+		stdscr.getkey()
+		
+def testTUI2(stdscr):
+	begin_x = 20; begin_y = 7
+	height = 5; width = 40
+	win = curses.newwin(height, width, begin_y, begin_x)
+	win.box()
+	win.refresh()
+	stdscr.refresh()
+	stdscr.getkey()
+
+def testTUI3(stdscr):
+	# Enable color support
+	curses.start_color()
+	curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
+
+	stdscr.clear()
+	stdscr.addstr(2, 5, "This is red text!", curses.color_pair(1))
+	stdscr.refresh()
+	stdscr.getch()
+	
+def testTUI4(stdscr):
+	curses.curs_set(0)  # Hide cursor
+	stdscr.clear()
+
+	# Create two windows
+	height, width = 10, 40
+	win1 = curses.newwin(height, width, 2,  2)
+	win2 = curses.newwin(height, width, 2, 45)
+
+	# Add borders and text
+	win1.box()
+	win2.box()
+	win1.addstr(1, 1, "Window 1: Logs")
+	win2.addstr(1, 1, "Window 2: Status")
+
+	# Refresh windows
+	win1.refresh()
+	win2.refresh()
+
+	stdscr.getch()
+
+def macro_time(fmt: str) -> str:
+	return time.strftime(fmt)
+
+def testTUI5():
+	ptg.tim.define("!time", macro_time)
+	
+	with ptg.WindowManager() as manager:
+		manager.layout.add_slot("Body")
+		manager.add(
+			ptg.Window("[bold]The current time is:[/]\n\n[!time 75]%c", box="EMPTY")
+			)
+
+def testGUI1():
+	app = wx.App()
+	
+	frame = wx.Frame(None, title='Simple application')
+	frame.Show()
+
+	app.MainLoop()
+
+def testGUI2():
+	app = wx.App()
+	frame = wx.Frame(None, style=wx.MAXIMIZE_BOX | wx.RESIZE_BORDER
+	| wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
+	frame.Show(True)
+
+	app.MainLoop()
+	
+class Example(wx.Frame):
+
+	def __init__(self, *args, **kw):
+		super(Example, self).__init__(*args, **kw)
+
+		self.InitUI()
+
+	def InitUI(self):
+
+		pnl = wx.Panel(self)
+
+		sizer = wx.GridBagSizer(5, 5)
+
+		sld = wx.Slider(pnl, value=200, minValue=150, maxValue=500,
+						style=wx.SL_HORIZONTAL)
+
+		sld.Bind(wx.EVT_SCROLL, self.OnSliderScroll)
+		sizer.Add(sld, pos=(0, 0), flag=wx.ALL|wx.EXPAND, border=25)
+
+		self.txt = wx.StaticText(pnl, label='200')
+		sizer.Add(self.txt, pos=(0, 1), flag=wx.TOP|wx.RIGHT, border=25)
+
+		sizer.AddGrowableCol(0)
+		pnl.SetSizer(sizer)
+
+		self.SetTitle('wx.Slider')
+		self.Centre()
+
+	def OnSliderScroll(self, e):
+
+		obj = e.GetEventObject()
+		val = obj.GetValue()
+
+		self.txt.SetLabel(str(val))
+		
+
+def testGUI3():
+	app = wx.App()
+	ex = Example(None)
+	ex.Show()
+#	Example(None)
+	app.MainLoop()
+
+def mainTUI(stdscr):
+	testTUI4(stdscr)
+
+def runTUI():
+	#curses.wrapper(mainTUI)
+#	testTUI5()
+	testGUI3()
 
 BRIDGE_SIGNATURE = 0x66ab
 BRIDGE_PORT = 31987
@@ -273,13 +410,15 @@ def computePlateTemperature(temp):
 
 def main():
 	
-	temp = -5
-	for i in range(0,60*100):
-		temp = computePlateTemperature(temp)
-		if (i % 120) == 0:
-			print(f'{i}: plate T = {temp}')
+	runTUI()
 	
-	
+#	temp = -5
+#	for i in range(0,60*100):
+#		temp = computePlateTemperature(temp)
+#		if (i % 120) == 0:
+#			print(f'{i}: plate T = {temp}')
+#	
+#	
 	return
 	
 	getPresetsList('default')
