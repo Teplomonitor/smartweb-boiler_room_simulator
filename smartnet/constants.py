@@ -259,26 +259,67 @@ CascadeManagerParameter = {
 	'TEMPERATURE_SOURCE_OFF_DELAY_BY_TEMPERATURE'  : 18,
 }
 
+CascadeManagerParameter = {
+	'PARAM_ROTATION_PERIOD'                        :  1,
+	'PARAM_TEMPERATURE_SOURCE_ID'                  :  2,
+	'PARAM_TEMPERATURE_SOURCE_TYPE'                :  3,
+	'PARAM_TEMPERATURE_SOURCE_POWER'               :  4,
+	'PARAM_TEMPERATURE_SOURCE_WORKTIME'            :  5,
+	'PARAM_TEMPERATURE_SOURCE_PRIORITY'            :  6,
+	'PARAM_P_FACTOR'                               :  7,
+	'PARAM_I_FACTOR'                               :  8,
+	'PARAM_D_FACTOR'                               :  9,
+	'SCHEDULE'                                     : 10,
+	'REQUIRED_POWER'                               : 11,
+	'NEXT_TEMPERATURE_SRC_ON_DELAY'                : 12,
+	'ROTATION_TYPE'                                : 13,
+	'TEMPERATURE_OFFSET'                           : 14,
+	'MINIMUM_REQUIRED_TEMPERATURE'                 : 15,
+	'MAXIMUM_REQUIRED_TEMPERATURE'                 : 16,
+	'WORK_FUNCTION'                                : 17,
+	'TEMPERATURE_SOURCE_OFF_DELAY_BY_TEMPERATURE'  : 18,
+}
+
+DistrictHeatingParameter = {
+	'PARAM_VALVE_MIN'                              :  1,
+	'PARAM_VALVE_RUNNING_TIME'                     :  2,
+	'PARAM_P_FACTOR'                               :  3,
+	'PARAM_I_FACTOR'                               :  4,
+	'PARAM_D_FACTOR'                               :  5,
+	'PARAM_BACKWARD_CONTROL_TYPE'                  :  6,
+	'PARAM_MAXIMUM_BACKWARD_TEMPERATURE'           :  7,
+	'PARAM_MAXIMUM_BACKWARD_TEMPERATURE_II'        :  8,
+	'PARAM_OUTDOOR_TEMPERATURE_II'                 :  9,
+	'PARAM_THERMAL_OUTPUT_CALIBRATION'             : 10,
+	'PARAM_VOLUME_FLOW_CALIBRATION'                : 11,
+	'PARAM_MAXIMUM_THERMAL_OUTPUT'                 : 12,
+	'PARAM_MAXIMUM_VOLUME_FLOW'                    : 13,
+	'PARAM_TEMPERATURE_SOURCE_POWER_REQUEST_DELAY' : 14,
+	'PARAM_TEMPERATURE_SOURCE_ID'                  : 15,
+	'PARAM_CURRENT_MAXIMUM_BACKWARD_TEMPERATURE'   : 16,
+}
+
 ParameterDict = {
-	'PROGRAM'        : ProgramParameter,
-	'ROOM_DEVICE'    : RoomDeviceParameter,
-	'CONTROLLER'     : ControllerParameter,
-	'HEATING_CIRCUIT': HeatingCircuitParameter,
-	'CONSUMER'       : ConsumerParameter,
-	'CASCADE_MANAGER': CascadeManagerParameter,
+	'PROGRAM'         : ProgramParameter,
+	'ROOM_DEVICE'     : RoomDeviceParameter,
+	'CONTROLLER'      : ControllerParameter,
+	'HEATING_CIRCUIT' : HeatingCircuitParameter,
+	'CONSUMER'        : ConsumerParameter,
+	'CASCADE_MANAGER' : CascadeManagerParameter,
+	'DISTRICT_HEATING': DistrictHeatingParameter,
 }
 
 
 ProgramFunction = {
-	 'IS_ID_OCCUPIED'                 : 1,                       
-	 'IS_TYPE_SUPPORTED'              : 2,      
-	 'GET_PROGRAM_TYPE'               : 3,     
-	 'GET_PROGRAM_NAME'               : 4,     
-	 'GET_PROGRAM_TYPES'              : 5,      
-	 'GET_SMARTNET_PROTOCOL_VERSION'  : 6,                  
-	 'I_AM_PROGRAM'                   : 7, 
-	 'IS_COLLISION'                   : 8, 
-	 'MY_ID_CHANGED'                  : 9,  
+	 'IS_ID_OCCUPIED'                 : 1,
+	 'IS_TYPE_SUPPORTED'              : 2,
+	 'GET_PROGRAM_TYPE'               : 3,
+	 'GET_PROGRAM_NAME'               : 4,
+	 'GET_PROGRAM_TYPES'              : 5,
+	 'GET_SMARTNET_PROTOCOL_VERSION'  : 6,
+	 'I_AM_PROGRAM'                   : 7,
+	 'IS_COLLISION'                   : 8,
+	 'MY_ID_CHANGED'                  : 9,
 }
 
 
