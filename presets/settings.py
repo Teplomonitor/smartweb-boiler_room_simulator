@@ -204,3 +204,19 @@ class RoomSettings(object):
 	def getSourceList(self):
 		return self._sourceList
 	
+
+class DistrictHeatingSettings(object):
+	def __init__(self,
+			source         = None,
+			):
+		self._source         = source
+
+	def get(self):
+		return [
+			RemoteControlParameter(
+				snc.ProgramType['DISTRICT_HEATING'], 
+				snc.DistrictHeatingParameter['PARAM_TEMPERATURE_SOURCE_ID'], 
+				self._source),
+		]
+	def getSource    (self): return  self._source
+	def getSourceList(self): return [self._source]
