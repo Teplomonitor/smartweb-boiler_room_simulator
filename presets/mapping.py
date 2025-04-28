@@ -280,3 +280,56 @@ class SnowMelterOutputMapping(object):
 		]
 
 
+class DistrictHeatingInputMapping(object):
+	def __init__(self,
+			supply_direct_temp   = None,
+			supply_backward_temp = None,
+			direct_temp          = None,
+			backward_temp        = None,
+			thermal_output       = None,
+			volume_flow          = None,
+			outside_request      = None,
+			):
+		self._supply_direct_temp   = supply_direct_temp  
+		self._supply_backward_temp = supply_backward_temp
+		self._direct_temp          = direct_temp         
+		self._backward_temp        = backward_temp       
+		self._thermal_output       = thermal_output      
+		self._volume_flow          = volume_flow         
+		self._outside_request      = outside_request
+
+	def get(self):
+		return [
+			self._supply_direct_temp  ,
+			self._supply_backward_temp,
+			self._direct_temp         ,
+			self._backward_temp       ,
+			self._thermal_output      ,
+			self._volume_flow         ,
+			self._outside_request     ,
+		]
+		
+	def getTemperature(self): return self._supply_direct_temp
+
+
+class DistrictHeatingOutputMapping(object):
+	def __init__(self,
+			supply_pump      = None,
+			circulation_pump = None,
+			valve            = None,
+			analog_valve     = None,
+			):
+		self._supply_pump      = supply_pump
+		self._circulation_pump = circulation_pump
+		self._valve            = valve
+		self._analog_valve     = analog_valve
+		
+	def get(self):
+		return [
+			self._supply_pump     ,
+			self._circulation_pump,
+			self._valve           ,
+			self._analog_valve    ,
+		]
+
+
