@@ -32,7 +32,7 @@ class Simulator(object):
 			'backwardTemperature' : 5,
 		}
 
-		self._tMax = 75
+		self._tMax = 85
 		self._tMin = 20
 		self.setTemperature(30)
 
