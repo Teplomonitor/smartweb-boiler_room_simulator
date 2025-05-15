@@ -93,13 +93,7 @@ class Simulator(object):
 		return self.getValveState()*self.getMaxPower()
 
 	def getSourceTemperature(self):
-		sourceList = self._control.getSourceList()
-		sourceId   = self._program.getPreset().getSettings().getSource()
-		for source in sourceList:
-			if source._program.getId() == sourceId:
-				return source.getTemperature()
-
-		return 60
+		return self._control._collector.getDirectTemperature()
 
 	def computeTemperature(self):
 		tempBackward = self.getBackwardTemperature()
@@ -112,7 +106,6 @@ class Simulator(object):
 			return temp*beta + roomTemp*alpha
 
 		sourceTemp = self.getSourceTemperature()
-		sourceTemp = sourceTemp - 5 # we loose some temp coming from source
 
 		valve = self.getValveState()
 		

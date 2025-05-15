@@ -223,21 +223,7 @@ class Simulator(object):
 		return directTemp
 	
 	def computeBackwardTemperature(self):
-		temp = self.getBackwardTemperature()
-		if self.secondaryFlowIsStopped():
-			temp = self.tempSlowCooling(temp)
-			return temp
-		
-		totalPower = self.getConsumersPower() + self.getPower()
-		print(f'dh total power: {totalPower}')
-		
-		temp = temp + totalPower/3600
-		
-		temp = limit(20, temp, 80)
-		
-		print(f'dh bacward temp {temp}')
-		
-		return temp
+		return self._control._collector.getDirectTemperature()
 		
 	def run(self):
 		self.setSupplyDirectTemperature  (self.computeSupplyDirectTemperature())

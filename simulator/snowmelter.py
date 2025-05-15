@@ -141,18 +141,11 @@ class Simulator(object):
 		return self.getMaxPower()*self.getAnalogPumpSignal()
 
 	def getSourceTemperature(self):
-		sourceList = self._control.getSourceList()
-		sourceId   = self._program.getPreset().getSettings().getSource()
-		for source in sourceList:
-			if source._program.getId() == sourceId:
-				return source.getTemperature()
-
-		return 60
+		return self._control._collector.getDirectTemperature()
 
 
 	def getHeating(self):
 		sourceTemp = self.getSourceTemperature()
-		sourceTemp = sourceTemp - 5 # we loose some temp coming from source
 		
 #		print(f'sm: source temp = {sourceTemp}')
 		temp       = self.getDirectFlowTemperature()

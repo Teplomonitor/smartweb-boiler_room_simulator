@@ -42,6 +42,13 @@ class Simulator(object):
 #		print(f'dhw: {value}')
 		self._program.getInput(self._inputId['temperature']).setValue(value)
 
+	def getBackwardTemperature(self):
+		return self._program.getInput(self._inputId['backwardTemperature']).getValue()
+
+	def setBackwardTemperature(self, value):
+#		print(f'dhw: {value}')
+		self._program.getInput(self._inputId['backwardTemperature']).setValue(value)
+
 	def getElapsedTime(self):
 		return time.time() - self._time_start
 
@@ -65,13 +72,7 @@ class Simulator(object):
 		return self.getMaxPower()
 
 	def getSourceTemperature(self):
-		sourceList = self._control.getSourceList()
-		sourceId   = self._program.getPreset().getSettings().getSource()
-		for source in sourceList:
-			if source._program.getId() == sourceId:
-				return source.getTemperature()
-
-		return 60
+		return self._control._collector.getDirectTemperature()
 
 	def getHeating(self):
 		sourceTemp = self.getSourceTemperature()
@@ -96,6 +97,21 @@ class Simulator(object):
 		temp = limit(10, temp, 120)
 
 		return temp
+	
+	def computeBackwardTemperature(self):
+		if self.getPumpState() == 0:
+			collectorBackwardTemp = self._control._collector.getBackwardTemperature()
+			return collectorBackwardTemp
+		
+		temp = self.getTemperature()
+		sourceTemp = self.getSourceTemperature()
+		
+		temp = (temp + sourceTemp)/2
+		
+		temp = limit(10, temp, 120)
+
+		return temp
 
 	def run(self):
-		self.setTemperature(self.computeTemperature())
+		self.setTemperature        (self.computeTemperature())
+		self.setBackwardTemperature(self.computeBackwardTemperature())
