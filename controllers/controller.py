@@ -32,6 +32,8 @@ class Controller(object):
 			for program in programList:
 				if self.makeNewProgram(program) == False:
 					print(f'Preset: program {program.getType()}_{program.getId()} make fail!')
+					
+				time.sleep(2)
 		else:
 			for program in programList:
 				prg = Program(program)
