@@ -2,7 +2,6 @@
 import math
 import time
 
-from functions.periodPulse import PeriodPulse as PeriodPulse
 
 def limit(lower_bound, value, upper_bound):
 	return max(min(value, upper_bound), lower_bound)
@@ -16,7 +15,6 @@ class Simulator(object):
 		self._canbus        = canbus
 		self._time_start    = time.time()
 		self._control    = control
-		self._washTime   = PeriodPulse()
 		
 		self._inputId = {
 			'roomTemperature'   : 0,
