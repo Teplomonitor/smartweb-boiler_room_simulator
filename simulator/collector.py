@@ -147,11 +147,11 @@ class Simulator(object):
 		self.setBackwardTemperature      (self.computeBackwardTemperature())
 		self.setSupplyBackwardTemperature(self.computeSupplyBackwardTemperature())
 		
-		t1 = self.getSupplyDirectTemperature()
-		t2 = self.getSupplyBackwardTemperature()
-		t3 = self.getDirectTemperature()
-		t4 = self.getBackwardTemperature()
+#		t1 = self.getSupplyDirectTemperature()
+#		t2 = self.getSupplyBackwardTemperature()
+#		t3 = self.getDirectTemperature()
+#		t4 = self.getBackwardTemperature()
 		
-		print(f'collector: {t1} {t2} {t3} {t4}')
+#		print(f'collector: {t1} {t2} {t3} {t4}')
 		
 	
