@@ -79,19 +79,38 @@ class Simulator(object):
 		
 	def computeSupplyBackwardTemperature(self):
 		direct   = self.getSupplyDirectTemperature()
+		backward = self.getBackwardTemperature()
 		
-		activeConsumersNum = 0
+		activeConsumersNum  = 0
+		activeGeneratorsNum = 0
+		
 		for consumer in self._consumerList:
 			if consumer.getPower() != 0:
 				activeConsumersNum = activeConsumersNum + 1
 				
+		for generator in self._generatorList:
+			if generator.getPower() != 0:
+				activeGeneratorsNum = activeGeneratorsNum + 1
+		
 		if activeConsumersNum == 0:
 			return direct
 		
-		alpha = 1 / (activeConsumersNum/2 + 1)
-		beta  = 1 - alpha
+		if activeGeneratorsNum == 0:
+			return backward
+		
+		a = 3
+		b = 1
+		
+		activeGeneratorsNum = activeGeneratorsNum * a
+		activeConsumersNum  = activeConsumersNum  * b
+		
+		sourceNum = activeGeneratorsNum + activeConsumersNum
+		
+		alpha = activeGeneratorsNum / sourceNum
+		beta  = activeConsumersNum  / sourceNum
 		
 		backward = self.getBackwardTemperature()
+		
 		avrTemp = direct * alpha + backward * beta
 		
 		return avrTemp
