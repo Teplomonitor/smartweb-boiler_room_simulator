@@ -15,9 +15,7 @@ def limit(lower_bound, value, upper_bound):
 	return max(min(value, upper_bound), lower_bound)
 
 class Simulator(object):
-	def __init__(self, thread_name, thread_ID, program_config, canbus, control):
-		self.thread_name = thread_name
-		self.thread_ID   = thread_ID
+	def __init__(self, program_config, control):
 		self._program    = program_config
 		self._preset     = self._program.getPreset()
 		self._time_start    = time.time()

@@ -1,7 +1,4 @@
 
-import math
-import time
-
 from functions.periodPulse import PeriodPulse as PeriodPulse
 
 S = 5*4
@@ -29,17 +26,12 @@ def limit(lower_bound, value, upper_bound):
 	return max(min(value, upper_bound), lower_bound)
 
 class Simulator(object):
-	def __init__(self, thread_name, thread_ID, program, canbus, control):
-		self.thread_name = thread_name
-		self.thread_ID   = thread_ID
+	def __init__(self, program, control):
 		self._program    = program
 		self._preset     = self._program.getPreset()
-		self._canbus     = canbus
-		self._time_start = time.time()
 		self._control    = control
 		self._snowTime   = PeriodPulse()
 		self._cnt        = 0
-
 		
 		self._inputId = {
 			'directFlowTemperature'  : 0,
@@ -79,6 +71,9 @@ class Simulator(object):
 	def getBackwardFlowTemperature(self):
 #		return 30
 		return self._program.getInput(self._inputId['backwardTemperature']).getValue()
+	
+	def getBackwardTemperature(self):
+		return self.getBackwardFlowTemperature()
 
 	def setBackwardFlowTemperature(self, value):
 #		print(f'sm: back flow temp = {value}')
@@ -96,9 +91,6 @@ class Simulator(object):
 
 	def setSnowSensor(self, value):
 		self._program.getInput(self._inputId['snowSensor']).setValue(value)
-
-	def getElapsedTime(self):
-		return time.time() - self._time_start
 
 	def getPrimaryPumpState(self):
 		pump = self._program.getOutput(self._outputId['primaryPump'])

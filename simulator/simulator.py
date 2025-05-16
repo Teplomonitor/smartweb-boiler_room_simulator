@@ -108,9 +108,7 @@ class Simulator(can.Listener):
 
 		for program in self._programsList:
 			if program.getType() in simulatorType:
-				sim = simulatorType[program.getType()](
-					f'{program.getTitle()} {program.getId()}',
-					 program.getId(), program, self._canbus, self)
+				sim = simulatorType[program.getType()](program, self)
 				self._simList.append(sim)
 
 		for sim in self._simList:

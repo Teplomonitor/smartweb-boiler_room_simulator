@@ -1,5 +1,4 @@
 
-import math
 import time
 
 from functions.periodPulse import PeriodPulse as PeriodPulse
@@ -8,12 +7,9 @@ def limit(lower_bound, value, upper_bound):
 	return max(min(value, upper_bound), lower_bound)
 
 class Simulator(object):
-	def __init__(self, thread_name, thread_ID, program, canbus, control):
-		self.thread_name = thread_name
-		self.thread_ID   = thread_ID
+	def __init__(self, program, control):
 		self._program    = program
 		self._preset     = self._program.getPreset()
-		self._canbus        = canbus
 		self._time_start    = time.time()
 		self._control    = control
 		self._washTime   = PeriodPulse()
