@@ -95,7 +95,7 @@ class Simulator(object):
 
 	def computeTemperature(self):
 		backwardTemp = self.getSupplyBackwardTemperature()
-		temp = backwardTemp + self.getTotalPower() * 1.9
+		temp = backwardTemp + self.getTotalPower() * 0.9
 
 		temp = limit(self._tMin, temp, self._tMax)
 
