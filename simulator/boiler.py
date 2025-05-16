@@ -1,6 +1,6 @@
 
-import math
 import time
+from functions.timeOnOffDelay import TimeOnOffDelay as TimeOnOffDelay
 
 BROADCAST_ID = 0
 
@@ -13,6 +13,8 @@ class Simulator(object):
 		self._preset     = self._program.getPreset()
 		self._time_start    = time.time()
 		self._control    = control
+		
+		self._boilerOverheatDelay = TimeOnOffDelay()
 		
 		self._inputId = {
 			'temperature'         : 0,
@@ -78,10 +80,18 @@ class Simulator(object):
 
 	def getPower(self):
 		if self.getStageState():
+			dt = self._tMax - self.getTemperature()
+			
+			overheatOnDelay  = 30
+			overheatOffDelay = 2*60
+			
+			if self._boilerOverheatDelay.Get(dt < 0, overheatOnDelay, overheatOffDelay):
+				return 0
+			
 			Pmax = self.getMaxPower()
-			Pmin = Pmax*0.5
-			dt = self._tMax - self.getTemperature() 
+			Pmin = Pmax*0.6
 			P = Pmin + (Pmax - Pmin) * dt/self._tMax
+			
 			return P
 		else:
 			return 0
@@ -95,9 +105,9 @@ class Simulator(object):
 
 	def computeTemperature(self):
 		backwardTemp = self.getSupplyBackwardTemperature()
-		temp = backwardTemp + self.getTotalPower() * 0.9
+		temp = backwardTemp + self.getTotalPower() * 1.2
 
-		temp = limit(self._tMin, temp, self._tMax)
+		temp = limit(self._tMin, temp, self._tMax + 10)
 
 #		print(f'b{self._program.getId()} t = {temp}')
 		
