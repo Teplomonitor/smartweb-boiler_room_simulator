@@ -126,13 +126,16 @@ class Simulator(object):
 		
 		tempDirect = self.getTemperature()
 		
-		alpha = 0.1
-		beta  = 1 - alpha
+		cw = 4200 # теплоемкость воды
+		qhouse = 1.5/3.6 # расход кг/сек в доме постоянный.
+		cwq = qhouse*cw # так короче
+		btermo=500 # теплоотдача батарей НЕ трогать
+		troom = roomTemp
+		tinhouse = tempDirect
 		
-		temp = tempDirect*beta + avrRoomTemp*alpha
-		temp = limit(-30, temp, 120)
+		t_rethouse = ((cwq - btermo/2)*tinhouse + btermo * troom)/(cwq+btermo/2) # обратка из дома
 		
-		return temp
+		return t_rethouse
 	
 	def computeBackwardTemperature(self):
 		temp = self.getBackwardTemperature2()
