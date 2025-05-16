@@ -26,10 +26,11 @@ class Simulator(object):
 			'pumpControl'         : 3,
 			'backwardTemperature' : 4,
 		}
-
+		
 		self._roomTemp = 24
 		self.setTemperature(20)
 		self.setBackwardTemperature(20)
+		self.setBackwardTemperature2(20)
 
 	def getOat(self):
 		oat = self._control.getOat()
@@ -48,9 +49,15 @@ class Simulator(object):
 		self._program.getInput(self._inputId['temperature']).setValue(value)
 
 	def getBackwardTemperature(self):
-		return self._program.getInput(self._inputId['backwardTemperature']).getValue()
+		return self._supplyBackwardTemperature
 
 	def setBackwardTemperature(self, value):
+		self._supplyBackwardTemperature = value
+
+	def getBackwardTemperature2(self):
+		return self._program.getInput(self._inputId['backwardTemperature']).getValue()
+
+	def setBackwardTemperature2(self, value):
 		self._program.getInput(self._inputId['backwardTemperature']).setValue(value)
 
 	def getPumpState(self):
@@ -86,7 +93,7 @@ class Simulator(object):
 		return self._control._collector.getDirectTemperature()
 
 	def computeTemperature(self):
-		tempBackward = self.getBackwardTemperature()
+		tempBackward = self.getBackwardTemperature2()
 		temp        = self.getTemperature()
 		roomTemp    = self.getRoomTemp()
 
@@ -105,8 +112,8 @@ class Simulator(object):
 
 		return temp
 	
-	def computeBackwardTemperature(self):
-		temp       = self.getBackwardTemperature()
+	def computeBackwardTemperature2(self):
+		temp       = self.getBackwardTemperature2()
 		roomTemp   = self.getRoomTemp()
 		oat        = self.getOat()
 		
@@ -124,9 +131,20 @@ class Simulator(object):
 		
 		temp = tempDirect*beta + avrRoomTemp*alpha
 		temp = limit(-30, temp, 120)
+		
+		return temp
+	
+	def computeBackwardTemperature(self):
+		temp = self.getBackwardTemperature2()
+		
+		valve = self.getValveState()
+		sourceTemp = self.getSourceTemperature()
+		
+		temp = temp * valve + sourceTemp * (1 - valve)
 
 		return temp
 
 	def run(self):
-		self.setTemperature        (self.computeTemperature())
-		self.setBackwardTemperature(self.computeBackwardTemperature())
+		self.setTemperature         (self.computeTemperature())
+		self.setBackwardTemperature2(self.computeBackwardTemperature2())
+		self.setBackwardTemperature (self.computeBackwardTemperature ())
