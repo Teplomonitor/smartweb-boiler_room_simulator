@@ -1,6 +1,7 @@
 
 import can
 import time
+import threading
 
 import smartnet.constants as snc
 from smartnet.message import createBus as createBus
@@ -18,10 +19,27 @@ import simulator.room
 import simulator.snowmelter
 import simulator.dhw
 import simulator.district_heating
-
+import simulator.collector
 
 BROADCAST_ID = 0
 
+class sensor_report_thread(threading.Thread):
+	def __init__(self, simulator):
+		threading.Thread.__init__(self)
+		
+		self._simulator = simulator
+		
+	def run(self):
+		while True:
+			for sim in self._simulator._simList:
+				program = sim._program
+				for programInput in program.getInputs():
+					if reportSensorValue(programInput):
+						time.sleep(0.1)
+						
+			time.sleep(2)
+
+	
 class Simulator(can.Listener):
 	'''
 	classdocs
@@ -40,7 +58,7 @@ class Simulator(can.Listener):
 		self._notifier = can.Notifier(self._canbus, [self])
 
 		self._programsList = self._controller.getProgramList()
-
+		
 		simulatorType = {
 			'OUTDOOR_SENSOR'  : simulator.oat             .Simulator,
 			'BOILER'          : simulator.boiler          .Simulator,
@@ -90,9 +108,7 @@ class Simulator(can.Listener):
 
 		for program in self._programsList:
 			if program.getType() in simulatorType:
-				sim = simulatorType[program.getType()](
-					f'{program.getTitle()} {program.getId()}',
-					 program.getId(), program, self._canbus, self)
+				sim = simulatorType[program.getType()](program, self)
 				self._simList.append(sim)
 
 		for sim in self._simList:
@@ -116,6 +132,11 @@ class Simulator(can.Listener):
 			if program.getType() == 'CASCADE_MANAGER':
 				self._cascadeList.append(sim)
 
+		self._collector = simulator.collector.Simulator(self)
+		
+		thread = sensor_report_thread(self)
+		thread.daemon = True
+		thread.start()
 
 
 	def getConsumerList      (self): return self._consumersList
@@ -186,16 +207,14 @@ class Simulator(can.Listener):
 	def run(self):
 		while True:
 			time_start = time.time()
+			
 			for sim in self._simList:
 				sim.run()
 
-				program = sim._program
-				for programInput in program.getInputs():
-					if reportSensorValue(programInput):
-						time.sleep(0.05)
-
 			for ctrlIo in self._controllerIo:
 				ctrlIo.run()
+			
+			self._collector.run()
 			
 			dt = time.time() - time_start
 			

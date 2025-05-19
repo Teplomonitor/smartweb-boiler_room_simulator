@@ -9,9 +9,7 @@ def limit(lower_bound, value, upper_bound):
 	return max(min(value, upper_bound), lower_bound)
 
 class Simulator(object):
-	def __init__(self, thread_name, thread_ID, program, canbus, control):
-		self.thread_name = thread_name
-		self.thread_ID   = thread_ID
+	def __init__(self, program, control):
 		self._program    = program
 		self._preset     = self._program.getPreset()
 		self._time_start    = time.time()
@@ -51,9 +49,8 @@ class Simulator(object):
 		return self.getPower() + self.getConsumersPower() + self.getCoolDownPower()
 
 	def computeTemperature(self):
-		temp = self.getTemperature()
-		temp = temp + self.getTotalPower() * 0.05
-
+		temp = self._control._collector.getDirectTemperature()
+		
 		temp = limit(-30, temp, 100)
 
 		return temp

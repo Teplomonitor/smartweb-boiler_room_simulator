@@ -7,6 +7,7 @@ Created on 9 апр. 2025 г.
 import time
 from smartnet.message import Message as smartnetMessage
 from controllers.channelMapping import Channel as Channel
+from functions.periodicTrigger import PeriodicTrigger as PeriodicTrigger
 import smartnet.constants as snc
 
 def reportOutputMapping(controllerId, outputId, mapping):
@@ -47,9 +48,14 @@ class ControllerIO(object):
 		self._id        = controllerId
 		self._title     = controllerTitle
 		self._time_start = time.time()
+		self._reportImHereTrigger = PeriodicTrigger()
+		self._reportOutputMappingTrigger = PeriodicTrigger()
 		
-		self._input      = [Channel(None, None)] * self.getInputNumber()
-		self._output     = [Channel(None, None)] * self.getOutputNumber()
+		inputs_num  = self.getInputNumber ()
+		outputs_num = self.getOutputNumber()
+		
+		self._input  = [Channel(None, None) for _ in range(inputs_num )]
+		self._output = [Channel(None, None) for _ in range(outputs_num)]
 		
 		sendImHere(self.getId(), self.getType())
 		self.reportChannelNumber()
@@ -151,7 +157,13 @@ class ControllerIO(object):
 			
 			
 	def run(self):
-		dT = time.time() - self._time_start
-		if dT > 10:
-			self._time_start = time.time()
+		if self._reportImHereTrigger.Get(10):
 			sendImHere(self.getId(), self.getType())
+			
+		if self._reportOutputMappingTrigger.Get(5*60):
+			num = self.getOutputNumber()
+			for output_id in range (num):
+				if self.getOutputMapping(output_id) and self.getOutputMapping(output_id).getChannelType() != 'CHANNEL_UNDEFINED':
+					self.reportOutputMapping(output_id)
+					time.sleep(0.1)
+			

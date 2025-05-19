@@ -1,6 +1,6 @@
 
-import math
 import time
+from functions.timeOnOffDelay import TimeOnOffDelay as TimeOnOffDelay
 
 BROADCAST_ID = 0
 
@@ -8,13 +8,13 @@ def limit(lower_bound, value, upper_bound):
 	return max(min(value, upper_bound), lower_bound)
 
 class Simulator(object):
-	def __init__(self, thread_name, thread_ID, program, canbus, control):
-		self.thread_name = thread_name
-		self.thread_ID   = thread_ID
+	def __init__(self, program, control):
 		self._program    = program
 		self._preset     = self._program.getPreset()
 		self._time_start    = time.time()
 		self._control    = control
+		
+		self._boilerOverheatDelay = TimeOnOffDelay()
 		
 		self._inputId = {
 			'temperature'         : 0,
@@ -32,10 +32,13 @@ class Simulator(object):
 			'backwardTemperature' : 5,
 		}
 
-		self._tMax = 75
+		self._tMax = 85
 		self._tMin = 20
 		self.setTemperature(30)
 
+	def getSupplyBackwardTemperature(self):
+		return self._control._collector.getSupplyBackwardTemperature()
+	
 	def getTemperature(self):
 		return self._program.getInput(self._inputId['temperature']).getValue()
 
@@ -77,10 +80,18 @@ class Simulator(object):
 
 	def getPower(self):
 		if self.getStageState():
+			dt = self._tMax - self.getTemperature()
+			
+			overheatOnDelay  = 30
+			overheatOffDelay = 2*60
+			
+			if self._boilerOverheatDelay.Get(dt < 0, overheatOnDelay, overheatOffDelay):
+				return 0
+			
 			Pmax = self.getMaxPower()
-			Pmin = Pmax*0.5
-			dt = self._tMax - self.getTemperature() 
+			Pmin = Pmax*0.6
 			P = Pmin + (Pmax - Pmin) * dt/self._tMax
+			
 			return P
 		else:
 			return 0
@@ -93,10 +104,10 @@ class Simulator(object):
 		return self.getPower() + self.getConsumersPower() + self.getCoolDownPower()
 
 	def computeTemperature(self):
-		temp = self.getTemperature()
-		temp = temp + self.getTotalPower() * 0.1
+		backwardTemp = self.getSupplyBackwardTemperature()
+		temp = backwardTemp + self.getTotalPower() * 0.5
 
-		temp = limit(self._tMin, temp, self._tMax)
+		temp = limit(self._tMin, temp, self._tMax + 10)
 
 #		print(f'b{self._program.getId()} t = {temp}')
 		

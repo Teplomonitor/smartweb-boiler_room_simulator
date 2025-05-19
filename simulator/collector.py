@@ -12,19 +12,19 @@ class Simulator(object):
 		
 		self._direct_temperature   = 40
 		self._backward_temperature = 40
-	
+		
 		self._control = control
 		self._generatorList = []
+		self._consumerList = self._control.getConsumerList()
 		
-		sourceList = self._control.getSourceList()
+		sourceList   = self._control.getSourceList()
 		
 		for source in sourceList:
 			if source._program.getType() == 'CASCADE_MANAGER':
-				#cascade do not produce temperature itself
+				#cascade do not produce temperature itself, exclude it
 				pass
 			else:
 				self._generatorList.append(source)
-				
 		
 	# temperature given by boilers
 	def getSupplyDirectTemperature(self):
@@ -60,7 +60,7 @@ class Simulator(object):
 		sumTemp = 0
 		i = 0
 		
-		for generator in self._generatorsList:
+		for generator in self._generatorList:
 			if generator.getPower() != 0:
 				sumTemp = sumTemp + generator.getTemperature()
 				i = i + 1
@@ -74,17 +74,84 @@ class Simulator(object):
 		beta  = 1 - alpha
 		
 		temp = temp*beta + avrTemp*alpha
-		 
-		return temp 
+		
+		return temp
 		
 	def computeSupplyBackwardTemperature(self):
-		temp = self.getSupplyDirectTemperature()
+		direct   = self.getSupplyDirectTemperature()
+		backward = self.getBackwardTemperature()
 		
+		activeConsumersNum  = 0
+		activeGeneratorsNum = 0
 		
+		for consumer in self._consumerList:
+			if consumer.getPower() != 0:
+				activeConsumersNum = activeConsumersNum + 1
+				
+		for generator in self._generatorList:
+			if generator.getPower() != 0:
+				activeGeneratorsNum = activeGeneratorsNum + 1
 		
+		if activeConsumersNum == 0:
+			return direct
 		
+		if activeGeneratorsNum == 0:
+			return backward
+		
+		a = 3
+		b = 1
+		
+		activeGeneratorsNum = activeGeneratorsNum * a
+		activeConsumersNum  = activeConsumersNum  * b
+		
+		sourceNum = activeGeneratorsNum + activeConsumersNum
+		
+		alpha = activeGeneratorsNum / sourceNum
+		beta  = activeConsumersNum  / sourceNum
+		
+		backward = self.getBackwardTemperature()
+		
+		avrTemp = direct * alpha + backward * beta
+		
+		return avrTemp
+		
+	def computeDirectTemperature(self):
+		return self.getSupplyDirectTemperature() -1 # assume we losing a bit
+		
+	def computeBackwardTemperature(self):
+		temp = self.getBackwardTemperature()
+		
+		sumTemp = 0
+		i = 0
+		
+		for consumer in self._consumerList:
+			if consumer.getPower() != 0:
+				sumTemp = sumTemp + consumer.getBackwardTemperature()
+				i = i + 1
+		
+		if i > 0:
+			avrTemp = sumTemp / i
+		else:
+			avrTemp = self.getDirectTemperature()
+		
+		alpha = 0.1
+		beta  = 1 - alpha
+		
+		temp = temp*beta + avrTemp*alpha
+		
+		return temp
+	
 	def run(self):
 		self.setSupplyDirectTemperature  (self.computeSupplyDirectTemperature  ())
+		self.setDirectTemperature        (self.computeDirectTemperature  ())
+		self.setBackwardTemperature      (self.computeBackwardTemperature())
 		self.setSupplyBackwardTemperature(self.computeSupplyBackwardTemperature())
+		
+#		t1 = self.getSupplyDirectTemperature()
+#		t2 = self.getSupplyBackwardTemperature()
+#		t3 = self.getDirectTemperature()
+#		t4 = self.getBackwardTemperature()
+		
+#		print(f'collector: {t1} {t2} {t3} {t4}')
 		
 	

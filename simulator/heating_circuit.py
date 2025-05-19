@@ -1,19 +1,12 @@
 
-import math
-import time
-
 
 def limit(lower_bound, value, upper_bound):
 	return max(min(value, upper_bound), lower_bound)
 
 class Simulator(object):
-	def __init__(self, thread_name, thread_ID, program, canbus, control):
-		self.thread_name = thread_name
-		self.thread_ID   = thread_ID
+	def __init__(self, program, control):
 		self._program    = program
 		self._preset     = self._program.getPreset()
-		self._canbus        = canbus
-		self._time_start    = time.time()
 		self._control    = control
 		
 		self._outputId = {
@@ -33,10 +26,11 @@ class Simulator(object):
 			'pumpControl'         : 3,
 			'backwardTemperature' : 4,
 		}
-
+		
 		self._roomTemp = 24
 		self.setTemperature(20)
 		self.setBackwardTemperature(20)
+		self.setBackwardTemperature2(20)
 
 	def getOat(self):
 		oat = self._control.getOat()
@@ -55,13 +49,16 @@ class Simulator(object):
 		self._program.getInput(self._inputId['temperature']).setValue(value)
 
 	def getBackwardTemperature(self):
-		return self._program.getInput(self._inputId['backwardTemperature']).getValue()
+		return self._supplyBackwardTemperature
 
 	def setBackwardTemperature(self, value):
-		self._program.getInput(self._inputId['backwardTemperature']).setValue(value)
+		self._supplyBackwardTemperature = value
 
-	def getElapsedTime(self):
-		return time.time() - self._time_start
+	def getBackwardTemperature2(self):
+		return self._program.getInput(self._inputId['backwardTemperature']).getValue()
+
+	def setBackwardTemperature2(self, value):
+		self._program.getInput(self._inputId['backwardTemperature']).setValue(value)
 
 	def getPumpState(self):
 		pump = self._program.getOutput(self._outputId['pump'])
@@ -93,16 +90,10 @@ class Simulator(object):
 		return self.getValveState()*self.getMaxPower()
 
 	def getSourceTemperature(self):
-		sourceList = self._control.getSourceList()
-		sourceId   = self._program.getPreset().getSettings().getSource()
-		for source in sourceList:
-			if source._program.getId() == sourceId:
-				return source.getTemperature()
-
-		return 60
+		return self._control._collector.getDirectTemperature()
 
 	def computeTemperature(self):
-		tempBackward = self.getBackwardTemperature()
+		tempBackward = self.getBackwardTemperature2()
 		temp        = self.getTemperature()
 		roomTemp    = self.getRoomTemp()
 
@@ -112,7 +103,6 @@ class Simulator(object):
 			return temp*beta + roomTemp*alpha
 
 		sourceTemp = self.getSourceTemperature()
-		sourceTemp = sourceTemp - 5 # we loose some temp coming from source
 
 		valve = self.getValveState()
 		
@@ -122,8 +112,8 @@ class Simulator(object):
 
 		return temp
 	
-	def computeBackwardTemperature(self):
-		temp       = self.getBackwardTemperature()
+	def computeBackwardTemperature2(self):
+		temp       = self.getBackwardTemperature2()
 		roomTemp   = self.getRoomTemp()
 		oat        = self.getOat()
 		
@@ -136,14 +126,28 @@ class Simulator(object):
 		
 		tempDirect = self.getTemperature()
 		
-		alpha = 0.1
-		beta  = 1 - alpha
+		cw = 4200 # теплоемкость воды
+		qhouse = 1.5/3.6 # расход кг/сек в доме постоянный.
+		cwq = qhouse*cw # так короче
+		btermo=500 # теплоотдача батарей НЕ трогать
+		troom = roomTemp
+		tinhouse = tempDirect
 		
-		temp = tempDirect*beta + avrRoomTemp*alpha
-		temp = limit(-30, temp, 120)
+		t_rethouse = ((cwq - btermo/2)*tinhouse + btermo * troom)/(cwq+btermo/2) # обратка из дома
+		
+		return t_rethouse
+	
+	def computeBackwardTemperature(self):
+		temp = self.getBackwardTemperature2()
+		
+		valve = self.getValveState()
+		sourceTemp = self.getSourceTemperature()
+		
+		temp = temp * valve + sourceTemp * (1 - valve)
 
 		return temp
 
 	def run(self):
-		self.setTemperature        (self.computeTemperature())
-		self.setBackwardTemperature(self.computeBackwardTemperature())
+		self.setTemperature         (self.computeTemperature())
+		self.setBackwardTemperature2(self.computeBackwardTemperature2())
+		self.setBackwardTemperature (self.computeBackwardTemperature ())

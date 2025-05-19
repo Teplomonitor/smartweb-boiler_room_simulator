@@ -1,5 +1,4 @@
 
-import math
 import time
 
 from functions.periodPulse import PeriodPulse as PeriodPulse
@@ -8,12 +7,9 @@ def limit(lower_bound, value, upper_bound):
 	return max(min(value, upper_bound), lower_bound)
 
 class Simulator(object):
-	def __init__(self, thread_name, thread_ID, program, canbus, control):
-		self.thread_name = thread_name
-		self.thread_ID   = thread_ID
+	def __init__(self, program, control):
 		self._program    = program
 		self._preset     = self._program.getPreset()
-		self._canbus        = canbus
 		self._time_start    = time.time()
 		self._control    = control
 		self._washTime   = PeriodPulse()
@@ -42,6 +38,13 @@ class Simulator(object):
 #		print(f'dhw: {value}')
 		self._program.getInput(self._inputId['temperature']).setValue(value)
 
+	def getBackwardTemperature(self):
+		return self._program.getInput(self._inputId['backwardTemperature']).getValue()
+
+	def setBackwardTemperature(self, value):
+#		print(f'dhw: {value}')
+		self._program.getInput(self._inputId['backwardTemperature']).setValue(value)
+
 	def getElapsedTime(self):
 		return time.time() - self._time_start
 
@@ -65,13 +68,7 @@ class Simulator(object):
 		return self.getMaxPower()
 
 	def getSourceTemperature(self):
-		sourceList = self._control.getSourceList()
-		sourceId   = self._program.getPreset().getSettings().getSource()
-		for source in sourceList:
-			if source._program.getId() == sourceId:
-				return source.getTemperature()
-
-		return 60
+		return self._control._collector.getDirectTemperature()
 
 	def getHeating(self):
 		sourceTemp = self.getSourceTemperature()
@@ -96,6 +93,21 @@ class Simulator(object):
 		temp = limit(10, temp, 120)
 
 		return temp
+	
+	def computeBackwardTemperature(self):
+		if self.getPumpState() == 0:
+			collectorBackwardTemp = self._control._collector.getBackwardTemperature()
+			return collectorBackwardTemp
+		
+		temp = self.getTemperature()
+		sourceTemp = self.getSourceTemperature()
+		
+		temp = (temp + sourceTemp)/2
+		
+		temp = limit(10, temp, 120)
+
+		return temp
 
 	def run(self):
-		self.setTemperature(self.computeTemperature())
+		self.setTemperature        (self.computeTemperature())
+		self.setBackwardTemperature(self.computeBackwardTemperature())

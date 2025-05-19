@@ -4,9 +4,7 @@ import time
 
 
 class Simulator(object):
-	def __init__(self, thread_name, thread_ID, program, canbus, control):
-		self.thread_name = thread_name
-		self.thread_ID   = thread_ID
+	def __init__(self, program, control):
 		self._program    = program
 		self._time_start = time.time()
 
