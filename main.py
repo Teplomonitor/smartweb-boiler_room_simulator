@@ -20,6 +20,7 @@ It defines classes_and_methods
 import sys
 import os
  
+import time
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
@@ -139,9 +140,7 @@ USAGE
 			thread2.start()
 		
 		if enable_gui:
-			guiThread = guiFrameThread.guiThread("GUI_Thread", 789)
-			guiThread.daemon = True
-			guiThread.start()
+			guiThread = guiFrameThread.guiThread("GUI", 666)
 		else:
 			guiThread = None
 		
@@ -158,9 +157,17 @@ USAGE
 		print('Controller %d found' %(controllerId))
 		
 		controller = Controller(controllerId, init_controller_with_preset, programList, guiThread)
-		simulator  = Simulator(controller, ctrlIo)
 		
-		simulator.run()
+		simulatorThread  = Simulator("simulator thread", 789, controller, ctrlIo)
+		simulatorThread.daemon = True
+		simulatorThread.start()
+		
+		if guiThread:
+			guiThread.run()
+		else:
+			while True:
+				time.sleep(1)
+		
 		return 0
 
 	except KeyboardInterrupt:
