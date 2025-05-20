@@ -168,6 +168,8 @@ USAGE
 			while True:
 				time.sleep(1)
 		
+		smartnetMessage.exit()
+		
 		return 0
 
 	except KeyboardInterrupt:
