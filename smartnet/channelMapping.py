@@ -1,27 +1,5 @@
 
 
-class Channel(object):
-	'''
-	classdocs
-	'''
-
-	def __init__(self, mapping = None, value = None, title = 'TODO?'):
-		'''
-		Constructor
-		'''
-		self._mapping = mapping
-		self._value   = value
-		self._title   = title
-
-	def getMapping(self): return self._mapping
-	def getValue  (self): return self._value
-	def getTitle  (self): return self._title
-
-	def setMapping(self, mapping): self._mapping = mapping
-	def setValue  (self, value  ): self._value   = value
-	def setTitle  (self, title  ): self._title   = title
-
-
 class ChannelMapping(object):
 	'''
 	classdocs
@@ -45,6 +23,11 @@ class ChannelMapping(object):
 	def getChannelId   (self): return self._channelId  
 	def getChannelType (self): return self._channelType
 	def getHostId      (self): return self._hostId
+	
+	def isMapped(self):
+		if self._channelType == 'CHANNEL_UNDEFINED':
+			return False
+		return True
 
 	def getRaw(self, part=None):
 		raw = (
@@ -57,5 +40,39 @@ class ChannelMapping(object):
 
 		if part == 0: return (raw >> 0) &0xFF
 		if part == 1: return (raw >> 8) &0xFF
+
+
+class Channel(object):
+	'''
+	classdocs
+	'''
+
+	def __init__(self, mapping = None, value = None, title = None, gui = None):
+		'''
+		Constructor
+		'''
+		self._mapping = mapping
+		self._value   = value
+		self._title   = title
+		self._gui     = gui
+
+	def getMapping(self): return self._mapping
+	def isMapped(self):
+		if self._mapping:
+			return self._mapping.isMapped()
+		
+	def getValue  (self): return self._value
+	def getTitle  (self): return self._title
+
+	def setMapping(self, mapping): self._mapping = mapping
+	def setValue  (self, value  ):
+		self._value = value
+		if self._gui:
+			self._gui.SetValue(value)
+		
+	def setTitle  (self, title  ): self._title   = title
+	
+	def setGui(self, gui):
+		self._gui = gui
 
 
