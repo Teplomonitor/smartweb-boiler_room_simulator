@@ -18,19 +18,41 @@ InputTitleRoomDevice        = [
 	'Движение',
 	]
 InputTitleHeatingCircuit    = [
-	'Улица',
+	'Т подачи',
+	'Термостат',
+	'Внешний запрос',
+	'Управление насосом',
+	'Т обратки',
 	]
 InputTitleDistrictHeating   = [
-	'Улица',
+	'Подача из города',
+	'Обратка в город',
+	'Подача в дом',
+	'Обратка из дома',
+	'Теплосчётчик',
+	'Расход',
+	'Внешний запрос',
 	]
 InputTitleDhw               = [
-	'Улица',
+	'Т бойлера',
+	'Проток',
+	'Т обратки',
 	]
 InputTitlePool              = [
-	'Улица',
+	'Бассейн',
+	'Бассейн',
+	'Бассейн',
+	'Бассейн',
+	'Бассейн',
+	'Бассейн',
+	'Бассейн',
+	'Бассейн',
 	]
 InputTitleSnowMelt          = [
-	'Улица',
+	'Т подачи',
+	'Т обратки',
+	'Т поверхности',
+	'Осадки',
 	]
 InputTitleBoiler            = [
 	'Улица',
@@ -58,11 +80,43 @@ OutputTitleRoomDevice        = [
 	'Сигнал РО',
 	'Сигнал ДН',
 	]
-OutputTitleHeatingCircuit    = ['Улица',]
-OutputTitleDistrictHeating   = ['Улица',]
-OutputTitleDhw               = ['Улица',]
-OutputTitlePool              = ['Улица',]
-OutputTitleSnowMelt          = ['Улица',]
+OutputTitleHeatingCircuit    = [
+	'А.смеситель',
+	'Смес. откр',
+	'Смес. закр',
+	'Насос',
+	'Клапан',
+	'Насос ТО',
+	'А. насос',
+	]
+OutputTitleDistrictHeating   = [
+	'Насос загрузки',
+	'Цирк. насос',
+	'Клапан',
+	'А. клапан',
+	]
+OutputTitleDhw               = [
+	'Насос загрузки',
+	'Цирк. насос',
+	'А. насос загрузки',
+	'Смес. откр',
+	'Смес. закр',
+	]
+OutputTitlePool              = [
+	'Бассейн',
+	'Бассейн',
+	'Бассейн',
+	'Бассейн',
+	'Бассейн',
+	'Бассейн',
+	'Бассейн',
+	'Бассейн',
+	]
+OutputTitleSnowMelt          = [
+	'Насос загрузки',
+	'Цирк. насос',
+	'А. насос загрузки',
+	]
 OutputTitleBoiler            = ['Улица',]
 OutputTitleSolarCollector    = ['Улица',]
 OutputTitleSolarGenericRelay = ['Улица',]
