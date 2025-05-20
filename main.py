@@ -113,7 +113,7 @@ USAGE
 		init_controller_with_preset = args.init
 		udp_bridge_enable           = int(args.udp)
 		preset                      = args.preset
-		enable_gui                  = 0
+		enable_gui                  = 1
 
 		programList, controllerIoList = presets.preset.getPresetsList(preset)
 		
@@ -142,6 +142,8 @@ USAGE
 			guiThread = guiFrameThread.guiThread("GUI_Thread", 789)
 			guiThread.daemon = True
 			guiThread.start()
+		else:
+			guiThread = None
 		
 		if run_simulator_debug:
 			dbgThread = debug.debug_thread()
@@ -155,9 +157,9 @@ USAGE
 		
 		print('Controller %d found' %(controllerId))
 		
-		controller = Controller(controllerId, init_controller_with_preset, programList)
+		controller = Controller(controllerId, init_controller_with_preset, programList, guiThread)
 		simulator  = Simulator(controller, ctrlIo)
-
+		
 		simulator.run()
 		return 0
 
