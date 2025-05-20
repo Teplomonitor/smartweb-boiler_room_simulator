@@ -1,4 +1,8 @@
 
+
+import math
+import time
+
 BROADCAST_ID = 0
 
 # https://proteplo.org/blog/teplovoy-raschet-teploobmennika
@@ -173,7 +177,7 @@ class Simulator(object):
 		return Q
 
 	def tempSlowCooling(self, temp):
-		alpha = 0.1
+		alpha = 0.01
 		beta  = 1 - alpha
 		roomTemp = 24
 		temp = temp*beta + roomTemp*alpha
@@ -194,7 +198,12 @@ class Simulator(object):
 			return temp
 		
 		if self._district_heating_scenario == 'default':
-			return 70
+			avrTemp = 70
+			hour = 3600
+			currentTime = time.time() % hour
+			pi = 3.14
+			offset = 2 * math.cos(2*pi * currentTime/hour)
+			return avrTemp + offset
 
 		return 85
 	
