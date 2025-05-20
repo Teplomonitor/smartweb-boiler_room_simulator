@@ -39,25 +39,73 @@ class sensor_report_thread(threading.Thread):
 						
 			time.sleep(2)
 
+class CanListener(can.Listener):
+	def __init__(self, simulator):
+	#	self._canbus   = createBus()
+		self._canbus   = smartnetMessage._txbus
+		self._notifier = can.Notifier(self._canbus, [self])
+		self._simulator = simulator
+		
+	def on_message_received(self, message):
+		if message is None:
+			return
+
+		msg = smartnetMessage()
+		msg.parse(message)
+
+		if msg is None:
+			return
+		
+#		print(f"rx: {msg.generateHeader():08X} - {' '.join(format(x, '02x') for x in msg._data)}")
+		
+		def programOutputFilter():
+			headerOk = ((msg.getProgramType() == snc.ProgramType['REMOTE_CONTROL']) and
+					(msg.getFunctionId () == snc.RemoteControlFunction['GET_PARAMETER_VALUE']) and
+					(msg.getRequestFlag() == snc.requestFlag['RESPONSE']))
+
+			if headerOk:
+				data = msg.getData()
+				return ((data[0] == snc.ProgramType['PROGRAM']) and
+						(data[1] == snc.ProgramParameter['OUTPUT']))
+
+			return False
+
+		if programOutputFilter():
+			programId   = msg.getProgramId()
+			data        = msg.getData()
+			outputId    = data[2]
+			outputValue = data[3]
+
+			if self._simulator._programsList is None:
+				return
+			for program in self._simulator._programsList:
+				if program.getId() == programId:
+					program.getOutput(outputId).setValue(outputValue)
+					break
+			return
+		
+		if self._simulator._controllerIo is None:
+			return
+		for ctrlIo in self._simulator._controllerIo:
+			ctrlIo.on_message_received(message)
 	
-class Simulator(can.Listener):
+class Simulator(threading.Thread):
 	'''
 	classdocs
 	'''
 
-	def __init__(self, controller, controllerIo):
+	def __init__(self, thread_name, thread_ID, controllerHost, controllerIo):
 		'''
 		Constructor
 		'''
-		self._controller   = controller
-		self._controllerIo = controllerIo
-
-#		self._canbus   = createBus()
-		self._canbus   = smartnetMessage._txbus
+		threading.Thread.__init__(self)
+		self.thread_name = thread_name
+		self.thread_ID   = thread_ID
 		
-		self._notifier = can.Notifier(self._canbus, [self])
+		self._controllerHost = controllerHost
+		self._controllerIo   = controllerIo
 
-		self._programsList = self._controller.getProgramList()
+		self._programsList = self._controllerHost.getProgramList()
 		
 		simulatorType = {
 			'OUTDOOR_SENSOR'  : simulator.oat             .Simulator,
@@ -137,6 +185,8 @@ class Simulator(can.Listener):
 		thread = sensor_report_thread(self)
 		thread.daemon = True
 		thread.start()
+		
+		self._CanListener = CanListener(self)
 
 
 	def getConsumerList      (self): return self._consumersList
@@ -161,48 +211,6 @@ class Simulator(can.Listener):
 
 		return consumerPower
 	
-	def on_message_received(self, message):
-		if message is None:
-			return
-
-		msg = smartnetMessage()
-		msg.parse(message)
-
-		if msg is None:
-			return
-		
-#		print(f"rx: {msg.generateHeader():08X} - {' '.join(format(x, '02x') for x in msg._data)}")
-		
-		def programOutputFilter():
-			headerOk = ((msg.getProgramType() == snc.ProgramType['REMOTE_CONTROL']) and
-					(msg.getFunctionId () == snc.RemoteControlFunction['GET_PARAMETER_VALUE']) and
-					(msg.getRequestFlag() == snc.requestFlag['RESPONSE']))
-
-			if headerOk:
-				data = msg.getData()
-				return ((data[0] == snc.ProgramType['PROGRAM']) and
-						(data[1] == snc.ProgramParameter['OUTPUT']))
-
-			return False
-
-		if programOutputFilter():
-			programId   = msg.getProgramId()
-			data        = msg.getData()
-			outputId    = data[2]
-			outputValue = data[3]
-
-			if self._programsList is None:
-				return
-			for program in self._programsList:
-				if program.getId() == programId:
-					program.getOutput(outputId).setValue(outputValue)
-					break
-			return
-		
-		if self._controllerIo is None:
-			return
-		for ctrlIo in self._controllerIo:
-			ctrlIo.on_message_received(message)
 		
 	def run(self):
 		while True:
