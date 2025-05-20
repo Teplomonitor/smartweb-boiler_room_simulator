@@ -5,18 +5,21 @@ class Channel(object):
 	classdocs
 	'''
 
-	def __init__(self, mapping = None, value = None):
+	def __init__(self, mapping = None, value = None, title = 'TODO'):
 		'''
 		Constructor
 		'''
 		self._mapping = mapping
 		self._value   = value
+		self._title   = title
 
 	def getMapping(self): return self._mapping
 	def getValue  (self): return self._value
+	def getTitle  (self): return self._title
 
 	def setMapping(self, mapping): self._mapping = mapping
 	def setValue  (self, value  ): self._value   = value
+	def setTitle  (self, title  ): self._title   = title
 
 
 class ChannelMapping(object):

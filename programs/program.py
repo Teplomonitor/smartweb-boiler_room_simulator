@@ -27,12 +27,16 @@ class Program(object):
 		inputMappings  = preset.getInputs ().get()
 		outputMappings = preset.getOutputs().get()
 
-		self._inputs  = [Channel(mapping, None) for mapping in inputMappings ]
-		self._outputs = [Channel(mapping, None) for mapping in outputMappings]
+		self._inputs  = [Channel(mapping, None, 'input Title' ) for mapping in inputMappings ]
+		self._outputs = [Channel(mapping, None, 'output Title') for mapping in outputMappings]
 	
 	def getInputs(self   ): return self._inputs
 	def getInput (self, i): return self._inputs [i]
 	def setInput (self, i, value): self._inputs [i] = value
+	
+	def getInputTitle(self, i):
+		return 'input Title'
+		
 
 	def getOutputs(self   ): return self._outputs
 	def getOutput (self, i): return self._outputs[i]
