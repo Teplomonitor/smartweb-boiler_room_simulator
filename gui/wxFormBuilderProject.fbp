@@ -60,7 +60,7 @@
       <property name="window_name"></property>
       <property name="window_style">wxTAB_TRAVERSAL</property>
       <property name="xrc_skip_sizer">1</property>
-      <event name="OnClose">doClose()</event>
+      <event name="OnClose">doClose</event>
       <object class="wxBoxSizer" expanded="true">
         <property name="minimum_size">640,-1</property>
         <property name="name">mainBoxSizer</property>
@@ -182,11 +182,11 @@
                               <property name="orient">wxHORIZONTAL</property>
                               <property name="parent">1</property>
                               <property name="permission">none</property>
-                              <object class="sizeritem" expanded="false">
+                              <object class="sizeritem" expanded="true">
                                 <property name="border">5</property>
                                 <property name="flag">wxALL</property>
                                 <property name="proportion">0</property>
-                                <object class="wxSpinCtrl" expanded="false">
+                                <object class="wxSpinCtrlDouble" expanded="true">
                                   <property name="BottomDockable">1</property>
                                   <property name="LeftDockable">1</property>
                                   <property name="RightDockable">1</property>
@@ -204,6 +204,7 @@
                                   <property name="context_help"></property>
                                   <property name="context_menu">1</property>
                                   <property name="default_pane">0</property>
+                                  <property name="digits">0</property>
                                   <property name="dock">Dock</property>
                                   <property name="dock_fixed">0</property>
                                   <property name="docking">Left</property>
@@ -215,8 +216,9 @@
                                   <property name="gripper">0</property>
                                   <property name="hidden">0</property>
                                   <property name="id">wxID_ANY</property>
+                                  <property name="inc">0.1</property>
                                   <property name="initial">0</property>
-                                  <property name="max">10</property>
+                                  <property name="max">100</property>
                                   <property name="max_size"></property>
                                   <property name="maximize_button">0</property>
                                   <property name="maximum_size"></property>
@@ -225,7 +227,7 @@
                                   <property name="minimize_button">0</property>
                                   <property name="minimum_size"></property>
                                   <property name="moveable">1</property>
-                                  <property name="name">inputValueSpinCtrl</property>
+                                  <property name="name">m_spinCtrlDouble1</property>
                                   <property name="pane_border">1</property>
                                   <property name="pane_position"></property>
                                   <property name="pane_size"></property>
