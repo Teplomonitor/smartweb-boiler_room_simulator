@@ -5,7 +5,7 @@ class Channel(object):
 	classdocs
 	'''
 
-	def __init__(self, mapping = None, value = None, title = 'TODO'):
+	def __init__(self, mapping = None, value = None, title = 'TODO?'):
 		'''
 		Constructor
 		'''
