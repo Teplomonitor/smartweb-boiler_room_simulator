@@ -17,7 +17,7 @@ class Controller(object):
 	'''
 
 
-	def __init__(self, controllerId, initPreset, programList):
+	def __init__(self, controllerId, initPreset, programList, gui = None):
 		'''
 		Constructor
 		'''
@@ -25,6 +25,7 @@ class Controller(object):
 
 		self._state = 'STATE_IDLE'
 		self._programList = []
+		self._gui = gui
 
 
 		if initPreset:
@@ -136,6 +137,7 @@ class Controller(object):
 	def addProgram(self, program):
 		print('add prg to list')
 		self._programList.append(program)
+		self._gui.addProgram(program)
 	
 	def getOutputsNum(self):
 		return 0
