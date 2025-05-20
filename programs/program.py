@@ -7,6 +7,8 @@ from copy import copy
 import smartnet.constants as snc
 from smartnet.message import Message as smartnetMessage
 from smartnet.channelMapping import Channel as Channel
+from smartnet.channelTitle import ProgramInputTitle  as InputTitle
+from smartnet.channelTitle import ProgramOutputTitle as OutputTitle
 
 class Program(object):
 	'''
@@ -27,20 +29,24 @@ class Program(object):
 		inputMappings  = preset.getInputs ().get()
 		outputMappings = preset.getOutputs().get()
 
-		self._inputs  = [Channel(mapping, None, 'input Title' ) for mapping in inputMappings ]
-		self._outputs = [Channel(mapping, None, 'output Title') for mapping in outputMappings]
+		self._inputs  = [Channel(mapping) for mapping in inputMappings ]
+		self._outputs = [Channel(mapping) for mapping in outputMappings]
+	
+		self._inputTitle  = InputTitle[self._type]
+		self._outputTitle = OutputTitle[self._type]
+
 	
 	def getInputs(self   ): return self._inputs
 	def getInput (self, i): return self._inputs [i]
 	def setInput (self, i, value): self._inputs [i] = value
 	
-	def getInputTitle(self, i):
-		return 'input Title'
-		
 
 	def getOutputs(self   ): return self._outputs
 	def getOutput (self, i): return self._outputs[i]
 	def setOutput (self, i, value): self._outputs[i] = value
+	
+	def getInputTitle (self, i): return self._inputTitle [i]
+	def getOutputTitle(self, i): return self._outputTitle[i]
 
 	def getType     (self): return self._type
 	def getScheme   (self): return self._scheme
@@ -48,15 +54,15 @@ class Program(object):
 	def getTitle    (self): return self._title
 	def getPreset   (self): return self._preset
 
-	def bindInput(self, id, mapping):
-		print(f'bind program input {id}')
+	def bindInput(self, channel_id, mapping):
+		print(f'bind program input {channel_id}')
 		def generateRequest():
 			request = smartnetMessage(
 			snc.ProgramType['REMOTE_CONTROL'],
 			self._id,
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
 			snc.requestFlag['REQUEST'],
-			[snc.ProgramType['PROGRAM'], snc.ProgramParameter['INPUT_MAPPING'], id, mapping.getRaw(0), mapping.getRaw(1)])
+			[snc.ProgramType['PROGRAM'], snc.ProgramParameter['INPUT_MAPPING'], channel_id, mapping.getRaw(0), mapping.getRaw(1)])
 			return request
 
 		def generateRequiredResponse():
