@@ -37,6 +37,14 @@ class MainFrame ( wx.Frame ):
 
 		self.Centre( wx.BOTH )
 		
+		# Connect Events
+		self.Bind( wx.EVT_CLOSE, self.doClose )
+		
+	# Virtual event handlers, override them in your derived class
+	def doClose( self, event ):
+		event.Skip()
+		exit(0)
+	
 	def __init__( self, parent ):
 		self.makeFrame(parent)
 		

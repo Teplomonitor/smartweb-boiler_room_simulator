@@ -52,7 +52,6 @@ class MainFrame ( wx.Frame ):
         ProgramInput1BoxSizer.Add( self.inputShortCheckbox, 0, wx.ALL, 5 )
 
         self.inputOpenCheckbox = wx.CheckBox( ProgramInput1BoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Open"), wx.DefaultPosition, wx.DefaultSize, 0 )
-        self.inputOpenCheckbox.SetValue(True)
         ProgramInput1BoxSizer.Add( self.inputOpenCheckbox, 0, wx.ALL, 5 )
 
         self.inputAutoRadiobutton = wx.RadioButton( ProgramInput1BoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Auto"), wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP )
@@ -77,7 +76,6 @@ class MainFrame ( wx.Frame ):
         ProgramInput2BoxSizer.Add( self.inputShortCheckbox1, 0, wx.ALL, 5 )
 
         self.inputOpenCheckbox1 = wx.CheckBox( ProgramInput2BoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Open"), wx.DefaultPosition, wx.DefaultSize, 0 )
-        self.inputOpenCheckbox1.SetValue(True)
         ProgramInput2BoxSizer.Add( self.inputOpenCheckbox1, 0, wx.ALL, 5 )
 
         self.inputAutoRadiobutton1 = wx.RadioButton( ProgramInput2BoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Auto"), wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP )
@@ -143,7 +141,15 @@ class MainFrame ( wx.Frame ):
 
         self.Centre( wx.BOTH )
 
+        # Connect Events
+        self.Bind( wx.EVT_CLOSE, self.doClose() )
+
     def __del__( self ):
         pass
+
+
+    # Virtual event handlers, override them in your derived class
+    def doClose()( self, event ):
+        event.Skip()
 
 

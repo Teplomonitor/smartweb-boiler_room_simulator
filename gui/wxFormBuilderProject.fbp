@@ -60,6 +60,7 @@
       <property name="window_name"></property>
       <property name="window_style">wxTAB_TRAVERSAL</property>
       <property name="xrc_skip_sizer">1</property>
+      <event name="OnClose">doClose()</event>
       <object class="wxBoxSizer" expanded="true">
         <property name="minimum_size">640,-1</property>
         <property name="name">mainBoxSizer</property>
