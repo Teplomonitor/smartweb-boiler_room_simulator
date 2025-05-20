@@ -7,6 +7,7 @@ import wx.xrc
 import gettext
 _ = gettext.gettext
 
+from gui.inputChannel import Channel as GuiInputChannel
 
 ###########################################################################
 ## Class MainFrame
@@ -52,27 +53,38 @@ class MainFrame ( wx.Frame ):
 		inputTitle = programInput.getTitle()
 		ProgramInputBoxSizer = wx.StaticBoxSizer( wx.StaticBox( ProgramInputsBox.GetStaticBox(), wx.ID_ANY, _(inputTitle) ), wx.HORIZONTAL )
 		
-		self.inputValueSpinCtrl = wx.SpinCtrl( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS, 0, 10, 0 )
-		ProgramInputBoxSizer.Add( self.inputValueSpinCtrl, 0, wx.ALL, 5 )
+		inputValueSpinCtrl = wx.SpinCtrlDouble( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS, 0, 100, 0, 0.1 )
+		ProgramInputBoxSizer.Add( inputValueSpinCtrl, 0, wx.ALL, 5 )
 		
-		self.inputValueSlider = wx.Slider( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, 50, 0, 100, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL )
-		ProgramInputBoxSizer.Add( self.inputValueSlider, 0, wx.ALL, 5 )
+		inputValueSlider = wx.Slider( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, 50, 0, 100, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL )
+		ProgramInputBoxSizer.Add( inputValueSlider, 0, wx.ALL, 5 )
 		
-		self.inputShortCheckbox = wx.CheckBox( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Short"), wx.DefaultPosition, wx.DefaultSize, 0 )
-		ProgramInputBoxSizer.Add( self.inputShortCheckbox, 0, wx.ALL, 5 )
+		inputShortCheckbox = wx.CheckBox( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Short"), wx.DefaultPosition, wx.DefaultSize, 0 )
+		ProgramInputBoxSizer.Add( inputShortCheckbox, 0, wx.ALL, 5 )
 		
-		self.inputOpenCheckbox = wx.CheckBox( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Open"), wx.DefaultPosition, wx.DefaultSize, 0 )
-	#	self.inputOpenCheckbox.SetValue(True)
-		ProgramInputBoxSizer.Add( self.inputOpenCheckbox, 0, wx.ALL, 5 )
+		inputOpenCheckbox = wx.CheckBox( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Open"), wx.DefaultPosition, wx.DefaultSize, 0 )
+	#	inputOpenCheckbox.SetValue(True)
+		ProgramInputBoxSizer.Add( inputOpenCheckbox, 0, wx.ALL, 5 )
 		
-		self.inputAutoRadiobutton = wx.RadioButton( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Auto"), wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP )
-		self.inputAutoRadiobutton.SetValue( True )
-		ProgramInputBoxSizer.Add( self.inputAutoRadiobutton, 0, wx.ALL, 5 )
+		inputAutoRadiobutton = wx.RadioButton( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Auto"), wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP )
+		inputAutoRadiobutton.SetValue( True )
+		ProgramInputBoxSizer.Add( inputAutoRadiobutton, 0, wx.ALL, 5 )
 		
-		self.inputManualRadioButton = wx.RadioButton( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Manual"), wx.DefaultPosition, wx.DefaultSize, 0 )
-		ProgramInputBoxSizer.Add( self.inputManualRadioButton, 0, wx.ALL, 5 )
+		inputManualRadioButton = wx.RadioButton( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Manual"), wx.DefaultPosition, wx.DefaultSize, 0 )
+		ProgramInputBoxSizer.Add( inputManualRadioButton, 0, wx.ALL, 5 )
 		
 		ProgramInputsBox.Add( ProgramInputBoxSizer, 1, wx.EXPAND, 5 )
+		
+		guiChannel = GuiInputChannel(
+			inputValueSpinCtrl,
+			inputValueSlider, 
+			inputShortCheckbox,
+			inputOpenCheckbox,
+			inputAutoRadiobutton,
+			inputManualRadioButton
+			)
+		
+		programInput.setGui(guiChannel)
 
 	def addOutput(self, ProgramOutputsBox, programOutput):
 		outputTitle = programOutput.getTitle()
@@ -101,22 +113,27 @@ class MainFrame ( wx.Frame ):
 		ProgramInputsBox = wx.StaticBoxSizer( wx.StaticBox( ProgramBoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Inputs") ), wx.VERTICAL )
 		
 		programInputs = programInfo.getInputs()
-		
+		inputFound = False
 		for programInput in programInputs:
-			self.addInput(ProgramInputsBox, programInput)
-			
-		ProgramIOBoxSizer.Add( ProgramInputsBox, 1, wx.EXPAND, 5 )
+			if programInput.isMapped():
+				self.addInput(ProgramInputsBox, programInput)
+				inputFound = True
+		
+		if inputFound:
+			ProgramIOBoxSizer.Add( ProgramInputsBox, 1, wx.EXPAND, 5 )
 		
 		ProgramOutputsBox = wx.StaticBoxSizer( wx.StaticBox( ProgramBoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Outputs") ), wx.VERTICAL )
 		
 		
 		programOutputs = programInfo.getOutputs()
-		
+		outputFound = False
 		for programOutput in programOutputs:
-			self.addOutput(ProgramOutputsBox, programOutput)
+			if programOutput.isMapped():
+				self.addOutput(ProgramOutputsBox, programOutput)
+				outputFound = True
 			
-			
-		ProgramIOBoxSizer.Add( ProgramOutputsBox, 1, wx.EXPAND, 5 )
+		if outputFound:
+			ProgramIOBoxSizer.Add( ProgramOutputsBox, 1, wx.EXPAND, 5 )
 		
 		
 		ProgramBoxSizer.Add( ProgramIOBoxSizer, 1, 0, 5 )
