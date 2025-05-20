@@ -6,7 +6,7 @@ from copy import copy
 
 import smartnet.constants as snc
 from smartnet.message import Message as smartnetMessage
-from controllers.channelMapping import Channel as Channel
+from smartnet.channelMapping import Channel as Channel
 
 class Program(object):
 	'''

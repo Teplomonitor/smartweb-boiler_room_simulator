@@ -1,5 +1,5 @@
 
-from controllers.channelMapping import ChannelMapping as Mapping
+from smartnet.channelMapping import ChannelMapping as Mapping
 
 from presets.mapping import BoilerInputMapping          as boilerInputMapping
 from presets.mapping import BoilerOutputMapping         as boilerOutputMapping

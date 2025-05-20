@@ -1,5 +1,5 @@
 
-from controllers.channelMapping import ChannelMapping as Mapping
+from smartnet.channelMapping import ChannelMapping as Mapping
 
 from presets.mapping import HeatingCircuitInputMapping   as hcInputMapping
 from presets.mapping import HeatingCircuitOutputMapping  as hcOutputMapping

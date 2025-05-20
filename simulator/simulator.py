@@ -9,7 +9,7 @@ from smartnet.message import Message as smartnetMessage
 from simulator.sensorReport import reportSensorValue as reportSensorValue
 from simulator.outputRead import outputRead as outputRead
 
-from controllers.channelMapping import ChannelMapping as ChannelMapping
+from smartnet.channelMapping import ChannelMapping as ChannelMapping
 
 import simulator.oat
 import simulator.boiler

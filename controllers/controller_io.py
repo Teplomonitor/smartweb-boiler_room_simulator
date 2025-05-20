@@ -6,7 +6,7 @@ Created on 9 апр. 2025 г.
 
 import time
 from smartnet.message import Message as smartnetMessage
-from controllers.channelMapping import Channel as Channel
+from smartnet.channelMapping import Channel as Channel
 from functions.periodicTrigger import PeriodicTrigger as PeriodicTrigger
 import smartnet.constants as snc
 
