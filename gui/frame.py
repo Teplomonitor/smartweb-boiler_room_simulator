@@ -92,6 +92,7 @@ class MainFrame ( wx.Frame ):
 		
 		self.OutputTitle = wx.StaticText( ProgramOutputsBox.GetStaticBox(), wx.ID_ANY, _(outputTitle), wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.OutputTitle.Wrap( -1 )
+		self.OutputTitle.SetMinSize( wx.Size( 120,-1 ) )
 		
 		OutputBoxSizer.Add( self.OutputTitle, 0, wx.ALL, 5 )
 		
