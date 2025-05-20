@@ -34,6 +34,16 @@ class Program(object):
 	
 		self._inputTitle  = InputTitle[self._type]
 		self._outputTitle = OutputTitle[self._type]
+		
+		i = 0
+		for programInput in self._inputs:
+			programInput.setTitle(self._inputTitle[i])
+			i = i + 1
+
+		i = 0
+		for programOutput in self._outputs:
+			programOutput.setTitle(self._outputTitle[i])
+			i = i + 1
 
 	
 	def getInputs(self   ): return self._inputs
