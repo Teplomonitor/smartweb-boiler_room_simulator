@@ -12,4 +12,5 @@ class HeatingCircuit(object):
 		'''
 		Constructor
 		'''
+		super().__init__(self, params)
 		

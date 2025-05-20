@@ -12,4 +12,5 @@ class Room(object):
 		'''
 		Constructor
 		'''
+		super().__init__(self, params)
 		

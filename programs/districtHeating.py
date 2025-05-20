@@ -1,10 +1,10 @@
 '''
+Created on 20 мая 2025 г.
+
 @author: admin
 '''
 
-from .program import Program
-
-class Boiler(Program):
+class DistrictHeating(object):
 	'''
 	classdocs
 	'''
