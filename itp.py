@@ -2,7 +2,7 @@ import math
 # начальные условия
 tintown = 70 # на входе из города - постоянная ---------------------------
 
-tinhouse0 = 58 # температура начальная в контуре отопления ---------------
+tinhouse0 = 24 # температура начальная в контуре отопления ---------------
 
 tinhouse_demand = 60 # требуемая температура подачи ----------------------
 
@@ -27,7 +27,7 @@ sqwear=1.5 # Площадь ТО в кв.м.-----------------------
 tau=3 # шаг по времени сек
 
 real_time = 0
-ugolserv = 1
+ugolserv = 0
 tinhouse = tinhouse0
 t_rettown = tintown
 i = 0
@@ -35,8 +35,7 @@ power1 = 100
 atos=ato * sqwear
 difftold = 0
 
-#while abs(tinhouse-tinhouse_demand) > 1 and tinhouse * t_rettown > 0 and i<200:
-while i < 20:
+while abs(tinhouse-tinhouse_demand) > 1 and tinhouse * t_rettown > 0 and i<200:
     # не больше 200 шагов и температуры положительные 
    
     i +=1
