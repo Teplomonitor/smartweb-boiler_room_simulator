@@ -55,6 +55,8 @@ class Channel(object):
 		self._value   = value
 		self._title   = title
 		self._gui     = gui
+		self._min     =   0
+		self._max     = 100
 
 	def getMapping(self): return self._mapping
 	def isMapped(self):
@@ -70,9 +72,15 @@ class Channel(object):
 		if self._gui:
 			self._gui.SetValue(value)
 		
-	def setTitle  (self, title  ): self._title   = title
+	def setTitle  (self, title  ): self._title = title
 	
 	def setGui(self, gui):
 		self._gui = gui
 
+	def getMin(self): return self._min
+	def getMax(self): return self._max
+	
+	def setMin(self, value): self._min = value
+	def setMax(self, value): self._max = value
+	
 
