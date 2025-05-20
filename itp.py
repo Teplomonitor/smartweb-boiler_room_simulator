@@ -4,7 +4,7 @@ tintown = 70 # на входе из города - постоянная --------
 
 tinhouse0 = 24 # температура начальная в контуре отопления ---------------
 
-tinhouse_demand = 60 # требуемая температура подачи ----------------------
+tinhouse_demand = 80 # требуемая температура подачи ----------------------
 
 troom = 18 # температура в помещении, от нее зависит рассеяние энергии
 
@@ -58,7 +58,8 @@ while abs(tinhouse-tinhouse_demand) > 1 and tinhouse * t_rettown > 0 and i<200:
         
         difft = (tintown+t_rettown)/2.0 - (tinhouse+t_rethouse)/2.0
 
-        t_rettown = tintown - atos * qtown * difft/qtown_max/cw #обратка в город
+        if difft>10 :
+            t_rettown = tintown - atos * qtown * difft/qtown_max/cw #обратка в город
             
         etown=qtown*cw*(tintown - t_rettown)
         ehouse=qhouse*cw*(tinhouse-t_rethouse)
@@ -66,13 +67,10 @@ while abs(tinhouse-tinhouse_demand) > 1 and tinhouse * t_rettown > 0 and i<200:
         tinhouse = tinhouse + d_tinhouse # подача в дом 
 
         power1 = qtown*cw*(tintown-t_rettown) # подсчет текущей мощности теплопередачи ватт
-        
-        if abs(difft-difftold)<0.2 or j>10: # условие выхода из внутреннего цикла. не больше 10 итераций 
+        print('tinhouse %.2f.' % tinhouse, 'rethous %.2f.' % t_rethouse,'rettown %.2f.' % t_rettown,'difft %.2f.' % difft)
+        if abs(difft-difftold)<0.2 or j>10 or difft<10: # условие выхода из внутреннего цикла. не больше 10 итераций 
             cond=False
         difftold=difft
-        
-        print('tmp: tinhouse %.2f.' % tinhouse, 'rethous %.2f.' % t_rethouse,'rettown %.2f.' % t_rettown)
-        
     real_time += tau
     
     print('power town %.2f.'% power1)
