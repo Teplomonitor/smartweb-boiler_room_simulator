@@ -42,7 +42,7 @@ class MainFrame ( wx.Frame ):
 
         ProgramInput1BoxSizer = wx.StaticBoxSizer( wx.StaticBox( ProgramInputsBox.GetStaticBox(), wx.ID_ANY, _(u"InputTitle") ), wx.HORIZONTAL )
 
-        self.m_spinCtrlDouble1 = wx.SpinCtrlDouble( ProgramInput1BoxSizer.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS, 0, 100, 0, 0.1 )
+        self.m_spinCtrlDouble1 = wx.SpinCtrlDouble( ProgramInput1BoxSizer.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS|wx.TE_PROCESS_ENTER, 0, 100, 0, 0.1 )
         self.m_spinCtrlDouble1.SetDigits( 0 )
         ProgramInput1BoxSizer.Add( self.m_spinCtrlDouble1, 0, wx.ALL, 5 )
 
@@ -146,6 +146,9 @@ class MainFrame ( wx.Frame ):
 
         # Connect Events
         self.Bind( wx.EVT_CLOSE, self.doClose )
+        self.m_spinCtrlDouble1.Bind( wx.EVT_SPINCTRLDOUBLE, self.onSpin )
+        self.m_spinCtrlDouble1.Bind( wx.EVT_TEXT_ENTER, self.onSpinText )
+        self.inputValueSlider.Bind( wx.EVT_SCROLL, self.onScroll )
 
     def __del__( self ):
         pass
@@ -153,6 +156,15 @@ class MainFrame ( wx.Frame ):
 
     # Virtual event handlers, override them in your derived class
     def doClose( self, event ):
+        event.Skip()
+
+    def onSpin( self, event ):
+        event.Skip()
+
+    def onSpinText( self, event ):
+        event.Skip()
+
+    def onScroll( self, event ):
         event.Skip()
 
 
