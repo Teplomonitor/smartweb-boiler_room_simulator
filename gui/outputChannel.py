@@ -7,5 +7,5 @@ class Channel():
 		self._gauge       = gauge  
 	
 	def SetValue(self, value):
-		self._gauge.SetValue(value*100)
+		self._gauge.SetValue(value)
 		
