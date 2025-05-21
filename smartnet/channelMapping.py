@@ -120,6 +120,23 @@ class InputChannel(Channel):
 		event.Skip()
 		self.setValue(self._gui._slider .GetValue(), True)
 	
+	def onShort(self, event):
+		event.Skip()
+		state = self._gui._shortCheckbox.GetValue()
+		if state:
+			self._gui._openCheckbox.SetValue(False)
+			
+		self._gui._slider.Enable ( not state )
+		self._gui._spinner.Enable( not state )
+	
+	def onOpen(self, event):
+		event.Skip()
+		state = self._gui._openCheckbox.GetValue()
+		if state:
+			self._gui._shortCheckbox.SetValue(False)
+		self._gui._slider.Enable ( not state )
+		self._gui._spinner.Enable( not state )
+	
 	def setGui(self, gui):
 		self._gui = gui
 		
@@ -144,6 +161,17 @@ class InputChannel(Channel):
 		
 		if self._gui:
 			self._gui.SetMax(value)
+			
+	def isShort(self):
+		if self._gui:
+			return self._gui._shortCheckbox.GetValue()
+		return False
+	
+	def isOpen(self):
+		if self._gui:
+			return self._gui._openCheckbox.GetValue()
+		return False
+		
 	
 class OutputChannel(Channel):	
 	'''
