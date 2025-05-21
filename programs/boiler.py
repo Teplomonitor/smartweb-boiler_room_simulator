@@ -14,4 +14,4 @@ class Boiler(Program):
 		'''
 		Constructor
 		'''
-		super().__init__(self, params)
+		super().__init__(params)
