@@ -67,7 +67,11 @@ class Channel(object):
 	def getTitle  (self): return self._title
 
 	def setMapping(self, mapping): self._mapping = mapping
-	def setValue  (self, value  ):
+	def setValue  (self, value, manual = False  ):
+		if self.isManual():
+			if not manual:
+				return
+			
 		self._value = value
 		if self._gui:
 			self._gui.SetValue(value)
@@ -87,12 +91,33 @@ class Channel(object):
 	def getMin(self): return self._min
 	def getMax(self): return self._max
 	
+	def isAuto(self):
+		if self._gui:
+			return self._gui._autoRb.GetValue()
+		return True
+	
+	def isManual(self):
+		if self._gui:
+			return self._gui._manualRb.GetValue()
+		return False
+	
+	def onSpin(self, event):
+		event.Skip()
+		self.setValue(self._gui._spinner.GetValue(), True)
+		
+	def onSpinText(self, event):
+		event.Skip()
+		self.setValue(int(self._gui._spinner.GetTextValue()), True)
+		
+	def onScroll(self, event):
+		event.Skip()
+		self.setValue(self._gui._slider .GetValue(), True)
+	
 	def setMin(self, value):
 		self._min = value
 		
 		if self._gui:
 			self._gui.SetMin(value)
-		
 		
 	def setMax(self, value):
 		self._max = value
