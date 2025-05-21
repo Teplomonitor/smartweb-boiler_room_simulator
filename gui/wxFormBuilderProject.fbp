@@ -307,6 +307,7 @@
                                   <property name="window_extra_style"></property>
                                   <property name="window_name"></property>
                                   <property name="window_style"></property>
+                                  <event name="OnSpinCtrlDouble">onSpin</event>
                                 </object>
                               </object>
                               <object class="sizeritem" expanded="false">
@@ -373,6 +374,7 @@
                                   <property name="window_extra_style"></property>
                                   <property name="window_name"></property>
                                   <property name="window_style"></property>
+                                  <event name="OnScroll">onScroll</event>
                                 </object>
                               </object>
                               <object class="sizeritem" expanded="false">
