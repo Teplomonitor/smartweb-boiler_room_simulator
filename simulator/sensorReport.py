@@ -2,6 +2,8 @@
 import smartnet.constants as snc
 from smartnet.message import Message as smartnetMessage
 from smartnet.units import TEMPERATURE as TEMPERATURE
+from smartnet.units import SENSOR_SHORT_VALUE as SENSOR_SHORT_VALUE
+from smartnet.units import SENSOR_OPEN_VALUE  as SENSOR_OPEN_VALUE
 
 def reportSensorValue(sensor, bus = None):
 	sensorValue   = sensor.getValue()
@@ -10,7 +12,15 @@ def reportSensorValue(sensor, bus = None):
 	if sensorValue   is None: return False
 	if sensorMapping is None: return False
 
-	sensorValue = TEMPERATURE(sensorValue)
+	isShort = sensor.isShort()
+	isOpen  = sensor.isShort()
+	
+	if isShort:
+		sensorValue = SENSOR_SHORT_VALUE
+	elif isOpen:
+		sensorValue = SENSOR_OPEN_VALUE
+	else:
+		sensorValue = TEMPERATURE(sensorValue)
 
 	value = [
 		(sensorValue >> 0) &0xFF,
