@@ -88,9 +88,11 @@ class MainFrame ( wx.Frame ):
 			inputManualRadioButton
 			)
 		
-		inputValueSpinCtrl.Bind( wx.EVT_SPINCTRLDOUBLE, programInput.onSpin   )
+		inputValueSpinCtrl.Bind( wx.EVT_SPINCTRLDOUBLE, programInput.onSpin    )
 		inputValueSpinCtrl.Bind( wx.EVT_TEXT_ENTER    , programInput.onSpinText)
-		inputValueSlider  .Bind( wx.EVT_SCROLL        , programInput.onScroll )
+		inputValueSlider  .Bind( wx.EVT_SCROLL        , programInput.onScroll  )
+		inputShortCheckbox.Bind( wx.EVT_CHECKBOX      , programInput.onShort   )
+		inputOpenCheckbox .Bind( wx.EVT_CHECKBOX      , programInput.onOpen    )
 		
 		programInput.setGui(guiChannel)
 
@@ -104,7 +106,7 @@ class MainFrame ( wx.Frame ):
 		
 		OutputBoxSizer.Add( self.OutputTitle, 0, wx.ALL, 5 )
 		
-		outputValueGauge = wx.Gauge( ProgramOutputsBox.GetStaticBox(), wx.ID_ANY, 100, wx.DefaultPosition, wx.DefaultSize, wx.GA_HORIZONTAL )
+		outputValueGauge = wx.Gauge( ProgramOutputsBox.GetStaticBox(), wx.ID_ANY, 254, wx.DefaultPosition, wx.DefaultSize, wx.GA_HORIZONTAL )
 		outputValueGauge.SetValue( 0 )
 		OutputBoxSizer.Add( outputValueGauge, 0, wx.ALL, 5 )
 		
