@@ -9,6 +9,7 @@ from programs.program import Program as Program
 from smartnet.message import Message as smartnetMessage
 import smartnet.constants as snc
 import presets.preset
+from programs.factory import createProgram as createProgram
 
 
 class Controller(object):
@@ -37,7 +38,7 @@ class Controller(object):
 				time.sleep(2)
 		else:
 			for program in programList:
-				prg = Program(program)
+				prg = createProgram(program)
 				self.addProgram(prg)
 
 

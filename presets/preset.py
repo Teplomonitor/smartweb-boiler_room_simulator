@@ -2,7 +2,8 @@ from os.path import dirname, basename, isfile, join
 import glob
 
 import smartnet.constants as snc
-from programs.program import Program as Program
+
+from programs.factory import createProgram as createProgram
 
 class ProgramPreset(object):
 	'''
@@ -43,7 +44,7 @@ class ProgramPreset(object):
 			print('Program %s add fail'%(self._title))
 			return False
 
-		prg = Program(self)
+		prg = createProgram(self)
 		controller.addProgram(prg)
 		if self._inputs:
 			i = 0
