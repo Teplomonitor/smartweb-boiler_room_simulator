@@ -31,7 +31,6 @@ class Simulator(object):
 		self._preset     = self._program.getPreset()
 		self._control    = control
 		self._snowTime   = PeriodPulse()
-		self._cnt        = 0
 		
 		self._inputId = {
 			'directFlowTemperature'  : 0,
