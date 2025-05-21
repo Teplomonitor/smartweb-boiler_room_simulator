@@ -91,6 +91,29 @@ class Channel(object):
 	def getMin(self): return self._min
 	def getMax(self): return self._max
 	
+	def setMin(self, value):
+		self._min = value
+		
+		if self._gui:
+			self._gui.SetMin(value)
+		
+	def setMax(self, value):
+		self._max = value
+		
+		if self._gui:
+			self._gui.SetMax(value)
+
+class InputChannel(Channel):	
+	'''
+	classdocs
+	'''
+
+	def __init__(self, mapping = None, value = None, title = None, gui = None):
+		'''
+		Constructor
+		'''
+		super().__init__(mapping, value, title, gui)
+
 	def isAuto(self):
 		if self._gui:
 			return self._gui._autoRb.GetValue()
@@ -113,16 +136,15 @@ class Channel(object):
 		event.Skip()
 		self.setValue(self._gui._slider .GetValue(), True)
 	
-	def setMin(self, value):
-		self._min = value
-		
-		if self._gui:
-			self._gui.SetMin(value)
-		
-	def setMax(self, value):
-		self._max = value
-		
-		if self._gui:
-			self._gui.SetMax(value)
 	
+class OutputChannel(Channel):	
+	'''
+	classdocs
+	'''
+
+	def __init__(self, mapping = None, value = None, title = None, gui = None):
+		'''
+		Constructor
+		'''
+		super().__init__(mapping, value, title, gui)
 
