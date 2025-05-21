@@ -9,7 +9,7 @@ try:
 	_ = gettext.gettext
 	
 except ImportError:
-	print('import gui fail. Please install wxPython: pip install -U wxPython')
+	print('import gui fail. Please install wxPython if you wish to use gui: pip install -U wxPython')
 
 from gui.inputChannel  import Channel as GuiInputChannel
 from gui.outputChannel import Channel as GuiOutputChannel
