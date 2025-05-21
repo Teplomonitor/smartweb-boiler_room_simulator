@@ -19,7 +19,7 @@ It defines classes_and_methods
 
 import sys
 import os
- 
+
 import time
 
 from argparse import ArgumentParser
@@ -106,6 +106,8 @@ USAGE
 		parser.add_argument(      '--init'  , action='store_true'                          , help='init controller with preset') 
 		parser.add_argument('-p', '--preset', nargs='?', const='default', default='default', help='enable erase all settings on controller and load the new one')
 		parser.add_argument('-u', '--udp'   , nargs='?', const=31987    , default=0        , help='enable CAN-UDP bridge. Can be value from 0 to 65535. 0 - disable CAN-UDP bridge')
+		parser.add_argument(      '--gui'   , action='store_true'                          , help='enable gui window') 
+		
 
 		# Process arguments
 		args = parser.parse_args()
@@ -114,7 +116,7 @@ USAGE
 		init_controller_with_preset = args.init
 		udp_bridge_enable           = int(args.udp)
 		preset                      = args.preset
-		enable_gui                  = 1
+		enable_gui                  = args.gui
 
 		programList, controllerIoList = presets.preset.getPresetsList(preset)
 		
