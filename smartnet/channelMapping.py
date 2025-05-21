@@ -55,8 +55,6 @@ class Channel(object):
 		self._value   = value
 		self._title   = title
 		self._gui     = gui
-		self._min     =   0
-		self._max     = 100
 
 	def getMapping(self): return self._mapping
 	def isMapped(self):
@@ -67,16 +65,60 @@ class Channel(object):
 	def getTitle  (self): return self._title
 
 	def setMapping(self, mapping): self._mapping = mapping
-	def setValue  (self, value, manual = False  ):
-		if self.isManual():
-			if not manual:
-				return
-			
+	
+	def setValue  (self, value):
 		self._value = value
 		if self._gui:
 			self._gui.SetValue(value)
 		
 	def setTitle  (self, title  ): self._title = title
+	
+	def setGui(self, gui):
+		self._gui = gui
+		
+
+class InputChannel(Channel):	
+	'''
+	classdocs
+	'''
+
+	def __init__(self, mapping = None, value = None, title = None, gui = None):
+		'''
+		Constructor
+		'''
+		super().__init__(mapping, value, title, gui)
+		
+		self._min     =   0
+		self._max     = 100
+		
+	def setValue  (self, value, manual = False  ):
+		if self.isManual():
+			if not manual:
+				return
+			
+		super().setValue(value)
+			
+	def isAuto(self):
+		if self._gui:
+			return self._gui._autoRb.GetValue()
+		return True
+	
+	def isManual(self):
+		if self._gui:
+			return self._gui._manualRb.GetValue()
+		return False
+	
+	def onSpin(self, event):
+		event.Skip()
+		self.setValue(self._gui._spinner.GetValue(), True)
+		
+	def onSpinText(self, event):
+		event.Skip()
+		self.setValue(int(self._gui._spinner.GetTextValue()), True)
+		
+	def onScroll(self, event):
+		event.Skip()
+		self.setValue(self._gui._slider .GetValue(), True)
 	
 	def setGui(self, gui):
 		self._gui = gui
@@ -102,40 +144,6 @@ class Channel(object):
 		
 		if self._gui:
 			self._gui.SetMax(value)
-
-class InputChannel(Channel):	
-	'''
-	classdocs
-	'''
-
-	def __init__(self, mapping = None, value = None, title = None, gui = None):
-		'''
-		Constructor
-		'''
-		super().__init__(mapping, value, title, gui)
-
-	def isAuto(self):
-		if self._gui:
-			return self._gui._autoRb.GetValue()
-		return True
-	
-	def isManual(self):
-		if self._gui:
-			return self._gui._manualRb.GetValue()
-		return False
-	
-	def onSpin(self, event):
-		event.Skip()
-		self.setValue(self._gui._spinner.GetValue(), True)
-		
-	def onSpinText(self, event):
-		event.Skip()
-		self.setValue(int(self._gui._spinner.GetTextValue()), True)
-		
-	def onScroll(self, event):
-		event.Skip()
-		self.setValue(self._gui._slider .GetValue(), True)
-	
 	
 class OutputChannel(Channel):	
 	'''

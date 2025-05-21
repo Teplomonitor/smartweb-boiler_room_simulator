@@ -7,7 +7,8 @@ import wx.xrc
 import gettext
 _ = gettext.gettext
 
-from gui.inputChannel import Channel as GuiInputChannel
+from gui.inputChannel  import Channel as GuiInputChannel
+from gui.outputChannel import Channel as GuiOutputChannel
 
 ###########################################################################
 ## Class MainFrame
@@ -99,12 +100,17 @@ class MainFrame ( wx.Frame ):
 		
 		OutputBoxSizer.Add( self.OutputTitle, 0, wx.ALL, 5 )
 		
-		self.outputValueGauge = wx.Gauge( ProgramOutputsBox.GetStaticBox(), wx.ID_ANY, 100, wx.DefaultPosition, wx.DefaultSize, wx.GA_HORIZONTAL )
-		self.outputValueGauge.SetValue( 0 )
-		OutputBoxSizer.Add( self.outputValueGauge, 0, wx.ALL, 5 )
-		
+		outputValueGauge = wx.Gauge( ProgramOutputsBox.GetStaticBox(), wx.ID_ANY, 100, wx.DefaultPosition, wx.DefaultSize, wx.GA_HORIZONTAL )
+		outputValueGauge.SetValue( 0 )
+		OutputBoxSizer.Add( outputValueGauge, 0, wx.ALL, 5 )
 		
 		ProgramOutputsBox.Add( OutputBoxSizer, 1, wx.EXPAND, 5 )
+		
+		guiChannel = GuiOutputChannel(
+			outputValueGauge
+			)
+		
+		programOutput.setGui(guiChannel)
 	
 	def addProgram(self, programInfo):
 #		return
