@@ -2,7 +2,9 @@
 @author: admin
 '''
 
-class HeatingCircuit(object):
+from .program import Program
+
+class HeatingCircuit(Program):
 	'''
 	classdocs
 	'''
@@ -12,5 +14,5 @@ class HeatingCircuit(object):
 		'''
 		Constructor
 		'''
-		super().__init__(self, params)
+		super().__init__(params)
 		

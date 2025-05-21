@@ -1,10 +1,10 @@
 '''
-Created on 20 мая 2025 г.
-
 @author: admin
 '''
 
-class DistrictHeating(object):
+from .program import Program
+
+class DistrictHeating(Program):
 	'''
 	classdocs
 	'''
@@ -14,4 +14,5 @@ class DistrictHeating(object):
 		'''
 		Constructor
 		'''
-		super().__init__(self, params)
+		super().__init__(params)
+		
