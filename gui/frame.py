@@ -63,7 +63,6 @@ class MainFrame ( wx.Frame ):
 		ProgramInputBoxSizer.Add( inputShortCheckbox, 0, wx.ALL, 5 )
 		
 		inputOpenCheckbox = wx.CheckBox( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Open"), wx.DefaultPosition, wx.DefaultSize, 0 )
-	#	inputOpenCheckbox.SetValue(True)
 		ProgramInputBoxSizer.Add( inputOpenCheckbox, 0, wx.ALL, 5 )
 		
 		inputAutoRadiobutton = wx.RadioButton( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Auto"), wx.DefaultPosition, wx.DefaultSize, wx.RB_GROUP )
