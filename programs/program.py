@@ -45,12 +45,10 @@ class Program(object):
 			programOutput.setTitle(self._outputTitle[i])
 			i = i + 1
 
-	
 	def getInputs(self   ): return self._inputs
 	def getInput (self, i): return self._inputs [i]
 	def setInput (self, i, value): self._inputs [i] = value
 	
-
 	def getOutputs(self   ): return self._outputs
 	def getOutput (self, i): return self._outputs[i]
 	def setOutput (self, i, value): self._outputs[i] = value
@@ -110,8 +108,6 @@ class Program(object):
 			
 		return result
 
-	
-
 	def bindOutput(self, channel_id, mapping):
 		print(f'bind program output {channel_id}')
 		def generateRequest():
@@ -157,3 +153,14 @@ class Program(object):
 			i = i + 1
 			
 		return result
+
+	def setInputsRange(self, inputsRange):
+		i = 0
+		for inputRange in inputsRange:
+			if inputRange:
+				self._inputs[i].setMin(inputRange[0])
+				self._inputs[i].setMax(inputRange[1])
+			i = i + 1
+
+		
+	
