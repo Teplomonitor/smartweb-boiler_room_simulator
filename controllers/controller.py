@@ -138,7 +138,8 @@ class Controller(object):
 	def addProgram(self, program):
 		print('add prg to list')
 		self._programList.append(program)
-		self._gui.addProgram(program)
+		if self._gui:
+			self._gui.addProgram(program)
 	
 	def getOutputsNum(self):
 		return 0
