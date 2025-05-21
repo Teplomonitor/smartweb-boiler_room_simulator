@@ -6,7 +6,8 @@ from copy import copy
 
 import smartnet.constants as snc
 from smartnet.message import Message as smartnetMessage
-from smartnet.channelMapping import Channel as Channel
+from smartnet.channelMapping import InputChannel  as InputChannel
+from smartnet.channelMapping import OutputChannel as OutputChannel
 from smartnet.channelTitle import ProgramInputTitle  as InputTitle
 from smartnet.channelTitle import ProgramOutputTitle as OutputTitle
 
@@ -29,8 +30,8 @@ class Program(object):
 		inputMappings  = preset.getInputs ().get()
 		outputMappings = preset.getOutputs().get()
 
-		self._inputs  = [Channel(mapping) for mapping in inputMappings ]
-		self._outputs = [Channel(mapping) for mapping in outputMappings]
+		self._inputs  = [InputChannel (mapping) for mapping in inputMappings ]
+		self._outputs = [OutputChannel(mapping) for mapping in outputMappings]
 	
 		self._inputTitle  = InputTitle[self._type]
 		self._outputTitle = OutputTitle[self._type]
