@@ -53,7 +53,7 @@ class MainFrame ( wx.Frame ):
 		inputTitle = programInput.getTitle()
 		ProgramInputBoxSizer = wx.StaticBoxSizer( wx.StaticBox( ProgramInputsBox.GetStaticBox(), wx.ID_ANY, _(inputTitle) ), wx.HORIZONTAL )
 		
-		inputValueSpinCtrl = wx.SpinCtrlDouble( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS, 0, 100, 0, 0.1 )
+		inputValueSpinCtrl = wx.SpinCtrlDouble( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS|wx.TE_PROCESS_ENTER, 0, 100, 0, 0.1 )
 		ProgramInputBoxSizer.Add( inputValueSpinCtrl, 0, wx.ALL, 5 )
 		
 		inputValueSlider = wx.Slider( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, 50, 0, 100, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL )
@@ -83,6 +83,10 @@ class MainFrame ( wx.Frame ):
 			inputAutoRadiobutton,
 			inputManualRadioButton
 			)
+		
+		inputValueSpinCtrl.Bind( wx.EVT_SPINCTRLDOUBLE, programInput.onSpin   )
+		inputValueSpinCtrl.Bind( wx.EVT_TEXT_ENTER    , programInput.onSpinText)
+		inputValueSlider  .Bind( wx.EVT_SCROLL        , programInput.onScroll )
 		
 		programInput.setGui(guiChannel)
 
