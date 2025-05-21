@@ -76,11 +76,28 @@ class Channel(object):
 	
 	def setGui(self, gui):
 		self._gui = gui
+		
+		self.initGui()
 
+	def initGui(self):
+		if self._gui:
+			self._gui.SetMin(self._min)
+			self._gui.SetMax(self._max)
+		
 	def getMin(self): return self._min
 	def getMax(self): return self._max
 	
-	def setMin(self, value): self._min = value
-	def setMax(self, value): self._max = value
+	def setMin(self, value):
+		self._min = value
+		
+		if self._gui:
+			self._gui.SetMin(value)
+		
+		
+	def setMax(self, value):
+		self._max = value
+		
+		if self._gui:
+			self._gui.SetMax(value)
 	
 
