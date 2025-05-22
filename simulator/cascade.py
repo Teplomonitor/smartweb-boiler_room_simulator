@@ -55,5 +55,18 @@ class Simulator(object):
 
 		return temp
 
+	def getFlow(self):
+		return 0
+		
+#		sourceList     = self._control.getSourceList()
+#		selfSourceList = self._program.getPreset().getSettings().getSourceList()
+
+#		flow = 0
+#		for source in sourceList:
+#			if source._program.getId() in selfSourceList:
+#				flow = flow + source.getFlow()
+
+#		return flow
+	
 	def run(self):
 		self.setTemperature(self.computeTemperature())
