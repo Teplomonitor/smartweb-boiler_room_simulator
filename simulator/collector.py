@@ -61,7 +61,7 @@ class Simulator(object):
 		i = 0
 		
 		for generator in self._generatorList:
-			if generator.getPower() != 0:
+			if generator.getFlow() != 0:
 				sumTemp = sumTemp + generator.getTemperature()
 				i = i + 1
 		
@@ -84,13 +84,17 @@ class Simulator(object):
 		activeConsumersNum  = 0
 		activeGeneratorsNum = 0
 		
+		consumerFlow = 0
 		for consumer in self._consumerList:
 			if consumer.getPower() != 0:
 				activeConsumersNum = activeConsumersNum + 1
+				consumerFlow = consumerFlow + 1
 				
+		generatorFlow = 0 
 		for generator in self._generatorList:
-			if generator.getPower() != 0:
+			if generator.getFlow() != 0:
 				activeGeneratorsNum = activeGeneratorsNum + 1
+				generatorFlow = generatorFlow + generator.getFlow()
 		
 		if activeConsumersNum == 0:
 			return direct
@@ -98,16 +102,10 @@ class Simulator(object):
 		if activeGeneratorsNum == 0:
 			return backward
 		
-		a = 3
-		b = 1
+		totalFlow = consumerFlow + generatorFlow
 		
-		activeGeneratorsNum = activeGeneratorsNum * a
-		activeConsumersNum  = activeConsumersNum  * b
-		
-		sourceNum = activeGeneratorsNum + activeConsumersNum
-		
-		alpha = activeGeneratorsNum / sourceNum
-		beta  = activeConsumersNum  / sourceNum
+		alpha = generatorFlow / totalFlow
+		beta  = consumerFlow  / totalFlow
 		
 		backward = self.getBackwardTemperature()
 		
@@ -147,11 +145,11 @@ class Simulator(object):
 		self.setBackwardTemperature      (self.computeBackwardTemperature())
 		self.setSupplyBackwardTemperature(self.computeSupplyBackwardTemperature())
 		
-#		t1 = self.getSupplyDirectTemperature()
-#		t2 = self.getSupplyBackwardTemperature()
-#		t3 = self.getDirectTemperature()
-#		t4 = self.getBackwardTemperature()
+		t1 = self.getSupplyDirectTemperature()
+		t2 = self.getSupplyBackwardTemperature()
+		t3 = self.getDirectTemperature()
+		t4 = self.getBackwardTemperature()
 		
-#		print(f'collector: {t1} {t2} {t3} {t4}')
+		print(f'collector: {t1:.2f} {t2:.2f} {t3:.2f} {t4:.2f}')
 		
 	
