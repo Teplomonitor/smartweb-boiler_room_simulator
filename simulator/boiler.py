@@ -74,6 +74,17 @@ class Simulator(object):
 			return 1
 
 		return 0
+	
+	def getPumpState(self):
+		pumpState = self._program.getOutput(self._outputId['pump'])
+		if pumpState.getMapping() is None:
+			return 1
+
+		if pumpState.getValue():
+			return 1
+
+		return 0
+		
 
 	def getMaxPower(self):
 		return self._preset.getPower()
@@ -96,6 +107,11 @@ class Simulator(object):
 		else:
 			return 0
 
+	def getFlow(self):
+		if self.getPumpState():
+			return 2 # cube per hour
+		return 0
+		
 	def getCoolDownPower(self):
 		dt = self.getTemperature() - self._tMin
 		return -1 * dt/self._tMax
@@ -104,9 +120,13 @@ class Simulator(object):
 		return self.getPower() + self.getConsumersPower() + self.getCoolDownPower()
 
 	def computeTemperature(self):
-		backwardTemp = self.getSupplyBackwardTemperature()
-		temp = backwardTemp + self.getTotalPower() * 0.5
-
+		if self.getFlow():
+			temp = self.getSupplyBackwardTemperature()
+		else:
+			temp = self.getTemperature()
+			
+		temp = temp + self.getTotalPower() * 0.5
+		
 		temp = limit(self._tMin, temp, self._tMax + 10)
 
 #		print(f'b{self._program.getId()} t = {temp}')
