@@ -131,6 +131,9 @@ class Simulator(object):
 
 		return self.getMaxPower()*self.getAnalogPumpSignal()
 
+	def getFlow(self):
+		return self.getAnalogPumpSignal() * 1 #cube per hour
+	
 	def getSourceTemperature(self):
 		return self._control._collector.getDirectTemperature()
 
