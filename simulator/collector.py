@@ -154,6 +154,6 @@ class Simulator(object):
 		f1 = self._consumerFlow
 		f2 = self._generatorFlow
 		
-		print(f'collector: {t1:.2f} {t2:.2f} {t3:.2f} {t4:.2f} flow {f1:.2f} {f2:.2f} ')
+#		print(f'collector: {t1:.2f} {t2:.2f} {t3:.2f} {t4:.2f} flow {f1:.2f} {f2:.2f} ')
 		
 	
