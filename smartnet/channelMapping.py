@@ -1,3 +1,4 @@
+from functions.programLog import ParameterLog as ChannelLog
 
 
 class ChannelMapping(object):
@@ -42,6 +43,7 @@ class ChannelMapping(object):
 		if part == 1: return (raw >> 8) &0xFF
 
 
+
 class Channel(object):
 	'''
 	classdocs
@@ -55,6 +57,7 @@ class Channel(object):
 		self._value   = value
 		self._title   = title
 		self._gui     = gui
+		self._log     = ChannelLog('SENSOR', title)
 
 	def getMapping(self): return self._mapping
 	def isMapped(self):
@@ -70,12 +73,20 @@ class Channel(object):
 		self._value = value
 		if self._gui:
 			self._gui.SetValue(value)
+			
+		self._log.append(value)
 		
-	def setTitle  (self, title  ): self._title = title
+	def setTitle  (self, title  ):
+		self._title = title
+		self._log.setTitle(title)
+		
+	def setLogType(self, logType): self._log.setSaveType(logType)
 	
 	def setGui(self, gui):
 		self._gui = gui
 		
+	def saveLog(self, title):
+		self._log.saveToCsv(title)
 
 class InputChannel(Channel):	
 	'''
@@ -90,6 +101,7 @@ class InputChannel(Channel):
 		
 		self._min     =   0
 		self._max     = 100
+		self.setLogType('TEMPERATURE')
 		
 	def setValue  (self, value, manual = False  ):
 		if self.isManual():

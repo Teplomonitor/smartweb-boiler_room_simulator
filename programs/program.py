@@ -2,6 +2,7 @@
 @author: admin
 '''
 
+import os
 from copy import copy
 
 import smartnet.constants as snc
@@ -163,5 +164,13 @@ class Program(object):
 				self._inputs[i].setMax(inputRange[1])
 			i = i + 1
 
+	def saveLog(self):
+		titleCommon = self._title + '_' + str(self._id)
 		
+		logDirInputs  = os.path.join(titleCommon, 'inputs')
+		logDirOutputs = os.path.join(titleCommon, 'outputs')
+		for programInput in self._inputs:
+			programInput.saveLog(logDirInputs)
+		for programOutput in self._outputs:
+			programOutput.saveLog(logDirOutputs)
 	
