@@ -5,6 +5,9 @@ import datetime
 import sys
 import random
 
+from typing import Union
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
@@ -20,6 +23,9 @@ def getRandomColor():
 	color = (r, g, b)
 	return color
 
+def get_n_last_subparts_path(base_dir: Union[Path, str], n:int) -> Path:
+	return Path(*Path(base_dir).parts[-n-1:])
+
 def showPlots():
 	ax=plt.gca()
 	ax.xaxis.axis_date()
@@ -32,7 +38,8 @@ def showPlots():
 		for file in fileNames:
 		
 			### Read .csv file and append to list
-			with open(os.path.join(dirPath, file), encoding='utf-8', newline='') as fp:
+			filePath = os.path.join(dirPath, file)
+			with open(filePath, encoding='utf-8', newline='') as fp:
 				reader = csv.reader(fp, delimiter=",", quotechar='"')
 				next(reader, None)  # skip the headers
 				lines = [row for row in reader]
@@ -45,10 +52,17 @@ def showPlots():
 						y.append(float(row[1]))
 					converted_dates = mdates.date2num(x)
 					
+#					splitext = os.path.splitext(filePath)
+#					num = len(splitext)
+					
+#					label = '_'.join(splitext[num-2])
+#					label = splitext[0]
+					label = str(get_n_last_subparts_path(filePath, 2))
+					
 					plt.plot(converted_dates, y, c=getRandomColor(),
 						#	linestyle = 'dashed',
 							marker = 'o',
-							label = file)
+							label = label)
 	
 	### Generate the plot
 	plt.xlabel('Time')
