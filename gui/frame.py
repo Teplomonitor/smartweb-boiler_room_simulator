@@ -66,12 +66,14 @@ class MainFrame ( wx.Frame ):
 	
 	def OnLogSaveButtonPress( self, event ):
 		event.Skip()
+		self._guithread.saveProgramPlots()
 
 	def OnExitButtonPress( self, event ):
 		self.doClose(event)
 
-	def __init__( self, parent ):
+	def __init__( self, parent , guithread):
 		self.makeFrame(parent)
+		self._guithread = guithread
 		
 	def addInput(self, ProgramInputsBox, programInput):
 		inputTitle = programInput.getTitle()
@@ -138,7 +140,6 @@ class MainFrame ( wx.Frame ):
 		programOutput.setGui(guiChannel)
 	
 	def addProgram(self, programInfo):
-#		return
 		ProgramBoxSizer = wx.StaticBoxSizer( wx.StaticBox( self.mainScrollableWindow, wx.ID_ANY, _(programInfo.getTitle()) ), wx.VERTICAL )
 		
 		ProgramIOBoxSizer = wx.FlexGridSizer( 0, 1, 10, 0 )
@@ -188,15 +189,20 @@ class guiThread():
 		
 		self._app = wx.App()
 		self._frame = wx.Frame(None, title='Simple application')
-		self._ex = MainFrame(self._frame)
+		self._ex = MainFrame(self._frame, self)
+		self._programsList = []
 		
 	def addProgram(self, programInfo):
-#		self._ex.Show(False)
+		self._programsList.append(programInfo)
+		
 		self._ex.addProgram(programInfo)
 		self._ex.mainScrollableWindow.Layout()
 		self._ex.Layout()
 #		self._ex.Show(True)
-
+	def saveProgramPlots(self):
+		for prg in self._programsList:
+			prg.saveLog()
+			
 	def run(self):
 		self._ex.Show()
 		self._app.MainLoop()
