@@ -91,17 +91,28 @@ class Simulator(object):
 
 	def getPower(self):
 		if self.getStageState():
-			dt = self._tMax - self.getTemperature()
+			offset = 20
+			temp = self.getTemperature()
 			
 			overheatOnDelay  = 30
 			overheatOffDelay = 2*60
 			
-			if self._boilerOverheatDelay.Get(dt < 0, overheatOnDelay, overheatOffDelay):
+			if self._boilerOverheatDelay.Get(temp > self._tMax, overheatOnDelay, overheatOffDelay):
 				return 0
 			
+			t1 = self._tMax - offset
+			t2 = self._tMax
+			
 			Pmax = self.getMaxPower()
-			Pmin = Pmax*0.6
-			P = Pmin + (Pmax - Pmin) * dt/self._tMax
+			Pmin = 0.6 * Pmax
+			
+			if temp < t1:
+				P = Pmax
+			elif temp > t2:
+				P = Pmin
+			else:
+				Pmin = Pmax*0.6
+				P = Pmax + (Pmin - Pmax) * (temp - t1)/(t2 - t1)
 			
 			return P
 		else:
@@ -120,12 +131,18 @@ class Simulator(object):
 		return self.getPower() + self.getConsumersPower() + self.getCoolDownPower()
 
 	def computeTemperature(self):
-		if self.getFlow():
+		flow = self.getFlow()
+		if flow:
 			temp = self.getSupplyBackwardTemperature()
 		else:
 			temp = self.getTemperature()
 			
-		temp = temp + self.getTotalPower() * 0.5
+		
+		if flow:
+			k = 0.7
+			temp = temp + self.getTotalPower() / flow * k
+		else:
+			temp = temp + self.getTotalPower() * 0.5
 		
 		temp = limit(self._tMin, temp, self._tMax + 10)
 
