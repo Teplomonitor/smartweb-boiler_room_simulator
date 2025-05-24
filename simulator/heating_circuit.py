@@ -89,6 +89,9 @@ class Simulator(object):
 
 		return self.getValveState()*self.getMaxPower()
 
+	def getFlow(self):
+		return self.getPumpState() * self.getValveState() * 1 # cube per hour
+	
 	def getSourceTemperature(self):
 		return self._control._collector.getDirectTemperature()
 
