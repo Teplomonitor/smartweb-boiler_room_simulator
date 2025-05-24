@@ -40,17 +40,36 @@ class MainFrame ( wx.Frame ):
 
 		self.SetSizer( mainBoxSizer )
 		self.Layout()
+		self.m_menubar1 = wx.MenuBar( 0 )
+		self.m_menu1 = wx.Menu()
+		self.m_menuItem1 = wx.MenuItem( self.m_menu1, wx.ID_ANY, _(u"Save log")+ u"\t" + u"Ctrl+S", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menu1.Append( self.m_menuItem1 )
+
+		self.m_menuItem2 = wx.MenuItem( self.m_menu1, wx.ID_ANY, _(u"Exit")+ u"\t" + u"Ctrl+Q", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menu1.Append( self.m_menuItem2 )
+
+		self.m_menubar1.Append( self.m_menu1, _(u"File") )
+
+		self.SetMenuBar( self.m_menubar1 )
 
 		self.Centre( wx.BOTH )
 		
 		# Connect Events
 		self.Bind( wx.EVT_CLOSE, self.doClose )
-		
+		self.Bind( wx.EVT_MENU, self.OnLogSaveButtonPress, id = self.m_menuItem1.GetId() )
+		self.Bind( wx.EVT_MENU, self.OnExitButtonPress   , id = self.m_menuItem2.GetId() )
+
 	# Virtual event handlers, override them in your derived class
 	def doClose( self, event ):
 		event.Skip()
 		exit(0)
 	
+	def OnLogSaveButtonPress( self, event ):
+		event.Skip()
+
+	def OnExitButtonPress( self, event ):
+		self.doClose(event)
+
 	def __init__( self, parent ):
 		self.makeFrame(parent)
 		

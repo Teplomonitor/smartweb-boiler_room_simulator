@@ -141,6 +141,18 @@ class MainFrame ( wx.Frame ):
 
         self.SetSizer( mainBoxSizer )
         self.Layout()
+        self.m_menubar1 = wx.MenuBar( 0 )
+        self.m_menu1 = wx.Menu()
+        self.m_menuItem1 = wx.MenuItem( self.m_menu1, wx.ID_ANY, _(u"Save log")+ u"\t" + u"Ctrl+S", wx.EmptyString, wx.ITEM_NORMAL )
+        self.m_menu1.Append( self.m_menuItem1 )
+
+        self.m_menuItem2 = wx.MenuItem( self.m_menu1, wx.ID_ANY, _(u"Exit")+ u"\t" + u"Ctrl+Q", wx.EmptyString, wx.ITEM_NORMAL )
+        self.m_menu1.Append( self.m_menuItem2 )
+
+        self.m_menubar1.Append( self.m_menu1, _(u"File") )
+
+        self.SetMenuBar( self.m_menubar1 )
+
 
         self.Centre( wx.BOTH )
 
@@ -149,6 +161,8 @@ class MainFrame ( wx.Frame ):
         self.m_spinCtrlDouble1.Bind( wx.EVT_SPINCTRLDOUBLE, self.onSpin )
         self.m_spinCtrlDouble1.Bind( wx.EVT_TEXT_ENTER, self.onSpinText )
         self.inputValueSlider.Bind( wx.EVT_SCROLL, self.onScroll )
+        self.Bind( wx.EVT_MENU, self.OnLogSaveButtonPress, id = self.m_menuItem1.GetId() )
+        self.Bind( wx.EVT_MENU, self.OnExitButtonPress, id = self.m_menuItem2.GetId() )
 
     def __del__( self ):
         pass
@@ -165,6 +179,12 @@ class MainFrame ( wx.Frame ):
         event.Skip()
 
     def onScroll( self, event ):
+        event.Skip()
+
+    def OnLogSaveButtonPress( self, event ):
+        event.Skip()
+
+    def OnExitButtonPress( self, event ):
         event.Skip()
 
 
