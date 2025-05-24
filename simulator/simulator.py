@@ -8,7 +8,6 @@ from smartnet.message import createBus as createBus
 from smartnet.message import Message as smartnetMessage
 from simulator.sensorReport import reportSensorValue as reportSensorValue
 from simulator.outputRead import outputRead as outputRead
-from functions.programLog import showPlots as showPlots
 from smartnet.channelMapping import ChannelMapping as ChannelMapping
 
 import simulator.oat
@@ -223,10 +222,6 @@ class Simulator(threading.Thread):
 				ctrlIo.run()
 			
 			self._collector.run()
-			
-			savePrgLog = 0
-			if savePrgLog:
-				self._programsList[0].saveLog()
 			
 			dt = time.time() - time_start
 			
