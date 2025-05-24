@@ -1,35 +1,35 @@
 
 import time
 
+def getOutput(inputValue, outputValue, delay, elapsedTime):
+	if inputValue or (outputValue and (elapsedTime < delay)):
+		return True
+	return False
+
 class TimeOffDelay(object):
 	def __init__(self):
-		self._state = False
-		self._previousStateSetup = time.time()
+		self._out = False
+		self._offTime = time.time()
 
 	def Get(self, value, offDelay):
-		if offDelay == 0:
-			self._state = value
-			return self._state
-		
-		now = time.time()
-		
 		if value:
-			self._previousStateSetup = now
-			self._state = True
-			return self._state
+			self._offTime = time.time()
 		
-		dt = now - self._previousStateSetup
+		self._out = getOutput(value, self._out, offDelay, self.GetCropedElapsedTime(offDelay))
 		
-		if dt >= offDelay:
-			self._previousStateSetup = now - offDelay
-			self._state = False
-			return self._state
+		return self._out
+	
+	def GetCropedElapsedTime(self, delay):
+		now = time.time()
+		if now - self._offTime > delay:
+			self._offTime = now - delay
 		
-		self._state = True
-		
-		return self._state
+		if self._out:
+			return now - self._offTime;
+		else:
+			return 0
 
 	def TimerReset(self):
-		self._previousStateSetup = time.time()
-		self._state = False
+		self._offTime = time.time()
+		self._out = False
 
