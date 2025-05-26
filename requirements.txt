@@ -2,17 +2,8 @@
 #CAN library
 python-can
 
-# TUI library based on Curses
-# don't work under Windows. Version on pypi is old
-# npyscreen
-
-# Windows version of TUI
-# work's bad on Windows. Not all examples work
-# windows-curses
-
-# another TUI
-# it's working but looks bad
-# PyTermGUI
-
 # GUI library
 wxPython
+
+# Async testing
+pytest-aio
