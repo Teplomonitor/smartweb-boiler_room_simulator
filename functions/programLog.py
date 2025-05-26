@@ -72,7 +72,7 @@ class ParameterLog(object):
 		
 		fullLogDir = os.path.join(logsRootDir, logDir)
 		
-		fields = ['time','value']
+		fields = ['time', self._parameterType]
 		
 		if not os.path.exists(fullLogDir):
 			try:
