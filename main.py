@@ -66,11 +66,44 @@ def messageIsImHere():
 
 
 def findOnlineController():
+	print('Searching controller')
 	result = smartnetMessage.recv(130, messageIsImHere())
 	if result:
-		return result.getProgramId()
+		controllerId = result.getProgramId()
+		print('Controller %d found' %(controllerId))
+		return controllerId
 	else:
 		return None
+
+def initArgParser(program_license):
+	parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
+	parser.add_argument('-d', '--debug' , action='store_true'                          , help='start debugger that will reply on simulator commands') 
+	parser.add_argument(      '--init'  , action='store_true'                          , help='init controller with preset') 
+	parser.add_argument('-p', '--preset', nargs='?', const='default', default='default', help='enable erase all settings on controller and load the new one')
+	parser.add_argument('-u', '--udp'   , nargs='?', const=31987    , default=0        , help='enable CAN-UDP bridge. Can be value from 0 to 65535. 0 - disable CAN-UDP bridge')
+	parser.add_argument(      '--gui'   , action='store_true'                          , help='enable gui window') 
+	
+	return parser.parse_args()
+
+def initUdpBridge(UDP_PORT):
+	thread1 = udp.udp.udp_listen_thread("UDP_listen", 123, UDP_PORT)
+	thread1.daemon = True
+	thread1.start()
+	thread2 = udp.udp.can_thread  ("UDP_CAN_send", 456, UDP_PORT)
+	thread2.daemon = True
+	thread2.start()
+
+def initVirtualControllers(controllerIoList):
+	ctrlIo = []
+	if controllerIoList:
+		for ctrl in controllerIoList:
+			ctrlIo.append(ControllerIO(ctrl.getId(), ctrl.getType(), ctrl.getTitle()))
+	return ctrlIo
+
+def initIoSimulator(controller, ctrlIo):
+	simulatorThread = Simulator("simulator thread", 789, controller, ctrlIo)
+	simulatorThread.daemon = True
+	simulatorThread.start()
 
 def main(argv=None): # IGNORE:C0111
 	'''Command line options.'''
@@ -101,68 +134,41 @@ USAGE
 
 	try:
 		# Setup argument parser
-		parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
-		parser.add_argument('-d', '--debug' , action='store_true'                          , help='start debugger that will reply on simulator commands') 
-		parser.add_argument(      '--init'  , action='store_true'                          , help='init controller with preset') 
-		parser.add_argument('-p', '--preset', nargs='?', const='default', default='default', help='enable erase all settings on controller and load the new one')
-		parser.add_argument('-u', '--udp'   , nargs='?', const=31987    , default=0        , help='enable CAN-UDP bridge. Can be value from 0 to 65535. 0 - disable CAN-UDP bridge')
-		parser.add_argument(      '--gui'   , action='store_true'                          , help='enable gui window') 
-		
+		args = initArgParser(program_license)
 
-		# Process arguments
-		args = parser.parse_args()
-
-		run_simulator_debug         = args.debug
 		init_controller_with_preset = args.init
 		udp_bridge_enable           = int(args.udp)
 		preset                      = args.preset
-		enable_gui                  = args.gui
 
 		programList, controllerIoList = presets.preset.getPresetsList(preset)
 		
-		ctrlIo = []
-		if controllerIoList is None:
-			pass
-		else:
-			for ctrl in controllerIoList:
-				ctrlIo.append(ControllerIO(ctrl.getId(), ctrl.getType(), ctrl.getTitle()))
 		
 		if programList is None:
 			print('wrong preset. Exit')
 			return 1
 		
-		UDP_PORT = udp_bridge_enable
-		
 		if udp_bridge_enable:
-			thread1 = udp.udp.udp_listen_thread("UDP_listen", 123, UDP_PORT)
-			thread1.daemon = True
-			thread1.start()
-			thread2 = udp.udp.can_thread  ("UDP_CAN_send", 456, UDP_PORT)
-			thread2.daemon = True
-			thread2.start()
+			initUdpBridge(udp_bridge_enable)
 		
-		if enable_gui:
-			guiThread = guiFrameThread.guiThread("GUI", 666)
-		else:
-			guiThread = None
-		
-		if run_simulator_debug:
+		if args.debug:
 			dbgThread = debug.debug_thread()
 
-		print('Searching controller')
 		controllerId = findOnlineController()
 
 		if controllerId is None:
 			print('controller not found. Exit')
 			return 1
 		
-		print('Controller %d found' %(controllerId))
+		if args.gui:
+			guiThread = guiFrameThread.guiThread("GUI", 666)
+		else:
+			guiThread = None
 		
 		controller = Controller(controllerId, init_controller_with_preset, programList, guiThread)
 		
-		simulatorThread  = Simulator("simulator thread", 789, controller, ctrlIo)
-		simulatorThread.daemon = True
-		simulatorThread.start()
+		ctrlIo = initVirtualControllers(controllerIoList)
+		
+		initIoSimulator(controller, ctrlIo)
 		
 		if guiThread:
 			guiThread.run()
