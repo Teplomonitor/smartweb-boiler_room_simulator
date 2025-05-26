@@ -130,9 +130,9 @@ class Simulator(object):
 		tempDirect = self.getTemperature()
 		
 		cw = 4200 # теплоемкость воды
-		qhouse = 1.5/3.6 # расход кг/сек в доме постоянный.
+		qhouse = 1/3.6 # расход кг/сек в доме постоянный.
 		cwq = qhouse*cw # так короче
-		btermo=500 # теплоотдача батарей НЕ трогать
+		btermo=1200 # теплоотдача батарей НЕ трогать
 		troom = roomTemp
 		tinhouse = tempDirect
 		
