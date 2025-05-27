@@ -271,8 +271,9 @@ class Simulator(object):
 		valve = self.getValveState()
 		ugolserv = valve
 		
-#		if ugolserv > 0.9:
-#			ugolserv = 0.9
+		#workaround
+		if ugolserv > 0.8:
+			ugolserv = 0.8
 			
 		if self._init and ugolserv:
 			self._init = False
