@@ -289,8 +289,8 @@ class Simulator(object):
 		
 		power1 = 0
 		j=0
-		d_trettown=10
-		while j<50 and abs(d_trettown) >0.5: # приращение Т обратки в город меньше 0,5
+		d_tinhouse=10
+		while j<50 and abs(d_tinhouse) >0.1: # приращение Т обратки в город меньше 0,5
 		
 			d_tmax = tintown + t_rettown
 			d_tmin = tinhouse + t_rethouse
