@@ -272,8 +272,8 @@ class Simulator(object):
 		ugolserv = valve
 		
 		#workaround
-		if ugolserv > 0.8:
-			ugolserv = 0.8
+		if ugolserv > 1:
+			ugolserv = 1
 			
 		if self._init and ugolserv:
 			self._init = False
@@ -286,7 +286,13 @@ class Simulator(object):
 		
 		self._qtown = qtown
 		
-		
+
+		if qtown == 0 or self.supplyFlowIsStopped():
+			t_rettown = self.tempSlowCooling(t_rettown)
+		if self.secondaryFlowIsStopped():
+			tinhouse = self.tempSlowCooling(tinhouse)
+			
+		ddt0 = 0
 		power1 = 0
 		j=0
 		d_tinhouse=10
@@ -294,19 +300,23 @@ class Simulator(object):
 		
 			d_tmax = tintown + t_rettown
 			d_tmin = tinhouse + t_rethouse
-	
+			ddt = (d_tmax - d_tmin)/2
+			d_ddt=ddt-ddt0
+#			ddt0 = ddt
+			ddt = 0
+			
 			# энергия которая передается через пластину
-			d_power=atos*d_qtown*(d_tmax - d_tmin)/2
+			d_power=atos*(d_qtown*ddt + qtown*d_ddt)
 			
 			if qtown == 0 or self.supplyFlowIsStopped():
-				t_rettown = self.tempSlowCooling(t_rettown)
+				pass
 			else:
 				d_trettown = (d_qtown*(tintown - t_rettown)-d_power/cw)/qtown # прирост Т обр город d_power - прирост энергии d_qtown - прирост расхода
 				t_rettown = t_rettown + d_trettown
 			
 			# подача в дом 
 			if self.secondaryFlowIsStopped():
-				tinhouse = self.tempSlowCooling(tinhouse)
+				pass
 			else:
 				etown=qtown*cw*(tintown - t_rettown)
 				ehouse=qhouse*cw*(tinhouse-t_rethouse)
