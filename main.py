@@ -29,9 +29,9 @@ import presets.preset
 from smartnet.message import Message as smartnetMessage
 import smartnet.constants as snc
 from controllers.controller    import Controller   as Controller
-from controllers.controller_io import ControllerIO as ControllerIO
+from controllers.controller_io import initVirtualControllers as initVirtualControllers
 
-from scenario.scenario import ScenarioThread
+from scenario.scenario import ScenarioThread as ScenarioThread
 
 
 from simulator.simulator import Simulator as Simulator
@@ -104,13 +104,6 @@ def initUdpBridge(UDP_PORT):
 	thread2 = udp.udp.can_thread  ("UDP_CAN_send", 456, UDP_PORT)
 	thread2.daemon = True
 	thread2.start()
-
-def initVirtualControllers(controllerIoList):
-	ctrlIo = []
-	if controllerIoList:
-		for ctrl in controllerIoList:
-			ctrlIo.append(ControllerIO(ctrl.getId(), ctrl.getType(), ctrl.getTitle()))
-	return ctrlIo
 
 def initIoSimulator(controller, ctrlIo):
 	simulatorThread = Simulator("simulator thread", 789, controller, ctrlIo)

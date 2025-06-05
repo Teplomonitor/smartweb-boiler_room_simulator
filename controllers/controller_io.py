@@ -167,3 +167,10 @@ class ControllerIO(object):
 					self.reportOutputMapping(output_id)
 					time.sleep(0.1)
 			
+
+def initVirtualControllers(controllerIoList):
+	ctrlIo = []
+	if controllerIoList:
+		for ctrl in controllerIoList:
+			ctrlIo.append(ControllerIO(ctrl.getId(), ctrl.getType(), ctrl.getTitle()))
+	return ctrlIo
