@@ -97,10 +97,30 @@ class Simulator(threading.Thread):
 		'''
 		Constructor
 		'''
+		
+		self._simList        = []
+		self._roomList       = []
+		self._heatingCircuitList = []
+		self._consumersList  = []
+		self._generatorsList = []
+		self._cascadeList    = []
+		self._oat = None
+		
+		
 		threading.Thread.__init__(self)
 		self.thread_name = thread_name
 		self.thread_ID   = thread_ID
 		
+		
+		thread = sensor_report_thread(self)
+		thread.daemon = True
+		thread.start()
+		
+		self._CanListener = CanListener(self)
+		
+		self.resetControllerConfig(controllerHost, controllerIo)
+
+	def resetControllerConfig(self, controllerHost, controllerIo):
 		self._controllerHost = controllerHost
 		self._controllerIo   = controllerIo
 
@@ -180,13 +200,6 @@ class Simulator(threading.Thread):
 				self._cascadeList.append(sim)
 
 		self._collector = simulator.collector.Simulator(self)
-		
-		thread = sensor_report_thread(self)
-		thread.daemon = True
-		thread.start()
-		
-		self._CanListener = CanListener(self)
-
 
 	def getConsumerList      (self): return self._consumersList
 	def getHeatingCircuitList(self): return self._heatingCircuitList

@@ -109,9 +109,10 @@ def initIoSimulator(controller, ctrlIo):
 	simulatorThread = Simulator("simulator thread", 789, controller, ctrlIo)
 	simulatorThread.daemon = True
 	simulatorThread.start()
+	return simulatorThread
 
-def initScenario(controller):
-	scenarioThread = ScenarioThread(controller)
+def initScenario(controller, sim):
+	scenarioThread = ScenarioThread(controller, sim)
 	scenarioThread.daemon = True
 	scenarioThread.start()
 
@@ -178,9 +179,9 @@ USAGE
 		
 		ctrlIo = initVirtualControllers(controllerIoList)
 		
-		initIoSimulator(controller, ctrlIo)
+		sim = initIoSimulator(controller, ctrlIo)
 		
-		initScenario(controller)
+		initScenario(controller, sim)
 		
 		if guiThread:
 			guiThread.run()
