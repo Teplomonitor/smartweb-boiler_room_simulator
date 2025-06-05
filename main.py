@@ -31,6 +31,8 @@ import smartnet.constants as snc
 from controllers.controller    import Controller   as Controller
 from controllers.controller_io import ControllerIO as ControllerIO
 
+from scenario.scenario import ScenarioThread
+
 
 from simulator.simulator import Simulator as Simulator
 
@@ -115,6 +117,11 @@ def initIoSimulator(controller, ctrlIo):
 	simulatorThread.daemon = True
 	simulatorThread.start()
 
+def initScenario(controller):
+	scenarioThread = ScenarioThread(controller)
+	scenarioThread.daemon = True
+	scenarioThread.start()
+
 def main(argv=None): # IGNORE:C0111
 	'''Command line options.'''
 
@@ -179,6 +186,8 @@ USAGE
 		ctrlIo = initVirtualControllers(controllerIoList)
 		
 		initIoSimulator(controller, ctrlIo)
+		
+		initScenario(controller)
 		
 		if guiThread:
 			guiThread.run()
