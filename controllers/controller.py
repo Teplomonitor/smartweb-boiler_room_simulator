@@ -23,13 +23,13 @@ class Controller(object):
 		Constructor
 		'''
 		self._controllerId = controllerId
-
-		self._state = 'STATE_IDLE'
-		self._programList = []
 		self._gui = gui
+		self.initController(initPreset, programList)
 
+	def initController(self, resetConfig, programList):
+		self._programList = []
 
-		if initPreset:
+		if resetConfig:
 			self.resetConfig()
 			for program in programList:
 				if self.makeNewProgram(program) == False:
@@ -40,7 +40,7 @@ class Controller(object):
 			for program in programList:
 				prg = createProgram(program)
 				self.addProgram(prg)
-
+		
 
 	def sendProgramAddRequest(self, programType, programId, programScheme):
 		print('Send program add request')
@@ -130,10 +130,6 @@ class Controller(object):
 			
 		return result
 
-
-	def run(self):
-		while True:
-			time.sleep(5)
 
 	def addProgram(self, program):
 		print('add prg to list')
