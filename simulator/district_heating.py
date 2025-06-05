@@ -277,7 +277,7 @@ class Simulator(object):
 			
 		if self._init and ugolserv:
 			self._init = False
-			tinhouse = tintown + (t_rethouse - tintown) * ugolserv
+			tinhouse = t_rethouse + (tintown - t_rethouse) * ugolserv
 			t_rettown = tintown*ugolserv+tinhouse*(1-ugolserv)
 		
 		qtown0 = self._qtown
@@ -286,27 +286,34 @@ class Simulator(object):
 		
 		self._qtown = qtown
 		
-		
+		if qtown == 0 or self.supplyFlowIsStopped():
+			t_rettown = self.tempSlowCooling(t_rettown)
+		if self.secondaryFlowIsStopped():
+			tinhouse = self.tempSlowCooling(tinhouse)
+			
 		power1 = 0
 		j=0
 		d_tinhouse=10
-		while j<50 and abs(d_tinhouse) >0.1: # приращение Т обратки в город меньше 0,5
+		d_trettown = 1
+		
+		while j<50 and abs(d_trettown) >0.1 and abs(d_tinhouse) >0.1: # приращение Т обратки в город меньше 0,5
 		
 			d_tmax = tintown + t_rettown
 			d_tmin = tinhouse + t_rethouse
+			ddt = (d_tmax - d_tmin)/2
 	
 			# энергия которая передается через пластину
-			d_power=atos*d_qtown*(d_tmax - d_tmin)/2
+			d_power=atos*d_qtown*ddt
 			
 			if qtown == 0 or self.supplyFlowIsStopped():
-				t_rettown = self.tempSlowCooling(t_rettown)
+				pass
 			else:
 				d_trettown = (d_qtown*(tintown - t_rettown)-d_power/cw)/qtown # прирост Т обр город d_power - прирост энергии d_qtown - прирост расхода
 				t_rettown = t_rettown + d_trettown
 			
 			# подача в дом 
 			if self.secondaryFlowIsStopped():
-				tinhouse = self.tempSlowCooling(tinhouse)
+				pass
 			else:
 				etown=qtown*cw*(tintown - t_rettown)
 				ehouse=qhouse*cw*(tinhouse-t_rethouse)
