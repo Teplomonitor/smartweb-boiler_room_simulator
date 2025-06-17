@@ -7,6 +7,8 @@ import glob
 import time
 import threading
 
+import presets.preset
+from controllers.controller_io import initVirtualControllers as initVirtualControllers
 
 def printLog(log_str):
 	print(log_str)
@@ -14,6 +16,68 @@ def printLog(log_str):
 def printError(log_str):
 	print(log_str)
 
+
+class Scenario(object):
+	def __init__(self, controllerHost, sim):
+		self._controllerHost = controllerHost
+		self._done = False
+		self._sim = sim
+		
+	def initScenario(self):
+		ok = self.initProgramList(self.getRequiredPrograms())
+				
+		if not ok:
+			self._done = True
+			self.initController(self.getDefaultPreset())
+			
+			if not self.initProgramList(self.getRequiredPrograms()):
+				printError('WTF?!')
+			else:
+				printLog('init ok!')
+
+	def getRequiredPrograms(self):
+		requiredProgramTypesList = {
+		}
+		return requiredProgramTypesList
+		
+	def getDefaultPreset(self):
+		return 'default'
+	
+	def initController(self, preset):
+		programList, controllerIoList = presets.preset.getPresetsList(preset)
+		self._controllerHost.initController(True, programList)
+		ctrlIo = initVirtualControllers(controllerIoList)
+		self._sim.resetControllerConfig(self._controllerHost, ctrlIo)
+		
+	def initProgramList(self, requiredProgramTypesList):
+		self._programList = {}
+		for prgType in requiredProgramTypesList:
+			prg = self.getUnbindedProgram(requiredProgramTypesList[prgType])
+			if prg is None:
+				printError(f'{prgType} not in program list!')
+				return False
+			else:
+				self._programList[prgType] = prg
+		return True
+		
+	def getProgramList(self):
+		return self._controllerHost.getProgramList()
+	
+	def findProgramInList(self, program):
+		# Use a list comprehension to find employees in the specified department
+		return [_ for _, prg in self._programList.items() if prg == program]
+	
+	def getUnbindedProgram(self, programType):
+		programsList = self.getProgramList()
+		for program in programsList:
+			if program.getType() == programType:
+				# in case we need to different programs of the same type
+				if self.findProgramInList(program):
+					#this one already in list
+					continue
+				else:
+					return program
+		return None
 
 class ScenarioThread(threading.Thread):
 	'''
