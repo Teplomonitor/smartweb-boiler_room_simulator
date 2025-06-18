@@ -64,6 +64,14 @@ class Simulator(object):
 		self.setThermalOutputSensor(0)
 		self.setVolumeFlowSensor(0)
 		self.setOutsideRequestSensor(0)
+		
+		self.tintown    = self.getSupplyDirectTemperature()
+		self.t_rethouse = self.getBackwardTemperature()
+		
+		self.tinhouse   = self.getDirectTemperature()
+		self.t_rettown  = self.getSupplyBackwardTemperature()
+		
+		self.qtown  = 0
 
 	def getSupplyDirectTemperature(self):
 		return self._program.getInput(self._inputId['supply_direct_temp']).getValue()
@@ -181,7 +189,7 @@ class Simulator(object):
 		return Q
 
 	def tempSlowCooling(self, temp):
-		alpha = 0.01
+		alpha = 0.001
 		beta  = 1 - alpha
 		roomTemp = 24
 		temp = temp*beta + roomTemp*alpha
@@ -210,126 +218,84 @@ class Simulator(object):
 			return avrTemp + offset
 
 		return 85
-	
-	def computeSupplyBackwardTemperature(self):
-		t_rettown  = self.getSupplyBackwardTemperature()
-		if self.supplyFlowIsStopped():
-			t_rettown = self.tempSlowCooling(t_rettown)
-			return t_rettown
-		
-		valve = self.getValveState()
 
-		tintown    = self.getSupplyDirectTemperature()
-		tinhouse   = self.getDirectTemperature()
-		t_rethouse = self.getBackwardTemperature()
-		ugolserv   = valve
-		
-		qtown = qtown_max * ugolserv # расход из города при данном угле сервака
-
-		t_rettown = tintown-(ato * qtown/qtown_max)*((tintown+t_rettown)/2 - (tinhouse+t_rethouse)/2)/cw #обратка в город
-		
-		return t_rettown
-
-	def computeDirectTemperature(self):
-		tinhouse = self.getDirectTemperature()
-		if self.secondaryFlowIsStopped():
-			tinhouse = self.tempSlowCooling(tinhouse)
-			return tinhouse
-		
-		valve = self.getValveState()
-		ugolserv = valve
-		
-		qtown = qtown_max * ugolserv * self.getSupplyPumpState()# расход из города при данном угле сервака and active pump
-		
-		t_rethouse = self.getBackwardTemperature()
-		t_rettown  = self.getSupplyBackwardTemperature()
-		tintown    = self.getSupplyDirectTemperature()
-		
-		if self.getCirculationPumpState() == 0:
-			return t_rethouse
-			
-		etown  = tau*qtown *cw*(tintown - t_rettown)
-		ehouse = tau*qhouse*cw*(tinhouse-t_rethouse)
-
-		d_tinhouse = (etown-ehouse)/(cw*tau*qhouse) #подача в дом - подсчет разности энергий
-
-		tinhouse = tinhouse + d_tinhouse # подача в дом
-		
-		return tinhouse
-	
 	def computeBackwardTemperature(self):
 		t_rethouse = self._control._collector.getSupplyBackwardTemperature()
 		return t_rethouse
+	
+	def ddtf(self):
+		d1 = self.tintown   - self.tinhouse 
+		d2 = self.t_rettown - self.t_rethouse
+		d_tmax=d1
+		d_tmin=d2
+		d = d_tmin/d_tmax
+		if  d > 20: #!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			ddt = (d_tmax - d_tmin) / math.log( d_tmax/d_tmin )
+		else :	
+			ddt = (d_tmax + d_tmin)/2 
+		return ddt
+	
+	def findom(self):
+		# подача и обратка дома
+		if self.secondaryFlowIsStopped():
+			self.tinhouse = self.tempSlowCooling(self.tinhouse)
+			return self.tinhouse
 		
+		self.tinhouse = self.qtown*(self.tintown - self.t_rettown)/qhouse + self.t_rethouse
+		return self.tinhouse
+	
+	def ft_rettown(self, ddt):
+		# обратка в город
+		if self.qtown == 0 or self.supplyFlowIsStopped():
+			self.t_rettown = self.tempSlowCooling(self.t_rettown)
+			return self.t_rettown
+		
+		self.t_rettown = self.tintown - atos*ddt/(cw*self.qtown)
+		if self.t_rettown < self.t_rethouse:
+			#print('!!!!!', t_rettown)
+			self.t_rettown = self.t_rethouse
+		return self.t_rettown
+	
+	def mainframe(self):
+		j=0
+		d_teta = 10
+		ddt = self.ddtf() # температурный напор
+		while j<20 and abs(d_teta) > 0.5 : # утрясаем температуры при изменении расхода
+			
+			ddt0=ddt
+			self.findom()
+			
+			#ddtf()
+			self.ft_rettown(ddt)
+			
+			#ddtf()
+#			frettdom()
+			
+			ddt = self.ddtf()
+			d_teta=ddt-ddt0
+			
+			#fenergy() # вроде нормально все с энергией - проверку можно выключить
+			
+			j = j + 1
+			#print('j', j, 'd_teta %.2f.'% d_teta, ddt)	
+		#print('i',i, 'энергия города', etown, ' дом ', ehouse,'----------------------') 
 	def computeTemp(self):
-		tintown    = self.getSupplyDirectTemperature()
-		t_rethouse = self.getBackwardTemperature()
-		
-		tinhouse   = self.getDirectTemperature()
-		t_rettown  = self.getSupplyBackwardTemperature()
-		
 		valve = self.getValveState()
 		ugolserv = valve
 		
 		#workaround
-		if ugolserv > 1:
-			ugolserv = 1
+#		if ugolserv > 1:
+#			ugolserv = 1
 			
 		if self._init and ugolserv:
 			self._init = False
-			tinhouse = tintown + (t_rethouse - tintown) * ugolserv
-			t_rettown = tintown*ugolserv+tinhouse*(1-ugolserv)
+			self.tinhouse  = self.tintown + (self.t_rethouse - self.tintown) * ugolserv
+			self.t_rettown = self.tintown*ugolserv+self.tinhouse*(1-ugolserv)
 		
-		qtown0 = self._qtown
-		qtown = qtown_max * ugolserv * self.getSupplyPumpState()# расход из города при данном угле сервака
-		d_qtown=qtown-qtown0
-		
-		self._qtown = qtown
-		
+		self.qtown = qtown_max * ugolserv * self.getSupplyPumpState()# расход из города при данном угле сервака
 
-		if qtown == 0 or self.supplyFlowIsStopped():
-			t_rettown = self.tempSlowCooling(t_rettown)
-		if self.secondaryFlowIsStopped():
-			tinhouse = self.tempSlowCooling(tinhouse)
-			
-		ddt0 = 0
-		power1 = 0
-		j=0
-		d_tinhouse=10
-		while j<50 and abs(d_tinhouse) >0.1: # приращение Т обратки в город меньше 0,5
+		self.mainframe()
 		
-			d_tmax = tintown + t_rettown
-			d_tmin = tinhouse + t_rethouse
-			ddt = (d_tmax - d_tmin)/2
-			d_ddt=ddt-ddt0
-#			ddt0 = ddt
-			ddt = 0
-			
-			# энергия которая передается через пластину
-			d_power=atos*(d_qtown*ddt + qtown*d_ddt)
-			
-			if qtown == 0 or self.supplyFlowIsStopped():
-				pass
-			else:
-				d_trettown = (d_qtown*(tintown - t_rettown)-d_power/cw)/qtown # прирост Т обр город d_power - прирост энергии d_qtown - прирост расхода
-				t_rettown = t_rettown + d_trettown
-			
-			# подача в дом 
-			if self.secondaryFlowIsStopped():
-				pass
-			else:
-				etown=qtown*cw*(tintown - t_rettown)
-				ehouse=qhouse*cw*(tinhouse-t_rethouse)
-				d_tinhouse = (etown-ehouse)/(cw*qhouse) #подача в дом - подсчет разности энергий
-				tinhouse = tinhouse+d_tinhouse
-
-			power1 = cw * qtown * (tintown - t_rettown)
-			j +=1
-			
-#		print('tinhouse %.2f.' % tinhouse, 'rethous %.2f.' % t_rethouse,'rettown %.2f.' % t_rettown,'power %.2f.'% power1 )
-		
-		self.setDirectTemperature        (tinhouse)
-		self.setSupplyBackwardTemperature(t_rettown)
 		
 		
 	def getFlow(self):
@@ -338,20 +304,13 @@ class Simulator(object):
 		return 0
 	
 	def run(self):
-		self.setSupplyDirectTemperature  (self.computeSupplyDirectTemperature())
-		self.setBackwardTemperature      (self.computeBackwardTemperature())
-		
-#		self.setSupplyBackwardTemperature(self.computeSupplyBackwardTemperature())
-#		self.setDirectTemperature        (self.computeDirectTemperature())
+		self.tintown    = self.computeSupplyDirectTemperature()
+		self.t_rethouse = self.computeBackwardTemperature()
 		
 		self.computeTemp()
 		
-#		t1 = self.getSupplyDirectTemperature()
-#		t2 = self.getSupplyBackwardTemperature()
-#		t3 = self.getDirectTemperature()
-#		t4 = self.getBackwardTemperature()
-		
-#		p  = self.getPower()
-		
-#		print(f'tinhouse = {t3:.2f} t_rethouse = {t4:.2f} tintown = {t1:.2f} t_rettown = {t2:.2f} power = {p:.2f}')
+		self.setSupplyDirectTemperature  (self.tintown   )
+		self.setBackwardTemperature      (self.t_rethouse)
+		self.setDirectTemperature        (self.tinhouse  )
+		self.setSupplyBackwardTemperature(self.t_rettown )
 
