@@ -139,6 +139,21 @@ class MainFrame ( wx.Frame ):
 		
 		programOutput.setGui(guiChannel)
 	
+	def addParameter(self, ProgramParametersBox, programParameter):
+		parameterTitle = programParameter.getTitle()
+		ProgramParameterBox = wx.StaticBoxSizer( wx.StaticBox( ProgramParametersBox.GetStaticBox(), wx.ID_ANY, _(parameterTitle) ), wx.HORIZONTAL )
+
+		parameterSpinCtrl = wx.SpinCtrlDouble( ProgramParameterBox.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS|wx.TE_PROCESS_ENTER, 0, 100, 0, 0.1 )
+		parameterSpinCtrl.SetDigits( 0 )
+		ProgramParameterBox.Add( parameterSpinCtrl, 0, wx.ALL, 5 )
+
+		self.Parameter1Slider = wx.Slider( ProgramParameterBox.GetStaticBox(), wx.ID_ANY, 50, 0, 100, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL )
+		ProgramParameterBox.Add( self.Parameter1Slider, 0, wx.ALL, 5 )
+
+
+		ProgramParametersBox.Add( ProgramParameterBox, 1, wx.EXPAND, 5 )
+		pass
+	
 	def addProgram(self, programInfo):
 		ProgramBoxSizer = wx.StaticBoxSizer( wx.StaticBox( self.mainScrollableWindow, wx.ID_ANY, _(programInfo.getTitle()) ), wx.VERTICAL )
 		
@@ -171,6 +186,19 @@ class MainFrame ( wx.Frame ):
 		if outputFound:
 			ProgramIOBoxSizer.Add( ProgramOutputsBox, 1, wx.EXPAND, 5 )
 		
+		
+		ProgramParametersBox = wx.StaticBoxSizer( wx.StaticBox( ProgramBoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Parameters") ), wx.VERTICAL )
+		
+		programParameters = programInfo.getParameters()
+		parameterFound = False
+		for programParameter in programParameters:
+			self.addParameter(ProgramParametersBox, programParameters[programParameter])
+			parameterFound = True
+			
+			
+		if parameterFound:
+			ProgramIOBoxSizer.Add( ProgramParametersBox, 1, wx.EXPAND, 5 )
+
 		
 		ProgramBoxSizer.Add( ProgramIOBoxSizer, 1, 0, 5 )
 		
