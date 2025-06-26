@@ -30,7 +30,7 @@ class Program(object):
 		self._inputs  = [InputChannel (mapping) for mapping in inputMappings ]
 		self._outputs = [OutputChannel(mapping) for mapping in outputMappings]
 	
-		self._parameters = []
+		self._parameters = {}
 		
 		prgType = self.getType()
 		inputTitle  = InputTitle [prgType]
