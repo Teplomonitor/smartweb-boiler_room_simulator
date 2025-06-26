@@ -22,10 +22,6 @@ class Program(object):
 		Constructor
 		'''
 		
-		self._type    = preset.getType()
-		self._id      = preset.getId()
-		self._scheme  = preset.getScheme()
-		self._title   = preset.getTitle()
 		self._preset  = preset
 
 		inputMappings  = preset.getInputs ().get()
@@ -34,17 +30,20 @@ class Program(object):
 		self._inputs  = [InputChannel (mapping) for mapping in inputMappings ]
 		self._outputs = [OutputChannel(mapping) for mapping in outputMappings]
 	
-		self._inputTitle  = InputTitle[self._type]
-		self._outputTitle = OutputTitle[self._type]
+		self._parameters = []
+		
+		prgType = self.getType()
+		inputTitle  = InputTitle [prgType]
+		outputTitle = OutputTitle[prgType]
 		
 		i = 0
 		for programInput in self._inputs:
-			programInput.setTitle(self._inputTitle[i])
+			programInput.setTitle(inputTitle[i])
 			i = i + 1
 
 		i = 0
 		for programOutput in self._outputs:
-			programOutput.setTitle(self._outputTitle[i])
+			programOutput.setTitle(outputTitle[i])
 			i = i + 1
 
 	def getInputs(self   ): return self._inputs
@@ -55,13 +54,15 @@ class Program(object):
 	def getOutput (self, i): return self._outputs[i]
 	def setOutput (self, i, value): self._outputs[i] = value
 	
-	def getInputTitle (self, i): return self._inputTitle [i]
-	def getOutputTitle(self, i): return self._outputTitle[i]
+	def getParameters(self): return self._parameters
+	
+	def getInputTitle (self, i): return self.getInput (i).getTitle()
+	def getOutputTitle(self, i): return self.getOutput(i).getTitle()
 
-	def getType     (self): return self._type
-	def getScheme   (self): return self._scheme
-	def getId       (self): return self._id
-	def getTitle    (self): return self._title
+	def getType     (self): return self._preset.getType()
+	def getScheme   (self): return self._preset.getScheme()
+	def getId       (self): return self._preset.getId()
+	def getTitle    (self): return self._preset.getTitle()
 	def getPreset   (self): return self._preset
 
 	def bindInput(self, channel_id, mapping):
@@ -94,8 +95,8 @@ class Program(object):
 				else:
 					print('bind error %d' %(result))
 					return False
-
-
+				
+		
 		request        = generateRequest()
 		responseFilter = generateRequiredResponse()
 
@@ -115,7 +116,7 @@ class Program(object):
 		def generateRequest():
 			request = smartnetMessage(
 			snc.ProgramType['REMOTE_CONTROL'],
-			self._id,
+			self.getId(),
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
 			snc.requestFlag['REQUEST'],
 			[snc.ProgramType['PROGRAM'], snc.ProgramParameter['OUTPUT_MAPPING'], channel_id, mapping.getRaw(0), mapping.getRaw(1)])
@@ -140,8 +141,8 @@ class Program(object):
 				else:
 					print('bind error %d' %(result))
 					return False
-
-
+				
+		
 		request        = generateRequest()
 		responseFilter = generateRequiredResponse()
 
@@ -165,10 +166,11 @@ class Program(object):
 			i = i + 1
 
 	def saveLog(self):
-		titleCommon = self._title + '_' + str(self._id)
+		titleCommon = self.getTitle() + '_' + str(self.getId())
 		
 		logDirInputs  = os.path.join(titleCommon, 'inputs')
 		logDirOutputs = os.path.join(titleCommon, 'outputs')
+		
 		for programInput in self._inputs:
 			programInput.saveLog(logDirInputs)
 		for programOutput in self._outputs:
