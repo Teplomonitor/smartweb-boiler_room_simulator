@@ -29,10 +29,15 @@ class MainFrame ( wx.Frame ):
         mainBoxSizer.SetMinSize( wx.Size( 640,-1 ) )
         self.mainScrollableWindow = wx.ScrolledWindow( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 640,480 ), wx.HSCROLL|wx.VSCROLL )
         self.mainScrollableWindow.SetScrollRate( 5, 5 )
+        self.mainScrollableWindow.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_INACTIVECAPTION ) )
+
         programsWrapSizer = wx.WrapSizer( wx.VERTICAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
         programsWrapSizer.SetMinSize( wx.Size( 640,480 ) )
-        ProgramBoxSizer = wx.StaticBoxSizer( wx.StaticBox( self.mainScrollableWindow, wx.ID_ANY, _(u"Heating circuit 1") ), wx.VERTICAL )
+        self.ProgramPanel = wx.Panel( self.mainScrollableWindow, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
+        self.ProgramPanel.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_MENU ) )
+
+        ProgramBoxSizer = wx.StaticBoxSizer( wx.StaticBox( self.ProgramPanel, wx.ID_ANY, _(u"Heating circuit 1") ), wx.VERTICAL )
 
         ProgramIOBoxSizer = wx.FlexGridSizer( 0, 1, 10, 0 )
         ProgramIOBoxSizer.SetFlexibleDirection( wx.BOTH )
@@ -148,7 +153,10 @@ class MainFrame ( wx.Frame ):
         ProgramBoxSizer.Add( ProgramIOBoxSizer, 1, 0, 5 )
 
 
-        programsWrapSizer.Add( ProgramBoxSizer, 1, 0, 5 )
+        self.ProgramPanel.SetSizer( ProgramBoxSizer )
+        self.ProgramPanel.Layout()
+        ProgramBoxSizer.Fit( self.ProgramPanel )
+        programsWrapSizer.Add( self.ProgramPanel, 1, wx.EXPAND |wx.ALL, 5 )
 
 
         self.mainScrollableWindow.SetSizer( programsWrapSizer )
