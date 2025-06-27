@@ -71,7 +71,7 @@ class Program(object):
 		def generateRequest():
 			request = smartnetMessage(
 			snc.ProgramType['REMOTE_CONTROL'],
-			self._id,
+			self.getId(),
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
 			snc.requestFlag['REQUEST'],
 			[snc.ProgramType['PROGRAM'], snc.ProgramParameter['INPUT_MAPPING'], channel_id, mapping.getRaw(0), mapping.getRaw(1)])
