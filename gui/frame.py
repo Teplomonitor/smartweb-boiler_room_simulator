@@ -258,13 +258,20 @@ class guiThread():
 		self._ex = MainFrame(self._frame, self)
 		self._programsList = []
 		
+	def Clear(self):
+		self._ex = MainFrame(self._frame, self)
+		self._programsList = []
+	
 	def addProgram(self, programInfo):
 		self._programsList.append(programInfo)
 		
 		self._ex.addProgram(programInfo)
 		self._ex.mainScrollableWindow.Layout()
 		self._ex.Layout()
-#		self._ex.Show(True)
+
+	def removeProgram(self, programInfo):
+		self._programsList.remove(programInfo)
+		
 	def saveProgramPlots(self):
 		for prg in self._programsList:
 			prg.saveLog()
