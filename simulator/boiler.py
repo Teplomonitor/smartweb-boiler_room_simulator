@@ -85,10 +85,10 @@ class Simulator(object):
 
 		return 0
 		
-
+	
 	def getMaxPower(self):
-		return self._preset.getPower()
-
+		return self._program.getMaxPower()
+	
 	def getPower(self):
 		if self.getStageState():
 			offset = 20
