@@ -51,20 +51,19 @@ class Scenario(object):
 		
 	def initProgramList(self, requiredProgramTypesList):
 		self._programList = {}
-		for prgType in requiredProgramTypesList:
-			prg = self.getUnbindedProgram(requiredProgramTypesList[prgType])
+		for prgKey in requiredProgramTypesList:
+			prg = self.getUnbindedProgram(requiredProgramTypesList[prgKey])
 			if prg is None:
-				printError(f'{prgType} not in program list!')
+				printError(f'{prgKey} not in program list!')
 				return False
 			else:
-				self._programList[prgType] = prg
+				self._programList[prgKey] = prg
 		return True
 		
 	def getProgramList(self):
 		return self._controllerHost.getProgramList()
 	
 	def findProgramInList(self, program):
-		# Use a list comprehension to find employees in the specified department
 		return [_ for _, prg in self._programList.items() if prg == program]
 	
 	def getUnbindedProgram(self, programType):
