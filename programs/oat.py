@@ -21,3 +21,5 @@ class Oat(Program):
 		]
 		
 		self.setInputsRange(inputsRange)
+
+	def getGuiColor (self): return 'blue'

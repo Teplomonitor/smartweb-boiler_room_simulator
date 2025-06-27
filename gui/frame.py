@@ -209,20 +209,22 @@ class MainFrame ( wx.Frame ):
 			
 	def programColorToSysColor(self, color):
 		sysColor = {
-			'default': wx.SYS_COLOUR_MENU,
-			'red'    : wx.SYS_COLOUR_MENU,
-			'blue'   : wx.SYS_COLOUR_MENU,
-			'yellow' : wx.SYS_COLOUR_MENU,
-			'orange' : wx.SYS_COLOUR_MENU,
-			}
+			'default': wx.SystemSettings.GetColour( wx.SYS_COLOUR_MENU ),
+			'red'    : wx.Colour( 251, 117, 126 ),
+			'blue'   : wx.Colour( 121, 168, 247 ),
+			'yellow' : wx.Colour( 243, 235, 124 ),
+			'orange' : wx.Colour( 254, 216, 114 ),
+			'green'  : wx.Colour( 120, 248, 158 ),
+		}
 		if color in sysColor:
 			return sysColor[color]
-		return wx.SYS_COLOUR_MENU
+		
+		return sysColor['default']
 			
 	def addProgram(self, programInfo):
 		ProgramPanel = wx.Panel( self.mainScrollableWindow, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
 		color = self.programColorToSysColor(programInfo.getGuiColor())
-		ProgramPanel.SetBackgroundColour( wx.SystemSettings.GetColour( color ) )
+		ProgramPanel.SetBackgroundColour( color )
 
 		ProgramBoxSizer = wx.StaticBoxSizer( wx.StaticBox( ProgramPanel, wx.ID_ANY, _(programInfo.getTitle()) ), wx.VERTICAL )
 		

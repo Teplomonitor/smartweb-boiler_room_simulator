@@ -24,3 +24,5 @@ class HeatingCircuit(Program):
 	
 	def getMaxFlowRate(self):
 		return self._parameters['max_flow_rate'].getValue()
+
+	def getGuiColor (self): return 'green'
