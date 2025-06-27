@@ -35,7 +35,7 @@ class MainFrame ( wx.Frame ):
 
         programsWrapSizer.SetMinSize( wx.Size( 640,480 ) )
         self.ProgramPanel = wx.Panel( self.mainScrollableWindow, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
-        self.ProgramPanel.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_MENU ) )
+        self.ProgramPanel.SetBackgroundColour( wx.Colour( 251, 117, 126 ) )
 
         ProgramBoxSizer = wx.StaticBoxSizer( wx.StaticBox( self.ProgramPanel, wx.ID_ANY, _(u"Heating circuit 1") ), wx.VERTICAL )
 
