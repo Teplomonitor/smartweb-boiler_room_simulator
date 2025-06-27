@@ -66,8 +66,8 @@ class Channel(GuiParameter):
 		
 	def setMapping(self, mapping): self._mapping = mapping
 	
-	def setValue  (self, value):
-		super().setValue(value)
+	def setValue  (self, value, manual = False):
+		super().setValue(value, manual)
 		self._log.append(value)
 		
 	def setTitle  (self, title  ):
@@ -97,7 +97,7 @@ class InputChannel(Channel):
 			if not manual:
 				return
 			
-		super().setValue(value)
+		super().setValue(value, manual)
 			
 	def isAuto(self):
 		if self._gui:
