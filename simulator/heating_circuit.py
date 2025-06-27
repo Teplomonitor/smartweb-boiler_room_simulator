@@ -35,7 +35,7 @@ class Simulator(object):
 	def getOat(self):
 		oat = self._control.getOat()
 		if oat is None:
-			oat = 0
+			return 0
 			
 		return oat.getTemperature()
 	
