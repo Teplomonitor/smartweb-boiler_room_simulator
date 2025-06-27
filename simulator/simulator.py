@@ -42,8 +42,8 @@ class CanListener(can.Listener):
 	def __init__(self, simulator):
 	#	self._canbus   = createBus()
 		self._canbus   = smartnetMessage._txbus
-		self._notifier = can.Notifier(self._canbus, [self])
 		self._simulator = simulator
+		self._notifier = can.Notifier(self._canbus, [self])
 		
 	def on_message_received(self, message):
 		if message is None:

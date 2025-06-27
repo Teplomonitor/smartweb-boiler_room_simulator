@@ -24,3 +24,7 @@ class Channel():
 	def SetMax(self, value):
 		self._spinner.SetMax(value)
 		self._slider .SetMax(int(value))
+		
+	def SetIncrement(self, value):
+		self._spinner.SetIncrement(value)
+		

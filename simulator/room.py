@@ -46,13 +46,7 @@ class Simulator(object):
 
 	def getMaxPower(self):
 		return self._preset.getPower()
-
-	def getPower(self):
-		if self.getPumpState() == 0:
-			return 0
-
-		return self.getMaxPower()
-
+	
 	def getSourceTemperature(self, sourceId):
 		sourceList       = self._control.getHeatingCircuitList()
 		roomSourceList   = self._program.getPreset().getSettings().getSourceList()

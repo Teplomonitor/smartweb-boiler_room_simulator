@@ -1,5 +1,6 @@
 from functions.programLog import ParameterLog as ChannelLog
 
+from gui.parameter import GuiParameter as GuiParameter
 
 class ChannelMapping(object):
 	'''
@@ -44,7 +45,7 @@ class ChannelMapping(object):
 
 
 
-class Channel(object):
+class Channel(GuiParameter):
 	'''
 	classdocs
 	'''
@@ -53,10 +54,9 @@ class Channel(object):
 		'''
 		Constructor
 		'''
+		super().__init__(value, title, gui)
+		
 		self._mapping = mapping
-		self._value   = value
-		self._title   = title
-		self._gui     = gui
 		self._log     = ChannelLog('SENSOR', title)
 
 	def getMapping(self): return self._mapping
@@ -64,31 +64,22 @@ class Channel(object):
 		if self._mapping:
 			return self._mapping.isMapped()
 		
-	def getValue  (self): return self._value
-	def getTitle  (self): return self._title
-
 	def setMapping(self, mapping): self._mapping = mapping
 	
-	def setValue  (self, value):
-		self._value = value
-		if self._gui:
-			self._gui.SetValue(value)
-			
+	def setValue  (self, value, manual = False):
+		super().setValue(value, manual)
 		self._log.append(value)
 		
 	def setTitle  (self, title  ):
-		self._title = title
+		super().setTitle(title)
 		self._log.setTitle(title)
 		
 	def setLogType(self, logType): self._log.setSaveType(logType)
 	
-	def setGui(self, gui):
-		self._gui = gui
-		
 	def saveLog(self, title):
 		self._log.saveToCsv(title)
 
-class InputChannel(Channel):	
+class InputChannel(Channel):
 	'''
 	classdocs
 	'''
@@ -99,8 +90,6 @@ class InputChannel(Channel):
 		'''
 		super().__init__(mapping, value, title, gui)
 		
-		self._min     =   0
-		self._max     = 100
 		self.setLogType('TEMPERATURE')
 		
 	def setValue  (self, value, manual = False  ):
@@ -108,7 +97,7 @@ class InputChannel(Channel):
 			if not manual:
 				return
 			
-		super().setValue(value)
+		super().setValue(value, manual)
 			
 	def isAuto(self):
 		if self._gui:
@@ -119,18 +108,6 @@ class InputChannel(Channel):
 		if self._gui:
 			return self._gui._manualRb.GetValue()
 		return False
-	
-	def onSpin(self, event):
-		event.Skip()
-		self.setValue(self._gui._spinner.GetValue(), True)
-		
-	def onSpinText(self, event):
-		event.Skip()
-		self.setValue(int(self._gui._spinner.GetTextValue()), True)
-		
-	def onScroll(self, event):
-		event.Skip()
-		self.setValue(self._gui._slider .GetValue(), True)
 	
 	def onShort(self, event):
 		event.Skip()
@@ -149,31 +126,7 @@ class InputChannel(Channel):
 		self._gui._slider.Enable ( not state )
 		self._gui._spinner.Enable( not state )
 	
-	def setGui(self, gui):
-		self._gui = gui
-		
-		self.initGui()
-
-	def initGui(self):
-		if self._gui:
-			self._gui.SetMin(self._min)
-			self._gui.SetMax(self._max)
-		
-	def getMin(self): return self._min
-	def getMax(self): return self._max
 	
-	def setMin(self, value):
-		self._min = value
-		
-		if self._gui:
-			self._gui.SetMin(value)
-		
-	def setMax(self, value):
-		self._max = value
-		
-		if self._gui:
-			self._gui.SetMax(value)
-			
 	def isShort(self):
 		if self._gui:
 			return self._gui._shortCheckbox.GetValue()
@@ -185,7 +138,7 @@ class InputChannel(Channel):
 		return False
 		
 	
-class OutputChannel(Channel):	
+class OutputChannel(Channel):
 	'''
 	classdocs
 	'''
@@ -195,4 +148,7 @@ class OutputChannel(Channel):
 		Constructor
 		'''
 		super().__init__(mapping, value, title, gui)
-
+		
+	def initGui(self):
+		pass
+		

@@ -29,10 +29,15 @@ class MainFrame ( wx.Frame ):
         mainBoxSizer.SetMinSize( wx.Size( 640,-1 ) )
         self.mainScrollableWindow = wx.ScrolledWindow( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 640,480 ), wx.HSCROLL|wx.VSCROLL )
         self.mainScrollableWindow.SetScrollRate( 5, 5 )
+        self.mainScrollableWindow.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_INACTIVECAPTION ) )
+
         programsWrapSizer = wx.WrapSizer( wx.VERTICAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
         programsWrapSizer.SetMinSize( wx.Size( 640,480 ) )
-        ProgramBoxSizer = wx.StaticBoxSizer( wx.StaticBox( self.mainScrollableWindow, wx.ID_ANY, _(u"Heating circuit 1") ), wx.VERTICAL )
+        self.ProgramPanel = wx.Panel( self.mainScrollableWindow, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
+        self.ProgramPanel.SetBackgroundColour( wx.Colour( 251, 117, 126 ) )
+
+        ProgramBoxSizer = wx.StaticBoxSizer( wx.StaticBox( self.ProgramPanel, wx.ID_ANY, _(u"Heating circuit 1") ), wx.VERTICAL )
 
         ProgramIOBoxSizer = wx.FlexGridSizer( 0, 1, 10, 0 )
         ProgramIOBoxSizer.SetFlexibleDirection( wx.BOTH )
@@ -127,11 +132,31 @@ class MainFrame ( wx.Frame ):
 
         ProgramIOBoxSizer.Add( ProgramOutputsBox, 1, wx.EXPAND, 5 )
 
+        ProgramParametersBox = wx.StaticBoxSizer( wx.StaticBox( ProgramBoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Parameters") ), wx.VERTICAL )
+
+        ProgramParameter1Box = wx.StaticBoxSizer( wx.StaticBox( ProgramParametersBox.GetStaticBox(), wx.ID_ANY, _(u"Parameter1Title") ), wx.HORIZONTAL )
+
+        self.Parameter1Spin = wx.SpinCtrlDouble( ProgramParameter1Box.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS|wx.TE_PROCESS_ENTER, 0, 100, 0, 0.1 )
+        self.Parameter1Spin.SetDigits( 0 )
+        ProgramParameter1Box.Add( self.Parameter1Spin, 0, wx.ALL, 5 )
+
+        self.Parameter1Slider = wx.Slider( ProgramParameter1Box.GetStaticBox(), wx.ID_ANY, 50, 0, 100, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL )
+        ProgramParameter1Box.Add( self.Parameter1Slider, 0, wx.ALL, 5 )
+
+
+        ProgramParametersBox.Add( ProgramParameter1Box, 1, wx.EXPAND, 5 )
+
+
+        ProgramIOBoxSizer.Add( ProgramParametersBox, 1, wx.EXPAND, 5 )
+
 
         ProgramBoxSizer.Add( ProgramIOBoxSizer, 1, 0, 5 )
 
 
-        programsWrapSizer.Add( ProgramBoxSizer, 1, 0, 5 )
+        self.ProgramPanel.SetSizer( ProgramBoxSizer )
+        self.ProgramPanel.Layout()
+        ProgramBoxSizer.Fit( self.ProgramPanel )
+        programsWrapSizer.Add( self.ProgramPanel, 1, wx.EXPAND |wx.ALL, 5 )
 
 
         self.mainScrollableWindow.SetSizer( programsWrapSizer )
@@ -161,6 +186,9 @@ class MainFrame ( wx.Frame ):
         self.m_spinCtrlDouble1.Bind( wx.EVT_SPINCTRLDOUBLE, self.onSpin )
         self.m_spinCtrlDouble1.Bind( wx.EVT_TEXT_ENTER, self.onSpinText )
         self.inputValueSlider.Bind( wx.EVT_SCROLL, self.onScroll )
+        self.Parameter1Spin.Bind( wx.EVT_SPINCTRLDOUBLE, self.onSpin )
+        self.Parameter1Spin.Bind( wx.EVT_TEXT_ENTER, self.onSpinText )
+        self.Parameter1Slider.Bind( wx.EVT_SCROLL, self.onScroll )
         self.Bind( wx.EVT_MENU, self.OnLogSaveButtonPress, id = self.m_menuItem1.GetId() )
         self.Bind( wx.EVT_MENU, self.OnExitButtonPress, id = self.m_menuItem2.GetId() )
 
@@ -180,6 +208,9 @@ class MainFrame ( wx.Frame ):
 
     def onScroll( self, event ):
         event.Skip()
+
+
+
 
     def OnLogSaveButtonPress( self, event ):
         event.Skip()
