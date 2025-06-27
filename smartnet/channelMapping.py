@@ -109,6 +109,11 @@ class InputChannel(Channel):
 			return self._gui._manualRb.GetValue()
 		return False
 	
+	def setManual(self, value):
+		if self._gui:
+			self._gui._manualRb.SetValue(value)
+		
+	
 	def onShort(self, event):
 		event.Skip()
 		state = self._gui._shortCheckbox.GetValue()
