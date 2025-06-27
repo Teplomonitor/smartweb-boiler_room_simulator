@@ -64,6 +64,7 @@ class Program(object):
 	def getId       (self): return self._preset.getId()
 	def getTitle    (self): return self._preset.getTitle()
 	def getPreset   (self): return self._preset
+	def getGuiColor (self): return 'default'
 
 	def bindInput(self, channel_id, mapping):
 		print(f'bind program input {channel_id}')
