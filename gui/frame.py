@@ -30,10 +30,12 @@ class MainFrame ( wx.Frame ):
 		mainBoxSizer.SetMinSize( wx.Size( 640,-1 ) )
 		self.mainScrollableWindow = wx.ScrolledWindow( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 640,480 ), wx.HSCROLL|wx.VSCROLL )
 		self.mainScrollableWindow.SetScrollRate( 5, 5 )
+		self.mainScrollableWindow.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_INACTIVECAPTION ) )
+
 		self.programsWrapSizer = wx.WrapSizer( wx.VERTICAL, wx.WRAPSIZER_DEFAULT_FLAGS )
 
 		self.programsWrapSizer.SetMinSize( wx.Size( 640,480 ) )
-		
+
 		self.mainScrollableWindow.SetSizer( self.programsWrapSizer )
 		self.mainScrollableWindow.Layout()
 		mainBoxSizer.Add( self.mainScrollableWindow, 1, wx.EXPAND |wx.ALL, 5 )
@@ -168,7 +170,10 @@ class MainFrame ( wx.Frame ):
 		programParameter.setGui(guiChannel)
 	
 	def addProgram(self, programInfo):
-		ProgramBoxSizer = wx.StaticBoxSizer( wx.StaticBox( self.mainScrollableWindow, wx.ID_ANY, _(programInfo.getTitle()) ), wx.VERTICAL )
+		ProgramPanel = wx.Panel( self.mainScrollableWindow, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
+		ProgramPanel.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_MENU ) )
+
+		ProgramBoxSizer = wx.StaticBoxSizer( wx.StaticBox( ProgramPanel, wx.ID_ANY, _(programInfo.getTitle()) ), wx.VERTICAL )
 		
 		ProgramIOBoxSizer = wx.FlexGridSizer( 0, 1, 10, 0 )
 		ProgramIOBoxSizer.SetFlexibleDirection( wx.BOTH )
@@ -215,8 +220,10 @@ class MainFrame ( wx.Frame ):
 		
 		ProgramBoxSizer.Add( ProgramIOBoxSizer, 1, 0, 5 )
 		
-		
-		self.programsWrapSizer.Add( ProgramBoxSizer, 1, 0, 5 )
+		ProgramPanel.SetSizer( ProgramBoxSizer )
+		ProgramPanel.Layout()
+		ProgramBoxSizer.Fit( ProgramPanel )
+		self.programsWrapSizer.Add( ProgramPanel, 1, wx.EXPAND |wx.ALL, 5 )
 		
 		
 	def __del__( self ):
