@@ -60,6 +60,9 @@ class Simulator(object):
 	def setBackwardTemperature2(self, value):
 		self._program.getInput(self._inputId['backwardTemperature']).setValue(value)
 
+	def getMaxFlowRate(self):
+		return self._program.getMaxFlowRate()
+	
 	def getPumpState(self):
 		pump = self._program.getOutput(self._outputId['pump'])
 		if pump.getMapping() is None:
@@ -90,7 +93,8 @@ class Simulator(object):
 		return self.getValveState()*self.getMaxPower()
 
 	def getFlow(self):
-		return self.getPumpState() * self.getValveState() * 1 # cube per hour
+		rate = self.getMaxFlowRate() / 1000 # cube per hour
+		return self.getPumpState() * self.getValveState() * rate
 	
 	def getSourceTemperature(self):
 		return self._control._collector.getDirectTemperature()
@@ -130,7 +134,7 @@ class Simulator(object):
 		tempDirect = self.getTemperature()
 		
 		cw = 4200 # теплоемкость воды
-		qhouse = 1/3.6 # расход кг/сек в доме постоянный.
+		qhouse = self.getMaxFlowRate() / 3600 # расход кг/сек в доме постоянный.
 		cwq = qhouse*cw # так короче
 		btermo=1200 # теплоотдача батарей НЕ трогать
 		troom = roomTemp
