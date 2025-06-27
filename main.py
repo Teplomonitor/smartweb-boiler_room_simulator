@@ -89,11 +89,12 @@ def findOnlineController():
 
 def initArgParser(program_license):
 	parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
-	parser.add_argument('-d', '--debug' , action='store_true'                          , help='start debugger that will reply on simulator commands') 
-	parser.add_argument(      '--init'  , action='store_true'                          , help='init controller with preset') 
-	parser.add_argument('-p', '--preset', nargs='?', const='default', default='default', help='enable erase all settings on controller and load the new one')
-	parser.add_argument('-u', '--udp'   , nargs='?', const=31987    , default=0        , help='enable CAN-UDP bridge. Can be value from 0 to 65535. 0 - disable CAN-UDP bridge')
-	parser.add_argument(      '--gui'   , action='store_true'                          , help='enable gui window') 
+	parser.add_argument('-d', '--debug'   , action='store_true'                          , help='start debugger that will reply on simulator commands') 
+	parser.add_argument(      '--init'    , action='store_true'                          , help='init controller with preset') 
+	parser.add_argument('-p', '--preset'  , nargs='?', const='default', default='default', help='select controller config')
+	parser.add_argument('-u', '--udp'     , nargs='?', const=31987    , default=0        , help='enable CAN-UDP bridge. Can be value from 0 to 65535. 0 - disable CAN-UDP bridge')
+	parser.add_argument(      '--gui'     , action='store_true'                          , help='enable gui window') 
+	parser.add_argument('-s', '--scenario', nargs='?', const='default', default='none'   , help='enable automatic scenarion run')
 	
 	return parser.parse_args()
 
@@ -150,6 +151,7 @@ USAGE
 		init_controller_with_preset = args.init
 		udp_bridge_enable           = int(args.udp)
 		preset                      = args.preset
+		scenario                    = args.scenario
 
 		programList, controllerIoList = presets.preset.getPresetsList(preset)
 		
@@ -181,7 +183,8 @@ USAGE
 		
 		sim = initIoSimulator(controller, ctrlIo)
 		
-		initScenario(controller, sim)
+		if scenario != 'none':
+			initScenario(controller, sim)
 		
 		if guiThread:
 			guiThread.run()
