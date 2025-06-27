@@ -143,9 +143,13 @@ class Simulator(object):
 		
 		if flow:
 			k = 0.7
-			temp = temp + self.getTotalPower() / flow * k
+			dt = self.getTotalPower() / flow * k
 		else:
-			temp = temp + self.getTotalPower() * 0.5
+			dt = self.getTotalPower() * 0.5
+		
+		dt = limit(-1, dt, 1)
+		
+		temp = temp + dt
 		
 		temp = limit(self._tMin, temp, self._tMax + 10)
 
