@@ -13,6 +13,7 @@ except ImportError:
 
 from gui.inputChannel  import Channel as GuiInputChannel
 from gui.outputChannel import Channel as GuiOutputChannel
+from gui.parameter     import Gui     as GuiParameterApi
 
 ###########################################################################
 ## Class MainFrame
@@ -147,12 +148,21 @@ class MainFrame ( wx.Frame ):
 		parameterSpinCtrl.SetDigits( 0 )
 		ProgramParameterBox.Add( parameterSpinCtrl, 0, wx.ALL, 5 )
 
-		self.Parameter1Slider = wx.Slider( ProgramParameterBox.GetStaticBox(), wx.ID_ANY, 50, 0, 100, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL )
-		ProgramParameterBox.Add( self.Parameter1Slider, 0, wx.ALL, 5 )
-
+		parameterSlider = wx.Slider( ProgramParameterBox.GetStaticBox(), wx.ID_ANY, 50, 0, 100, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL )
+		ProgramParameterBox.Add( parameterSlider, 0, wx.ALL, 5 )
 
 		ProgramParametersBox.Add( ProgramParameterBox, 1, wx.EXPAND, 5 )
-		pass
+		
+		guiChannel = GuiParameterApi(
+			parameterSpinCtrl,
+			parameterSlider
+			)
+		
+		parameterSpinCtrl.Bind( wx.EVT_SPINCTRLDOUBLE, programParameter.onSpin    )
+		parameterSpinCtrl.Bind( wx.EVT_TEXT_ENTER    , programParameter.onSpinText)
+		parameterSlider  .Bind( wx.EVT_SCROLL        , programParameter.onScroll  )
+		
+		programParameter.setGui(guiChannel)
 	
 	def addProgram(self, programInfo):
 		ProgramBoxSizer = wx.StaticBoxSizer( wx.StaticBox( self.mainScrollableWindow, wx.ID_ANY, _(programInfo.getTitle()) ), wx.VERTICAL )
