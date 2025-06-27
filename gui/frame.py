@@ -78,7 +78,9 @@ class MainFrame ( wx.Frame ):
 		
 	def addInput(self, ProgramInputsBox, programInput):
 		inputTitle = programInput.getTitle()
-		ProgramInputBoxSizer = wx.StaticBoxSizer( wx.StaticBox( ProgramInputsBox.GetStaticBox(), wx.ID_ANY, _(inputTitle) ), wx.HORIZONTAL )
+		inputUnits = programInput.getUnits()
+		
+		ProgramInputBoxSizer = wx.StaticBoxSizer( wx.StaticBox( ProgramInputsBox.GetStaticBox(), wx.ID_ANY, _(f'{inputTitle} ({inputUnits})') ), wx.HORIZONTAL )
 		
 		inputValueSpinCtrl = wx.SpinCtrlDouble( ProgramInputBoxSizer.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS|wx.TE_PROCESS_ENTER, 0, 100, 0, 0.1 )
 		ProgramInputBoxSizer.Add( inputValueSpinCtrl, 0, wx.ALL, 5 )
@@ -142,7 +144,8 @@ class MainFrame ( wx.Frame ):
 	
 	def addParameter(self, ProgramParametersBox, programParameter):
 		parameterTitle = programParameter.getTitle()
-		ProgramParameterBox = wx.StaticBoxSizer( wx.StaticBox( ProgramParametersBox.GetStaticBox(), wx.ID_ANY, _(parameterTitle) ), wx.HORIZONTAL )
+		parameterUnits = programParameter.getUnits()
+		ProgramParameterBox = wx.StaticBoxSizer( wx.StaticBox( ProgramParametersBox.GetStaticBox(), wx.ID_ANY, _(f'{parameterTitle} ({parameterUnits})') ), wx.HORIZONTAL )
 
 		parameterSpinCtrl = wx.SpinCtrlDouble( ProgramParameterBox.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS|wx.TE_PROCESS_ENTER, 0, 100, 0, 0.1 )
 		parameterSpinCtrl.SetDigits( 0 )
