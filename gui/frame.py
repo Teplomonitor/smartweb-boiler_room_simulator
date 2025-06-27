@@ -169,17 +169,8 @@ class MainFrame ( wx.Frame ):
 		
 		programParameter.setGui(guiChannel)
 	
-	def addProgram(self, programInfo):
-		ProgramPanel = wx.Panel( self.mainScrollableWindow, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
-		ProgramPanel.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_MENU ) )
-
-		ProgramBoxSizer = wx.StaticBoxSizer( wx.StaticBox( ProgramPanel, wx.ID_ANY, _(programInfo.getTitle()) ), wx.VERTICAL )
-		
-		ProgramIOBoxSizer = wx.FlexGridSizer( 0, 1, 10, 0 )
-		ProgramIOBoxSizer.SetFlexibleDirection( wx.BOTH )
-		ProgramIOBoxSizer.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
-		
-		ProgramInputsBox = wx.StaticBoxSizer( wx.StaticBox( ProgramBoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Inputs") ), wx.VERTICAL )
+	def addInputs(self, box, boxSizer, programInfo):
+		ProgramInputsBox = wx.StaticBoxSizer( wx.StaticBox( box, wx.ID_ANY, _(u"Inputs") ), wx.VERTICAL )
 		
 		programInputs = programInfo.getInputs()
 		inputFound = False
@@ -187,12 +178,12 @@ class MainFrame ( wx.Frame ):
 			if programInput.isMapped():
 				self.addInput(ProgramInputsBox, programInput)
 				inputFound = True
-		
+				
 		if inputFound:
-			ProgramIOBoxSizer.Add( ProgramInputsBox, 1, wx.EXPAND, 5 )
-		
-		ProgramOutputsBox = wx.StaticBoxSizer( wx.StaticBox( ProgramBoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Outputs") ), wx.VERTICAL )
-		
+			boxSizer.Add( ProgramInputsBox, 1, wx.EXPAND, 5 )
+	
+	def addOutputs(self, box, boxSizer, programInfo):
+		ProgramOutputsBox = wx.StaticBoxSizer( wx.StaticBox( box, wx.ID_ANY, _(u"Outputs") ), wx.VERTICAL )
 		
 		programOutputs = programInfo.getOutputs()
 		outputFound = False
@@ -202,10 +193,10 @@ class MainFrame ( wx.Frame ):
 				outputFound = True
 			
 		if outputFound:
-			ProgramIOBoxSizer.Add( ProgramOutputsBox, 1, wx.EXPAND, 5 )
-		
-		
-		ProgramParametersBox = wx.StaticBoxSizer( wx.StaticBox( ProgramBoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Parameters") ), wx.VERTICAL )
+			boxSizer.Add( ProgramOutputsBox, 1, wx.EXPAND, 5 )
+			
+	def addParameters(self, box, boxSizer, programInfo):
+		ProgramParametersBox = wx.StaticBoxSizer( wx.StaticBox( box, wx.ID_ANY, _(u"Parameters") ), wx.VERTICAL )
 		
 		programParameters = programInfo.getParameters()
 		parameterFound = False
@@ -213,11 +204,36 @@ class MainFrame ( wx.Frame ):
 			self.addParameter(ProgramParametersBox, programParameters[programParameter])
 			parameterFound = True
 			
-			
 		if parameterFound:
-			ProgramIOBoxSizer.Add( ProgramParametersBox, 1, wx.EXPAND, 5 )
+			boxSizer.Add( ProgramParametersBox, 1, wx.EXPAND, 5 )
+			
+	def programColorToSysColor(self, color):
+		sysColor = {
+			'default': wx.SYS_COLOUR_MENU,
+			'red'    : wx.SYS_COLOUR_MENU,
+			'blue'   : wx.SYS_COLOUR_MENU,
+			'yellow' : wx.SYS_COLOUR_MENU,
+			'orange' : wx.SYS_COLOUR_MENU,
+			}
+		if color in sysColor:
+			return sysColor[color]
+		return wx.SYS_COLOUR_MENU
+			
+	def addProgram(self, programInfo):
+		ProgramPanel = wx.Panel( self.mainScrollableWindow, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
+		color = self.programColorToSysColor(programInfo.getGuiColor())
+		ProgramPanel.SetBackgroundColour( wx.SystemSettings.GetColour( color ) )
 
+		ProgramBoxSizer = wx.StaticBoxSizer( wx.StaticBox( ProgramPanel, wx.ID_ANY, _(programInfo.getTitle()) ), wx.VERTICAL )
 		
+		ProgramIOBoxSizer = wx.FlexGridSizer( 0, 1, 10, 0 )
+		ProgramIOBoxSizer.SetFlexibleDirection( wx.BOTH )
+		ProgramIOBoxSizer.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+		
+		self.addInputs    (ProgramBoxSizer.GetStaticBox(), ProgramIOBoxSizer, programInfo)
+		self.addOutputs   (ProgramBoxSizer.GetStaticBox(), ProgramIOBoxSizer, programInfo)
+		self.addParameters(ProgramBoxSizer.GetStaticBox(), ProgramIOBoxSizer, programInfo)
+
 		ProgramBoxSizer.Add( ProgramIOBoxSizer, 1, 0, 5 )
 		
 		ProgramPanel.SetSizer( ProgramBoxSizer )
