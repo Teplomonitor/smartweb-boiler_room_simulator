@@ -18,6 +18,9 @@ class Gui(object):
 	def SetMax(self, value):
 		self._spinner.SetMax(value)
 		self._slider .SetMax(int(value))
+		
+	def SetIncrement(self, value):
+		self._spinner.SetIncrement(value)
 
 
 class GuiParameter(object):
@@ -34,19 +37,24 @@ class GuiParameter(object):
 		self._gui     = gui
 		self._min     =   0
 		self._max     = 100
+		self._step    = 0.1
+		self._units   = '°C'
+		
+		if self._value is None:
+			self._value = self._min
 		
 	def getValue  (self): return self._value
 	def getTitle  (self): return self._title
+	def getUnits  (self): return self._units
 	
-	def setValue  (self, value):
+	def setValue  (self, value, manual = False):
 		self._value = value
 		if self._gui:
 			self._gui.SetValue(value)
 		
 		
-	def setTitle  (self, title  ):
-		self._title = title
-		
+	def setTitle(self, title): self._title = title
+	def setUnits(self, units): self._units = units
 	
 	def onSpin(self, event):
 		event.Skip()
@@ -67,11 +75,14 @@ class GuiParameter(object):
 
 	def initGui(self):
 		if self._gui:
-			self._gui.SetMin(self._min)
-			self._gui.SetMax(self._max)
+			self._gui.SetMin  (self._min)
+			self._gui.SetMax  (self._max)
+			self._gui.SetIncrement(self._step)
+			self._gui.SetValue(self._value)
 		
-	def getMin(self): return self._min
-	def getMax(self): return self._max
+	def getMin (self): return self._min
+	def getMax (self): return self._max
+	def getStep(self): return self._step
 	
 	def setMin(self, value):
 		self._min = value
@@ -84,4 +95,10 @@ class GuiParameter(object):
 		
 		if self._gui:
 			self._gui.SetMax(value)
+			
+	def setStep(self, value):
+		self._step = value
+		
+		if self._gui:
+			self._gui.SetIncrement(value)
 			
