@@ -102,3 +102,9 @@ class GuiParameter(object):
 		if self._gui:
 			self._gui.SetIncrement(value)
 			
+	def setProperties(self, minValue, maxValue, step, units):
+		self.setMin(minValue)
+		self.setMax(maxValue)
+		self.setStep(step)
+		self.setUnits(units)
+			
