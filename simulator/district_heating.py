@@ -9,11 +9,6 @@ BROADCAST_ID = 0
 # начальные условия
 
 cw = 4200 # теплоемкость воды  Joule/kg*C
-qhouse_chas = 3 # расход куб в час в отоплении
-qhouse = qhouse_chas/3.6 # расход кг/сек в доме постоянный.
-
-qtown_chas_max = 3 # мах расход куб в час из города
-qtown_max = qtown_chas_max/3.6 # секундный из города
 
 ato = 3000 # теплопередача ТО тоже не трогать
 
@@ -235,11 +230,19 @@ class Simulator(object):
 			ddt = (d_tmax + d_tmin)/2 
 		return ddt
 	
+	def getMaxFlowRateHouse(self):
+		return self._program.getMaxFlowRate1() / 3600 # расход кг/сек в доме постоянный.
+	
+	def getMaxFlowRateTown(self):
+		return self._program.getMaxFlowRate2() / 3600 # расход кг/сек в городе постоянный.
+	
 	def findom(self):
 		# подача и обратка дома
 		if self.secondaryFlowIsStopped():
 			self.tinhouse = self.tempSlowCooling(self.tinhouse)
 			return self.tinhouse
+		
+		qhouse = self.getMaxFlowRateHouse()
 		
 		self.tinhouse = self.qtown*(self.tintown - self.t_rettown)/qhouse + self.t_rethouse
 		return self.tinhouse
@@ -292,6 +295,8 @@ class Simulator(object):
 			self.tinhouse  = self.tintown + (self.t_rethouse - self.tintown) * ugolserv
 			self.t_rettown = self.tintown*ugolserv+self.tinhouse*(1-ugolserv)
 		
+		qtown_max = self.getMaxFlowRateTown()
+		
 		self.qtown = qtown_max * ugolserv * self.getSupplyPumpState()# расход из города при данном угле сервака
 
 		self.mainframe()
@@ -300,7 +305,7 @@ class Simulator(object):
 		
 	def getFlow(self):
 		if self.getCirculationPumpState():
-			return 2 # cube per hour
+			return self.getMaxFlowRateHouse() / 1000 # cube per hour
 		return 0
 	
 	def run(self):

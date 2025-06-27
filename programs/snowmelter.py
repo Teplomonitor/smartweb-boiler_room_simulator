@@ -3,6 +3,7 @@
 '''
 
 from .program import Program
+from gui.parameter import GuiParameter as GuiParameter
 
 class Snowmelter(Program):
 	'''
@@ -22,3 +23,17 @@ class Snowmelter(Program):
 		]
 		
 		self.setInputsRange(inputsRange)
+		
+		rate = GuiParameter(1000, 'Расход до теплообменника')
+		rate.setProperties(0, 3000, 1, 'кг/ч')
+		self._parameters['max_flow_rate1'] = rate
+		
+		rate = GuiParameter(1000, 'Расход после теплообменника')
+		rate.setProperties(0, 3000, 1, 'кг/ч')
+		self._parameters['max_flow_rate2'] = rate
+	
+	def getMaxFlowRate1(self):
+		return self._parameters['max_flow_rate1'].getValue()
+	
+	def getMaxFlowRate2(self):
+		return self._parameters['max_flow_rate2'].getValue()

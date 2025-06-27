@@ -118,9 +118,12 @@ class Simulator(object):
 		else:
 			return 0
 
+	def getMaxFlowRate(self):
+		return self._program.getMaxFlowRate()
+	
 	def getFlow(self):
 		if self.getPumpState():
-			return 2 # cube per hour
+			return self.getMaxFlowRate() / 1000 # cube per hour
 		return 0
 		
 	def getCoolDownPower(self):

@@ -17,12 +17,10 @@ class HeatingCircuit(Program):
 		'''
 		super().__init__(preset)
 		
-		self._parameters['max_flow_rate'] = GuiParameter(1000, 'Расход')
-		self._parameters['max_flow_rate'].setMin(0)
-		self._parameters['max_flow_rate'].setMax(3000)
-		self._parameters['max_flow_rate'].setStep(1)
+		rate = GuiParameter(1000, 'Расход')
+		rate.setProperties(0, 3000, 1, 'кг/ч')
 		
-		self._parameters['max_flow_rate'].setUnits('кг/ч')
+		self._parameters['max_flow_rate'] = rate
 	
 	def getMaxFlowRate(self):
 		return self._parameters['max_flow_rate'].getValue()
