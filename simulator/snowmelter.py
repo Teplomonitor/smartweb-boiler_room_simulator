@@ -32,19 +32,6 @@ class Simulator(object):
 		self._control    = control
 		self._snowTime   = PeriodPulse()
 		
-		self._inputId = {
-			'directFlowTemperature'  : 0,
-			'backwardTemperature'    : 1,
-			'plateTemperature'       : 2,
-			'snowSensor'             : 3,
-		}
-
-		self._outputId = {
-			'primaryPump'              : 0,
-			'secondaryPump'            : 1,
-			'primaryPumpAnalogSignal'  : 2,
-		}
-
 		self.setDirectFlowTemperature  (20)
 		self.setBackwardFlowTemperature(20)
 		self.setPlateTemperature       (-5)
@@ -60,39 +47,34 @@ class Simulator(object):
 
 
 	def getDirectFlowTemperature(self):
-#		return 50
-		return self._program.getInput(self._inputId['directFlowTemperature']).getValue()
+		return self._program.getDirectFlowTemperature().getValue()
 
 	def setDirectFlowTemperature(self, value):
-#		print(f'sm: direct flow temp = {value}')
-		self._program.getInput(self._inputId['directFlowTemperature']).setValue(value)
+		self._program.setDirectFlowTemperature(value)
 
 	def getBackwardFlowTemperature(self):
-#		return 30
-		return self._program.getInput(self._inputId['backwardTemperature']).getValue()
+		return self._program.getBackwardFlowTemperature().getValue()
 	
 	def getBackwardTemperature(self):
 		return self.getBackwardFlowTemperature()
 
 	def setBackwardFlowTemperature(self, value):
-#		print(f'sm: back flow temp = {value}')
-		self._program.getInput(self._inputId['backwardTemperature']).setValue(value)
+		self._program.setBackwardFlowTemperature(value)
 
 	def getPlateTemperature(self):
-		return self._program.getInput(self._inputId['plateTemperature']).getValue()
+		return self._program.getPlateTemperature().getValue()
 
 	def setPlateTemperature(self, value):
-#		print(f'sm: plate temp = {value}')
-		self._program.getInput(self._inputId['plateTemperature']).setValue(value)
+		self._program.setPlateTemperature(value)
 
 	def getSnowSensor(self):
-		return self._program.getInput(self._inputId['snowSensor']).getValue()
+		return self._program.getSnowSensor().getValue()
 
 	def setSnowSensor(self, value):
-		self._program.getInput(self._inputId['snowSensor']).setValue(value)
+		self._program.setSnowSensor(value)
 
 	def getPrimaryPumpState(self):
-		pump = self._program.getOutput(self._outputId['primaryPump'])
+		pump = self._program.getPrimaryPumpState()
 		if pump.getMapping() is None:
 			return 1
 
@@ -102,7 +84,7 @@ class Simulator(object):
 		return 0
 
 	def getSecondaryPumpState(self):
-		pump = self._program.getOutput(self._outputId['secondaryPump'])
+		pump = self._program.getSecondaryPumpState()
 		if pump.getMapping() is None:
 			return 1
 
@@ -112,7 +94,7 @@ class Simulator(object):
 		return 0
 	
 	def getAnalogPumpSignal(self):
-		pump = self._program.getOutput(self._outputId['primaryPumpAnalogSignal'])
+		pump = self._program.getAnalogPumpSignal()
 		if pump.getMapping() is None:
 			return self.getPrimaryPumpState()
 
@@ -128,7 +110,7 @@ class Simulator(object):
 	def getPower(self):
 		if self.getSecondaryPumpState() == 0:
 			return 0
-
+		
 		return self.getMaxPower()*self.getAnalogPumpSignal()
 
 	def getMaxFlowRate(self):
