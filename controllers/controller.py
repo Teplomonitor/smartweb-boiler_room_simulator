@@ -28,7 +28,9 @@ class Controller(object):
 
 	def initController(self, resetConfig, programList):
 		self._programList = []
-
+		if self._gui:
+			self._gui.Clear()
+			
 		if resetConfig:
 			self.resetConfig()
 			for program in programList:
