@@ -10,13 +10,26 @@ import threading
 import presets.preset
 from controllers.controller_io import initVirtualControllers as initVirtualControllers
 
+from gui.frame import printLog   as printLog
+from gui.frame import printError as printError
+
+
 class Scenario(object):
 	def __init__(self, controllerHost, sim):
 		self._controllerHost = controllerHost
 		self._done = False
 		self._sim = sim
 				
+		printLog(f'starting {self.getScenarioTitle()}')
+		printLog(f'description: {self.getScenarioDescription()}')
+		
 		self._manualSensorsList = []
+	
+	def getScenarioTitle(self):
+		return 'scenario'
+	
+	def getScenarioDescription(self):
+		return 'default'
 	
 	def __del__(self):
 		for sensor in self._manualSensorsList:

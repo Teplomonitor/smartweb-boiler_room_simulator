@@ -2,24 +2,28 @@
 @author: admin
 '''
 
-import presets.preset
 import time
+
 from scenario.scenario import printLog   as printLog
 from scenario.scenario import printError as printError
-from scenario.scenario import Scenario as Parent
+from scenario.scenario import Scenario   as Parent
 
-# check if circulation pump switch off, if T < TfrostProtect
+from functions.timeOnDelay  import TimeOnDelay  as TimeOnDelay
 
 class Scenario(Parent):
 	def __init__(self, controllerHost, sim):
 		super().__init__(controllerHost, sim)
 		
-		printLog('starting scenario 1')
-		
 		self.initScenario()
 		
 		self._snowmelter = self._programList['snowmelter']
 
+	def getScenarioTitle(self):
+		return 'scenario 1'
+	
+	def getScenarioDescription(self):
+		return 'check if circulation pump switch off, if T < TfrostProtect'
+	
 	def getRequiredPrograms(self):
 		requiredProgramTypesList = {
 			'snowmelter': 'SNOWMELT',
@@ -30,48 +34,57 @@ class Scenario(Parent):
 	def getDefaultPreset(self):
 		return 'snowmelter'
 		
+	def setBacwardFlowTemperature(self, value):
+		t = self._snowmelter.getBackwardFlowTemperature()
+		self.setSensorValue(t, value)
+		
+		
 	def run(self):
-		if self.done():
-			return
+		pumpNotWorkingDelay = TimeOnDelay()
+		testTimeoutDelay    = TimeOnDelay()
 		
-		time.sleep(20)
+		printLog('Warm up')
+		time.sleep(30)
 		
-		timeStart = time.time()
+		
 		
 		while True:
-			pump = self._snowmelter.getSecondaryPumpState().getValue()
-			if pump:
-				break
-			
-			if time.time() - timeStart > 5*60:
-				self._done = True
-				printLog('Test fail! Pump don\'t work')
-				return
 			time.sleep(1)
 			
-		t = self._snowmelter.getBackwardFlowTemperature()
+			pump = self._snowmelter.getSecondaryPumpState().getValue()
+			if pumpNotWorkingDelay.Get(not pump, 60):
+				self._done = True
+				printError('Test fail! Pump don\'t work')
+				return
+			
+			if pump:
+				printLog('cirulation pump is working')
+				break
+			
+			
+		time.sleep(2)
 		
-		self.setSensorValue(t, 0)
+		printLog('making "cold" backward flow temperature')
+		self.setBacwardFlowTemperature(0)
 		
 		time.sleep(10)
 		
-		timeStart = time.time()
-		
 		while True:
+			time.sleep(1)
+			
 			pump = self._snowmelter.getSecondaryPumpState().getValue()
 			
-			if not pump:
+			if pumpNotWorkingDelay.Get(not pump, 60):
 				self._done = True
 				printLog('Test Ok!')
 				return
 			
-			if time.time() - timeStart > 5*60:
+			if testTimeoutDelay.Get(True, 5*60):
 				self._done = True
 				printLog('Test fail!')
 				return
 				
 			
-			time.sleep(1)
 	
 	def done(self):
 		return self._done
