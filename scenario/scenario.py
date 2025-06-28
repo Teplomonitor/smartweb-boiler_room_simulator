@@ -10,18 +10,27 @@ import threading
 import presets.preset
 from controllers.controller_io import initVirtualControllers as initVirtualControllers
 
-def printLog(log_str):
-	print(log_str)
-
-def printError(log_str):
-	print(log_str)
-
-
 class Scenario(object):
 	def __init__(self, controllerHost, sim):
 		self._controllerHost = controllerHost
 		self._done = False
 		self._sim = sim
+				
+		self._manualSensorsList = []
+	
+	def __del__(self):
+		for sensor in self._manualSensorsList:
+			sensor.setManual(False)
+			
+	def setManual(self, sensor, manual):
+		sensor.setManual(manual)
+		if sensor in self._manualSensorsList:
+			return
+		self._manualSensorsList.append(sensor)
+	
+	def setSensorValue(self, sensor, value):
+		self.setManual(sensor, True)
+		sensor.setValue(value, True)
 		
 	def initScenario(self):
 		ok = self.initProgramList(self.getRequiredPrograms())
@@ -107,6 +116,7 @@ class ScenarioThread(threading.Thread):
 			if self._currentScenario.done():
 				self._currentScenario = self.getNextScenario()
 				if self._currentScenario == None:
+					printLog('All scenario finished!')
 					return 0
 				
 			time.sleep(1)

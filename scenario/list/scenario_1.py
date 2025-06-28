@@ -19,26 +19,14 @@ class Scenario(Parent):
 		self.initScenario()
 		
 		self._snowmelter = self._programList['snowmelter']
-		
-		self._manualSensorsList = []
-	
-	def __del__(self):
-		for sensor in self._manualSensorsList:
-			sensor.setManual(False)
-			
-	def setManual(self, sensor, manual):
-		sensor.setManual(manual)
-		if sensor in self._manualSensorsList:
-			return
-		self._manualSensorsList.append(sensor)
-	
+
 	def getRequiredPrograms(self):
 		requiredProgramTypesList = {
 			'snowmelter': 'SNOWMELT',
 			'oat'       : 'OUTDOOR_SENSOR',
 		}
 		return requiredProgramTypesList
-		
+	
 	def getDefaultPreset(self):
 		return 'snowmelter'
 		
@@ -57,15 +45,13 @@ class Scenario(Parent):
 			
 			if time.time() - timeStart > 5*60:
 				self._done = True
-				print('Test fail! Pump don\'t work')
+				printLog('Test fail! Pump don\'t work')
 				return
 			time.sleep(1)
 			
 		t = self._snowmelter.getBackwardFlowTemperature()
 		
-		self.setManual(t, True)
-		
-		t.setValue(0, True)
+		self.setSensorValue(t, 0)
 		
 		time.sleep(10)
 		
@@ -76,12 +62,12 @@ class Scenario(Parent):
 			
 			if not pump:
 				self._done = True
-				print('Test Ok!')
+				printLog('Test Ok!')
 				return
 			
 			if time.time() - timeStart > 5*60:
 				self._done = True
-				print('Test fail!')
+				printLog('Test fail!')
 				return
 				
 			
