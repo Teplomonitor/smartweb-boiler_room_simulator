@@ -11,6 +11,23 @@ import smartnet.constants as snc
 import presets.preset
 from programs.factory import createProgram as createProgram
 
+def messageIsImHere():
+	return smartnetMessage(
+		snc.ProgramType['CONTROLLER'], None, 
+		snc.ControllerFunction['I_AM_HERE'], 
+		snc.requestFlag['RESPONSE'])
+
+
+def findOnlineController():
+	print('Searching controller')
+	result = smartnetMessage.recv(130, messageIsImHere())
+	if result:
+		controllerId = result.getProgramId()
+		print('Controller %d found' %(controllerId))
+		return controllerId
+	else:
+		return None
+
 
 class Controller(object):
 	'''

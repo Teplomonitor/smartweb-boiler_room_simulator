@@ -244,3 +244,9 @@ class Simulator(threading.Thread):
 			time.sleep(1 - dt)
 
 
+def initIoSimulator(controller, ctrlIo):
+	simulatorThread = Simulator("simulator thread", 789, controller, ctrlIo)
+	simulatorThread.daemon = True
+	simulatorThread.start()
+	return simulatorThread
+

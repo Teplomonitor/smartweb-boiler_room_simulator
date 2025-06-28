@@ -27,17 +27,15 @@ from argparse import RawDescriptionHelpFormatter
 
 import presets.preset
 from smartnet.message import Message as smartnetMessage
-import smartnet.constants as snc
-from controllers.controller    import Controller   as Controller
+
+from controllers.controller    import findOnlineController   as findOnlineController
+from controllers.controller    import Controller             as Controller
 from controllers.controller_io import initVirtualControllers as initVirtualControllers
-
-from scenario.scenario import ScenarioThread as ScenarioThread
-
-
-from simulator.simulator import Simulator as Simulator
+from scenario.scenario         import ScenarioThread         as ScenarioThread
+from simulator.simulator       import initIoSimulator        as initIoSimulator
 
 import debug
-import udp.udp
+from udp.udp import initUdpBridge as initUdpBridge
 
 def mock_missing(name):
 	def init(self, *args, **kwargs):
@@ -60,6 +58,19 @@ DEBUG = 0
 
 
 
+guiThread = None
+
+def printLog(log_str):
+	print(log_str)
+	if guiThread:
+		guiThread.printConsoleText(log_str)
+
+def printError(log_str):
+	print(log_str)
+	if guiThread:
+		guiThread.printConsoleText(log_str)
+
+
 class CLIError(Exception):
 	'''Generic exception to raise and log different fatal errors.'''
 	def __init__(self, msg):
@@ -69,23 +80,6 @@ class CLIError(Exception):
 		return self.msg
 	def __unicode__(self):
 		return self.msg
-
-def messageIsImHere():
-	return smartnetMessage(
-		snc.ProgramType['CONTROLLER'], None, 
-		snc.ControllerFunction['I_AM_HERE'], 
-		snc.requestFlag['RESPONSE'])
-
-
-def findOnlineController():
-	print('Searching controller')
-	result = smartnetMessage.recv(130, messageIsImHere())
-	if result:
-		controllerId = result.getProgramId()
-		print('Controller %d found' %(controllerId))
-		return controllerId
-	else:
-		return None
 
 def initArgParser(program_license):
 	parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
@@ -97,20 +91,6 @@ def initArgParser(program_license):
 	parser.add_argument('-s', '--scenario', nargs='?', const='default', default='none'   , help='enable automatic scenarion run')
 	
 	return parser.parse_args()
-
-def initUdpBridge(UDP_PORT):
-	thread1 = udp.udp.udp_listen_thread("UDP_listen", 123, UDP_PORT)
-	thread1.daemon = True
-	thread1.start()
-	thread2 = udp.udp.can_thread  ("UDP_CAN_send", 456, UDP_PORT)
-	thread2.daemon = True
-	thread2.start()
-
-def initIoSimulator(controller, ctrlIo):
-	simulatorThread = Simulator("simulator thread", 789, controller, ctrlIo)
-	simulatorThread.daemon = True
-	simulatorThread.start()
-	return simulatorThread
 
 def initScenario(controller, sim):
 	scenarioThread = ScenarioThread(controller, sim)
@@ -132,6 +112,8 @@ def main(argv=None): # IGNORE:C0111
 	program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
 	program_license = '''%s
 
+	%s
+	
 	Created by user_name on %s.
 	Copyright 2025 organization_name. All rights reserved.
 
@@ -142,17 +124,17 @@ def main(argv=None): # IGNORE:C0111
 	or conditions of any kind, either express or implied.
 
 USAGE
-''' % (program_shortdesc, str(__date__))
+''' % (program_shortdesc, program_version_message, str(__date__))
 
 	try:
 		# Setup argument parser
 		args = initArgParser(program_license)
-
+		
 		init_controller_with_preset = args.init
 		udp_bridge_enable           = int(args.udp)
 		preset                      = args.preset
 		scenario                    = args.scenario
-
+		
 		programList, controllerIoList = presets.preset.getPresetsList(preset)
 		
 		
@@ -165,17 +147,15 @@ USAGE
 		
 		if args.debug:
 			dbgThread = debug.debug_thread()
-
+			
 		controllerId = findOnlineController()
-
+		
 		if controllerId is None:
 			print('controller not found. Exit')
 			return 1
 		
 		if args.gui:
 			guiThread = guiFrameThread.guiThread("GUI", 666)
-		else:
-			guiThread = None
 		
 		controller = Controller(controllerId, init_controller_with_preset, programList, guiThread)
 		
@@ -195,7 +175,7 @@ USAGE
 		smartnetMessage.exit()
 		
 		return 0
-
+	
 	except KeyboardInterrupt:
 		### handle keyboard interrupt ###
 		smartnetMessage.exit()
@@ -203,7 +183,7 @@ USAGE
 		return 0
 	except Exception as e:
 		smartnetMessage.exit()
-
+		
 		if DEBUG:
 			raise(e)
 		indent = len(program_name) * " "
@@ -214,5 +194,5 @@ USAGE
 if __name__ == "__main__":
 	if DEBUG:
 		sys.argv.append("-d")
-
+		
 	sys.exit(main())

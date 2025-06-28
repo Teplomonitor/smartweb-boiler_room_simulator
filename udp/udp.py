@@ -178,4 +178,12 @@ class udp_listen_thread(threading.Thread):
 #				print(f'udp_rx {msg}')
 				self._canbus.send(msg)
 			
-			
+
+def initUdpBridge(UDP_PORT):
+	thread1 = udp_listen_thread("UDP_listen", 123, UDP_PORT)
+	thread1.daemon = True
+	thread1.start()
+	
+	thread2 = can_thread  ("UDP_CAN_send", 456, UDP_PORT)
+	thread2.daemon = True
+	thread2.start()
