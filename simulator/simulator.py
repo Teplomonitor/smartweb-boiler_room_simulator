@@ -180,24 +180,13 @@ class Simulator(threading.Thread):
 
 		for sim in self._simList:
 			program = sim._program
-
-			if program.getType() in consumerTypesList:
-				self._consumersList.append(sim)
-
-			if program.getType() in sourceTypesList:
-				self._generatorsList.append(sim)
-
-			if program.getType() == 'OUTDOOR_SENSOR':
-				self._oat = sim
-
-			if program.getType() == 'ROOM_DEVICE':
-				self._roomList.append(sim)
 			
-			if program.getType() == 'HEATING_CIRCUIT':
-				self._heatingCircuitList.append(sim)
-				
-			if program.getType() == 'CASCADE_MANAGER':
-				self._cascadeList.append(sim)
+			if program.getType() in consumerTypesList: self._consumersList.append(sim)
+			if program.getType() in sourceTypesList  : self._generatorsList.append(sim)
+			if program.getType() == 'OUTDOOR_SENSOR' : self._oat = sim
+			if program.getType() == 'ROOM_DEVICE'    : self._roomList.append(sim)
+			if program.getType() == 'HEATING_CIRCUIT': self._heatingCircuitList.append(sim)
+			if program.getType() == 'CASCADE_MANAGER': self._cascadeList.append(sim)
 
 		self._collector = simulator.collector.Simulator(self)
 
