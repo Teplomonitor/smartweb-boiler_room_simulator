@@ -118,9 +118,9 @@ class Simulator(threading.Thread):
 		
 		self._CanListener = CanListener(self)
 		
-		self.resetControllerConfig(controllerHost, controllerIo)
+		self.reloadConfig(controllerHost, controllerIo)
 
-	def resetControllerConfig(self, controllerHost, controllerIo):
+	def reloadConfig(self, controllerHost, controllerIo):
 		self._controllerHost = controllerHost
 		self._controllerIo   = controllerIo
 

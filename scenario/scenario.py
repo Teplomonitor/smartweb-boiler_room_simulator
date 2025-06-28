@@ -56,7 +56,7 @@ class Scenario(object):
 		programList, controllerIoList = presets.preset.getPresetsList(preset)
 		self._controllerHost.initController(True, programList)
 		ctrlIo = initVirtualControllers(controllerIoList)
-		self._sim.resetControllerConfig(self._controllerHost, ctrlIo)
+		self._sim.reloadConfig(self._controllerHost, ctrlIo)
 		
 	def initProgramList(self, requiredProgramTypesList):
 		self._programList = {}
