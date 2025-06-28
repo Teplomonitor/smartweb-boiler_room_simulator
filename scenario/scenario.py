@@ -17,7 +17,7 @@ from gui.frame import printError as printError
 class Scenario(object):
 	def __init__(self, controllerHost, sim):
 		self._controllerHost = controllerHost
-		self._done = False
+		self._status = 'IN_PROGRESS'
 		self._sim = sim
 				
 		printLog(f'starting {self.getScenarioTitle()}')
@@ -45,11 +45,13 @@ class Scenario(object):
 		self.setManual(sensor, True)
 		sensor.setValue(value, True)
 		
+	def done(self):
+		return self._status is not 'IN_PROGRESS'
+	
 	def initScenario(self):
 		ok = self.initProgramList(self.getRequiredPrograms())
 				
 		if not ok:
-			self._done = True
 			self.initController(self.getDefaultPreset())
 			
 			if not self.initProgramList(self.getRequiredPrograms()):

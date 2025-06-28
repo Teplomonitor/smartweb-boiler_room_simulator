@@ -34,33 +34,55 @@ class Scenario(Parent):
 	def getDefaultPreset(self):
 		return 'snowmelter'
 		
+		
+	def getCirculationPumpState(self):
+		return self._snowmelter.getSecondaryPumpState().getValue()
+	
 	def setBacwardFlowTemperature(self, value):
 		t = self._snowmelter.getBackwardFlowTemperature()
 		self.setSensorValue(t, value)
 		
+	def waitPumpSwitchOn(self, delay):
+		pumpNotWorkingDelay = TimeOnDelay()
 		
-	def run(self):
+		pump = False
+		
+		while not pump:
+			time.sleep(1)
+			
+			pump = self.getCirculationPumpState()
+			if pumpNotWorkingDelay.Get(not pump, delay):
+				return False
+			
+		return True
+	
+	def waitPumpSwitchOff(self, delay, timeout):
 		pumpNotWorkingDelay = TimeOnDelay()
 		testTimeoutDelay    = TimeOnDelay()
 		
-		printLog('Warm up')
-		time.sleep(30)
-		
-		
+		pump = False
 		
 		while True:
 			time.sleep(1)
 			
-			pump = self._snowmelter.getSecondaryPumpState().getValue()
-			if pumpNotWorkingDelay.Get(not pump, 60):
-				self._done = True
-				printError('Test fail! Pump don\'t work')
-				return
+			pump = self.getCirculationPumpState()
+			if pumpNotWorkingDelay.Get(not pump, delay):
+				return True
 			
-			if pump:
-				printLog('cirulation pump is working')
-				break
-			
+			if testTimeoutDelay(True, timeout):
+				return False
+		return False
+	
+	def run(self):
+		printLog('Warm up')
+		time.sleep(30)
+		
+		if self.waitPumpSwitchOn(60):
+			printLog('ok, cirulation pump is working')
+		else:
+			self._status = 'FAIL'
+			printError('Test fail! Pump don\'t work')
+			return
 			
 		time.sleep(2)
 		
@@ -69,23 +91,11 @@ class Scenario(Parent):
 		
 		time.sleep(10)
 		
-		while True:
-			time.sleep(1)
-			
-			pump = self._snowmelter.getSecondaryPumpState().getValue()
-			
-			if pumpNotWorkingDelay.Get(not pump, 60):
-				self._done = True
-				printLog('Test Ok!')
-				return
-			
-			if testTimeoutDelay.Get(True, 5*60):
-				self._done = True
-				printLog('Test fail!')
-				return
-				
-			
-	
-	def done(self):
-		return self._done
+		if self.waitPumpSwitchOff(60, 5*60):
+			printLog('Test Ok!')
+			self._status = 'OK'
+		else:
+			printLog('Test fail!')	
+			self._status = 'FAIL'
+		
 
