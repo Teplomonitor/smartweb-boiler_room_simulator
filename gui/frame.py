@@ -265,11 +265,22 @@ class ConsoleFrame ( wx.Frame ):
 
 		self.Centre( wx.BOTH )
 
+		# Connect Events
+		self.Bind( wx.EVT_CLOSE, self.doClose )
+		
 	def __del__( self ):
 		pass
 	
+	# Virtual event handlers, override them in your derived class
+	def doClose( self, event ):
+		event.Skip()
+		exit(0)
+	
 	def printText(self, text):
 		self.ConsoleTextCtrl.AppendText(text)
+
+	def OnExitButtonPress( self, event ):
+		self.doClose(event)
 
 class guiThread():
 	def __init__(self, thread_name, thread_ID):
