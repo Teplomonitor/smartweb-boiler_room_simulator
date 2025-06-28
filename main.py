@@ -47,7 +47,7 @@ def mock_missing(name):
 try:
 	import gui.frame as guiFrameThread
 except:
-	guiFrameTherad = mock_missing('guiFrameTherad')
+	guiFrameThread = mock_missing('guiFrameThread')
 
 __all__ = []
 __version__ = 0.1
@@ -57,18 +57,6 @@ __updated__ = '2025-03-04'
 DEBUG = 0
 
 
-
-guiThread = None
-
-def printLog(log_str):
-	print(log_str)
-	if guiThread:
-		guiThread.printConsoleText(log_str)
-
-def printError(log_str):
-	print(log_str)
-	if guiThread:
-		guiThread.printConsoleText(log_str)
 
 
 class CLIError(Exception):
@@ -155,7 +143,9 @@ USAGE
 			return 1
 		
 		if args.gui:
-			guiThread = guiFrameThread.guiThread("GUI", 666)
+			guiThread = guiFrameThread.initGuiThread()
+		else:
+			guiThread = None
 		
 		controller = Controller(controllerId, init_controller_with_preset, programList, guiThread)
 		

@@ -250,13 +250,16 @@ class MainFrame ( wx.Frame ):
 class ConsoleFrame ( wx.Frame ):
 
 	def __init__( self, parent ):
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 500,300 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 640,480 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 
 		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
 
 		ConsoleSizer = wx.BoxSizer( wx.VERTICAL )
 
-		self.ConsoleTextCtrl = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.ConsoleTextCtrl = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE|wx.TE_READONLY )
+		self.ConsoleTextCtrl.SetForegroundColour( wx.Colour( 14, 173, 5 ) )
+		self.ConsoleTextCtrl.SetBackgroundColour( wx.Colour( 0, 0, 0 ) )
+		
 		ConsoleSizer.Add( self.ConsoleTextCtrl, 1, wx.ALL|wx.EXPAND, 5 )
 
 
@@ -313,9 +316,33 @@ class guiThread():
 	
 	def printConsoleText(self, text):
 		self._consoleFrame.printText(text)
+		self._consoleFrame.printText('\n')
 		
 	def run(self):
 		self._consoleFrame.Show()
 		self._ex.Show()
 		self._app.MainLoop()
-			
+	
+	
+guiThreadSingleton = None
+		
+def initGuiThread():
+	global guiThreadSingleton
+	if guiThreadSingleton is None:
+		guiThreadSingleton = guiThread("GUI", 666)
+		
+	return guiThreadSingleton
+	
+	
+def printLog(log_str):
+	print(log_str)
+	global guiThreadSingleton
+	if guiThreadSingleton:
+		guiThreadSingleton.printConsoleText(log_str)
+
+def printError(log_str):
+	print(log_str)
+	global guiThreadSingleton
+	if guiThreadSingleton:
+		guiThreadSingleton.printConsoleText(log_str)
+
