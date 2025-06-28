@@ -247,6 +247,29 @@ class MainFrame ( wx.Frame ):
 	def __del__( self ):
 		pass
 
+class ConsoleFrame ( wx.Frame ):
+
+	def __init__( self, parent ):
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 500,300 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+
+		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
+
+		ConsoleSizer = wx.BoxSizer( wx.VERTICAL )
+
+		self.ConsoleTextCtrl = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		ConsoleSizer.Add( self.ConsoleTextCtrl, 1, wx.ALL|wx.EXPAND, 5 )
+
+
+		self.SetSizer( ConsoleSizer )
+		self.Layout()
+
+		self.Centre( wx.BOTH )
+
+	def __del__( self ):
+		pass
+	
+	def printText(self, text):
+		self.ConsoleTextCtrl.AppendText(text)
 
 class guiThread():
 	def __init__(self, thread_name, thread_ID):
@@ -256,6 +279,7 @@ class guiThread():
 		self._app = wx.App()
 		self._frame = wx.Frame(None, title='Simple application')
 		self._ex = MainFrame(self._frame, self)
+		self._consoleFrame = ConsoleFrame(self._frame)
 		self._programsList = []
 		
 	def Clear(self):
@@ -275,8 +299,12 @@ class guiThread():
 	def saveProgramPlots(self):
 		for prg in self._programsList:
 			prg.saveLog()
-			
+	
+	def printConsoleText(self, text):
+		self._consoleFrame.printText(text)
+		
 	def run(self):
+		self._consoleFrame.Show()
 		self._ex.Show()
 		self._app.MainLoop()
 			
