@@ -111,7 +111,8 @@ class InputChannel(Channel):
 	
 	def setManual(self, value):
 		if self._gui:
-			self._gui._manualRb.SetValue(value)
+			self._gui._manualRb.SetValue(    value)
+			self._gui._autoRb  .SetValue(not value)
 		
 	
 	def onShort(self, event):
