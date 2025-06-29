@@ -46,7 +46,7 @@ class Scenario(object):
 		sensor.setValue(value, True)
 		
 	def done(self):
-		return self._status is not 'IN_PROGRESS'
+		return self._status != 'IN_PROGRESS'
 	
 	def initScenario(self):
 		ok = self.initProgramList(self.getRequiredPrograms())
