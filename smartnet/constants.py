@@ -236,7 +236,17 @@ ConsumerParameter = {
 	'REQUIRED_TEMPERATURE'      :  6,
 	'GENERATOR_TEMPERATURE'     :  7,
 	'HEAT_EXTRICATION_ENABLED'  :  8,
-}                       
+}
+
+SnowMelterParameter = {
+	'WORK_MODE'                                               :  1,
+	'MINIMUM_OUTDOOR_TEMPERATURE'                             :  2,
+	'MAXIMUM_OUTDOOR_TEMPERATURE'                             :  3,
+	'REQUIRED_CONSTANT_FLOW_TEMPERATURE_OF_SECONDARY_CIRCUIT' :  4,
+	'OUTDOOR_TEMPERATURE'                                     :  5,
+	'PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE'                  :  6,
+	'REQUIRED_PLATE_TEMPERATURE'                              :  7,
+}
 
 CascadeManagerParameter = {
 	'PARAM_ROTATION_PERIOD'                        :  1,
@@ -308,6 +318,7 @@ ParameterDict = {
 	'CONSUMER'        : ConsumerParameter,
 	'CASCADE_MANAGER' : CascadeManagerParameter,
 	'DISTRICT_HEATING': DistrictHeatingParameter,
+	'SNOWMELT'        : SnowMelterParameter,
 }
 
 
@@ -384,6 +395,11 @@ RemoteControlFunction = {
 RemoteControlSetParameterResult = {
 	'SET_PARAMETER_STATUS_OK'    : 0,
 	'SET_PARAMETER_STATUS_ERROR' : 1,
+}
+
+RemoteControlGetParameterResult = {
+	'GET_PARAMETER_STATUS_OK'    : 0,
+	'GET_PARAMETER_STATUS_ERROR' : 1,
 }
 
 TemperatureSourceFunction = {
