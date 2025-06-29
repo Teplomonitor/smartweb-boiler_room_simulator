@@ -7,6 +7,8 @@ import time
 from scenario.scenario import printLog   as printLog
 from scenario.scenario import printError as printError
 from scenario.scenario import Scenario   as Parent
+import smartnet.constants as snc
+from smartnet.remoteControl import RemoteControlParameter as RemoteControlParameter
 
 from functions.timeOnDelay  import TimeOnDelay  as TimeOnDelay
 
@@ -34,7 +36,16 @@ class Scenario(Parent):
 	def getDefaultPreset(self):
 		return 'snowmelter'
 		
+	def readFrostProtectionTemperatureValue(self):
+		param = RemoteControlParameter(
+				snc.ProgramType['SNOWMELT'], 
+				snc.SnowMelterParameter['PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE'],
+				parameterType  = 'TEMPERATURE')
 		
+		programId = self._snowmelter.getId()
+		param.read(programId)
+		return param.getValue()
+	
 	def getCirculationPumpState(self):
 		return self._snowmelter.getSecondaryPumpState().getValue()
 	
@@ -69,11 +80,18 @@ class Scenario(Parent):
 			if pumpNotWorkingDelay.Get(not pump, delay):
 				return True
 			
-			if testTimeoutDelay(True, timeout):
+			if testTimeoutDelay.Get(True, timeout):
 				return False
 		return False
 	
 	def run(self):
+		tFrostProtect = self.readFrostProtectionTemperatureValue()
+		
+		if tFrostProtect is None:
+			self._status = 'FAIL'
+			printError('Test fail! Can\'t get frost protect temp')
+			return
+			
 		printLog('Warm up')
 		time.sleep(30)
 		
@@ -87,7 +105,7 @@ class Scenario(Parent):
 		time.sleep(2)
 		
 		printLog('making "cold" backward flow temperature')
-		self.setBacwardFlowTemperature(0)
+		self.setBacwardFlowTemperature(tFrostProtect - 1)
 		
 		time.sleep(10)
 		
