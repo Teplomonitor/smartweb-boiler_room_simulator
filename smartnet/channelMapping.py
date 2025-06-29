@@ -1,3 +1,6 @@
+
+import time
+
 from functions.programLog import ParameterLog as ChannelLog
 
 from gui.parameter import GuiParameter as GuiParameter
@@ -154,7 +157,18 @@ class OutputChannel(Channel):
 		Constructor
 		'''
 		super().__init__(mapping, value, title, gui)
+		self._lastUpdateTime = None
 		
+	def setValue(self, value, manual = False):
+		super().setValue(value, manual)
+		self._lastUpdateTime = time.time()
+		
+	def valueIsUpToDate(self):
+		if self._lastUpdateTime is None:
+			return False
+		now = time.time()
+		return now -self._lastUpdateTime < 10
+	
 	def initGui(self):
 		pass
 		
