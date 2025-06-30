@@ -36,24 +36,34 @@ class RemoteControlParameter(object):
 		parameterId   ,
 		parameterValue = None,
 		parameterIndex = None,
-		parameterType  = 'UINT8_T'):
+		parameterType  = 'UINT8_T',
+		programId      = None
+		):
 		self._programType    = programType   
 		self._parameterId    = parameterId
 		self._parameterValue = parameterValue
 		self._parameterIndex = parameterIndex
 		self._parameterType  = parameterType
+		self._programId      = programId
 
+	def setProgramId(self, programId):
+		self._programId      = programId
+		
 	def getValue(self): return self._parameterValue
 
-	def write(self, programId):
+	def write(self):
+		if self._programId is None:
+			print('wrong programId')
+			return
+		
 		if self._parameterValue is None:
-			print(f'prg {programId} skip parameter {self._programType}.{self._parameterId}')
+			print(f'prg {self._programId} skip parameter {self._programType}.{self._parameterId}')
 			return
 		
 		if self._parameterIndex is None:
-			print(f'prg {programId} write parameter {self._programType}.{self._parameterId} = {self._parameterValue}')
+			actionStr = f'prg {self._programId} write parameter {self._programType}.{self._parameterId} = {self._parameterValue}'
 		else:
-			print(f'prg {programId} write parameter {self._programType}.{self._parameterId}.{self._parameterIndex} = {self._parameterValue}')
+			actionStr = f'prg {self._programId} write parameter {self._programType}.{self._parameterId}.{self._parameterIndex} = {self._parameterValue}'
 
 		def generateRequest():
 			if self._parameterIndex is None:
@@ -63,7 +73,7 @@ class RemoteControlParameter(object):
 
 			request = smartnetMessage(
 			snc.ProgramType['REMOTE_CONTROL'],
-			programId,
+			self._programId,
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
 			snc.requestFlag['REQUEST'],
 			data)
@@ -76,17 +86,17 @@ class RemoteControlParameter(object):
 
 		def handleResponse():
 			if response is None:
-				print('write timeout')
+				print(f'{actionStr}: write timeout')
 				return False
 			else:
 				data = response.getData()
 				resultPos = len(data) - 1
 				result = data[resultPos]
 				if result == snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK']:
-					print('write ok!')
+#					print('write ok!')
 					return True
 				else:
-					print('write error %d' %(result))
+					print(f'{actionStr}: write error {result}')
 					return False
 
 		request        = generateRequest()
@@ -94,20 +104,24 @@ class RemoteControlParameter(object):
 
 		i = 0
 		while i < 3:
-			response = request.send(responseFilter, 10)
+			response = request.send(responseFilter, 3)
 			result = handleResponse()
 			if result:
 				break;
-			print('retry')
+			print(f'{actionStr}: retry')
 			i = i + 1
 			
 		return result
 	
-	def read(self, programId):
+	def read(self):
+		if self._programId is None:
+			print('wrong programId')
+			return
+		
 		if self._parameterIndex is None:
-			print(f'prg {programId} read parameter {self._programType}.{self._parameterId}')
+			actionStr = f'prg {self._programId} read parameter {self._programType}.{self._parameterId}'
 		else:
-			print(f'prg {programId} read parameter {self._programType}.{self._parameterId}.{self._parameterIndex}')
+			actionStr = f'prg {self._programId} read parameter {self._programType}.{self._parameterId}.{self._parameterIndex}'
 
 		def generateRequest():
 			if self._parameterIndex is None:
@@ -117,7 +131,7 @@ class RemoteControlParameter(object):
 
 			request = smartnetMessage(
 				snc.ProgramType['REMOTE_CONTROL'],
-				programId,
+				self._programId,
 				snc.RemoteControlFunction['GET_PARAMETER_VALUE'],
 				snc.requestFlag['REQUEST'],
 				data)
@@ -130,7 +144,7 @@ class RemoteControlParameter(object):
 
 		def handleResponse():
 			if response is None:
-				print('read timeout')
+				print(f'{actionStr}: read timeout')
 				return False
 			else:
 				data = response.getData()
@@ -157,26 +171,11 @@ class RemoteControlParameter(object):
 			result = handleResponse()
 			if result:
 				break;
-			print('retry')
+			print(f'{actionStr}: retry')
 			i = i + 1
 			
 		return result
 	
-	def responseGet(self, programId):
-		if self._parameterIndex is None:
-			data = [self._programType, self._parameterId, self._parameterValue]
-		else:
-			data = [self._programType, self._parameterId, self._parameterIndex, self._parameterValue]
-
-		response = smartnetMessage(
-			snc.ProgramType['REMOTE_CONTROL'],
-			programId,
-			snc.RemoteControlFunction['GET_PARAMETER_VALUE'],
-			snc.requestFlag['RESPONSE'],
-			data)
-		
-		response.send()
-		
 	def getParameterSize(self):
 		if self._parameterType == 'UINT8_T'    : return 1
 		if self._parameterType == 'TEMPERATURE': return 2

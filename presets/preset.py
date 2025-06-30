@@ -62,7 +62,8 @@ class ProgramPreset(object):
 
 		if self._settings:
 			for value in self._settings.get():
-				value.write(self._id)
+				value.setProgramId(self._id)
+				value.write()
 
 class ControllerPreset(object):
 	'''

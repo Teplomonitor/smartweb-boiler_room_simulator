@@ -37,13 +37,15 @@ class Scenario(Parent):
 		return 'snowmelter'
 		
 	def readFrostProtectionTemperatureValue(self):
+		programId = self._snowmelter.getId()
 		param = RemoteControlParameter(
 				snc.ProgramType['SNOWMELT'], 
 				snc.SnowMelterParameter['PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE'],
-				parameterType  = 'TEMPERATURE')
+				parameterType  = 'TEMPERATURE',
+				programId = programId)
 		
-		programId = self._snowmelter.getId()
-		param.read(programId)
+		param.read()
+		
 		return param.getValue()
 	
 	def getCirculationPumpState(self):

@@ -7,8 +7,9 @@ def outputRead(programId, outputId):
 	param = RemoteControlParameter(
 			snc.ProgramType['PROGRAM'], 
 			snc.ProgramParameter['OUTPUT'],
-			parameterIndex = outputId)
+			parameterIndex = outputId,
+			programId = programId)
 		
-	param.read(programId)
+	param.read()
 	
 	return param.getValue()
