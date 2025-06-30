@@ -4,7 +4,6 @@ import time
 import threading
 
 import smartnet.constants as snc
-from smartnet.message import createBus as createBus
 from smartnet.message import Message as smartnetMessage
 from simulator.sensorReport import reportSensorValue as reportSensorValue
 from simulator.outputRead import outputRead as outputRead
@@ -35,6 +34,18 @@ class sensor_report_thread(threading.Thread):
 				for programInput in program.getInputs():
 					if reportSensorValue(programInput):
 						time.sleep(0.1)
+				
+				programId = program.getId()
+				
+				i = 0
+				for programOutput in program.getOutputs():
+					if not programOutput.valueIsUpToDate():
+						value = outputRead(programId, i)
+						if value is not None:
+							programOutput.setValue(value)
+						time.sleep(0.1)
+					
+					i += 1
 						
 			time.sleep(2)
 
@@ -158,6 +169,7 @@ class Simulator(threading.Thread):
 		self._oat = None
 
 		for program in self._programsList:
+			programId = program.getId()
 			i = 0
 			for output in program.getOutputs():
 				mapping = output.getMapping()
@@ -165,17 +177,20 @@ class Simulator(threading.Thread):
 					
 					for ctrlIo in self._controllerIo:
 						if (ctrlIo.getId() == mapping.getHostId()) and (mapping.getChannelType() == 'CHANNEL_RELAY'):
-							ctrlOutputMapping = ChannelMapping(i, 'CHANNEL_OUTPUT', program.getId())
+							ctrlOutputMapping = ChannelMapping(i, 'CHANNEL_OUTPUT', programId)
 							ctrlIo.setOutputMapping(mapping.getChannelId(), ctrlOutputMapping)
 							ctrlIo.reportOutputMapping(mapping.getChannelId())
 					
-					outputRead(program.getId(), i)
+					value = outputRead(programId, i)
+					if value is not None:
+						program.getOutput(i).setValue(value)
 					time.sleep(0.1)
 				i = i + 1
 
 		for program in self._programsList:
-			if program.getType() in simulatorType:
-				sim = simulatorType[program.getType()](program, self)
+			programType = program.getType()
+			if programType in simulatorType:
+				sim = simulatorType[programType](program, self)
 				self._simList.append(sim)
 
 		for sim in self._simList:
