@@ -181,7 +181,8 @@ USAGE
 		
 		sim = initIoSimulator(controller, ctrlIo)
 		
-		initScenario(controller, sim)
+		if False:
+			initScenario(controller, sim)
 		
 		if guiThread:
 			guiThread.run()
