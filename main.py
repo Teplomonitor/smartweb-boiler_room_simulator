@@ -33,6 +33,7 @@ from controllers.controller    import Controller             as Controller
 from controllers.controller_io import initVirtualControllers as initVirtualControllers
 from scenario.scenario         import ScenarioThread         as ScenarioThread
 from simulator.simulator       import initIoSimulator        as initIoSimulator
+from smartnet.message          import CanListener            as CanListener
 
 import debug
 from udp.udp import initUdpBridge as initUdpBridge
@@ -125,6 +126,8 @@ USAGE
 		
 		programList, controllerIoList = presets.preset.getPresetsList(preset)
 		
+		
+		canListener = CanListener()
 		
 		if programList is None:
 			print('wrong preset. Exit')
