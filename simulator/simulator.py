@@ -1,13 +1,10 @@
 
-import can
 import time
 import threading
 
-import smartnet.constants as snc
-from smartnet.message import Message as smartnetMessage
-from simulator.sensorReport import reportSensorValue as reportSensorValue
-from simulator.outputRead import outputRead as outputRead
-from smartnet.channelMapping import ChannelMapping as ChannelMapping
+from smartnet.message        import CanListener       as CanListener
+from simulator.sensorReport  import reportSensorValue as reportSensorValue
+from smartnet.channelMapping import ChannelMapping    as ChannelMapping
 
 import simulator.oat
 import simulator.boiler
@@ -34,71 +31,9 @@ class sensor_report_thread(threading.Thread):
 				for programInput in program.getInputs():
 					if reportSensorValue(programInput):
 						time.sleep(0.1)
-				
-				programId = program.getId()
-				
-				i = 0
-				for programOutput in program.getOutputs():
-					if not programOutput.valueIsUpToDate():
-						value = outputRead(programId, i)
-						if value is not None:
-							programOutput.setValue(value)
-						time.sleep(0.1)
-					
-					i += 1
-						
+
 			time.sleep(2)
 
-class CanListener(can.Listener):
-	def __init__(self, simulator):
-	#	self._canbus   = createBus()
-		self._canbus   = smartnetMessage._txbus
-		self._simulator = simulator
-		self._notifier = can.Notifier(self._canbus, [self])
-		
-	def on_message_received(self, message):
-		if message is None:
-			return
-
-		msg = smartnetMessage()
-		msg.parse(message)
-
-		if msg is None:
-			return
-		
-#		print(f"rx: {msg.generateHeader():08X} - {' '.join(format(x, '02x') for x in msg._data)}")
-		
-		def programOutputFilter():
-			headerOk = ((msg.getProgramType() == snc.ProgramType['REMOTE_CONTROL']) and
-					(msg.getFunctionId () == snc.RemoteControlFunction['GET_PARAMETER_VALUE']) and
-					(msg.getRequestFlag() == snc.requestFlag['RESPONSE']))
-
-			if headerOk:
-				data = msg.getData()
-				return ((data[0] == snc.ProgramType['PROGRAM']) and
-						(data[1] == snc.ProgramParameter['OUTPUT']))
-
-			return False
-
-		if programOutputFilter():
-			programId   = msg.getProgramId()
-			data        = msg.getData()
-			outputId    = data[2]
-			outputValue = data[3]
-
-			if self._simulator._programsList is None:
-				return
-			for program in self._simulator._programsList:
-				if program.getId() == programId:
-					program.getOutput(outputId).setValue(outputValue)
-					break
-			return
-		
-		if self._simulator._controllerIo is None:
-			return
-		for ctrlIo in self._simulator._controllerIo:
-			ctrlIo.on_message_received(message)
-	
 class Simulator(threading.Thread):
 	'''
 	classdocs
@@ -116,6 +51,7 @@ class Simulator(threading.Thread):
 		self._generatorsList = []
 		self._cascadeList    = []
 		self._oat = None
+		self._collector = None
 		
 		
 		threading.Thread.__init__(self)
@@ -127,10 +63,11 @@ class Simulator(threading.Thread):
 		thread.daemon = True
 		thread.start()
 		
-		self._CanListener = CanListener(self)
-		
 		self.reloadConfig(controllerHost, controllerIo)
-
+	
+	def __del__(self):
+		CanListener.unsubscribe(self)
+		
 	def reloadConfig(self, controllerHost, controllerIo):
 		self._controllerHost = controllerHost
 		self._controllerIo   = controllerIo
@@ -174,16 +111,12 @@ class Simulator(threading.Thread):
 			for output in program.getOutputs():
 				mapping = output.getMapping()
 				if mapping:
-					
 					for ctrlIo in self._controllerIo:
 						if (ctrlIo.getId() == mapping.getHostId()) and (mapping.getChannelType() == 'CHANNEL_RELAY'):
 							ctrlOutputMapping = ChannelMapping(i, 'CHANNEL_OUTPUT', programId)
 							ctrlIo.setOutputMapping(mapping.getChannelId(), ctrlOutputMapping)
 							ctrlIo.reportOutputMapping(mapping.getChannelId())
-					
-					value = outputRead(programId, i)
-					if value is not None:
-						program.getOutput(i).setValue(value)
+
 					time.sleep(0.1)
 				i = i + 1
 
@@ -238,7 +171,8 @@ class Simulator(threading.Thread):
 			for ctrlIo in self._controllerIo:
 				ctrlIo.run()
 			
-			self._collector.run()
+			if self._collector:
+				self._collector.run()
 			
 			dt = time.time() - time_start
 			

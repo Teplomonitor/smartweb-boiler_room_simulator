@@ -5,8 +5,9 @@ Created on 9 апр. 2025 г.
 '''
 
 import time
-from smartnet.message import Message as smartnetMessage
-from smartnet.channelMapping import Channel as Channel
+from smartnet.message        import CanListener as CanListener
+from smartnet.message        import Message     as smartnetMessage
+from smartnet.channelMapping import Channel     as Channel
 from functions.periodicTrigger import PeriodicTrigger as PeriodicTrigger
 import smartnet.constants as snc
 
@@ -48,8 +49,10 @@ class ControllerIO(object):
 		self._id        = controllerId
 		self._title     = controllerTitle
 		self._time_start = time.time()
-		self._reportImHereTrigger = PeriodicTrigger()
+		self._reportImHereTrigger        = PeriodicTrigger()
 		self._reportOutputMappingTrigger = PeriodicTrigger()
+		
+		CanListener.subscribe(self)
 		
 		inputs_num  = self.getInputNumber ()
 		outputs_num = self.getOutputNumber()
@@ -60,6 +63,9 @@ class ControllerIO(object):
 		sendImHere(self.getId(), self.getType())
 		self.reportChannelNumber()
 
+	def __del__(self):
+		CanListener.unsubscribe(self)
+		
 	def getType     (self): return self._type
 	def getId       (self): return self._id
 	def getTitle    (self): return self._title
@@ -120,13 +126,9 @@ class ControllerIO(object):
 		[self.getInputNumber(), self.getOutputNumber()])
 		msg.send()
 		
-	def on_message_received(self, message):
-		if message is None:
-			return
-
-		msg = smartnetMessage()
-		msg.parse(message)
-
+	def OnCanMessageReceived(self, msg):
+#		print(f'OCMR: {self.getTitle()}')
+		
 		if msg is None:
 			return
 		

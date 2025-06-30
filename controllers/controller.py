@@ -20,7 +20,8 @@ def messageIsImHere():
 
 def findOnlineController():
 	print('Searching controller')
-	result = smartnetMessage.recv(130, messageIsImHere())
+	msg = smartnetMessage()
+	result = msg.recv(messageIsImHere(), 130)
 	if result:
 		controllerId = result.getProgramId()
 		print('Controller %d found' %(controllerId))

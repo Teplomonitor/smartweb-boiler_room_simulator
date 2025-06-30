@@ -5,10 +5,14 @@
 import os
 from copy import copy
 
+from simulator.outputRead    import outputRead       as outputRead
+
 import smartnet.constants as snc
-from smartnet.message import Message as smartnetMessage
-from smartnet.channelMapping import InputChannel  as InputChannel
-from smartnet.channelMapping import OutputChannel as OutputChannel
+
+from smartnet.message        import CanListener      as CanListener
+from smartnet.message        import Message          as smartnetMessage
+from smartnet.channelMapping import InputChannel     as InputChannel
+from smartnet.channelMapping import OutputChannel    as OutputChannel
 from smartnet.channelTitle import ProgramInputTitle  as InputTitle
 from smartnet.channelTitle import ProgramOutputTitle as OutputTitle
 
@@ -32,7 +36,8 @@ class Program(object):
 	
 		self._parameters = {}
 		
-		prgType = self.getType()
+		programId   = self.getId()
+		prgType     = self.getType()
 		inputTitle  = InputTitle [prgType]
 		outputTitle = OutputTitle[prgType]
 		
@@ -44,8 +49,39 @@ class Program(object):
 		i = 0
 		for programOutput in self._outputs:
 			programOutput.setTitle(outputTitle[i])
+	
+			mapping = programOutput.getMapping()
+			if mapping:
+				value = outputRead(programId, i)
+				if value is None:
+					print('cant read output value!!!')
+				else:
+					self.getOutput(i).setValue(value)
+					
+					
 			i = i + 1
+		
+		CanListener.subscribe(self)
+		
+	def OnCanMessageReceived(self, msg):
+		headerOk = (
+					(msg.getProgramId  () == self.getId()) and
+					(msg.getProgramType() == snc.ProgramType['REMOTE_CONTROL']) and
+					(msg.getFunctionId () == snc.RemoteControlFunction['GET_PARAMETER_VALUE']) and
+					(msg.getRequestFlag() == snc.requestFlag['RESPONSE']))
 
+		if headerOk:
+			data   = msg.getData()
+			dataOk = (
+				(data[0] == snc.ProgramType['PROGRAM']) and
+				(data[1] == snc.ProgramParameter['OUTPUT']))
+			
+			if dataOk:
+				outputId    = data[2]
+				outputValue = data[3]
+				self.getOutput(outputId).setValue(outputValue)
+		
+		
 	def getInputs(self   ): return self._inputs
 	def getInput (self, i): return self._inputs [i]
 	def setInput (self, i, value): self._inputs [i] = value
