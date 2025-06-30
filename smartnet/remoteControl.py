@@ -145,7 +145,7 @@ class RemoteControlParameter(object):
 				data_cut = int_array[valuePos:valuePos+valueSize]
 				self._parameterValue = self.dataToValue(data_cut)
 				
-				print('read ok!')
+#				print('read ok!')
 				return True
 
 		request        = generateRequest()
