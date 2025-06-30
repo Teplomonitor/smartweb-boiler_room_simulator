@@ -4,6 +4,7 @@ import time
 from functions.programLog import ParameterLog as ChannelLog
 
 from gui.parameter import GuiParameter as GuiParameter
+from threading import Lock
 
 class ChannelMapping(object):
 	'''
@@ -158,10 +159,13 @@ class OutputChannel(Channel):
 		'''
 		super().__init__(mapping, value, title, gui)
 		self._lastUpdateTime = None
+		self._lock = Lock()
 		
 	def setValue(self, value, manual = False):
-		super().setValue(value, manual)
-		self._lastUpdateTime = time.time()
+		with self._lock:
+			super().setValue(value, manual)
+#			print(f'{self.getTitle()} = {value}')
+			self._lastUpdateTime = time.time()
 		
 	def valueIsUpToDate(self):
 		if self._lastUpdateTime is None:
@@ -170,5 +174,6 @@ class OutputChannel(Channel):
 		return now -self._lastUpdateTime < 10
 	
 	def initGui(self):
-		pass
+		if self._gui:
+			self._gui.SetValue(self._value)
 		
