@@ -134,20 +134,19 @@ class RemoteControlParameter(object):
 				return False
 			else:
 				data = response.getData()
-				resultPos = len(data) - 1
-				result = data[resultPos]
 				
-				if result == snc.RemoteControlGetParameterResult['GET_PARAMETER_STATUS_OK']:
+				if self._parameterIndex is None:
 					valuePos = 2
-					int_array = [byte for byte in data]
-					data_cut = int_array[valuePos:resultPos]
-					self._parameterValue = self.dataToValue(data_cut)
-					
-					print('read ok!')
-					return True
 				else:
-					print('read error %d' %(result))
-					return False
+					valuePos = 3
+				
+				valueSize = self.getParameterSize()
+				int_array = [byte for byte in data]
+				data_cut = int_array[valuePos:valuePos+valueSize]
+				self._parameterValue = self.dataToValue(data_cut)
+				
+				print('read ok!')
+				return True
 
 		request        = generateRequest()
 		responseFilter = generateRequiredResponse()
@@ -178,7 +177,10 @@ class RemoteControlParameter(object):
 		
 		response.send()
 		
-	
+	def getParameterSize(self):
+		if self._parameterType == 'UINT8_T'    : return 1
+		if self._parameterType == 'TEMPERATURE': return 2
+		
 	def dataToValue(self, data):
 		if self._parameterType == 'UINT8_T'    : return data[0]
 		if self._parameterType == 'TEMPERATURE': return bytesToTemp(data)
