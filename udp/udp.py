@@ -21,25 +21,32 @@ SELF_ID = uuid.uuid4()
 self_id_bytes = SELF_ID.bytes
 self_id_bytes = bytearray(self_id_bytes[:SCAN_PACKET_DATA_SIZE])
 self_id_bytes[SCAN_PACKET_DATA_SIZE-1] = 0;
+scan_msg = make_scan_message(self_id_bytes)
 
 DATA_PACKET_SIZE = 24
 
 
-def update_ip_list(data, addr):
+def update_ip_list(data, ip):
 	body = get_scan_id(data)
-	ip   = addr[0]
 	
 #	print(f'recv udp scan msg {data}')
 	
 #	print(f'compare {body} and {self_id_bytes}')
-	
 	if body == self_id_bytes:
 		self_ip_list.append(ip)
 		print(f'add self ip {ip}')
+		result = 'SELF_IP_FOUND'
 	else:
 		now = time.time()
+		
+		if ip in ip_list:
+			print(f'update {ip}')
+			result = 'UPDATE_IP'
+		else:
+			print(f'add new udp-controller {ip}')
+			result = 'NEW_CONTROLLER_FOUND'
+			
 		ip_list[ip] = now
-		print(f'update {ip}')
 		
 		timeout = 10*60
 		
@@ -47,6 +54,8 @@ def update_ip_list(data, addr):
 			if now - ip_list[ip] > timeout:
 				print(f'delete {ip}')
 				del ip_list[ip]
+	
+	return result
 
 udp_messages_to_send = bytearray([])
 
@@ -74,6 +83,16 @@ def send_broadcast_udp_packet(data, port):
 		sock.sendto(data, ("255.255.255.255", port))
 		sock.close()
 
+def send_udp_packet(ip, data, port):
+	ip_any = '0.0.0.0'
+
+	ip_addr = ip_any
+	
+	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)  # UDP
+	sock.bind((ip_addr,0))
+	sock.sendto(data, (ip, port))
+	sock.close()
+	
 def make_rand_delay(queue_size):
 	rand_delay = queue_size/100
 	if rand_delay > 0.2:
@@ -91,6 +110,7 @@ class can_thread(threading.Thread):
 		self._canbus     = can_udp_bus
 		self._send_can_time = time.time()
 		self._sock       = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+		self._connectionReady = False
 		
 	def sendUdpPacket(self, data, udp_ip, udp_port):
 #		print(f'send udp packet {data} to {udp_ip}')
@@ -129,7 +149,7 @@ class udp_listen_thread(threading.Thread):
 		self._port       = port
 		self._sock       = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		self._canbus     = can_udp_bus
-		self._scan_msg   = make_scan_message(self_id_bytes)
+
 		self._send_scan_time = time.time() - 100
 		
 		ip_any = '0.0.0.0'
@@ -152,7 +172,7 @@ class udp_listen_thread(threading.Thread):
 			
 			if now - self._send_scan_time > 60:
 				self._send_scan_time = now
-				send_broadcast_udp_packet(self._scan_msg, self._port)
+				send_broadcast_udp_packet(scan_msg, self._port)
 			
 			data, addr = self._sock.recvfrom(1024)
 			
@@ -165,8 +185,11 @@ class udp_listen_thread(threading.Thread):
 				
 			if udp_msg_is_scan(data):
 				self._send_scan_time = now
-				update_ip_list(data, addr)
-				send_broadcast_udp_packet(self._scan_msg, self._port)
+				ip = addr[0]
+				result = update_ip_list(data, ip)
+				if result == 'NEW_CONTROLLER_FOUND': send_udp_packet(ip, scan_msg, self._port)
+				if result == 'UPDATE_IP': self._connectionReady = True
+				
 				continue
 			
 			if len(ip_list) == 0:
