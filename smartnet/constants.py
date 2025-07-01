@@ -319,6 +319,7 @@ ParameterDict = {
 	'CASCADE_MANAGER' : CascadeManagerParameter,
 	'DISTRICT_HEATING': DistrictHeatingParameter,
 	'SNOWMELT'        : SnowMelterParameter,
+	'CIRCUIT'         : CircuitParameter,
 }
 
 
