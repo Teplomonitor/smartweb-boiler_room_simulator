@@ -57,6 +57,9 @@ class Program(object):
 		
 		CanListener.subscribe(self)
 		
+	def __del__(self):
+		CanListener.unsubscribe(self)
+		
 	def OnCanMessageReceived(self, msg):
 		headerOk = (
 					(msg.getProgramId  () == self.getId()) and
