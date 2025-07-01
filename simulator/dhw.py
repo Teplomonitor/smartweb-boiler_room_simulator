@@ -32,24 +32,24 @@ class Simulator(object):
 
 
 	def getTemperature(self):
-		return self._program.getInput(self._inputId['temperature']).getValue()
+		return self._program.getInputChannel(self._inputId['temperature']).getValue()
 
 	def setTemperature(self, value):
 #		print(f'dhw: {value}')
-		self._program.getInput(self._inputId['temperature']).setValue(value)
+		self._program.getInputChannel(self._inputId['temperature']).setValue(value)
 
 	def getBackwardTemperature(self):
-		return self._program.getInput(self._inputId['backwardTemperature']).getValue()
+		return self._program.getInputChannel(self._inputId['backwardTemperature']).getValue()
 
 	def setBackwardTemperature(self, value):
 #		print(f'dhw: {value}')
-		self._program.getInput(self._inputId['backwardTemperature']).setValue(value)
+		self._program.getInputChannel(self._inputId['backwardTemperature']).setValue(value)
 
 	def getElapsedTime(self):
 		return time.time() - self._time_start
 
 	def getPumpState(self):
-		pump = self._program.getOutput(self._outputId['supplyPump'])
+		pump = self._program.getOutputChannel(self._outputId['supplyPump'])
 		if pump.getMapping() is None:
 			return 1
 

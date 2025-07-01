@@ -35,6 +35,9 @@ from scenario.scenario         import ScenarioThread         as ScenarioThread
 from simulator.simulator       import initIoSimulator        as initIoSimulator
 from smartnet.message          import CanListener            as CanListener
 
+from gui.frame import printLog   as printLog
+from gui.frame import printError as printError
+
 import debug
 from udp.udp import initUdpBridge as initUdpBridge
 
@@ -130,7 +133,7 @@ USAGE
 		canListener = CanListener()
 		
 		if programList is None:
-			print('wrong preset. Exit')
+			printError('wrong preset. Exit')
 			return 1
 		
 		if udp_bridge_enable:
@@ -142,7 +145,7 @@ USAGE
 		controllerId = findOnlineController()
 		
 		if controllerId is None:
-			print('controller not found. Exit')
+			printError('controller not found. Exit')
 			return 1
 		
 		if args.gui:
@@ -172,7 +175,7 @@ USAGE
 	except KeyboardInterrupt:
 		### handle keyboard interrupt ###
 		smartnetMessage.exit()
-		print('exit')
+		printLog('exit')
 		return 0
 	except Exception as e:
 		smartnetMessage.exit()

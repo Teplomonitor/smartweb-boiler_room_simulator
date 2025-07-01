@@ -2,6 +2,11 @@
 @author: admin
 '''
 
+import wx
+
+def IsMainLoopRunning():
+	return wx.AppConsole.IsMainLoopRunning()
+
 class Gui(object):
 	def __init__(self, spinner, slider):
 		self._spinner       = spinner
@@ -39,18 +44,22 @@ class GuiParameter(object):
 		self._max     = 100
 		self._step    = 0.1
 		self._units   = '°C'
+		self._needUpdateGuiValue = True
 		
 		if self._value is None:
 			self._value = self._min
 		
-	def getValue  (self): return self._value
+	def getValue  (self):
+		if self._needUpdateGuiValue:
+			self.setGuiValue(self._value)
+			
+		return self._value
 	def getTitle  (self): return self._title
 	def getUnits  (self): return self._units
 	
 	def setValue  (self, value, manual = False):
 		self._value = value
-		if self._gui:
-			self._gui.SetValue(value)
+		self.setGuiValue(value)
 		
 		
 	def setTitle(self, title): self._title = title
@@ -67,10 +76,17 @@ class GuiParameter(object):
 	def onScroll(self, event):
 		event.Skip()
 		self.setValue(self._gui._slider .GetValue(), True)
+	
+	def setGuiValue(self, value):
+		if self._gui:
+			if IsMainLoopRunning():
+				self._gui.SetValue(value)
+				self._needUpdateGuiValue = False
+			else:
+				self._needUpdateGuiValue = True
 		
 	def setGui(self, gui):
 		self._gui = gui
-		
 		self.initGui()
 
 	def initGui(self):
@@ -78,7 +94,7 @@ class GuiParameter(object):
 			self._gui.SetMin  (self._min)
 			self._gui.SetMax  (self._max)
 			self._gui.SetIncrement(self._step)
-			self._gui.SetValue(self._value)
+			self.setGuiValue  (self._value)
 		
 	def getMin (self): return self._min
 	def getMax (self): return self._max

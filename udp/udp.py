@@ -9,6 +9,9 @@ import socket
 from udp.message import udp_to_can, can_to_udp, make_scan_message, udp_msg_is_scan, get_scan_id
 from smartnet.message import createBus as createBus
 
+from gui.frame import printLog   as printLog
+from gui.frame import printError as printError
+
 can_udp_bus = createBus()
 
 
@@ -34,16 +37,16 @@ def update_ip_list(data, ip):
 #	print(f'compare {body} and {self_id_bytes}')
 	if body == self_id_bytes:
 		self_ip_list.append(ip)
-		print(f'add self ip {ip}')
+		printLog(f'add self ip {ip}')
 		result = 'SELF_IP_FOUND'
 	else:
 		now = time.time()
 		
 		if ip in ip_list:
-			print(f'update {ip}')
+			printLog(f'update {ip}')
 			result = 'UPDATE_IP'
 		else:
-			print(f'add new udp-controller {ip}')
+			printLog(f'add new udp-controller {ip}')
 			result = 'NEW_CONTROLLER_FOUND'
 			
 		ip_list[ip] = now
@@ -52,7 +55,7 @@ def update_ip_list(data, ip):
 		
 		for ip in ip_list:
 			if now - ip_list[ip] > timeout:
-				print(f'delete {ip}')
+				printLog(f'delete {ip}')
 				del ip_list[ip]
 	
 	return result

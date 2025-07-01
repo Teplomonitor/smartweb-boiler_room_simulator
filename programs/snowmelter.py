@@ -46,37 +46,37 @@ class Snowmelter(Program):
 		}
 
 	def getDirectFlowTemperature(self):
-		return self.getInput(self._inputId['directFlowTemperature'])
+		return self.getInputChannel(self._inputId['directFlowTemperature'])
 
 	def setDirectFlowTemperature(self, value):
-		self.getInput(self._inputId['directFlowTemperature']).setValue(value)
+		self.getInputChannel(self._inputId['directFlowTemperature']).setValue(value)
 
 	def getBackwardFlowTemperature(self):
-		return self.getInput(self._inputId['backwardTemperature'])
+		return self.getInputChannel(self._inputId['backwardTemperature'])
 	
 	def setBackwardFlowTemperature(self, value):
-		self.getInput(self._inputId['backwardTemperature']).setValue(value)
+		self.getInputChannel(self._inputId['backwardTemperature']).setValue(value)
 
 	def getPlateTemperature(self):
-		return self.getInput(self._inputId['plateTemperature'])
+		return self.getInputChannel(self._inputId['plateTemperature'])
 
 	def setPlateTemperature(self, value):
-		self.getInput(self._inputId['plateTemperature']).setValue(value)
+		self.getInputChannel(self._inputId['plateTemperature']).setValue(value)
 
 	def getSnowSensor(self):
-		return self.getInput(self._inputId['snowSensor'])
+		return self.getInputChannel(self._inputId['snowSensor'])
 
 	def setSnowSensor(self, value):
-		self.getInput(self._inputId['snowSensor']).setValue(value)
+		self.getInputChannel(self._inputId['snowSensor']).setValue(value)
 		
 	def getPrimaryPumpState(self):
-		return self.getOutput(self._outputId['primaryPump'])
+		return self.getOutputChannel(self._outputId['primaryPump'])
 
 	def getSecondaryPumpState(self):
-		return self.getOutput(self._outputId['secondaryPump'])
+		return self.getOutputChannel(self._outputId['secondaryPump'])
 	
 	def getAnalogPumpSignal(self):
-		return self.getOutput(self._outputId['primaryPumpAnalogSignal'])
+		return self.getOutputChannel(self._outputId['primaryPumpAnalogSignal'])
 	
 	def getMaxFlowRate1(self):
 		return self._parameters['max_flow_rate1'].getValue()

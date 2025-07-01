@@ -4,6 +4,8 @@ from copy import copy
 import smartnet.constants as snc
 from smartnet.message import Message as smartnetMessage
 
+from gui.frame import printLog   as printLog
+from gui.frame import printError as printError
 
 
 def concatByteArray(data, littleEndian = False):
@@ -56,11 +58,11 @@ class RemoteControlParameter(object):
 	
 	def write(self):
 		if self._programId is None:
-			print('wrong programId')
+			printError('wrong programId')
 			return
 		
 		if self._parameterValue is None:
-			print(f'prg {self._programId} skip parameter {self._programType}.{self._parameterId}')
+#			print(f'prg {self._programId} skip parameter {self._programType}.{self._parameterId}')
 			return
 		
 		if self._parameterIndex is None:
@@ -90,17 +92,16 @@ class RemoteControlParameter(object):
 
 		def handleResponse():
 			if response is None:
-				print(f'{actionStr}: write timeout')
+				printError(f'{actionStr}: write timeout')
 				return False
 			else:
 				data = response.getData()
 				resultPos = len(data) - 1
 				result = data[resultPos]
 				if result == snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK']:
-#					print('write ok!')
 					return True
 				else:
-					print(f'{actionStr}: write error {result}')
+					printError(f'{actionStr}: write error {result}')
 					return False
 
 		request        = generateRequest()
@@ -112,14 +113,14 @@ class RemoteControlParameter(object):
 			result = handleResponse()
 			if result:
 				break;
-			print(f'{actionStr}: retry')
+			printLog(f'{actionStr}: retry')
 			i = i + 1
 			
 		return result
 	
 	def read(self):
 		if self._programId is None:
-			print('wrong programId')
+			printError('wrong programId')
 			return
 		
 		if self._parameterIndex is None:
@@ -150,7 +151,7 @@ class RemoteControlParameter(object):
 
 		def handleResponse():
 			if response is None:
-				print(f'{actionStr}: read timeout')
+				printError(f'{actionStr}: read timeout')
 				return False
 			else:
 				data = response.getData()
@@ -177,7 +178,7 @@ class RemoteControlParameter(object):
 			result = handleResponse()
 			if result:
 				break;
-			print(f'{actionStr}: retry')
+			printLog(f'{actionStr}: retry')
 			i = i + 1
 			
 		return result

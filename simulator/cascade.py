@@ -18,11 +18,11 @@ class Simulator(object):
 		self.setTemperature(30)
 
 	def getTemperature(self):
-		return self._program.getInput(0).getValue()
+		return self._program.getInputChannel(0).getValue()
 
 	def setTemperature(self, value):
 #		print(f'cascade: {value}')
-		self._program.getInput(0).setValue(value)
+		self._program.getInputChannel(0).setValue(value)
 
 	def getElapsedTime(self):
 		return time.time() - self._time_start

@@ -18,11 +18,11 @@ class Simulator(object):
 		return time.time() - self._time_start
 
 	def getTemperature(self):
-		return self._program.getInput(self._inputId['temperature']).getValue()
+		return self._program.getInputChannel(self._inputId['temperature']).getValue()
 
 	def setTemperature(self, value):
 #		print(f'oat: {value}')
-		self._program.getInput(self._inputId['temperature']).setValue(value)
+		self._program.getInputChannel(self._inputId['temperature']).setValue(value)
 
 	def computeTemperature(self):
 		temp  = self.getTemperature()

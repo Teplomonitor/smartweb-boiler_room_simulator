@@ -39,10 +39,10 @@ class Simulator(object):
 		return oat.getTemperature()
 
 	def getTemperature(self):
-		return self._program.getInput(self._inputId['roomTemperature']).getValue()
+		return self._program.getInputChannel(self._inputId['roomTemperature']).getValue()
 
 	def setTemperature(self, value):
-		self._program.getInput(self._inputId['roomTemperature']).setValue(value)
+		self._program.getInputChannel(self._inputId['roomTemperature']).setValue(value)
 
 	def getMaxPower(self):
 		return self._preset.getPower()

@@ -40,11 +40,11 @@ class Simulator(object):
 		return self._control._collector.getSupplyBackwardTemperature()
 	
 	def getTemperature(self):
-		return self._program.getInput(self._inputId['temperature']).getValue()
+		return self._program.getInputChannel(self._inputId['temperature']).getValue()
 
 	def setTemperature(self, value):
 #		print(f'boiler: {value}')
-		self._program.getInput(self._inputId['temperature']).setValue(value)
+		self._program.getInputChannel(self._inputId['temperature']).setValue(value)
 
 	def getElapsedTime(self):
 		return time.time() - self._time_start
@@ -54,7 +54,7 @@ class Simulator(object):
 		return consumersPower
 
 	def temperatureInputIsMapped(self):
-		temp = self._program.getInput(self._inputId['temperature'])
+		temp = self._program.getInputChannel(self._inputId['temperature'])
 		mapping = temp.getMapping()
 		if mapping is None:
 			return False
@@ -66,7 +66,7 @@ class Simulator(object):
 
 
 	def getStageState(self):
-		stage = self._program.getOutput(self._outputId['burner1'])
+		stage = self._program.getOutputChannel(self._outputId['burner1'])
 		if stage.getMapping() is None:
 			return 1
 
@@ -76,7 +76,7 @@ class Simulator(object):
 		return 0
 	
 	def getPumpState(self):
-		pumpState = self._program.getOutput(self._outputId['pump'])
+		pumpState = self._program.getOutputChannel(self._outputId['pump'])
 		if pumpState.getMapping() is None:
 			return 1
 

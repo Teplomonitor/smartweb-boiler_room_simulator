@@ -43,10 +43,10 @@ class Simulator(object):
 		return self._roomTemp
 
 	def getTemperature(self):
-		return self._program.getInput(self._inputId['temperature']).getValue()
+		return self._program.getInputChannel(self._inputId['temperature']).getValue()
 
 	def setTemperature(self, value):
-		self._program.getInput(self._inputId['temperature']).setValue(value)
+		self._program.getInputChannel(self._inputId['temperature']).setValue(value)
 
 	def getBackwardTemperature(self):
 		return self._supplyBackwardTemperature
@@ -55,16 +55,16 @@ class Simulator(object):
 		self._supplyBackwardTemperature = value
 
 	def getBackwardTemperature2(self):
-		return self._program.getInput(self._inputId['backwardTemperature']).getValue()
+		return self._program.getInputChannel(self._inputId['backwardTemperature']).getValue()
 
 	def setBackwardTemperature2(self, value):
-		self._program.getInput(self._inputId['backwardTemperature']).setValue(value)
+		self._program.getInputChannel(self._inputId['backwardTemperature']).setValue(value)
 
 	def getMaxFlowRate(self):
 		return self._program.getMaxFlowRate()
 	
 	def getPumpState(self):
-		pump = self._program.getOutput(self._outputId['pump'])
+		pump = self._program.getOutputChannel(self._outputId['pump'])
 		if pump.getMapping() is None:
 			return 1
 
@@ -74,7 +74,7 @@ class Simulator(object):
 		return 0
 
 	def getValveState(self):
-		valve = self._program.getOutput(self._outputId['analogValve'])
+		valve = self._program.getOutputChannel(self._outputId['analogValve'])
 		if valve.getMapping() is None:
 			return 1
 

@@ -127,8 +127,6 @@ class ControllerIO(object):
 		msg.send()
 		
 	def OnCanMessageReceived(self, msg):
-#		print(f'OCMR: {self.getTitle()}')
-		
 		if msg is None:
 			return
 		
@@ -152,12 +150,10 @@ class ControllerIO(object):
 			data        = msg.getData()
 			outputId    = data[0]
 			self.reportOutputMapping(outputId)
-			return
-			
-		if controllerChannelNumberRequestFilter():
+		elif controllerChannelNumberRequestFilter():
 			self.reportChannelNumber()
 			
-			
+		
 	def run(self):
 		if self._reportImHereTrigger.Get(10):
 			sendImHere(self.getId(), self.getType())

@@ -4,7 +4,7 @@ import time
 from functions.programLog import ParameterLog as ChannelLog
 
 from gui.parameter import GuiParameter as GuiParameter
-from threading import Lock
+
 
 class ChannelMapping(object):
 	'''
@@ -64,6 +64,7 @@ class Channel(GuiParameter):
 		self._log     = ChannelLog('SENSOR', title)
 
 	def getMapping(self): return self._mapping
+	
 	def isMapped(self):
 		if self._mapping:
 			return self._mapping.isMapped()
@@ -159,13 +160,11 @@ class OutputChannel(Channel):
 		'''
 		super().__init__(mapping, value, title, gui)
 		self._lastUpdateTime = None
-		self._lock = Lock()
 		
 	def setValue(self, value, manual = False):
-		with self._lock:
-			super().setValue(value, manual)
-#			print(f'{self.getTitle()} = {value}')
-			self._lastUpdateTime = time.time()
+#		print(f'{self.getTitle()} = {value}')
+		super().setValue(value, manual)
+		self._lastUpdateTime = time.time()
 		
 	def valueIsUpToDate(self):
 		if self._lastUpdateTime is None:
@@ -174,6 +173,5 @@ class OutputChannel(Channel):
 		return now -self._lastUpdateTime < 10
 	
 	def initGui(self):
-		if self._gui:
-			self._gui.SetValue(self._value)
+		self.setGuiValue(self._value)
 		

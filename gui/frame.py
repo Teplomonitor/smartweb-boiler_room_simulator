@@ -295,6 +295,7 @@ class guiThread():
 		self._ex = MainFrame(self._frame, self)
 		self._consoleFrame = ConsoleFrame(self._frame)
 		self._programsList = []
+		self._consoleFrame.Show()
 		
 	def Clear(self):
 		self._ex = MainFrame(self._frame, self)
@@ -319,7 +320,6 @@ class guiThread():
 		self._consoleFrame.printText('\n')
 		
 	def run(self):
-		self._consoleFrame.Show()
 		self._ex.Show()
 		self._app.MainLoop()
 	
@@ -332,8 +332,7 @@ def initGuiThread():
 		guiThreadSingleton = guiThread("GUI", 666)
 		
 	return guiThreadSingleton
-	
-	
+
 def printLog(log_str):
 	print(log_str)
 	global guiThreadSingleton

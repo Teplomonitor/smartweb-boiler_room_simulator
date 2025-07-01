@@ -116,11 +116,12 @@ class Simulator(threading.Thread):
 							ctrlOutputMapping = ChannelMapping(i, 'CHANNEL_OUTPUT', programId)
 							ctrlIo.setOutputMapping(mapping.getChannelId(), ctrlOutputMapping)
 							ctrlIo.reportOutputMapping(mapping.getChannelId())
-
+	
 					time.sleep(0.1)
 				i = i + 1
 
 		for program in self._programsList:
+#			CanListener.subscribe(program)
 			programType = program.getType()
 			if programType in simulatorType:
 				sim = simulatorType[programType](program, self)

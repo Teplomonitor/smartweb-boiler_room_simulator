@@ -69,46 +69,46 @@ class Simulator(object):
 		self.qtown  = 0
 
 	def getSupplyDirectTemperature(self):
-		return self._program.getInput(self._inputId['supply_direct_temp']).getValue()
+		return self._program.getInputChannel(self._inputId['supply_direct_temp']).getValue()
 
 	def setSupplyDirectTemperature(self, value):
-		self._program.getInput(self._inputId['supply_direct_temp']).setValue(value)
+		self._program.getInputChannel(self._inputId['supply_direct_temp']).setValue(value)
 
 	def getSupplyBackwardTemperature(self):
-		return self._program.getInput(self._inputId['supply_backward_temp']).getValue()
+		return self._program.getInputChannel(self._inputId['supply_backward_temp']).getValue()
 
 	def setSupplyBackwardTemperature(self, value):
-		self._program.getInput(self._inputId['supply_backward_temp']).setValue(value)
+		self._program.getInputChannel(self._inputId['supply_backward_temp']).setValue(value)
 
 	def getDirectTemperature(self):
-		return self._program.getInput(self._inputId['direct_temp']).getValue()
+		return self._program.getInputChannel(self._inputId['direct_temp']).getValue()
 
 	def setDirectTemperature(self, value):
-		self._program.getInput(self._inputId['direct_temp']).setValue(value)
+		self._program.getInputChannel(self._inputId['direct_temp']).setValue(value)
 
 	def getBackwardTemperature(self):
-		return self._program.getInput(self._inputId['backward_temp']).getValue()
+		return self._program.getInputChannel(self._inputId['backward_temp']).getValue()
 
 	def setBackwardTemperature(self, value):
-		self._program.getInput(self._inputId['backward_temp']).setValue(value)
+		self._program.getInputChannel(self._inputId['backward_temp']).setValue(value)
 
 	def getThermalOutputSensor(self):
-		return self._program.getInput(self._inputId['thermal_output']).getValue()
+		return self._program.getInputChannel(self._inputId['thermal_output']).getValue()
 
 	def setThermalOutputSensor(self, value):
-		self._program.getInput(self._inputId['thermal_output']).setValue(value)
+		self._program.getInputChannel(self._inputId['thermal_output']).setValue(value)
 
 	def getVolumeFlowSensor(self):
-		return self._program.getInput(self._inputId['volume_flow']).getValue()
+		return self._program.getInputChannel(self._inputId['volume_flow']).getValue()
 
 	def setVolumeFlowSensor(self, value):
-		self._program.getInput(self._inputId['volume_flow']).setValue(value)
+		self._program.getInputChannel(self._inputId['volume_flow']).setValue(value)
 
 	def getOutsideRequestSensor(self):
-		return self._program.getInput(self._inputId['outside_request']).getValue()
+		return self._program.getInputChannel(self._inputId['outside_request']).getValue()
 
 	def setOutsideRequestSensor(self, value):
-		self._program.getInput(self._inputId['outside_request']).setValue(value)
+		self._program.getInputChannel(self._inputId['outside_request']).setValue(value)
 
 	def getTemperature(self):
 		return self.getDirectTemperature()
@@ -136,7 +136,7 @@ class Simulator(object):
 
 
 	def getPumpState(self, pumpId):
-		pump = self._program.getOutput(self._outputId[pumpId])
+		pump = self._program.getOutputChannel(self._outputId[pumpId])
 		if pump.getMapping() is None:
 			return 1
 
@@ -149,8 +149,8 @@ class Simulator(object):
 		return self.getPumpState('supply_pump')
 	
 	def getValveState(self):
-		valve        = self._program.getOutput(self._outputId['valve'])
-		analog_valve = self._program.getOutput(self._outputId['analog_valve'])
+		valve        = self._program.getOutputChannel(self._outputId['valve'])
+		analog_valve = self._program.getOutputChannel(self._outputId['analog_valve'])
 		
 		if (valve.getMapping() is None) and (analog_valve.getMapping() is None ):
 			return 1

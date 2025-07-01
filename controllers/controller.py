@@ -5,11 +5,13 @@
 import time
 from copy import copy
 
-from programs.program import Program as Program
 from smartnet.message import Message as smartnetMessage
 import smartnet.constants as snc
 import presets.preset
 from programs.factory import createProgram as createProgram
+
+from gui.frame import printLog   as printLog
+from gui.frame import printError as printError
 
 def messageIsImHere():
 	return smartnetMessage(
@@ -19,12 +21,12 @@ def messageIsImHere():
 
 
 def findOnlineController():
-	print('Searching controller')
+	printLog('Searching controller')
 	msg = smartnetMessage()
 	result = msg.recv(messageIsImHere(), 130)
 	if result:
 		controllerId = result.getProgramId()
-		print('Controller %d found' %(controllerId))
+		printLog('Controller %d found' %(controllerId))
 		return controllerId
 	else:
 		return None
@@ -53,7 +55,7 @@ class Controller(object):
 			self.resetConfig()
 			for program in programList:
 				if self.makeNewProgram(program) == False:
-					print(f'Preset: program {program.getType()}_{program.getId()} make fail!')
+					printError(f'Preset: program {program.getType()}_{program.getId()} make fail!')
 					
 				time.sleep(2)
 		else:
@@ -63,7 +65,7 @@ class Controller(object):
 		
 
 	def sendProgramAddRequest(self, programType, programId, programScheme):
-		print('Send program add request')
+		printLog('Send program add request')
 		def generateRequest():
 			request = smartnetMessage(
 			snc.ProgramType['CONTROLLER'],
@@ -81,7 +83,7 @@ class Controller(object):
 
 		def handleResponse():
 			if response is None:
-				print('Program add timeout')
+				printError('Program add timeout')
 				return False
 			else:
 				programAddStatus = {
@@ -92,10 +94,10 @@ class Controller(object):
 				}
 				data = response.getData()
 				if data[2] == programAddStatus['STATUS_ADD_PROGRAM_OK']:
-					print('Program add ok!')
+					printLog('Program add ok!')
 					return True
 				else:
-					print('Program add error %d' %(data[2]))
+					printError('Program add error %d' %(data[2]))
 					return False
 
 
@@ -115,7 +117,7 @@ class Controller(object):
 	def getProgramList(self): return self._programList
 
 	def resetConfig(self):
-		print('send Controller reset request')
+		printLog('send Controller reset request')
 		def generateRequest():
 			request = smartnetMessage(
 			snc.ProgramType['CONTROLLER'],
@@ -131,7 +133,7 @@ class Controller(object):
 
 		def handleResponse():
 			if response is None:
-				print('Program reset timeout')
+				printError('Program reset timeout')
 				return False
 			else:
 				return True
@@ -145,14 +147,14 @@ class Controller(object):
 			result = handleResponse()
 			if result:
 				break;
-			print('retry')
+			printLog('retry')
 			i = i + 1
 			
 		return result
 
 
 	def addProgram(self, program):
-		print('add prg to list')
+		printLog('add prg to list')
 		self._programList.append(program)
 		if self._gui:
 			self._gui.addProgram(program)

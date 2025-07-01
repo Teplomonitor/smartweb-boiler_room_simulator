@@ -119,10 +119,9 @@ class Message(object):
 		return True
 	
 	def OnCanMessageReceived(self, msg):
-#		print(f'OCMR: msg')
-		
 		if msg.compare(self._responseFilter):
 			self._responseMessage = msg
+			
 	
 	def send(self, responseFilter = None, timeout = None, bus = None):
 		msg = self.smartNetToCanMsg()
@@ -191,6 +190,7 @@ class Message(object):
 
 class CanListener(can.Listener):
 	_listeners   = []
+	_lockSubscribe = 0
 	
 	def __init__(self):
 	#	self._canbus   = createBus()
@@ -208,12 +208,16 @@ class CanListener(can.Listener):
 		
 	@staticmethod
 	def subscribe(listener):
+		while CanListener._lockSubscribe:
+			time.sleep(0.1)
 		CanListener._listeners.append(listener)
 #		CanListener.countListeners()
 		
 		
 	@staticmethod
 	def unsubscribe(listener):
+		while CanListener._lockSubscribe:
+			time.sleep(0.1)
 		CanListener._listeners.remove(listener)
 #		CanListener.countListeners()
 		
@@ -234,7 +238,9 @@ class CanListener(can.Listener):
 			
 #		print(f"rx: {msg.generateHeader():08X} - {' '.join(format(x, '02x') for x in msg._data)} s = {i}")
 
+		CanListener._lockSubscribe = 1
 		for listener in CanListener._listeners:
 			listener.OnCanMessageReceived(msg)
+		CanListener._lockSubscribe = 0
 		
 
