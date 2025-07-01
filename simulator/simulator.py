@@ -2,7 +2,6 @@
 import time
 import threading
 
-from smartnet.message        import CanListener       as CanListener
 from simulator.sensorReport  import reportSensorValue as reportSensorValue
 from smartnet.channelMapping import ChannelMapping    as ChannelMapping
 
@@ -65,9 +64,6 @@ class Simulator(threading.Thread):
 		
 		self.reloadConfig(controllerHost, controllerIo)
 	
-	def __del__(self):
-		CanListener.unsubscribe(self)
-		
 	def reloadConfig(self, controllerHost, controllerIo):
 		self._controllerHost = controllerHost
 		self._controllerIo   = controllerIo
@@ -121,7 +117,6 @@ class Simulator(threading.Thread):
 				i = i + 1
 
 		for program in self._programsList:
-#			CanListener.subscribe(program)
 			programType = program.getType()
 			if programType in simulatorType:
 				sim = simulatorType[programType](program, self)
