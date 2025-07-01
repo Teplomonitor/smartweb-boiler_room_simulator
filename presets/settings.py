@@ -1,5 +1,4 @@
 
-import smartnet.constants as snc
 from smartnet.remoteControl import RemoteControlParameter as RemoteControlParameter
 
 class HeatingCircuitSettings(object):
@@ -12,14 +11,8 @@ class HeatingCircuitSettings(object):
 
 	def get(self):
 		return [
-			RemoteControlParameter(
-				snc.ProgramType['CONSUMER'], 
-				snc.ConsumerParameter['GENERATOR_ID'], 
-				self._source),
-			RemoteControlParameter(
-				snc.ProgramType['CIRCUIT'], 
-				snc.CircuitParameter['HEATING_SLOPE'], 
-				self._heatingSlope),
+			RemoteControlParameter('CONSUMER', 'GENERATOR_ID', self._source),
+			RemoteControlParameter('CIRCUIT', 'HEATING_SLOPE', self._heatingSlope),
 		]
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]
@@ -32,10 +25,7 @@ class DhwSettings(object):
 
 	def get(self):
 		return [
-			RemoteControlParameter(
-				snc.ProgramType['CONSUMER'], 
-				snc.ConsumerParameter['GENERATOR_ID'], 
-				self._source),
+			RemoteControlParameter('CONSUMER', 'GENERATOR_ID', self._source),
 		]
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]
@@ -48,10 +38,7 @@ class SnowMelterSettings(object):
 
 	def get(self):
 		return [
-			RemoteControlParameter(
-				snc.ProgramType['CONSUMER'], 
-				snc.ConsumerParameter['GENERATOR_ID'], 
-				self._source),
+			RemoteControlParameter('CONSUMER', 'GENERATOR_ID', self._source),
 		]
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]
@@ -85,10 +72,7 @@ class CascadeSettings(object):
 		for source in self._sourceList:
 			if source:
 				result.append(
-					RemoteControlParameter(
-						snc.ProgramType['CASCADE_MANAGER'], 
-						snc.CascadeManagerParameter['PARAM_TEMPERATURE_SOURCE_ID'], 
-						source, i)
+					RemoteControlParameter('CASCADE_MANAGER', 'PARAM_TEMPERATURE_SOURCE_ID', source, i)
 				)
 			i = i + 1
 
@@ -112,19 +96,11 @@ class RoomSettings(object):
 			]
 
 	def get(self):
-		result = []
-		i = 0
-		for source in self._sourceList:
-			if source:
-				result.append(
-					RemoteControlParameter(
-						snc.ProgramType['ROOM_DEVICE'], 
-						snc.RoomDeviceParameter['RESPONSIBLE_CIRCUIT_1'] + i, 
-						source)
-				)
-			i = i + 1
-
-		return result
+		return [
+				RemoteControlParameter('ROOM_DEVICE', 'RESPONSIBLE_CIRCUIT_1', self._sourceList[0]),
+				RemoteControlParameter('ROOM_DEVICE', 'RESPONSIBLE_CIRCUIT_2', self._sourceList[1]),
+				RemoteControlParameter('ROOM_DEVICE', 'RESPONSIBLE_CIRCUIT_3', self._sourceList[2]),
+			]
 		
 	def getSourceList(self):
 		return self._sourceList
@@ -138,10 +114,7 @@ class DistrictHeatingSettings(object):
 
 	def get(self):
 		return [
-			RemoteControlParameter(
-				snc.ProgramType['DISTRICT_HEATING'], 
-				snc.DistrictHeatingParameter['PARAM_TEMPERATURE_SOURCE_ID'], 
-				self._source),
+			RemoteControlParameter('DISTRICT_HEATING', 'PARAM_TEMPERATURE_SOURCE_ID', self._source),
 		]
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]

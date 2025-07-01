@@ -39,8 +39,7 @@ class Scenario(Parent):
 	def readFrostProtectionTemperatureValue(self):
 		programId = self._snowmelter.getId()
 		param = RemoteControlParameter(
-				snc.ProgramType['SNOWMELT'], 
-				snc.SnowMelterParameter['PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE'],
+				'SNOWMELT', 'PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE',
 				parameterType  = 'TEMPERATURE',
 				programId = programId)
 		

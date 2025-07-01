@@ -51,6 +51,9 @@ class RemoteControlParameter(object):
 		
 	def getValue(self): return self._parameterValue
 
+	def getParameterIdCode(self):
+		return snc.ParameterDict[self._programType][self._parameterId]
+	
 	def write(self):
 		if self._programId is None:
 			print('wrong programId')
@@ -66,10 +69,11 @@ class RemoteControlParameter(object):
 			actionStr = f'prg {self._programId} write parameter {self._programType}.{self._parameterId}.{self._parameterIndex} = {self._parameterValue}'
 
 		def generateRequest():
+			parameterIdCode = self.getParameterIdCode()
 			if self._parameterIndex is None:
-				data = [self._programType, self._parameterId, self._parameterValue]
+				data = [snc.ProgramType[self._programType], parameterIdCode, self._parameterValue]
 			else:
-				data = [self._programType, self._parameterId, self._parameterIndex, self._parameterValue]
+				data = [snc.ProgramType[self._programType], parameterIdCode, self._parameterIndex, self._parameterValue]
 
 			request = smartnetMessage(
 			snc.ProgramType['REMOTE_CONTROL'],
@@ -124,10 +128,12 @@ class RemoteControlParameter(object):
 			actionStr = f'prg {self._programId} read parameter {self._programType}.{self._parameterId}.{self._parameterIndex}'
 
 		def generateRequest():
+			parameterIdCode = self.getParameterIdCode()
+			
 			if self._parameterIndex is None:
-				data = [self._programType, self._parameterId]
+				data = [snc.ProgramType[self._programType], parameterIdCode]
 			else:
-				data = [self._programType, self._parameterId, self._parameterIndex]
+				data = [snc.ProgramType[self._programType], parameterIdCode, self._parameterIndex]
 
 			request = smartnetMessage(
 				snc.ProgramType['REMOTE_CONTROL'],
