@@ -60,7 +60,7 @@ __updated__ = '2025-03-04'
 
 DEBUG = 0
 
-
+guiThread = None
 
 
 class CLIError(Exception):
@@ -91,7 +91,9 @@ def initScenario(controller, sim):
 
 def main(argv=None): # IGNORE:C0111
 	'''Command line options.'''
-
+	
+	global guiThread
+	
 	if argv is None:
 		argv = sys.argv
 	else:
@@ -150,8 +152,6 @@ USAGE
 		
 		if args.gui:
 			guiThread = guiFrameThread.initGuiThread()
-		else:
-			guiThread = None
 		
 		controller = Controller(controllerId, init_controller_with_preset, programList, guiThread)
 		
