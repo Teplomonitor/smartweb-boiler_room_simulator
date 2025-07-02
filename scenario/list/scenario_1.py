@@ -4,10 +4,9 @@
 
 import time
 
-from scenario.scenario import printLog   as printLog
-from scenario.scenario import printError as printError
+from gui.frame import printLog   as printLog
+from gui.frame import printError as printError
 from scenario.scenario import Scenario   as Parent
-import smartnet.constants as snc
 from smartnet.remoteControl import RemoteControlParameter as RemoteControlParameter
 
 from functions.timeOnDelay  import TimeOnDelay  as TimeOnDelay
