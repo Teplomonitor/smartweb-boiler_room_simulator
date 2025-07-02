@@ -19,7 +19,7 @@ BROADCAST_ID = 0
 
 class sensor_report_thread(threading.Thread):
 	def __init__(self, simulator):
-		threading.Thread.__init__(self)
+		threading.Thread.__init__(self, name = 'report_sensors')
 		
 		self._simulator = simulator
 		
@@ -53,7 +53,7 @@ class Simulator(threading.Thread):
 		self._collector = None
 		
 		
-		threading.Thread.__init__(self)
+		threading.Thread.__init__(self, name = thread_name)
 		self.thread_name = thread_name
 		self.thread_ID   = thread_ID
 		

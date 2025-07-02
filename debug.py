@@ -10,7 +10,7 @@ from smartnet.message import createBus as createBus
 
 class i_am_here_thread(threading.Thread):
 	def __init__(self, thread_name, thread_ID, canbus):
-		threading.Thread.__init__(self)
+		threading.Thread.__init__(self, name = thread_name)
 		self.thread_name = thread_name
 		self.thread_ID   = thread_ID
 		self._canbus     = canbus

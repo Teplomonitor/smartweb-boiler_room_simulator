@@ -110,7 +110,7 @@ class ScenarioThread(threading.Thread):
 		'''
 		Constructor
 		'''
-		threading.Thread.__init__(self)
+		threading.Thread.__init__(self, name = 'Scenario')
 		
 		self._scenarioIndex = 0
 		self._controllerHost = controllerHost
