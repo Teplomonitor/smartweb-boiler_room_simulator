@@ -53,11 +53,7 @@ class GuiParameter(object):
 	
 	def setGuiValue(self, value):
 		if self._gui:
-			if self._gui.guiIsEnable():
-				self._gui.SetValue(value)
-				self._needUpdateGuiValue = False
-			else:
-				self._needUpdateGuiValue = True
+			self._gui.SetValue(value)
 		
 	def setGui(self, gui):
 		self._gui = gui
