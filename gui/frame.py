@@ -382,12 +382,14 @@ def initGuiThread():
 
 def printLog(log_str):
 	print(log_str)
+	return
 	global guiThreadSingleton
 	if guiThreadSingleton:
 		guiThreadSingleton.printConsoleText(log_str)
 
 def printError(log_str):
 	print(log_str)
+	return
 	global guiThreadSingleton
 	if guiThreadSingleton:
 		guiThreadSingleton.printConsoleText(log_str)
