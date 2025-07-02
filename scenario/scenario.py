@@ -55,7 +55,7 @@ class Scenario(object):
 			self.initController(self.getDefaultPreset())
 			
 			if not self.initProgramList(self.getRequiredPrograms()):
-				printError('WTF?!')
+				printError('fail to init program list!')
 			else:
 				printLog('init ok!')
 
