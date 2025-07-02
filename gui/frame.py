@@ -2,8 +2,6 @@
 
 try:
 	import wx
-	import wx.xrc
-
 	import gettext
 	_ = gettext.gettext
 	
@@ -19,6 +17,9 @@ class GuiParameterApi(object):
 		self._slider        = slider
 	
 	def SetValue(self, value):
+		wx.CallAfter(self.SetValueNow, value)
+		
+	def SetValueNow(self, value):
 		self._spinner.SetValue(value)
 		self._slider .SetValue(int(value + 0.5))
 		
@@ -33,10 +34,6 @@ class GuiParameterApi(object):
 	def SetIncrement(self, value):
 		self._spinner.SetIncrement(value)
 
-	def guiIsEnable(self):
-		return False
-		return True
-
 class GuiInputChannel(GuiParameterApi):
 	def __init__(self, spinner, slider, shortCheckbox, openCheckbox, autoRb, manualRb):
 		super().__init__(spinner, slider)
@@ -46,18 +43,15 @@ class GuiInputChannel(GuiParameterApi):
 		self._manualRb      = manualRb    
 
 class GuiOutputChannel():
-	def __init__(self, frame, gauge):
-		self._gauge       = gauge  
-		self._frame       = frame
+	def __init__(self, gauge):
+		self._gauge       = gauge
 		
 	def SetValue(self, value):
+		wx.CallAfter(self.SetValueNow, value)
+		
+	def SetValueNow(self, value):
 		self._gauge.SetValue(value)
 		
-	def guiIsEnable(self):
-		return False
-		return self._frame.guiFrameIsShown()
-		
-
 ###########################################################################
 ## Class MainFrame
 ###########################################################################
@@ -182,7 +176,6 @@ class MainFrame ( wx.Frame ):
 		ProgramOutputsBox.Add( OutputBoxSizer, 1, wx.EXPAND, 5 )
 		
 		guiChannel = GuiOutputChannel(
-			guiThreadSingleton,
 			outputValueGauge
 			)
 		
@@ -360,14 +353,15 @@ class guiThread():
 			prg.saveLog()
 	
 	def printConsoleText(self, text):
+		wx.CallAfter(self.printConsoleTextNow, text)
+		
+	def printConsoleTextNow(self, text):
 		self._consoleFrame.printText(text)
 		self._consoleFrame.printText('\n')
-	
-	def guiFrameIsShown(self):
-		if self._ex:
-			return self._ex.IsShown()
-		return False
-	
+		
+	def SetValueNow(self, value):
+		self._gauge.SetValue(value)
+		
 	def run(self):
 		self._ex.Show()
 		self._app.MainLoop()
@@ -382,14 +376,12 @@ def initGuiThread():
 
 def printLog(log_str):
 	print(log_str)
-	return
 	global guiThreadSingleton
 	if guiThreadSingleton:
 		guiThreadSingleton.printConsoleText(log_str)
 
 def printError(log_str):
 	print(log_str)
-	return
 	global guiThreadSingleton
 	if guiThreadSingleton:
 		guiThreadSingleton.printConsoleText(log_str)
