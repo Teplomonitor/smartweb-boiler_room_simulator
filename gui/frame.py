@@ -257,8 +257,11 @@ class MainFrame ( wx.Frame ):
 			return sysColor[color]
 		
 		return sysColor['default']
-			
+	
 	def addProgram(self, programInfo):
+		wx.CallAfter(self.addProgramNow, programInfo)
+	
+	def addProgramNow(self, programInfo):
 		ProgramPanel = wx.Panel( self.mainScrollableWindow, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
 		color = self.programColorToSysColor(programInfo.getGuiColor())
 		ProgramPanel.SetBackgroundColour( color )
@@ -279,7 +282,7 @@ class MainFrame ( wx.Frame ):
 		ProgramPanel.Layout()
 		ProgramBoxSizer.Fit( ProgramPanel )
 		self.programsWrapSizer.Add( ProgramPanel, 1, wx.EXPAND |wx.ALL, 5 )
-		
+		self.Layout()
 		
 	def __del__( self ):
 		pass
