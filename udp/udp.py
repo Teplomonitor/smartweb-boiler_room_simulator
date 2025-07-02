@@ -133,7 +133,7 @@ class can_thread(threading.Thread):
 			message = self._canbus.recv(dt)
 			
 			if message:
-				print(f'udp_tx {message}')
+#				print(f'udp_tx {message}')
 				self.append_can_udp_message(message)
 			
 			if ((now - self._send_can_time) > dt) or (queue_size > 10*DATA_PACKET_SIZE):
@@ -204,7 +204,7 @@ class udp_listen_thread(threading.Thread):
 		messages = udp_to_can(data)
 		
 		for msg in messages:
-			print(f'udp_rx {msg}')
+#			print(f'udp_rx {msg}')
 			self._canbus.send(msg)
 			
 	def run(self):
