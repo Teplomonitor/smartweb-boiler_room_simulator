@@ -2,32 +2,6 @@
 @author: admin
 '''
 
-import wx
-
-def IsMainLoopRunning():
-	return wx.AppConsole.IsMainLoopRunning()
-
-class Gui(object):
-	def __init__(self, spinner, slider):
-		self._spinner       = spinner
-		self._slider        = slider
-	
-	def SetValue(self, value):
-		self._spinner.SetValue(value)
-		self._slider .SetValue(int(value + 0.5))
-		
-	def SetMin(self, value):
-		self._spinner.SetMin(value)
-		self._slider .SetMin(int(value))
-		
-	def SetMax(self, value):
-		self._spinner.SetMax(value)
-		self._slider .SetMax(int(value))
-		
-	def SetIncrement(self, value):
-		self._spinner.SetIncrement(value)
-
-
 class GuiParameter(object):
 	'''
 	classdocs
@@ -79,7 +53,7 @@ class GuiParameter(object):
 	
 	def setGuiValue(self, value):
 		if self._gui:
-			if IsMainLoopRunning():
+			if self._gui.guiIsEnable():
 				self._gui.SetValue(value)
 				self._needUpdateGuiValue = False
 			else:
