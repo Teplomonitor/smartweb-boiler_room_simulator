@@ -60,20 +60,6 @@ def update_ip_list(data, ip):
 	
 	return result
 
-udp_messages_to_send = bytearray([])
-
-def get_send_queue():
-	return udp_messages_to_send
-	
-def clear_send_queue():
-#	print('udp clear send queue')
-	udp_messages_to_send.clear()
-
-def append_can_udp_message(msg):
-#	print('udp add msg to queue')
-	udp_msg = can_to_udp(msg)
-	udp_messages_to_send.extend(udp_msg)
-
 def send_broadcast_udp_packet(data, port):
 	interfaces = socket.getaddrinfo(host=socket.gethostname(), port=None, family=socket.AF_INET)
 	allips = [ip[-1][0] for ip in interfaces]
@@ -106,7 +92,7 @@ def make_rand_delay(queue_size):
 
 class can_thread(threading.Thread):
 	def __init__(self, thread_name, thread_ID, port):
-		threading.Thread.__init__(self)
+		threading.Thread.__init__(self, name = thread_name)
 		self.thread_name = thread_name
 		self.thread_ID   = thread_ID
 		self._port       = port
@@ -115,24 +101,40 @@ class can_thread(threading.Thread):
 		self._sock       = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
 		self._connectionReady = False
 		
+		self._send_scan_time = time.time() - 100
+		
+		self._udp_messages_to_send = bytearray([])
+	
+	def get_send_queue(self):
+		return self._udp_messages_to_send
+		
+	def clear_send_queue(self):
+	#	print('udp clear send queue')
+		self._udp_messages_to_send.clear()
+	
+	def append_can_udp_message(self, msg):
+	#	print('udp add msg to queue')
+		udp_msg = can_to_udp(msg)
+		self._udp_messages_to_send.extend(udp_msg)
+
 	def sendUdpPacket(self, data, udp_ip, udp_port):
 #		print(f'send udp packet {data} to {udp_ip}')
 		self._sock.sendto(data, (udp_ip, udp_port))
-
-
+		
+	
 	def run(self):
 		while True:
 			now = time.time()
 			
-			messages = get_send_queue()
+			messages = self.get_send_queue()
 			queue_size = len(messages)
 			dt = make_rand_delay(queue_size)
 			
 			message = self._canbus.recv(dt)
 			
 			if message:
-#				print(f'udp_tx {message}')
-				append_can_udp_message(message)
+				print(f'udp_tx {message}')
+				self.append_can_udp_message(message)
 			
 			if ((now - self._send_can_time) > dt) or (queue_size > 10*DATA_PACKET_SIZE):
 				if queue_size:
@@ -141,26 +143,31 @@ class can_thread(threading.Thread):
 					for ip in ip_list:
 						self.sendUdpPacket(bytes(messages), ip, self._port)
 						
-					clear_send_queue()
-				
+					self.clear_send_queue()
+			
+			if now - self._send_scan_time > 60:
+				self._send_scan_time = now
+				print('send SCAN UDP message')
+				send_broadcast_udp_packet(scan_msg, self._port)
+		
 
 class udp_listen_thread(threading.Thread):
 	def __init__(self, thread_name, thread_ID, port):
-		threading.Thread.__init__(self)
+		threading.Thread.__init__(self, name = thread_name)
 		self.thread_name = thread_name
 		self.thread_ID   = thread_ID
 		self._port       = port
 		self._sock       = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		self._canbus     = can_udp_bus
 
-		self._send_scan_time = time.time() - 100
-		
 		ip_any = '0.0.0.0'
 
 		ip_addr = ip_any
 		
 		self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 		self._sock.bind((ip_addr, self._port))
+		self._sock.settimeout(10)
+		
 		self._messages = []
 
 	def clear_buffer(self):
@@ -169,41 +176,43 @@ class udp_listen_thread(threading.Thread):
 		except:
 			pass
 	
+	def doRun(self):
+		try:
+			data, addr = self._sock.recvfrom(1024)
+		except socket.timeout:
+			return
+		
+		if addr[0] in self_ip_list:
+#			print(f'skip {addr}')
+			return
+		else:
+#			print(f'recv{data} from {addr}')
+			pass
+			
+		if udp_msg_is_scan(data):
+			ip = addr[0]
+			result = update_ip_list(data, ip)
+			if result == 'NEW_CONTROLLER_FOUND': self._connectionReady = True
+			if result == 'UPDATE_IP'           : self._connectionReady = True
+			if result == 'SELF_IP_FOUND' : return
+#			send_udp_packet(ip, scan_msg, self._port)
+			return
+		
+		if len(ip_list) == 0:
+			return
+		
+		messages = udp_to_can(data)
+		
+		for msg in messages:
+			print(f'udp_rx {msg}')
+			self._canbus.send(msg)
+			
 	def run(self):
 		while True:
-			now = time.time()
+			self.doRun()
 			
-			if now - self._send_scan_time > 60:
-				self._send_scan_time = now
-				send_broadcast_udp_packet(scan_msg, self._port)
-			
-			data, addr = self._sock.recvfrom(1024)
-			
-			if addr[0] in self_ip_list:
-#				print(f'skip {addr}')
-				continue
-			else:
-#				print(f'recv{data} from {addr}')
-				pass
-				
-			if udp_msg_is_scan(data):
-				self._send_scan_time = now
-				ip = addr[0]
-				result = update_ip_list(data, ip)
-				if result == 'NEW_CONTROLLER_FOUND': send_udp_packet(ip, scan_msg, self._port)
-				if result == 'UPDATE_IP': self._connectionReady = True
-				
-				continue
-			
-			if len(ip_list) == 0:
-				continue
-			
-			messages = udp_to_can(data)
-			
-			for msg in messages:
-#				print(f'udp_rx {msg}')
-				self._canbus.send(msg)
-			
+		print('Exit UDP Rx thread')
+
 
 def initUdpBridge(UDP_PORT):
 	thread1 = udp_listen_thread("UDP_listen", 123, UDP_PORT)
