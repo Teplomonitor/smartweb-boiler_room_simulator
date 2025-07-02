@@ -41,13 +41,18 @@ def programAddFilter(msg):
 			(msg.getFunctionId () == snc.ControllerFunction['ADD_NEW_PROGRAM']) and
 			(msg.getRequestFlag() == snc.requestFlag['REQUEST']))
 
-def remoteControlRequest(msg):
+def remoteControlSetRequest(msg):
 	return ((msg.getProgramType() == snc.ProgramType['REMOTE_CONTROL']) and
 			(msg.getFunctionId () == snc.RemoteControlFunction['SET_PARAMETER_VALUE']) and
 			(msg.getRequestFlag() == snc.requestFlag['REQUEST']))
 
+def remoteControlGetRequest(msg):
+	return ((msg.getProgramType() == snc.ProgramType['REMOTE_CONTROL']) and
+			(msg.getFunctionId () == snc.RemoteControlFunction['GET_PARAMETER_VALUE']) and
+			(msg.getRequestFlag() == snc.requestFlag['REQUEST']))
+
 def programInputMappingFilter(msg):
-	if not remoteControlRequest(msg):
+	if not remoteControlSetRequest(msg):
 		return False
 
 	data = msg.getData()
@@ -55,7 +60,7 @@ def programInputMappingFilter(msg):
 			(data[1] == snc.ProgramParameter['INPUT_MAPPING']))
 
 def programOutputMappingFilter(msg):
-	if not remoteControlRequest(msg):
+	if not remoteControlSetRequest(msg):
 		return False
 
 	data = msg.getData()
@@ -99,12 +104,19 @@ class debug_thread(can.Listener):
 			msg.send(bus = self._canbus)
 			return
 
-		if remoteControlRequest(msg):
+		if remoteControlSetRequest(msg):
 			msg.setRequestFlag(snc.requestFlag['RESPONSE'])
 			data = msg.getData()
 			data.append(snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK'])
 			msg.send(bus = self._canbus)
 			return
-
+		
+		if remoteControlGetRequest(msg):
+			msg.setRequestFlag(snc.requestFlag['RESPONSE'])
+			data = msg.getData()
+			data.extend([0xFF, 0xFF, 0xFF])
+			msg.send(bus = self._canbus)
+			return
+			
 
 
