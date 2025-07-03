@@ -97,6 +97,8 @@ class InputChannel(Channel):
 		
 		self.setLogType('TEMPERATURE')
 		
+		self._isManual = False
+		
 	def setValue  (self, value, manual = False  ):
 		if self.isManual():
 			if not manual:
@@ -112,9 +114,10 @@ class InputChannel(Channel):
 	def isManual(self):
 		if self._gui:
 			return self._gui._manualRb.GetValue()
-		return False
+		return self._isManual
 	
 	def setManual(self, value):
+		self._isManual = value
 		if self._gui:
 			self._gui._manualRb.SetValue(    value)
 			self._gui._autoRb  .SetValue(not value)
