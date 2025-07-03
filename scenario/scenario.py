@@ -54,7 +54,7 @@ class Scenario(object):
 		ok = self.initProgramList(self.getRequiredPrograms())
 				
 		if not ok:
-			self.initController(self.getDefaultPreset())
+			self.initSimulator(self.getDefaultPreset())
 			
 			if not self.initProgramList(self.getRequiredPrograms()):
 				printError('fail to init program list!')
@@ -69,7 +69,8 @@ class Scenario(object):
 	def getDefaultPreset(self):
 		return 'default'
 	
-	def initController(self, preset):
+	def initSimulator(self, preset):
+		self._sim.Clear()
 		programList, controllerIoList = presets.preset.getPresetsList(preset)
 		self._controllerHost.initController(True, programList)
 		ctrlIo = initVirtualControllers(controllerIoList)
@@ -81,6 +82,7 @@ class Scenario(object):
 			prg = self.getUnbindedProgram(requiredProgramTypesList[prgKey])
 			if prg is None:
 				printError(f'{prgKey} not in program list!')
+				self._programList = {}
 				return False
 			else:
 				self._programList[prgKey] = prg
