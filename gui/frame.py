@@ -334,30 +334,24 @@ class guiThread():
 		self._frame = wx.Frame(None, title='Simple application')
 		self._ex = MainFrame(self._frame, self)
 		self._consoleFrame = ConsoleFrame(self._frame)
-		self._programsList = []
 		self._consoleFrame.Show()
 		
 	def Clear(self):
 		wx.CallAfter(self.ClearNow)
 	
 	def ClearNow(self):
-		self._ex = MainFrame(self._frame, self)
-		self._programsList = []
+		self._ex.programsWrapSizer.Clear(True)
+		self._ex.programsWrapSizer.Layout()
+		self._ex.Layout()
 #		wx.GetApp().OnInit()
 	
 	def addProgram(self, programInfo):
-		self._programsList.append(programInfo)
-		
 		self._ex.addProgram(programInfo)
 		self._ex.mainScrollableWindow.Layout()
 		self._ex.Layout()
 
-	def removeProgram(self, programInfo):
-		self._programsList.remove(programInfo)
-		
 	def saveProgramPlots(self):
-		for prg in self._programsList:
-			prg.saveLog()
+		pass
 	
 	def printConsoleText(self, text):
 		wx.CallAfter(self.printConsoleTextNow, text)
@@ -365,9 +359,6 @@ class guiThread():
 	def printConsoleTextNow(self, text):
 		self._consoleFrame.printText(text)
 		self._consoleFrame.printText('\n')
-		
-	def SetValueNow(self, value):
-		self._gauge.SetValue(value)
 		
 	def run(self):
 		self._ex.Show()
