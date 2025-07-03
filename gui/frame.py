@@ -338,8 +338,12 @@ class guiThread():
 		self._consoleFrame.Show()
 		
 	def Clear(self):
+		wx.CallAfter(self.ClearNow)
+	
+	def ClearNow(self):
 		self._ex = MainFrame(self._frame, self)
 		self._programsList = []
+#		wx.GetApp().OnInit()
 	
 	def addProgram(self, programInfo):
 		self._programsList.append(programInfo)
