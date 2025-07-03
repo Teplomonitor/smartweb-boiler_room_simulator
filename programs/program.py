@@ -55,10 +55,24 @@ class Program(object):
 				self.readOutput(i)
 			i += 1
 		
+		self.CanSubscribe()
+	
+	def Clear(self):
+		self.CanUnSubscribe()
+		self._inputs  = []
+		self._outputs = []
+		self._parameters = {}
+		
+	
+	def CanSubscribe(self):
 		CanListener.subscribe(self)
 		
-	def __del__(self):
+	def CanUnSubscribe(self):
 		CanListener.unsubscribe(self)
+		
+	def __del__(self):
+		self.CanUnSubscribe()
+		print(f'kill {self.getTitle()}')
 		
 	def OnCanMessageReceived(self, msg):
 		headerOk = (
