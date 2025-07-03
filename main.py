@@ -21,6 +21,7 @@ import sys
 import os
 
 import time
+import threading
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
@@ -89,6 +90,45 @@ def initScenario(controller, sim):
 	scenarioThread.daemon = True
 	scenarioThread.start()
 
+def initMainRun(args):
+	init_controller_with_preset = args.init
+	udp_bridge_enable           = int(args.udp)
+	preset                      = args.preset
+	scenario                    = args.scenario
+	
+	programPresetList, controllerIoList = presets.preset.getPresetsList(preset)
+	
+	if programPresetList is None:
+		printError('wrong preset. Exit')
+		return 1
+	
+	if udp_bridge_enable:
+		initUdpBridge(udp_bridge_enable)
+	
+	if args.debug:
+		dbgThread = debug.debug_thread()
+		
+	controllerId = findOnlineController()
+	
+	if controllerId is None:
+		printError('controller not found. Exit')
+		return 1
+	
+	controller = Controller(controllerId, init_controller_with_preset, programPresetList, guiThread)
+	
+	ctrlIo = initVirtualControllers(controllerIoList)
+	
+	sim = initIoSimulator(controller, ctrlIo)
+	
+	if scenario != 'none':
+		initScenario(controller, sim)
+		
+
+
+def initMainThread(args):
+	t = threading.Thread(target = initMainRun, args = (args,))
+	t.start()
+	
 def main(argv=None): # IGNORE:C0111
 	'''Command line options.'''
 	
@@ -124,44 +164,14 @@ USAGE
 		# Setup argument parser
 		args = initArgParser(program_license)
 		
-		init_controller_with_preset = args.init
-		udp_bridge_enable           = int(args.udp)
-		preset                      = args.preset
-		scenario                    = args.scenario
-		
-		programList, controllerIoList = presets.preset.getPresetsList(preset)
-		
-		
 		canListener = CanListener()
-		
-		if programList is None:
-			printError('wrong preset. Exit')
-			return 1
-		
-		if udp_bridge_enable:
-			initUdpBridge(udp_bridge_enable)
-		
-		if args.debug:
-			dbgThread = debug.debug_thread()
-			
-		controllerId = findOnlineController()
-		
-		if controllerId is None:
-			printError('controller not found. Exit')
-			return 1
-		
+	
 		if args.gui:
 			guiThread = guiFrameThread.initGuiThread()
+
+		initMainThread(args)
 		
-		controller = Controller(controllerId, init_controller_with_preset, programList, guiThread)
-		
-		ctrlIo = initVirtualControllers(controllerIoList)
-		
-		sim = initIoSimulator(controller, ctrlIo)
-		
-		if scenario != 'none':
-			initScenario(controller, sim)
-		
+		# should run in main loop
 		if guiThread:
 			guiThread.run()
 		else:
