@@ -70,11 +70,11 @@ class ControllerPreset(object):
 	classdocs
 	'''
 	def __init__(self,
-			programType, programId,
-			programTitle):
-		self._type      = programType
-		self._id        = programId
-		self._title     = programTitle
+			controllerType, controllerId,
+			controllerTitle):
+		self._type      = controllerType
+		self._id        = controllerId
+		self._title     = controllerTitle
 
 	def getType     (self): return self._type
 	def getId       (self): return self._id
