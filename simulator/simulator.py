@@ -43,15 +43,7 @@ class Simulator(threading.Thread):
 		Constructor
 		'''
 		
-		self._simList        = []
-		self._roomList       = []
-		self._heatingCircuitList = []
-		self._consumersList  = []
-		self._generatorsList = []
-		self._cascadeList    = []
-		self._oat = None
-		self._collector = None
-		
+		self.Clear()
 		
 		threading.Thread.__init__(self, name = thread_name)
 		self.thread_name = thread_name
@@ -64,11 +56,28 @@ class Simulator(threading.Thread):
 		
 		self.reloadConfig(controllerHost, controllerIo)
 	
+	def Clear(self):
+		self._simulator_ready = False
+		self._controllerHost = None
+		self._controllerIo   = []
+		self._simList        = []
+		self._roomList       = []
+		self._heatingCircuitList = []
+		self._consumersList  = []
+		self._generatorsList = []
+		self._cascadeList    = []
+		self._oat = None
+		self._collector = None
+		
+#		time.sleep(2)
+		
 	def reloadConfig(self, controllerHost, controllerIo):
+		self.Clear()
+		
 		self._controllerHost = controllerHost
 		self._controllerIo   = controllerIo
 
-		self._programsList = self._controllerHost.getProgramList()
+		programsList = self._controllerHost.getProgramList()
 		
 		simulatorType = {
 			'OUTDOOR_SENSOR'  : simulator.oat             .Simulator,
@@ -92,16 +101,9 @@ class Simulator(threading.Thread):
 			'CASCADE_MANAGER',
 			'DISTRICT_HEATING',
 		]
-
-		self._simList        = []
-		self._roomList       = []
-		self._heatingCircuitList = []
-		self._consumersList  = []
-		self._generatorsList = []
-		self._cascadeList    = []
-		self._oat = None
-
-		for program in self._programsList:
+		
+		
+		for program in programsList:
 			programId = program.getId()
 			i = 0
 			for output in program.getOutputs():
@@ -112,16 +114,16 @@ class Simulator(threading.Thread):
 							ctrlOutputMapping = ChannelMapping(i, 'CHANNEL_OUTPUT', programId)
 							ctrlIo.setOutputMapping(mapping.getChannelId(), ctrlOutputMapping)
 							ctrlIo.reportOutputMapping(mapping.getChannelId())
-	
+							
 					time.sleep(0.1)
 				i = i + 1
-
-		for program in self._programsList:
+				
+		for program in programsList:
 			programType = program.getType()
 			if programType in simulatorType:
 				sim = simulatorType[programType](program, self)
 				self._simList.append(sim)
-
+				
 		for sim in self._simList:
 			program = sim._program
 			
@@ -133,6 +135,7 @@ class Simulator(threading.Thread):
 			if program.getType() == 'CASCADE_MANAGER': self._cascadeList.append(sim)
 
 		self._collector = simulator.collector.Simulator(self)
+		self._simulator_ready = True
 
 	def getConsumerList      (self): return self._consumersList
 	def getHeatingCircuitList(self): return self._heatingCircuitList
@@ -159,6 +162,10 @@ class Simulator(threading.Thread):
 		
 	def run(self):
 		while True:
+			if not self._simulator_ready:
+				time.sleep(1)
+				continue
+			
 			time_start = time.time()
 			
 			for sim in self._simList:
