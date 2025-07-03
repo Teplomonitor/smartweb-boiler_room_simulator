@@ -31,8 +31,8 @@ class Program(object):
 		
 		self._preset  = preset
 
-		inputMappings  = preset.getInputs ().get()
-		outputMappings = preset.getOutputs().get()
+		inputMappings  = preset.getInputs ()
+		outputMappings = preset.getOutputs()
 
 		self._inputs  = [InputChannel (mapping) for mapping in inputMappings ]
 		self._outputs = [OutputChannel(mapping) for mapping in outputMappings]

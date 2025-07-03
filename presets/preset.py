@@ -28,9 +28,9 @@ class ProgramPreset(object):
 	def getTitle    (self): return self._title
 	def getSettings (self): return self._settings
 	def getInputs   (self   ): return self._inputs
-	def getInput    (self, i): return self._inputs.get()[i]
+	def getInput    (self, i): return self._inputs[i]
 	def getOutputs  (self   ): return self._outputs
-	def getOutput   (self, i): return self._outputs.get()[i]
+	def getOutput   (self, i): return self._outputs[i]
 	def getPower    (self): return self._power
 
 
@@ -48,14 +48,14 @@ class ProgramPreset(object):
 		controller.addProgram(prg)
 		if self._inputs:
 			i = 0
-			for value in self._inputs.get():
+			for value in self._inputs:
 				if value:
 					prg.bindInput(i, value)
 				i = i + 1
 
 		if self._outputs:
 			i = 0
-			for value in self._outputs.get():
+			for value in self._outputs:
 				if value:
 					prg.bindOutput(i, value)
 				i = i + 1
