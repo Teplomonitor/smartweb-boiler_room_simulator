@@ -25,6 +25,8 @@ class Scenario(object):
 		
 		self._manualSensorsList = []
 	
+		self.initScenario()
+		
 	def getScenarioTitle(self):
 		return 'scenario'
 	
@@ -115,9 +117,6 @@ class ScenarioThread(threading.Thread):
 		self._scenarioIndex = 0
 		self._controllerHost = controllerHost
 		self._simulator      = simulator
-		self._programsList   = self._controllerHost.getProgramList()
-		
-		self._currentScenario = self.getNextScenario()
 		
 	def getNextScenario(self):
 		scenario = self.getScenario(self._scenarioIndex)
@@ -125,6 +124,16 @@ class ScenarioThread(threading.Thread):
 		return scenario
 		
 	def run(self):
+		time.sleep(5)
+		
+		printLog('Starting scenario!')
+		
+		time.sleep(5)
+		
+		self._programsList   = self._controllerHost.getProgramList()
+		
+		self._currentScenario = self.getNextScenario()
+		
 		while True:
 			self._currentScenario.run()
 			

@@ -15,8 +15,6 @@ class Scenario(Parent):
 	def __init__(self, controllerHost, sim):
 		super().__init__(controllerHost, sim)
 		
-		self.initScenario()
-		
 		self._snowmelter = self._programList['snowmelter']
 
 	def getScenarioTitle(self):
