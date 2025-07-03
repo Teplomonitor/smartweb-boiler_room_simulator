@@ -38,28 +38,34 @@ class Controller(object):
 	'''
 
 
-	def __init__(self, controllerId, initPreset, programList, gui = None):
+	def __init__(self, controllerId, initPreset, programPresetList, gui = None):
 		'''
 		Constructor
 		'''
+		self._programList = []
 		self._controllerId = controllerId
 		self._gui = gui
-		self.initController(initPreset, programList)
-
-	def initController(self, resetConfig, programList):
+		
+		self.initController(initPreset, programPresetList)
+		
+	def initController(self, resetConfig, programPresetList):
+		for prg in self._programList:
+			prg.Clear()
+			
 		self._programList = []
+		
 		if self._gui:
 			self._gui.Clear()
 			
 		if resetConfig:
 			self.resetConfig()
-			for program in programList:
+			for program in programPresetList:
 				if self.makeNewProgram(program) == False:
 					printError(f'Preset: program {program.getType()}_{program.getId()} make fail!')
 					
 				time.sleep(2)
 		else:
-			for program in programList:
+			for program in programPresetList:
 				prg = createProgram(program)
 				self.addProgram(prg)
 		
