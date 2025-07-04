@@ -1529,6 +1529,40 @@
           <property name="label">File</property>
           <property name="name">m_menu1</property>
           <property name="permission">protected</property>
+          <object class="submenu" expanded="true">
+            <property name="bitmap"></property>
+            <property name="label">Load preset</property>
+            <property name="name">loadPresetSubmenu</property>
+            <property name="permission">protected</property>
+            <object class="wxMenuItem" expanded="true">
+              <property name="bitmap"></property>
+              <property name="checked">0</property>
+              <property name="enabled">1</property>
+              <property name="help"></property>
+              <property name="id">wxID_ANY</property>
+              <property name="kind">wxITEM_NORMAL</property>
+              <property name="label">Preset 1</property>
+              <property name="name">preset1</property>
+              <property name="permission">none</property>
+              <property name="shortcut"></property>
+              <property name="unchecked_bitmap"></property>
+              <event name="OnMenuSelection">onPreset1Select</event>
+            </object>
+            <object class="wxMenuItem" expanded="true">
+              <property name="bitmap"></property>
+              <property name="checked">0</property>
+              <property name="enabled">1</property>
+              <property name="help"></property>
+              <property name="id">wxID_ANY</property>
+              <property name="kind">wxITEM_NORMAL</property>
+              <property name="label">Preset 2</property>
+              <property name="name">preset2</property>
+              <property name="permission">none</property>
+              <property name="shortcut"></property>
+              <property name="unchecked_bitmap"></property>
+              <event name="OnMenuSelection">onPreset2Select</event>
+            </object>
+          </object>
           <object class="wxMenuItem" expanded="true">
             <property name="bitmap"></property>
             <property name="checked">0</property>

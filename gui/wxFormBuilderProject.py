@@ -35,7 +35,7 @@ class MainFrame ( wx.Frame ):
 
         programsWrapSizer.SetMinSize( wx.Size( 640,480 ) )
         self.ProgramPanel = wx.Panel( self.mainScrollableWindow, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
-        self.ProgramPanel.SetBackgroundColour( wx.Colour( 251, 117, 126 ) )
+        self.ProgramPanel.SetBackgroundColour( wx.Colour( 120, 248, 158 ) )
 
         ProgramBoxSizer = wx.StaticBoxSizer( wx.StaticBox( self.ProgramPanel, wx.ID_ANY, _(u"Heating circuit 1") ), wx.VERTICAL )
 
@@ -168,6 +168,15 @@ class MainFrame ( wx.Frame ):
         self.Layout()
         self.m_menubar1 = wx.MenuBar( 0 )
         self.m_menu1 = wx.Menu()
+        self.loadPresetSubmenu = wx.Menu()
+        self.preset1 = wx.MenuItem( self.loadPresetSubmenu, wx.ID_ANY, _(u"Preset 1"), wx.EmptyString, wx.ITEM_NORMAL )
+        self.loadPresetSubmenu.Append( self.preset1 )
+
+        self.preset2 = wx.MenuItem( self.loadPresetSubmenu, wx.ID_ANY, _(u"Preset 2"), wx.EmptyString, wx.ITEM_NORMAL )
+        self.loadPresetSubmenu.Append( self.preset2 )
+
+        self.m_menu1.AppendSubMenu( self.loadPresetSubmenu, _(u"Load preset") )
+
         self.m_menuItem1 = wx.MenuItem( self.m_menu1, wx.ID_ANY, _(u"Save log")+ u"\t" + u"Ctrl+S", wx.EmptyString, wx.ITEM_NORMAL )
         self.m_menu1.Append( self.m_menuItem1 )
 
@@ -189,6 +198,8 @@ class MainFrame ( wx.Frame ):
         self.Parameter1Spin.Bind( wx.EVT_SPINCTRLDOUBLE, self.onSpin )
         self.Parameter1Spin.Bind( wx.EVT_TEXT_ENTER, self.onSpinText )
         self.Parameter1Slider.Bind( wx.EVT_SCROLL, self.onScroll )
+        self.Bind( wx.EVT_MENU, self.onPreset1Select, id = self.preset1.GetId() )
+        self.Bind( wx.EVT_MENU, self.onPreset2Select, id = self.preset2.GetId() )
         self.Bind( wx.EVT_MENU, self.OnLogSaveButtonPress, id = self.m_menuItem1.GetId() )
         self.Bind( wx.EVT_MENU, self.OnExitButtonPress, id = self.m_menuItem2.GetId() )
 
@@ -211,6 +222,12 @@ class MainFrame ( wx.Frame ):
 
 
 
+
+    def onPreset1Select( self, event ):
+        event.Skip()
+
+    def onPreset2Select( self, event ):
+        event.Skip()
 
     def OnLogSaveButtonPress( self, event ):
         event.Skip()
