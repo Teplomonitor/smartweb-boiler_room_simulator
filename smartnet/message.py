@@ -5,6 +5,8 @@
 import can
 import time
 
+import mainThread
+
 def createBus():
 	return can.Bus()
 
@@ -160,7 +162,7 @@ class Message(object):
 		
 		start_time = time.time()
 		
-		while True:
+		while mainThread.taskEnable():
 			if (time.time() - start_time) > timeout:
 				break
 			
@@ -192,11 +194,20 @@ class CanListener(can.Listener):
 	_listeners   = []
 	_lockSubscribe = 0
 	
+	def __new__(cls, *args, **kwargs):
+		if not hasattr(cls, 'instance'):
+			cls.instance = super(CanListener, cls).__new__(cls)
+		return cls.instance
+
 	def __init__(self):
-	#	self._canbus   = createBus()
+		if hasattr(self, '_initDone'):
+			return
+		
 		self._canbus   = Message._txbus
 		self._notifier = can.Notifier(self._canbus, [self])
 	
+		self._initDone = True
+		
 	@staticmethod
 	def countListeners():
 		i = 0
