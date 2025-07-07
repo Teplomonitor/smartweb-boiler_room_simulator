@@ -8,7 +8,7 @@ try:
 except ImportError:
 	print('import gui fail. Please install wxPython if you wish to use gui: pip install -U wxPython')
 
-from main import loadPreset
+import main
 
 from gui.parameter import GuiParameterApi  as GuiParameterApi
 from gui.parameter import GuiInputChannel  as GuiInputChannel
@@ -27,7 +27,7 @@ class PresetItem(object):
 		self._preset = preset
 	
 	def loadPreset(self):
-		loadPreset(self._preset)
+		main.loadPreset(self._preset)
 		
 	def onPresetSelect(self, event):
 		event.Skip()
@@ -97,7 +97,8 @@ class MainFrame ( wx.Frame ):
 	# Virtual event handlers, override them in your derived class
 	def doClose( self, event ):
 		event.Skip()
-		guiThread().ClearNow()
+		main.MainStop()
+		guiThread().Clear()
 		exit(0)
 	
 	def OnLogSaveButtonPress( self, event ):
