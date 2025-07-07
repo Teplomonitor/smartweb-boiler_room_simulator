@@ -6,6 +6,8 @@ import uuid
 import time
 import threading
 import socket
+
+import mainThread
 from udp.message import udp_to_can, can_to_udp, make_scan_message, udp_msg_is_scan, get_scan_id
 from smartnet.message import createBus as createBus
 
@@ -125,34 +127,39 @@ class can_thread(threading.Thread):
 		self._sock.sendto(data, (udp_ip, udp_port))
 		
 	
-	def run(self):
-		while True:
-			now = time.time()
-			
-			messages = self.get_send_queue()
-			queue_size = len(messages)
-			dt = make_rand_delay(queue_size)
-			
-			message = self._canbus.recv(dt)
-			
-			if message:
-#				print(f'udp_tx {message}')
-				self.append_can_udp_message(message)
-			
-			if ((now - self._send_can_time) > dt) or (queue_size > 10*DATA_PACKET_SIZE):
-				if queue_size:
-					self._send_can_time = now
-#					print(f'udp_tx data {queue_size}')
-					for ip in ip_list:
-						self.sendUdpPacket(bytes(messages), ip, self._port)
-						
-					self.clear_send_queue()
-			
-			if now - self._send_scan_time > 60:
-				self._send_scan_time = now
-				print('send SCAN UDP message')
-				send_broadcast_udp_packet(scan_msg, self._port)
+	def doRun(self):
+		now = time.time()
 		
+		messages = self.get_send_queue()
+		queue_size = len(messages)
+		dt = make_rand_delay(queue_size)
+		
+		message = self._canbus.recv(dt)
+		
+		if message:
+#			print(f'udp_tx {message}')
+			self.append_can_udp_message(message)
+		
+		if ((now - self._send_can_time) > dt) or (queue_size > 10*DATA_PACKET_SIZE):
+			if queue_size:
+				self._send_can_time = now
+#				print(f'udp_tx data {queue_size}')
+				for ip in ip_list:
+					self.sendUdpPacket(bytes(messages), ip, self._port)
+					
+				self.clear_send_queue()
+		
+		if now - self._send_scan_time > 60:
+			self._send_scan_time = now
+			print('send SCAN UDP message')
+			send_broadcast_udp_packet(scan_msg, self._port)
+		
+		return 0
+		
+	def run(self):
+		while mainThread.taskEnable():
+			self.doRun()
+
 
 class udp_listen_thread(threading.Thread):
 	def __init__(self, thread_name, thread_ID, port):
@@ -214,10 +221,9 @@ class udp_listen_thread(threading.Thread):
 			self._canbus.send(msg)
 			
 	def run(self):
-		while True:
+		while mainThread.taskEnable():
 			self.doRun()
 			
-		print('Exit UDP Rx thread')
 
 
 def initUdpBridge(UDP_PORT):
