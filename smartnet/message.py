@@ -208,8 +208,12 @@ class CanListener(can.Listener):
 		
 	@staticmethod
 	def subscribe(listener):
+		if listener in CanListener._listeners:
+			return
+		
 		while CanListener._lockSubscribe:
 			time.sleep(0.1)
+		
 		CanListener._listeners.append(listener)
 #		CanListener.countListeners()
 		
@@ -218,7 +222,8 @@ class CanListener(can.Listener):
 	def unsubscribe(listener):
 		while CanListener._lockSubscribe:
 			time.sleep(0.1)
-		CanListener._listeners.remove(listener)
+		if listener in CanListener._listeners:
+			CanListener._listeners.remove(listener)
 #		CanListener.countListeners()
 		
 	def on_message_received(self, message):

@@ -52,19 +52,31 @@ class ControllerIO(object):
 		self._reportImHereTrigger        = PeriodicTrigger()
 		self._reportOutputMappingTrigger = PeriodicTrigger()
 		
-		CanListener.subscribe(self)
+		self.CanSubscribe()
 		
 		inputs_num  = self.getInputNumber ()
 		outputs_num = self.getOutputNumber()
 		
-		self._input  = [Channel(None, None) for _ in range(inputs_num )]
-		self._output = [Channel(None, None) for _ in range(outputs_num)]
+		self._inputs  = [Channel(None, None) for _ in range(inputs_num )]
+		self._outputs = [Channel(None, None) for _ in range(outputs_num)]
 		
 		sendImHere(self.getId(), self.getType())
 		self.reportChannelNumber()
-
-	def __del__(self):
+	
+	def Clear(self):
+		self.CanUnSubscribe()
+		self._inputs  = []
+		self._outputs = []
+		
+	def CanSubscribe(self):
+		CanListener.subscribe(self)
+		
+	def CanUnSubscribe(self):
 		CanListener.unsubscribe(self)
+		
+	def __del__(self):
+		print('kill ctrlIO')
+		self.CanUnSubscribe()
 		
 	def getType     (self): return self._type
 	def getId       (self): return self._id
@@ -102,16 +114,16 @@ class ControllerIO(object):
 	
 	
 	def setOutputMapping(self, channelId, mapping):
-		self._output[channelId].setMapping(mapping)
+		self._outputs[channelId].setMapping(mapping)
 	
 	def setOutputValue(self, channelId, value):
-		self._output[channelId].setValue(value)
+		self._outputs[channelId].setValue(value)
 	
 	def getOutputMapping(self, channelId):
-		return self._output[channelId].getMapping()
+		return self._outputs[channelId].getMapping()
 	
 	def getOutputValue(self, channelId):
-		return self._output[channelId].getValue()
+		return self._outputs[channelId].getValue()
 	
 	def reportOutputMapping(self, channelId):
 		mapping = self.getOutputMapping(channelId)

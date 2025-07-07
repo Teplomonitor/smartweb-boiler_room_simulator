@@ -3,8 +3,6 @@ import glob
 
 import smartnet.constants as snc
 
-from programs.factory import createProgram as createProgram
-
 class ProgramPreset(object):
 	'''
 	classdocs
@@ -44,8 +42,7 @@ class ProgramPreset(object):
 			print('Program %s add fail'%(self._title))
 			return False
 
-		prg = createProgram(self)
-		controller.addProgram(prg)
+		prg = controller.addProgramFromPreset(self)
 		if self._inputs:
 			i = 0
 			for value in self._inputs:
@@ -80,13 +77,17 @@ class ControllerPreset(object):
 	def getId       (self): return self._id
 	def getTitle    (self): return self._title
 
-
-def getPresetsList(presetId):
+def getPresetFilesList():
 	regex = join(dirname(__file__),'list', "*.py")
-	moduleId = 'presets.list.%s' % presetId
 	
 	modules = glob.glob(regex)
 	__all__ = [ basename(f)[:-3] for f in modules if isfile(f) and not f.endswith('__init__.py')]
+	return __all__
+
+def getPresetsList(presetId):
+	moduleId = 'presets.list.%s' % presetId
+	
+	__all__ = getPresetFilesList()
 	
 	if presetId in __all__:
 		preset_module = __import__(moduleId, fromlist=["presets.list"])

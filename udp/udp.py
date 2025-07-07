@@ -9,8 +9,8 @@ import socket
 from udp.message import udp_to_can, can_to_udp, make_scan_message, udp_msg_is_scan, get_scan_id
 from smartnet.message import createBus as createBus
 
-from gui.frame import printLog   as printLog
-from gui.frame import printError as printError
+from consoleLog import printLog   as printLog
+from consoleLog import printError as printError
 
 can_udp_bus = createBus()
 
@@ -105,6 +105,9 @@ class can_thread(threading.Thread):
 		
 		self._udp_messages_to_send = bytearray([])
 	
+		self.daemon = True
+		self.start()
+		
 	def get_send_queue(self):
 		return self._udp_messages_to_send
 		
@@ -169,6 +172,9 @@ class udp_listen_thread(threading.Thread):
 		self._sock.settimeout(10)
 		
 		self._messages = []
+		
+		self.daemon = True
+		self.start()
 
 	def clear_buffer(self):
 		try:
@@ -215,10 +221,6 @@ class udp_listen_thread(threading.Thread):
 
 
 def initUdpBridge(UDP_PORT):
-	thread1 = udp_listen_thread("UDP_listen", 123, UDP_PORT)
-	thread1.daemon = True
-	thread1.start()
+	udp_listen_thread("UDP_listen", 123, UDP_PORT)
 	
-	thread2 = can_thread  ("UDP_CAN_send", 456, UDP_PORT)
-	thread2.daemon = True
-	thread2.start()
+	can_thread  ("UDP_CAN_send", 456, UDP_PORT)

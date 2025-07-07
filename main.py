@@ -28,19 +28,19 @@ from argparse import RawDescriptionHelpFormatter
 
 import presets.preset
 from smartnet.message import Message as smartnetMessage
-
-from controllers.controller    import findOnlineController   as findOnlineController
+import consoleLog
+from controllers.search        import findOnlineController   as findOnlineController
 from controllers.controller    import Controller             as Controller
 from controllers.controller_io import initVirtualControllers as initVirtualControllers
 from scenario.scenario         import ScenarioThread         as ScenarioThread
-from simulator.simulator       import initIoSimulator        as initIoSimulator
+from simulator.simulator       import Simulator              as Simulator
 from smartnet.message          import CanListener            as CanListener
-
-from gui.frame import printLog   as printLog
-from gui.frame import printError as printError
 
 import debug
 from udp.udp import initUdpBridge as initUdpBridge
+
+from consoleLog import printLog   as printLog
+from consoleLog import printError as printError
 
 def mock_missing(name):
 	def init(self, *args, **kwargs):
@@ -60,8 +60,6 @@ __date__ = '2025-03-04'
 __updated__ = '2025-03-04'
 
 DEBUG = 0
-
-guiThread = None
 
 
 class CLIError(Exception):
@@ -85,54 +83,62 @@ def initArgParser(program_license):
 	
 	return parser.parse_args()
 
-def initScenario(controller, sim):
-	scenarioThread = ScenarioThread(controller, sim)
-	scenarioThread.daemon = True
-	scenarioThread.start()
-
 def initMainRun(args):
 	init_controller_with_preset = args.init
 	udp_bridge_enable           = int(args.udp)
 	preset                      = args.preset
 	scenario                    = args.scenario
-	
 	programPresetList, controllerIoList = presets.preset.getPresetsList(preset)
 	
 	if programPresetList is None:
 		printError('wrong preset. Exit')
-		return 1
+		sys.exit(1)
 	
 	if udp_bridge_enable:
 		initUdpBridge(udp_bridge_enable)
 	
 	if args.debug:
-		dbgThread = debug.debug_thread()
+		debug.debug_thread()
 		
 	controllerId = findOnlineController()
 	
 	if controllerId is None:
 		printError('controller not found. Exit')
-		return 1
+		sys.exit(1)
 	
-	controller = Controller(controllerId, init_controller_with_preset, programPresetList, guiThread)
+	if args.gui:
+		guiThread = guiFrameThread.guiThread()
+	else:
+		guiThread = None
+		
+	ioSimulator    = Simulator("simulator thread", 789)
+	controllerHost = Controller(controllerId, guiThread)
 	
+	controllerHost.initController(init_controller_with_preset, programPresetList)
 	ctrlIo = initVirtualControllers(controllerIoList)
-	
-	sim = initIoSimulator(controller, ctrlIo)
+	ioSimulator.reloadConfig(controllerHost, ctrlIo)
 	
 	if scenario != 'none':
-		initScenario(controller, sim)
+		ScenarioThread(controllerHost, ioSimulator)
 		
 
+def loadPreset(preset):
+	programList, controllerIoList = presets.preset.getPresetsList(preset)
 
+	ioSimulator    = Simulator()
+	controllerHost = Controller()
+	
+	ioSimulator.Clear()
+	controllerHost.initController(True, programList)
+	ctrlIo = initVirtualControllers(controllerIoList)
+	ioSimulator.reloadConfig(controllerHost, ctrlIo)
+	
 def initMainThread(args):
 	t = threading.Thread(target = initMainRun, args = (args,))
 	t.start()
 	
 def main(argv=None): # IGNORE:C0111
 	'''Command line options.'''
-	
-	global guiThread
 	
 	if argv is None:
 		argv = sys.argv
@@ -164,11 +170,15 @@ USAGE
 		# Setup argument parser
 		args = initArgParser(program_license)
 		
-		canListener = CanListener()
-	
+		CanListener()
+		
 		if args.gui:
-			guiThread = guiFrameThread.initGuiThread()
+			guiThread = guiFrameThread.guiThread()
+		else:
+			guiThread = None
 
+		consoleLog.initGui(guiThread)
+		
 		initMainThread(args)
 		
 		# should run in main loop
@@ -177,6 +187,12 @@ USAGE
 		else:
 			while True:
 				time.sleep(1)
+				
+		ioSimulator    = Simulator()
+		controllerHost = Controller()
+		
+		ioSimulator.Clear()
+		controllerHost.Clear()
 		
 		smartnetMessage.exit()
 		

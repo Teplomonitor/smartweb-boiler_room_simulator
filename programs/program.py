@@ -16,8 +16,8 @@ from smartnet.channelMapping import OutputChannel    as OutputChannel
 from smartnet.channelTitle import ProgramInputTitle  as InputTitle
 from smartnet.channelTitle import ProgramOutputTitle as OutputTitle
 
-from gui.frame import printLog   as printLog
-from gui.frame import printError as printError
+from consoleLog import printLog   as printLog
+from consoleLog import printError as printError
 
 class Program(object):
 	'''

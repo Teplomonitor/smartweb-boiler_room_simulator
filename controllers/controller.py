@@ -7,48 +7,35 @@ from copy import copy
 
 from smartnet.message import Message as smartnetMessage
 import smartnet.constants as snc
-import presets.preset
 from programs.factory import createProgram as createProgram
 
-from gui.frame import printLog   as printLog
-from gui.frame import printError as printError
-
-def messageIsImHere():
-	return smartnetMessage(
-		snc.ProgramType['CONTROLLER'], None, 
-		snc.ControllerFunction['I_AM_HERE'], 
-		snc.requestFlag['RESPONSE'])
-
-
-def findOnlineController():
-	printLog('Searching controller')
-	msg = smartnetMessage()
-	result = msg.recv(messageIsImHere(), 130)
-	if result:
-		controllerId = result.getProgramId()
-		printLog('Controller %d found' %(controllerId))
-		return controllerId
-	else:
-		return None
+from consoleLog import printLog   as printLog
+from consoleLog import printError as printError
 
 
 class Controller(object):
 	'''
 	classdocs
 	'''
+	def __new__(cls, *args, **kwargs):
+		if not hasattr(cls, 'instance'):
+			cls.instance = super(Controller, cls).__new__(cls)
+		return cls.instance
 
-
-	def __init__(self, controllerId, initPreset, programPresetList, gui = None):
+	def __init__(self, controllerId = None, gui = None):
 		'''
 		Constructor
 		'''
+		if hasattr(self, '_initDone'):
+			return
+		
 		self._programList = []
 		self._controllerId = controllerId
 		self._gui = gui
 		
-		self.initController(initPreset, programPresetList)
-		
-	def initController(self, resetConfig, programPresetList):
+		self._initDone = True
+	
+	def Clear(self):
 		for prg in self._programList:
 			prg.Clear()
 			
@@ -56,6 +43,9 @@ class Controller(object):
 		
 		if self._gui:
 			self._gui.Clear()
+			
+	def initController(self, resetConfig, programPresetList):
+		self.Clear()
 			
 		if resetConfig:
 			self.resetConfig()
@@ -66,10 +56,13 @@ class Controller(object):
 				time.sleep(2)
 		else:
 			for program in programPresetList:
-				prg = createProgram(program)
-				self.addProgram(prg)
+				self.addProgramFromPreset(program)
 		
-
+	def addProgramFromPreset(self, program):
+		prg = createProgram(program)
+		self.addProgram(prg)
+		return prg
+		
 	def sendProgramAddRequest(self, programType, programId, programScheme):
 		printLog('Send program add request')
 		def generateRequest():
@@ -116,9 +109,6 @@ class Controller(object):
 
 	def makeNewProgram(self, preset):
 		return preset.loadPreset(self)
-
-	def getPresetsList(self, presetId):
-		return presets.preset.getPresetsList(presetId)
 
 	def getProgramList(self): return self._programList
 

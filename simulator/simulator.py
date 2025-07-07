@@ -22,6 +22,8 @@ class sensor_report_thread(threading.Thread):
 		threading.Thread.__init__(self, name = 'report_sensors')
 		
 		self._simulator = simulator
+		self.deamon = True
+		self.start()
 		
 	def run(self):
 		while True:
@@ -38,10 +40,17 @@ class Simulator(threading.Thread):
 	classdocs
 	'''
 
-	def __init__(self, thread_name, thread_ID, controllerHost, controllerIo):
+	def __new__(cls, *args, **kwargs):
+		if not hasattr(cls, 'instance'):
+			cls.instance = super(Simulator, cls).__new__(cls)
+		return cls.instance
+
+	def __init__(self, thread_name = None, thread_ID = None):
 		'''
 		Constructor
 		'''
+		if hasattr(self, '_initDone'):
+			return
 		
 		self.Clear()
 		
@@ -50,11 +59,12 @@ class Simulator(threading.Thread):
 		self.thread_ID   = thread_ID
 		
 		
-		thread = sensor_report_thread(self)
-		thread.daemon = True
-		thread.start()
+		sensor_report_thread(self)
 		
-		self.reloadConfig(controllerHost, controllerIo)
+		self._initDone = True
+		
+		self.deamon = True
+		self.start()
 	
 	def Clear(self):
 		self._simulator_ready = False
@@ -185,9 +195,7 @@ class Simulator(threading.Thread):
 			time.sleep(1 - dt)
 
 
-def initIoSimulator(controller, ctrlIo):
-	simulatorThread = Simulator("simulator thread", 789, controller, ctrlIo)
-	simulatorThread.daemon = True
-	simulatorThread.start()
+def initIoSimulator():
+	simulatorThread = Simulator("simulator thread", 789)
 	return simulatorThread
 

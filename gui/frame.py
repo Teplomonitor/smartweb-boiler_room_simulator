@@ -8,57 +8,49 @@ try:
 except ImportError:
 	print('import gui fail. Please install wxPython if you wish to use gui: pip install -U wxPython')
 
+from main import loadPreset
+
+from gui.parameter import GuiParameterApi  as GuiParameterApi
+from gui.parameter import GuiInputChannel  as GuiInputChannel
+from gui.parameter import GuiOutputChannel as GuiOutputChannel
+
+from presets.preset import getPresetFilesList as getPresetFilesList
 
 guiThreadSingleton = None
 
-class GuiParameterApi(object):
-	def __init__(self, spinner, slider):
-		self._spinner       = spinner
-		self._slider        = slider
-	
-	def SetValue(self, value):
-		wx.CallAfter(self.SetValueNow, value)
-		
-	def SetValueNow(self, value):
-		self._spinner.SetValue(value)
-		self._slider .SetValue(int(value + 0.5))
-		
-	def SetMin(self, value):
-		self._spinner.SetMin(value)
-		self._slider .SetMin(int(value))
-		
-	def SetMax(self, value):
-		self._spinner.SetMax(value)
-		self._slider .SetMax(int(value))
-		
-	def SetIncrement(self, value):
-		self._spinner.SetIncrement(value)
-
-class GuiInputChannel(GuiParameterApi):
-	def __init__(self, spinner, slider, shortCheckbox, openCheckbox, autoRb, manualRb):
-		super().__init__(spinner, slider)
-		self._shortCheckbox = shortCheckbox
-		self._openCheckbox  = openCheckbox 
-		self._autoRb        = autoRb       
-		self._manualRb      = manualRb    
-
-class GuiOutputChannel():
-	def __init__(self, gauge):
-		self._gauge       = gauge
-		
-	def SetValue(self, value):
-		wx.CallAfter(self.SetValueNow, value)
-		
-	def SetValueNow(self, value):
-		self._gauge.SetValue(value)
-		
 ###########################################################################
 ## Class MainFrame
 ###########################################################################
 
+class PresetItem(object):
+	def __init__(self, preset):
+		self._preset = preset
+	
+	def loadPreset(self):
+		loadPreset(self._preset)
+		
+	def onPresetSelect(self, event):
+		event.Skip()
+		self.loadPreset()
+
 class MainFrame ( wx.Frame ):
+	
+	def addPresetsMenu(self):
+		self.loadPresetSubmenu = wx.Menu()
+		
+		presetList = getPresetFilesList()
+		
+		for preset in presetList:
+			presetItem = PresetItem(preset)
+			presetMenuItem = wx.MenuItem( self.loadPresetSubmenu, wx.ID_ANY, _(preset), wx.EmptyString, wx.ITEM_NORMAL )
+			self.loadPresetSubmenu.Append( presetMenuItem )
+			self.Bind( wx.EVT_MENU, presetItem.onPresetSelect, id = presetMenuItem.GetId() )
+
+		self.m_menu1.AppendSubMenu( self.loadPresetSubmenu, _(u"Load preset") )
+		
+
 	def makeFrame(self, parent ):
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 1000,800 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 1020,800 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 
 		self.SetSizeHints( wx.Size( 500,400 ), wx.DefaultSize )
 
@@ -82,6 +74,9 @@ class MainFrame ( wx.Frame ):
 		self.Layout()
 		self.m_menubar1 = wx.MenuBar( 0 )
 		self.m_menu1 = wx.Menu()
+		
+		self.addPresetsMenu()
+		
 		self.m_menuItem1 = wx.MenuItem( self.m_menu1, wx.ID_ANY, _(u"Save log")+ u"\t" + u"Ctrl+S", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.Append( self.m_menuItem1 )
 
@@ -102,6 +97,7 @@ class MainFrame ( wx.Frame ):
 	# Virtual event handlers, override them in your derived class
 	def doClose( self, event ):
 		event.Skip()
+		guiThread().ClearNow()
 		exit(0)
 	
 	def OnLogSaveButtonPress( self, event ):
@@ -317,6 +313,7 @@ class ConsoleFrame ( wx.Frame ):
 	# Virtual event handlers, override them in your derived class
 	def doClose( self, event ):
 		event.Skip()
+		guiThread().ClearNow()
 		exit(0)
 	
 	def printText(self, text):
@@ -326,15 +323,23 @@ class ConsoleFrame ( wx.Frame ):
 		self.doClose(event)
 
 class guiThread():
-	def __init__(self, thread_name, thread_ID):
-		self.thread_name = thread_name
-		self.thread_ID   = thread_ID
+	def __new__(cls, *args, **kwargs):
+		if not hasattr(cls, 'instance'):
+			cls.instance = super(guiThread, cls).__new__(cls)
+		return cls.instance
+
+	def __init__(self):
+		if hasattr(self, '_initDone'):
+			return
 		
 		self._app = wx.App()
 		self._frame = wx.Frame(None, title='Simple application')
 		self._ex = MainFrame(self._frame, self)
 		self._consoleFrame = ConsoleFrame(self._frame)
 		self._consoleFrame.Show()
+		self._ex.Show()
+		
+		self._initDone = True
 		
 	def Clear(self):
 		wx.CallAfter(self.ClearNow)
@@ -346,6 +351,9 @@ class guiThread():
 #		wx.GetApp().OnInit()
 	
 	def addProgram(self, programInfo):
+		wx.CallAfter(self.addProgramNow, programInfo)
+		
+	def addProgramNow(self, programInfo):
 		self._ex.addProgram(programInfo)
 		self._ex.mainScrollableWindow.Layout()
 		self._ex.Layout()
@@ -361,26 +369,7 @@ class guiThread():
 		self._consoleFrame.printText('\n')
 		
 	def run(self):
-		self._ex.Show()
 		self._app.MainLoop()
 	
-	
-def initGuiThread():
-	global guiThreadSingleton
-	if guiThreadSingleton is None:
-		guiThreadSingleton = guiThread("GUI", 666)
-		
-	return guiThreadSingleton
 
-def printLog(log_str):
-	print(log_str)
-	global guiThreadSingleton
-	if guiThreadSingleton:
-		guiThreadSingleton.printConsoleText(log_str)
-
-def printError(log_str):
-	print(log_str)
-	global guiThreadSingleton
-	if guiThreadSingleton:
-		guiThreadSingleton.printConsoleText(log_str)
 

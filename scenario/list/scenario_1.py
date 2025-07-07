@@ -4,8 +4,8 @@
 
 import time
 
-from gui.frame import printLog   as printLog
-from gui.frame import printError as printError
+from consoleLog import printLog   as printLog
+from consoleLog import printError as printError
 from scenario.scenario import Scenario   as Parent
 from smartnet.remoteControl import RemoteControlParameter as RemoteControlParameter
 

@@ -1,6 +1,11 @@
 '''
 @author: admin
 '''
+try:
+	import wx
+	
+except ImportError:
+	print('import gui fail. Please install wxPython if you wish to use gui: pip install -U wxPython')
 
 class GuiParameter(object):
 	'''
@@ -94,3 +99,45 @@ class GuiParameter(object):
 		self.setStep(step)
 		self.setUnits(units)
 			
+
+class GuiParameterApi(object):
+	def __init__(self, spinner, slider):
+		self._spinner       = spinner
+		self._slider        = slider
+	
+	def SetValue(self, value):
+		wx.CallAfter(self.SetValueNow, value)
+		
+	def SetValueNow(self, value):
+		self._spinner.SetValue(value)
+		self._slider .SetValue(int(value + 0.5))
+		
+	def SetMin(self, value):
+		self._spinner.SetMin(value)
+		self._slider .SetMin(int(value))
+		
+	def SetMax(self, value):
+		self._spinner.SetMax(value)
+		self._slider .SetMax(int(value))
+		
+	def SetIncrement(self, value):
+		self._spinner.SetIncrement(value)
+
+class GuiInputChannel(GuiParameterApi):
+	def __init__(self, spinner, slider, shortCheckbox, openCheckbox, autoRb, manualRb):
+		super().__init__(spinner, slider)
+		self._shortCheckbox = shortCheckbox
+		self._openCheckbox  = openCheckbox 
+		self._autoRb        = autoRb       
+		self._manualRb      = manualRb    
+
+class GuiOutputChannel():
+	def __init__(self, gauge):
+		self._gauge       = gauge
+		
+	def SetValue(self, value):
+		wx.CallAfter(self.SetValueNow, value)
+		
+	def SetValueNow(self, value):
+		self._gauge.SetValue(value)
+		

@@ -10,8 +10,8 @@ import threading
 import presets.preset
 from controllers.controller_io import initVirtualControllers as initVirtualControllers
 
-from gui.frame import printLog   as printLog
-from gui.frame import printError as printError
+from consoleLog import printLog   as printLog
+from consoleLog import printError as printError
 
 
 class Scenario(object):
@@ -119,6 +119,9 @@ class ScenarioThread(threading.Thread):
 		self._scenarioIndex = 0
 		self._controllerHost = controllerHost
 		self._simulator      = simulator
+		
+		self.daemon = True
+		self.start()
 		
 	def getNextScenario(self):
 		scenario = self.getScenario(self._scenarioIndex)
