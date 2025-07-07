@@ -30,8 +30,9 @@ class sensor_report_thread(threading.Thread):
 			for sim in self._simulator._simList:
 				program = sim._program
 				for programInput in program.getInputs():
-					if reportSensorValue(programInput):
-						time.sleep(0.1)
+					if programInput.isMapped():
+						if reportSensorValue(programInput):
+							time.sleep(0.1)
 
 			time.sleep(2)
 
