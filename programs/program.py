@@ -212,11 +212,11 @@ class Program(object):
 			parameterIndex = outputId,
 			programId = self.getId())
 		
-		value = param.read()
-		if value is None:
-			return None
-		
-		self.setOutputValue(outputId, value)
+		value = None
+		if param.read():
+			value = param.getValue()
+			self.setOutputValue(outputId, value)
+			
 		return value
 	
 	def setInputsRange(self, inputsRange):
