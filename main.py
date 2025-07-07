@@ -129,6 +129,8 @@ def loadPreset(preset):
 	controllerHost = Controller()
 	
 	ioSimulator.Clear()
+	controllerHost.Clear()
+	
 	controllerHost.initController(True, programList)
 	ctrlIo = initVirtualControllers(controllerIoList)
 	ioSimulator.reloadConfig(controllerHost, ctrlIo)
