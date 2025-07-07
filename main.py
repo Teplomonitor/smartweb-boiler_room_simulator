@@ -21,26 +21,16 @@ import sys
 import os
 
 import time
-import threading
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
-import presets.preset
-from smartnet.message import Message as smartnetMessage
-import consoleLog
-from controllers.search        import findOnlineController   as findOnlineController
-from controllers.controller    import Controller             as Controller
-from controllers.controller_io import initVirtualControllers as initVirtualControllers
-from scenario.scenario         import ScenarioThread         as ScenarioThread
-from simulator.simulator       import Simulator              as Simulator
-from smartnet.message          import CanListener            as CanListener
 
-import debug
-from udp.udp import initUdpBridge as initUdpBridge
+import mainThread
+import consoleLog
 
 from consoleLog import printLog   as printLog
-from consoleLog import printError as printError
+
 
 def mock_missing(name):
 	def init(self, *args, **kwargs):
@@ -83,71 +73,7 @@ def initArgParser(program_license):
 	
 	return parser.parse_args()
 
-def initMainRun(args):
-	init_controller_with_preset = args.init
-	udp_bridge_enable           = int(args.udp)
-	preset                      = args.preset
-	scenario                    = args.scenario
-	programPresetList, controllerIoList = presets.preset.getPresetsList(preset)
-	
-	if programPresetList is None:
-		printError('wrong preset. Exit')
-		sys.exit(1)
-	
-	if udp_bridge_enable:
-		initUdpBridge(udp_bridge_enable)
-	
-	if args.debug:
-		debug.debug_thread()
-		
-	controllerId = findOnlineController()
-	
-	if controllerId is None:
-		printError('controller not found. Exit')
-		sys.exit(1)
-	
-	if args.gui:
-		guiThread = guiFrameThread.guiThread()
-	else:
-		guiThread = None
-		
-	ioSimulator    = Simulator("simulator thread", 789)
-	controllerHost = Controller(controllerId, guiThread)
-	
-	controllerHost.initController(init_controller_with_preset, programPresetList)
-	ctrlIo = initVirtualControllers(controllerIoList)
-	ioSimulator.reloadConfig(controllerHost, ctrlIo)
-	
-	if scenario != 'none':
-		ScenarioThread(controllerHost, ioSimulator)
-		
-
-def loadPreset(preset):
-	programList, controllerIoList = presets.preset.getPresetsList(preset)
-
-	ioSimulator    = Simulator()
-	controllerHost = Controller()
-	
-	ioSimulator.Clear()
-	controllerHost.Clear()
-	
-	controllerHost.initController(True, programList)
-	ctrlIo = initVirtualControllers(controllerIoList)
-	ioSimulator.reloadConfig(controllerHost, ctrlIo)
-	
-def initMainThread(args):
-	t = threading.Thread(target = initMainRun, args = (args,))
-	t.start()
-	
-def main(argv=None): # IGNORE:C0111
-	'''Command line options.'''
-	
-	if argv is None:
-		argv = sys.argv
-	else:
-		sys.argv.extend(argv)
-
-	program_name = os.path.basename(sys.argv[0])
+def getProgramLicense():
 	program_version = "v%s" % __version__
 	program_build_date = str(__updated__)
 	program_version_message = '%%(prog)s %s (%s)' % (program_version, program_build_date)
@@ -167,12 +93,32 @@ def main(argv=None): # IGNORE:C0111
 
 USAGE
 ''' % (program_shortdesc, program_version_message, str(__date__))
+	return program_license
+
+def loadPreset(preset):
+	t = mainThread.MainThread()
+	t.loadPreset(preset)
+
+def initMainThread(args):
+	mainThread.MainThread(args)
+
+def MainStop():
+	mainThread.MainStop()
+	
+def main(argv=None): # IGNORE:C0111
+	'''Command line options.'''
+	
+	if argv is None:
+		argv = sys.argv
+	else:
+		sys.argv.extend(argv)
+
+	program_name = os.path.basename(sys.argv[0])
 
 	try:
+		program_license = getProgramLicense()
 		# Setup argument parser
 		args = initArgParser(program_license)
-		
-		CanListener()
 		
 		if args.gui:
 			guiThread = guiFrameThread.guiThread()
@@ -190,23 +136,18 @@ USAGE
 			while True:
 				time.sleep(1)
 				
-		ioSimulator    = Simulator()
-		controllerHost = Controller()
-		
-		ioSimulator.Clear()
-		controllerHost.Clear()
-		
-		smartnetMessage.exit()
+		MainStop()
 		
 		return 0
 	
 	except KeyboardInterrupt:
 		### handle keyboard interrupt ###
-		smartnetMessage.exit()
+		MainStop()
 		printLog('exit')
 		return 0
+	
 	except Exception as e:
-		smartnetMessage.exit()
+		MainStop()
 		
 		if DEBUG:
 			raise(e)
