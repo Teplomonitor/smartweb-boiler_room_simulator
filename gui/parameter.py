@@ -59,6 +59,7 @@ class GuiParameter(object):
 	def setGuiValue(self, value):
 		if self._gui:
 			self._gui.SetValue(value)
+			self._needUpdateGuiValue = False
 		
 	def setGui(self, gui):
 		self._gui = gui
