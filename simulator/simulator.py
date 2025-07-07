@@ -2,6 +2,8 @@
 import time
 import threading
 
+import mainThread
+
 from simulator.sensorReport  import reportSensorValue as reportSensorValue
 from smartnet.channelMapping import ChannelMapping    as ChannelMapping
 
@@ -24,16 +26,18 @@ class sensor_report_thread(threading.Thread):
 		self._simulator = simulator
 		self.deamon = True
 		self.start()
-		
+	
+	def reportSensorsValues(self):
+		for sim in self._simulator._simList:
+			program = sim._program
+			for programInput in program.getInputs():
+				if programInput.isMapped():
+					if reportSensorValue(programInput):
+						time.sleep(0.1)
+						
 	def run(self):
-		while True:
-			for sim in self._simulator._simList:
-				program = sim._program
-				for programInput in program.getInputs():
-					if programInput.isMapped():
-						if reportSensorValue(programInput):
-							time.sleep(0.1)
-
+		while mainThread.taskEnable():
+			self.reportSensorsValues()
 			time.sleep(2)
 
 class Simulator(threading.Thread):
@@ -170,23 +174,30 @@ class Simulator(threading.Thread):
 
 		return consumerPower
 	
-		
+	
+	def runProgramSimulators(self):
+		for sim in self._simList:
+			sim.run()
+			
+	def runVirtualControllers(self):
+		for ctrlIo in self._controllerIo:
+			ctrlIo.run()
+			
+	def runCollector(self):
+		if self._collector:
+			self._collector.run()
+			
 	def run(self):
-		while True:
+		while mainThread.taskEnable():
 			if not self._simulator_ready:
 				time.sleep(1)
 				continue
 			
 			time_start = time.time()
 			
-			for sim in self._simList:
-				sim.run()
-
-			for ctrlIo in self._controllerIo:
-				ctrlIo.run()
-			
-			if self._collector:
-				self._collector.run()
+			self.runProgramSimulators()
+			self.runVirtualControllers()
+			self.runCollector()
 			
 			dt = time.time() - time_start
 			
