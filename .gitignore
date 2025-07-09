@@ -107,3 +107,6 @@ venv.bak/
 /Output.txt
 
 log/
+
+# project specific settings
+settings.ini
