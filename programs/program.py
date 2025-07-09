@@ -90,7 +90,9 @@ class Program(object):
 			if dataOk:
 				outputId    = data[2]
 				outputValue = data[3]
-				self.setOutputValue(outputId, outputValue)
+				
+				if outputId < len(self._outputs):
+					self.setOutputValue(outputId, outputValue)
 		
 		
 	def getInputs(self   ): return self._inputs
