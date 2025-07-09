@@ -171,10 +171,11 @@ class Message(object):
 			
 			time.sleep(0.1)
 		
-		self._responseFilter = None
 		CanListener.unsubscribe(self)
-		
-		return self._responseMessage
+		msg = self._responseMessage
+		self._responseFilter  = None
+		self._responseMessage = None
+		return msg
 
 	def parse(self, message):
 		if not message.is_extended_id or message.is_remote_frame:
