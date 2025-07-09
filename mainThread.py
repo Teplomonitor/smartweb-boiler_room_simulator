@@ -2,12 +2,12 @@
 import time
 import threading
 import sys
+import config
 
 import presets.preset
 from consoleLog import printError as printError
 from controllers.search        import findOnlineController   as findOnlineController
 
-from smartnet.message        import Message     as smartnetMessage
 from smartnet.message          import CanListener            as CanListener
 from controllers.controller_io import initVirtualControllers as initVirtualControllers
 from controllers.controller    import Controller             as Controller
@@ -53,9 +53,14 @@ class MainThread(threading.Thread):
 		
 		threading.Thread.__init__(self, name = 'MainThread')
 
+		self.configParserInstance = config.ConfigParserInstance()
+		
 		self._init_controller_with_preset = args.init
 		self._udp_bridge_enable           = int(args.udp)
-		preset                            = args.preset
+		self._profile                     = args.profile
+		
+		preset = self.configParserInstance.getParameterValue(self._profile, 'preset')
+		
 		self._scenario                    = args.scenario
 		self._programPresetList, self._controllerIoList = presets.preset.getPresetsList(preset)
 		self._taskEnable = True
@@ -84,9 +89,6 @@ class MainThread(threading.Thread):
 	
 	def taskStop(self):
 		self._taskEnable = False
-		
-	def __del__(self):
-		print('WTF???!!!!')
 		
 	def initSimulator(self):
 		
@@ -120,6 +122,9 @@ class MainThread(threading.Thread):
 			
 			if self._newPreset:
 				loadPresetNow(self._newPreset)
+				
+				self.configParserInstance.setParameterValue(self._profile, 'preset', self._newPreset)
+				
 				self._newPreset = None
 			
 	def loadPreset(self, newPreset):
