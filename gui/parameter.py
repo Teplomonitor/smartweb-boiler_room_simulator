@@ -50,7 +50,7 @@ class GuiParameter(object):
 		
 	def onSpinText(self, event):
 		event.Skip()
-		self.setValue(int(self._gui._spinner.GetTextValue()), True)
+		self.setValue(int(float(self._gui._spinner.GetTextValue())), True)
 		
 	def onScroll(self, event):
 		event.Skip()
