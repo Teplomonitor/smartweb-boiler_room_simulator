@@ -1,55 +1,67 @@
+# импортируем модуль
+# import time
+import tkinter as tk
+from tkinter import messagebox, StringVar, ttk
 import math
+import numpy as np
+
 # начальные условия
-tintown = 70 # на входе из города - постоянная ---------------------------
-
-tinhouse_demand = 45 # требуемая температура подачи ----------------------
-
-troom = 18 # температура в помещении, от нее зависит рассеяние энергии
+tintown = 80 # на входе из города - постоянная ---------------------------
+tinhouse_demand = 55 # требуемая температура подачи ----------------------
 
 cw = 4200 # теплоемкость воды
 
-qhouse = 1 # расход кг/сек в доме постоянный.
-
-cwq = qhouse*cw # так короче
-
-qtown_max = 1.5 # секундный из города
+qhouse = 1.5 # расход кг/сек в доме постоянный.
+qtown_max = 2 # секундный из города
 
 tservak = 120 # время разворота сервака ---------------------------------
-proport = 20 # полоса пропорциональности температуры
+proport = 20 # полоса пропорциональности температуры для сервака
+tau=5 # шаг по времени сек
 
-btermo=1000 # теплоотдача батарей НЕ трогать
-ato = 3500 # теплопередача ТО тоже не трогать
-
+pdiss=100 # примерно равно мощности отопления
+ato = 3300 # теплопередача ТО тоже не трогать
 square=1 # Площадь ТО в кв.м.-----------------------
-tau=2 # шаг по времени сек
 
 ddt=0
 real_time = 0
-ugolserv = 1
+ugolserv_0 = 0.1
+ugolserv_max=1
+qtown = 0 # расход из города при данном угле сервака 
+tinhouse = 20 #температура начальная в контуре отопления ---------------
+t_rethouse = 0
+t_rettown = 0
+calc_number=0
+igss=0
+bt5="q"
+bt6="q"
+etown=0
+ehouse=0
+mid_temp=30
 
-tinhouse = troom #температура начальная в контуре отопления ---------------
-t_rethouse = troom
-t_rettown = tintown-30
+def viewtemp():
 
-t_rett=0
-i = 0
-atos=ato * square
+    bt12 = str(round(t_rettown, 0))
+    bt11 = 'от котла Т '+ str(round(tintown, 0)) + '   обратка ' + bt12 +'  '
+    beg11 = tk.Label(master=frm_form, text=bt11)
+    beg11.grid(column=1, row=9, pady=2, padx=2)
 
-def initialcond():
-    # начальные условия
-    global t_rettown, tinhouse, t_rethouse
-    t_rettown = ugolserv * (tintown-15-troom) + troom # линейно меняем от Тподачи - 15 до Тroom
-    tinhouse = ugolserv * (tintown-25-troom) + troom # линейно меняем от Тподачи - 25 до Тroom
-    t_rethouse = ((cwq - btermo/2)*tinhouse + btermo * troom)/(cwq+btermo/2) # начальное прибдижение обратка из дома - поглощение энергии    
-    print('!!! initial tinhouse %.2f.' % tinhouse, 'rethous %.2f.' % t_rethouse,'rettown %.2f.' % t_rettown, 'tinhouse demand %.2f.' % tinhouse_demand )
+    bt21 = str(round(tinhouse, 0))
+    bt22 = str(round(t_rethouse, 0))
+    bt12 = ' после ТО ' + bt21 + '   обратка в ТО ' + bt22 + '  ' 
+    beg12 = tk.Label(master=frm_form, text=bt12)
+    beg12.grid(column=1, row=10, pady=2, padx=2)
     
 def ddtf():
     global ddt
     # тепловой напор - http://ispu.ru/files/u2/Teplovoy_raschet_rekuperativnogo_teploobmennogo_apparata.pdf
     d1 = tintown - tinhouse 
     d2 = t_rettown - t_rethouse
-    d_tmax=d1
-    d_tmin=d2
+    if abs(d1)>abs(d2):
+        d_tmax=d1
+        d_tmin=d2
+    else:
+        d_tmax=d2
+        d_tmin=d1
     d = d_tmin/d_tmax
     if  d > 20: #!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ddt = (d_tmax - d_tmin) / math.log( d_tmax/d_tmin )
@@ -57,63 +69,122 @@ def ddtf():
         ddt = (d_tmax + d_tmin)/2 
     return ddt
 
-def ft_rettown():
-    # обратка в город
-    global t_rettown
-    t_rettown = tintown - atos*ddt/(cw*qtown)
-    if t_rettown < t_rethouse:
-        #print('!!!!!', t_rettown)
-        t_rettown = t_rethouse
-    return t_rettown
-
-def frettdom():
-    # подача и обратка дома
-    global t_rethouse
-    t_rethouse = ((cwq - btermo/2)*tinhouse + btermo * troom)/(cwq+btermo/2) # обратка из дома - поглощение энергии
-    
-def findom():
-    # подача и обратка дома
-    global tinhouse
-    tinhouse = qtown*(tintown - t_rettown)/qhouse + t_rethouse
-
 def fenergy():
     # для контроля считаем баланс энергии до ТО и после. должно примерно совпадать.
     global etown, ehouse
     etown=qtown*cw*(tintown - t_rettown)
     ehouse=qhouse*cw*(tinhouse-t_rethouse)
-    
-def mainframe():
-    # тело основной программы
-    global tinhouse, t_rethouse, t_rettown
-    j=0
-    d_teta = 10
-    ddtf() # температурный напор
-    while j<20 and abs(d_teta) > 0.5 : # утрясаем температуры при изменении расхода
-        
-        ddt0=ddt
-        findom()
-        
-        #ddtf()
-        ft_rettown()
-              
-        #ddtf()
-        frettdom()
-        
-        ddtf()
-        d_teta=ddt-ddt0
-        
-        #fenergy() # вроде нормально все с энергией - проверку можно выключить
-        
-        j +=1
-        #print('j', j, 'd_teta %.2f.'% d_teta, ddt)    
-    #print('i',i, 'энергия города', etown, ' дом ', ehouse,'----------------------') 
-    return
 
-initialcond() # - initial conditions calculate, depends on ugolserv
-while  i<100:
-    # не больше i шагов и температуры положительные  
-    i +=1
-    qtown0 = qtown_max * ugolserv
+def gss_solver():
+    global t_rettown, tinhouse, t_rethouse
+    # Reading number of unknowns
+    n = 3
+
+    # Making numpy array of n x n+1 size and initializing 
+    # to zero for storing augmented matrix
+    a = np.zeros((n,n+1))
+
+    # Making numpy array of n size and initializing 
+    # to zero for storing solution vector
+    x = np.zeros(n)
+
+    # Reading augmented matrix coefficients
+
+    a[0][0]= -qtown*cw
+    a[0][1]= -qhouse*cw
+    a[0][2]= qhouse*cw
+    
+    a[0][3]= -qtown*cw*tintown
+
+    a[1][0]= 0
+    a[1][1]= qhouse*cw-pdiss*1000/2/mid_temp
+    a[1][2]= -qhouse*cw-pdiss*1000/2/mid_temp
+
+    a[1][3]=0
+
+    a[2][0]= -qtown*cw - square * ato/2
+    a[2][1]= square*ato/2
+    a[2][2]= square*ato/2 
+
+    a[2][3]= (square*ato/2 - qtown*cw)*tintown
+
+    # Applying Gauss Elimination
+    for i in range(n):
+        if a[i][i] == 0.0:
+            sys.exit('Divide by zero detected!')
+        
+        for j in range(i+1, n):
+            ratio = a[j][i]/a[i][i]
+        
+            for k in range(n+1):
+                a[j][k] = a[j][k] - ratio * a[i][k]
+
+    # Back Substitution
+    x[n-1] = a[n-1][n]/a[n-1][n-1]
+
+    for i in range(n-2,-1,-1):
+        x[i] = a[i][n]
+    
+        for j in range(i+1,n):
+            x[i] = x[i] - a[i][j]*x[j]
+    
+        x[i] = x[i]/a[i][i]
+    t_rettown = x[0]
+    tinhouse = x[1]
+    t_rethouse = x[2]
+    # Displaying solution 
+    return
+#----------------------------------------------
+def squareinp():
+    global square
+    res = entry.get()
+    square = float(res)
+    result.configure(text=res)
+def consinp():
+    global qtown_max
+    res = entry1.get()
+    qtown_max = float(res)
+    result1.configure(text=res)
+def temptown():
+    global tintown
+    res = entry2.get()
+    tintown = float(res)
+    result2.configure(text=str(tintown))
+def conshouse():
+    global qhouse
+    res = entry3.get()
+    qhouse = float(res)
+    result3.configure(text=res)
+def powerhouse():
+    global pdiss
+    res = entry4.get()
+    pdiss = float(res)
+    result4.configure(text=res)
+def t_demand():
+    global tinhouse_demand
+    res = entry5.get()
+    tinhouse_demand = float(res)
+    result5.configure(text=res)    
+def midl_temp():
+    global mid_temp
+    res = entry6.get()
+    mid_temp = float(res)
+    if mid_temp > tinhouse_demand:
+        mid_temp = tinhouse_demand-2
+    result6.configure(text=str(mid_temp))
+    
+def initialcond():
+    # начальные условия    
+    squareinp()
+    consinp()
+    temptown()
+    conshouse()
+    powerhouse()
+    t_demand()
+    midl_temp()
+
+def ugolserv_calc():
+    global ugolserv
     x = (tinhouse_demand-tinhouse)/proport
     # расчет расхода из города ----------------------
     if abs(x)>1 :
@@ -122,28 +193,131 @@ while  i<100:
         ugolserv = ugolserv + x*tau/tservak
     if ugolserv < 0 : ugolserv = 0
     if ugolserv > 1 : ugolserv = 1
-       
-    qtown = qtown_max * ugolserv # расход из города при данном угле сервака 
-    d_qtown=qtown-qtown0
-    #--------------------------------------------------------------
-    print("ugol %.3f." % ugolserv, "qtown %.3f." % qtown, d_qtown)
-
-    mainframe()
- 
-    # здесь можно вставить изменение внешних условий по температуре. НЕ слишком резко! -
-    ddt0 = ddt
     
-    if i<20 : #меняем входящую из города
-        tintown=tintown + 0.1
-        if tintown >85 : tintown = 85
-    else :    
-        tintown=tintown - 0.07
-        if tintown < 55 : tintown = 55
-    #-----------------------------------------
+def mainframe_servo():
+    global tintown, tinhouse, t_rethouse, t_rettown, qtown, ugolserv, calc_number, igss
+    calc_number +=1
+    igss=0
+    tinhouse = 20
+    ugolserv = ugolserv_0
+    qtown = 0
+    while  igss<200 and tinhouse < tinhouse_demand - 0.5 and qtown < qtown_max:
+        # не больше i шагов и температуры положительные  
+        igss +=1
+        ugolserv_calc()           
+        qtown = qtown_max * ugolserv # расход из города при данном угле сервака 
 
-    mainframe()
+        gss_solver()
+        fenergy()
+        ddtf()
+        print(igss, "ugol %.2f." % ugolserv, "qtown %.2f." % qtown, ' rettown %.1f.' % t_rettown,'tinhouse %.2f.' % tinhouse, 'rethous %.1f.' % t_rethouse)
 
-    print('tintown %.2f.' % tintown, ' rettown %.2f.' % t_rettown,'tinhouse %.2f.' % tinhouse, 'rethous %.2f.' % t_rethouse)     
-    print(i,'шаг по времени ------')
+        viewtemp()
+        
+    mfs= ' мощность ТО квт ' + str(round(etown/1000, 0)) +'  ddt  ' + str(round(ddt, 1))+'  '  
+    calc_mfs = tk.Label(master=clc_form, text=mfs)
+    calc_mfs.grid(column=0, row=17, pady=2, padx=2)
+      
+    mfs= '  угол поворота  ' + str(round(ugolserv, 2)) +'  расход от котла ' + str(round(qtown, 2))+'  '  
+    calc_mfs = tk.Label(master=clc_form, text=mfs)
+    calc_mfs.grid(column=1, row=17, pady=2, padx=2)
+    cnum= '   расчет ' + str(calc_number)+'  '  
+    calc_mfs = tk.Label(master=clc_form, text=cnum)
+    calc_mfs.grid(column=1, row=12, pady=2, padx=2)
+
+    if ugolserv == ugolserv_max:
+        mfs= 'температура  ' + str(tinhouse_demand) + '  НЕ достигнута '
+        color = "red"
+    else:
+        mfs= 'температура  ' + str(tinhouse_demand) + '  достигнута    '
+        color = "black"
+    calc_mfs = tk.Label(master=clc_form, text=mfs, fg=color)
+    calc_mfs.grid(column=0, row=18, pady=2, padx=2)
     
-print('gameover', 'realtime', tau*i, tau)    
+        
+# создаем корневое окно
+window = tk.Tk()
+
+# заголовок
+window.title("ввод начальных данных")
+
+# размеры
+window.geometry('500x500')
+
+frm_form = tk.Frame(relief=tk.RAISED, borderwidth=5)
+clc_form = tk.Frame(relief=tk.SUNKEN, borderwidth=5)
+# Помещает рамку в окно приложения.
+frm_form.pack()
+clc_form.pack()
+
+# ввод начальных данных----------------------------------
+lbl = tk.Label(master=frm_form, text="площадь ТО")
+lbl.grid(column=0, row=1)
+entry = tk.Entry(master=frm_form, width=5)  
+entry.grid(column=1, row=1)
+entry.insert(0, square)
+entry.focus()
+result = tk.Label(master=frm_form, text=str(square))
+result.grid(column=3, row=1, padx=10)
+
+lbl1 = tk.Label(master=frm_form, text="расход от котла л/с")
+lbl1.grid(column=0, row=2)
+entry1 = tk.Entry(master=frm_form, width=5)  
+entry1.grid(column=1, row=2)
+entry1.insert(0, qtown_max)
+result1 = tk.Label(master=frm_form, text=str(qtown_max))
+result1.grid(column=3, row=2, padx=10)
+
+lbl2 = tk.Label(master=frm_form, text="темп подачи от котла")
+lbl2.grid(column=0, row=3)
+entry2 = tk.Entry(master=frm_form, width=5)  
+entry2.grid(column=1, row=3)
+entry2.insert(0, tintown)
+result2 = tk.Label(master=frm_form, text=str(tintown))
+result2.grid(column=3, row=3, padx=10)
+
+lbl3 = tk.Label(master=frm_form, text="расход в доме")
+lbl3.grid(column=0, row=4)
+entry3 = tk.Entry(master=frm_form, width=5)  
+entry3.grid(column=1, row=4)
+entry3.insert(0, qhouse)
+result3 = tk.Label(master=frm_form, text=str(qhouse))
+result3.grid(column=3, row=4, padx=10)
+
+lbl4 = tk.Label(master=frm_form, text="мощь рассеивания, квт")
+lbl4.grid(column=0, row=5)
+entry4 = tk.Entry(master=frm_form, width=5)  
+entry4.grid(column=1, row=5)
+entry4.insert(0, pdiss)
+result4 = tk.Label(master=frm_form, text=str(pdiss))
+result4.grid(column=3, row=5, padx=10)
+
+lbl5 = tk.Label(master=frm_form, text="требуемая темп. после ТО")
+lbl5.grid(column=0, row=6)
+entry5 = tk.Entry(master=frm_form, width=5)  
+entry5.grid(column=1, row=6)
+entry5.insert(0, tinhouse_demand)
+result5 = tk.Label(master=frm_form, text=str(tinhouse_demand))
+result5.grid(column=3, row=6, padx=10)
+
+lbl6 = tk.Label(master=frm_form, text="ожидаемая средн Т после ТО")
+lbl6.grid(column=0, row=7)
+entry6 = tk.Entry(master=frm_form, width=5)  
+entry6.grid(column=1, row=7)
+entry6.insert(0, mid_temp)
+result6 = tk.Label(master=frm_form, text=str(mid_temp))
+result6.grid(column=3, row=7, padx=10)
+#---------------------------------------------------------
+btn_recalc = tk.Button( master=frm_form, text="обновить нач. данные", command=initialcond)
+btn_recalc.grid(row=8, column=1, pady=2, padx=5)
+
+#---------------------------------
+btn_mf = tk.Button(master=clc_form, text="расчет Т потоков", command = mainframe_servo)
+btn_mf.grid(row=12, column=0, pady=2, padx=10)
+window.after(1000, initialcond)  # Обновлять каждую секунду
+# ----------------------------------------
+window.mainloop()
+     
+realtime=tau*igss
+print('gameover ', realtime, ' время = шаг х колво шагов')    
+
