@@ -55,6 +55,18 @@ class Controller(object):
 					
 				time.sleep(2)
 		else:
+			activeProgramList = self.readControllerProgramList()
+			
+			for program in programPresetList:
+				programFound = False
+				for ap in activeProgramList:
+					if ap['id'] == program.getId() and ap['type'] == snc.ProgramType[program.getType()]:
+						programFound = True
+						break
+				if not programFound:
+					print('controller got wrong preset')
+					return
+				
 			for program in programPresetList:
 				self.addProgramFromPreset(program)
 		
@@ -62,7 +74,53 @@ class Controller(object):
 		prg = createProgram(program)
 		self.addProgram(prg)
 		return prg
+	
+	def readControllerProgramList(self):
+		printLog('read controller programs list')
+		def generateRequest():
+			request = smartnetMessage(
+			snc.ProgramType['CONTROLLER'],
+			self._controllerId,
+			snc.ControllerFunction['GET_ACTIVE_PROGRAMS_LIST'],
+			snc.requestFlag['REQUEST'])
+			return request
 		
+		def generateRequiredResponse():
+			response = copy(request)
+			response.setRequestFlag(snc.requestFlag['RESPONSE'])
+			return response
+		
+		def handleResponse():
+			if response is None:
+				return False
+			else:
+				data = response.getData()
+				
+				programNum = int(len(data) / 2)
+				
+				for i in range(programNum):
+					programId   = data[i*2  ]
+					programType = data[i*2+1]
+					prg = {'id': programId, 'type': programType}
+					activeProgramList.append(prg)
+				
+				return True
+				
+		request = generateRequest()
+		responseFilter = generateRequiredResponse()
+		
+		request.send()
+		
+		activeProgramList = []
+		
+		while True:
+			response = request.recv(responseFilter, 5)
+			if handleResponse() == False:
+				break
+		
+		return activeProgramList
+		
+	
 	def sendProgramAddRequest(self, programType, programId, programScheme):
 		printLog('Send program add request')
 		def generateRequest():
