@@ -14,7 +14,9 @@ from gui.parameter import GuiParameterApi  as GuiParameterApi
 from gui.parameter import GuiInputChannel  as GuiInputChannel
 from gui.parameter import GuiOutputChannel as GuiOutputChannel
 
-from presets.preset import getPresetFilesList as getPresetFilesList
+from presets.preset import getPresetFilesList   as getPresetFilesList
+
+import scenario.scenario as sc
 
 guiThreadSingleton = None
 
@@ -33,21 +35,50 @@ class PresetItem(object):
 		event.Skip()
 		self.loadPreset()
 
+class ScenarioItem(object):
+	def __init__(self, scenario):
+		self._scenario = scenario
+	
+	def startScenario(self):
+		sc.startScenario(self._scenario)
+
+	def onScenarioSelect(self, event):
+		event.Skip()
+		self.startScenario()
+
 class MainFrame ( wx.Frame ):
 	
 	def addPresetsMenu(self):
-		self.loadPresetSubmenu = wx.Menu()
+		loadPresetSubmenu = wx.Menu()
 		
 		presetList = getPresetFilesList()
 		
 		for preset in presetList:
 			presetItem = PresetItem(preset)
-			presetMenuItem = wx.MenuItem( self.loadPresetSubmenu, wx.ID_ANY, _(preset), wx.EmptyString, wx.ITEM_NORMAL )
-			self.loadPresetSubmenu.Append( presetMenuItem )
+			presetMenuItem = wx.MenuItem( loadPresetSubmenu, wx.ID_ANY, _(preset), wx.EmptyString, wx.ITEM_NORMAL )
+			loadPresetSubmenu.Append( presetMenuItem )
 			self.Bind( wx.EVT_MENU, presetItem.onPresetSelect, id = presetMenuItem.GetId() )
 
-		self.m_menu1.AppendSubMenu( self.loadPresetSubmenu, _(u"Load preset") )
+		self.m_menu1.AppendSubMenu( loadPresetSubmenu, _(u"Load preset") )
 		
+	def addScenarioMenu(self):
+		startScenarioSubmenu = wx.Menu()
+		
+		scenarioList = sc.getScenarioFilesList()
+		scenarioList.insert(0, 'all')
+
+		appendSeparator = True
+		for scenario in scenarioList:
+			scenarioItem     = ScenarioItem(scenario)
+			scenarioMenuItem = wx.MenuItem( startScenarioSubmenu, wx.ID_ANY, _(scenario), wx.EmptyString, wx.ITEM_NORMAL )
+			startScenarioSubmenu.Append( scenarioMenuItem )
+			self.Bind( wx.EVT_MENU, scenarioItem.onScenarioSelect, id = scenarioMenuItem.GetId() )
+			
+			if appendSeparator:
+				appendSeparator = False
+				startScenarioSubmenu.AppendSeparator()
+
+		self.m_menu1.AppendSubMenu( startScenarioSubmenu, _(u"Scenario") )
 
 	def makeFrame(self, parent ):
 		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 1020,800 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
@@ -76,6 +107,8 @@ class MainFrame ( wx.Frame ):
 		self.m_menu1 = wx.Menu()
 		
 		self.addPresetsMenu()
+		
+		self.addScenarioMenu()
 		
 		self.m_menuItem1 = wx.MenuItem( self.m_menu1, wx.ID_ANY, _(u"Save log")+ u"\t" + u"Ctrl+S", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.Append( self.m_menuItem1 )
