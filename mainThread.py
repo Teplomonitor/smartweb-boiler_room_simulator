@@ -55,7 +55,6 @@ class MainThread(threading.Thread):
 
 		self.configParserInstance = config.ConfigParserInstance()
 		
-		self._init_controller_with_preset = args.init
 		self._udp_bridge_enable           = int(args.udp)
 		self._profile                     = args.profile
 		
@@ -107,7 +106,7 @@ class MainThread(threading.Thread):
 		ioSimulator    = Simulator("simulator thread", 789)
 		controllerHost = Controller(controllerId, self._guiThread)
 		
-		controllerHost.initController(self._init_controller_with_preset, self._programPresetList)
+		controllerHost.initController(False, self._programPresetList)
 		ctrlIo = initVirtualControllers(self._controllerIoList)
 		ioSimulator.reloadConfig(controllerHost, ctrlIo)
 		
