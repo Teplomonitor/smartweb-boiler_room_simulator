@@ -26,7 +26,7 @@ def findOnlineController():
 		result = msg.recv(messageIsImHere(), 130)
 		if result:
 			controllerId   = result.getProgramId()
-			controllerType = result.data[0]
+			controllerType = result.getData()[0]
 			
 			printLog('Controller %d found' %(controllerId))
 			
