@@ -114,25 +114,24 @@ def getScenarioFilesList():
 	__all__ = [ basename(f)[:-3] for f in modules if isfile(f) and not f.endswith('__init__.py')]
 	return __all__
 
-def getScenarioModule(scenarioId):
-	moduleId = 'scenario.list.%s' % scenarioId
-	scenario_module = __import__(moduleId, fromlist=["scenario.list"])
-	return scenario_module.Scenario(self._controllerHost, self._simulator)
-
 class ScenarioThread(threading.Thread):
-	'''
-	classdocs
-	'''
-	def __init__(self, controllerHost, simulator):
-		'''
-		Constructor
-		'''
+	def __new__(cls, *args, **kwargs):
+		if not hasattr(cls, 'instance'):
+			cls.instance = super(threading.Thread, cls).__new__(cls)
+		return cls.instance
+
+	def __init__(self, controllerHost = None, simulator = None):
+		if hasattr(self, '_initDone'):
+			return
+		
 		threading.Thread.__init__(self, name = 'Scenario')
 		
 		self._scenarioIndex = 0
 		self._currentScenario = None
 		self._controllerHost = controllerHost
 		self._simulator      = simulator
+		
+		self._initDone = True
 		
 		self.daemon = True
 		self.start()
@@ -164,19 +163,24 @@ class ScenarioThread(threading.Thread):
 		
 		if scenario in __all__:
 			self._scenarioIndex   = len(__all__)
-			self._currentScenario = getScenarioModule(scenario)
+			self._currentScenario = self.getScenarioModule(scenario)
 		else:
 			printError(f'{scenario} not in scenario list!')
 			
-			
+	
+	def getScenarioModule(self, scenarioId):
+		moduleId = 'scenario.list.%s' % scenarioId
+		scenario_module = __import__(moduleId, fromlist=["scenario.list"])
+		return scenario_module.Scenario(self._controllerHost, self._simulator)
+
 	def getScenario(self, scenarioIndex):
 		__all__ = getScenarioFilesList()
 		
 		if scenarioIndex < len(__all__): 
 			scenarioId = __all__[scenarioIndex]
-			moduleId = 'scenario.list.%s' % scenarioId
-			scenario_module = __import__(moduleId, fromlist=["scenario.list"])
-			return scenario_module.Scenario(self._controllerHost, self._simulator)
+			return self.getScenarioModule(scenarioId)
 		
 		return None
 
+def startScenario(scenario):
+	ScenarioThread().startScenario(scenario)
