@@ -64,7 +64,7 @@ class CLIError(Exception):
 def initArgParser(program_license):
 	parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
 	parser.add_argument('-d', '--debug'   , action='store_true'                          , help='start debugger that will reply on simulator commands') 
-	parser.add_argument('-p', '--profile' , nargs='?', const='main', default='main'      , help='select controller config')
+	parser.add_argument('-p', '--profile' , nargs='?', const='main', default='main'      , help='select program profile')
 	parser.add_argument('-u', '--udp'     , nargs='?', const=31987 , default=0           , help='enable CAN-UDP bridge. Can be value from 0 to 65535. 0 - disable CAN-UDP bridge')
 	parser.add_argument(      '--gui'     , action='store_true'                          , help='enable gui window') 
 	parser.add_argument('-s', '--scenario', nargs='?', const='default', default='none'   , help='enable automatic scenarion run')
