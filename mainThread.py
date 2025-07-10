@@ -12,7 +12,9 @@ from smartnet.message          import CanListener            as CanListener
 from controllers.controller_io import initVirtualControllers as initVirtualControllers
 from controllers.controller    import Controller             as Controller
 from simulator.simulator       import Simulator              as Simulator
-from scenario.scenario         import ScenarioThread         as ScenarioThread
+
+import scenario.scenario as scenario
+
 import debug
 from udp.udp import initUdpBridge as initUdpBridge
 
@@ -111,8 +113,11 @@ class MainThread(threading.Thread):
 		ctrlIo = initVirtualControllers(self._controllerIoList)
 		ioSimulator.reloadConfig(controllerHost, ctrlIo)
 		
+		scenario.ScenarioThread(controllerHost, ioSimulator)
+		
 		if self._scenario != 'none':
-			ScenarioThread(controllerHost, ioSimulator)
+			scenario.startScenario(self._scenario)
+			
 		
 	def run(self):
 		self.initSimulator()
