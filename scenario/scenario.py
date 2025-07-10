@@ -7,6 +7,7 @@ import glob
 import time
 import threading
 
+import main
 import mainThread
 import presets.preset
 from controllers.controller_io import initVirtualControllers as initVirtualControllers
@@ -55,7 +56,12 @@ class Scenario(object):
 		ok = self.initProgramList(self.getRequiredPrograms())
 				
 		if not ok:
-			self.initSimulator(self.getDefaultPreset())
+			main.loadPreset(self.getDefaultPreset())
+			
+			while main.loadPresetDone() == False:
+				time.sleep(1)
+			
+			time.sleep(2)
 			
 			if not self.initProgramList(self.getRequiredPrograms()):
 				printError('fail to init program list!')
@@ -70,13 +76,6 @@ class Scenario(object):
 	def getDefaultPreset(self):
 		return 'default'
 	
-	def initSimulator(self, preset):
-		self._sim.Clear()
-		programList, controllerIoList = presets.preset.getPresetsList(preset)
-		self._controllerHost.initController(True, programList)
-		ctrlIo = initVirtualControllers(controllerIoList)
-		self._sim.reloadConfig(self._controllerHost, ctrlIo)
-		
 	def initProgramList(self, requiredProgramTypesList):
 		self._programList = {}
 		for prgKey in requiredProgramTypesList:
@@ -130,6 +129,7 @@ class ScenarioThread(threading.Thread):
 		self._currentScenario = None
 		self._controllerHost = controllerHost
 		self._simulator      = simulator
+		self._newScenario    = None
 		
 		self._initDone = True
 		
@@ -143,6 +143,10 @@ class ScenarioThread(threading.Thread):
 		
 	def run(self):
 		while mainThread.taskEnable():
+			if self._newScenario:
+				self.startScenarioNow(self._newScenario)
+				self._newScenario = None
+			
 			if self._currentScenario:
 				self._currentScenario.run()
 			
@@ -152,8 +156,11 @@ class ScenarioThread(threading.Thread):
 						printLog('All scenario finished!')
 				
 			time.sleep(1)
-			
+	
 	def startScenario(self, scenario):
+		self._newScenario = scenario
+	
+	def startScenarioNow(self, scenario):
 		if scenario == 'all':
 			self._scenarioIndex = 0
 			self._currentScenario = self.getNextScenario()
