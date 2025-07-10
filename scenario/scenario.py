@@ -7,6 +7,7 @@ import glob
 import time
 import threading
 
+import mainThread
 import presets.preset
 from controllers.controller_io import initVirtualControllers as initVirtualControllers
 
@@ -106,6 +107,18 @@ class Scenario(object):
 					return program
 		return None
 
+def getScenarioFilesList():
+	regex = join(dirname(__file__),'list', "*.py")
+	
+	modules = glob.glob(regex)
+	__all__ = [ basename(f)[:-3] for f in modules if isfile(f) and not f.endswith('__init__.py')]
+	return __all__
+
+def getScenarioModule(scenarioId):
+	moduleId = 'scenario.list.%s' % scenarioId
+	scenario_module = __import__(moduleId, fromlist=["scenario.list"])
+	return scenario_module.Scenario(self._controllerHost, self._simulator)
+
 class ScenarioThread(threading.Thread):
 	'''
 	classdocs
@@ -117,6 +130,7 @@ class ScenarioThread(threading.Thread):
 		threading.Thread.__init__(self, name = 'Scenario')
 		
 		self._scenarioIndex = 0
+		self._currentScenario = None
 		self._controllerHost = controllerHost
 		self._simulator      = simulator
 		
@@ -125,36 +139,38 @@ class ScenarioThread(threading.Thread):
 		
 	def getNextScenario(self):
 		scenario = self.getScenario(self._scenarioIndex)
-		self._scenarioIndex = self._scenarioIndex + 1
+		self._scenarioIndex += 1
 		return scenario
 		
 	def run(self):
-		time.sleep(5)
-		
-		printLog('Starting scenario!')
-		
-		time.sleep(5)
-		
-		self._programsList   = self._controllerHost.getProgramList()
-		
-		self._currentScenario = self.getNextScenario()
-		
-		while True:
-			self._currentScenario.run()
+		while mainThread.taskEnable():
+			if self._currentScenario:
+				self._currentScenario.run()
 			
-			if self._currentScenario.done():
-				self._currentScenario = self.getNextScenario()
-				if self._currentScenario == None:
-					printLog('All scenario finished!')
-					return 0
+				if self._currentScenario.done():
+					self._currentScenario = self.getNextScenario()
+					if self._currentScenario == None:
+						printLog('All scenario finished!')
 				
 			time.sleep(1)
-
-	def getScenario(self, scenarioIndex):
-		regex = join(dirname(__file__),'list', "*.py")
+			
+	def startScenario(self, scenario):
+		if scenario == 'all':
+			self._scenarioIndex = 0
+			self._currentScenario = self.getNextScenario()
+			return
 		
-		modules = glob.glob(regex)
-		__all__ = [ basename(f)[:-3] for f in modules if isfile(f) and not f.endswith('__init__.py')]
+		__all__ = getScenarioFilesList()
+		
+		if scenario in __all__:
+			self._scenarioIndex   = len(__all__)
+			self._currentScenario = getScenarioModule(scenario)
+		else:
+			printError(f'{scenario} not in scenario list!')
+			
+			
+	def getScenario(self, scenarioIndex):
+		__all__ = getScenarioFilesList()
 		
 		if scenarioIndex < len(__all__): 
 			scenarioId = __all__[scenarioIndex]
