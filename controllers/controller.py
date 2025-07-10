@@ -66,7 +66,7 @@ class Controller(object):
 				for program in programPresetList:
 					programFound = self.searchProgramInActiveProgramList(program.getId(), program.getType(), activeProgramList)
 					if not programFound:
-						printError(f'program {program.getId()} not found')
+						printError(f'program {program.getId()}.{program.getType()} not found')
 						i += 1
 						break
 					
@@ -111,7 +111,7 @@ class Controller(object):
 					continue
 				
 				prg = {'id': programId, 'type': programType}
-				print(f'found prg {programId}')
+				print(f'found prg {programId}.{programType}')
 				self._activeProgramsList.append(prg)
 			
 			return True
