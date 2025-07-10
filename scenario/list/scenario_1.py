@@ -93,6 +93,7 @@ class Scenario(Parent):
 		printLog('Warm up')
 		time.sleep(30)
 		
+		printLog('Waiting for circulation pump to switch on')
 		if self.waitPumpSwitchOn(60):
 			printLog('ok, cirulation pump is working')
 		else:
@@ -105,13 +106,16 @@ class Scenario(Parent):
 		printLog('making "cold" backward flow temperature')
 		self.setBacwardFlowTemperature(tFrostProtect - 1)
 		
+		pumpSwitchOffDuration = 60
+		
+		printLog(f'Waiting for circulation pump to switch off for at least {pumpSwitchOffDuration} seconds')
 		time.sleep(10)
 		
-		if self.waitPumpSwitchOff(60, 5*60):
+		if self.waitPumpSwitchOff(pumpSwitchOffDuration, 5*60):
 			printLog('Test Ok!')
 			self._status = 'OK'
 		else:
-			printLog('Test fail!')	
+			printError('Test fail! Pump don\'t switch off')
 			self._status = 'FAIL'
 		
 
