@@ -5,7 +5,9 @@
 import time
 from copy import copy
 
-from smartnet.message import Message as smartnetMessage
+from smartnet.message import CanListener as CanListener
+from smartnet.message import Message     as smartnetMessage
+
 import smartnet.constants as snc
 from programs.factory import createProgram as createProgram
 
@@ -29,6 +31,7 @@ class Controller(object):
 		if hasattr(self, '_initDone'):
 			return
 		
+		self._activeProgramsList = []
 		self._programList = []
 		self._controllerId = controllerId
 		self._gui = gui
@@ -39,6 +42,7 @@ class Controller(object):
 		for prg in self._programList:
 			prg.Clear()
 			
+		self._activeProgramsList = []
 		self._programList = []
 		
 		if self._gui:
@@ -55,18 +59,25 @@ class Controller(object):
 					
 				time.sleep(2)
 		else:
-			activeProgramList = self.readControllerProgramList()
-			
-			for program in programPresetList:
-				programFound = False
-				for ap in activeProgramList:
-					if ap['id'] == program.getId() and ap['type'] == snc.ProgramType[program.getType()]:
-						programFound = True
+			activeProgramList = []
+			i = 0
+			while i < 3:
+				activeProgramList.extend(self.readControllerProgramList())
+				for program in programPresetList:
+					programFound = self.searchProgramInActiveProgramList(program.getId(), program.getType(), activeProgramList)
+					if not programFound:
+						printError(f'program {program.getId()} not found')
+						i += 1
 						break
-				if not programFound:
-					print('controller got wrong preset')
-					return
+					
+				if programFound:
+					printLog('all programs found')
+					break
 				
+			if not programFound:
+				printError('controller got wrong preset')
+				return
+			
 			for program in programPresetList:
 				self.addProgramFromPreset(program)
 		
@@ -75,8 +86,40 @@ class Controller(object):
 		self.addProgram(prg)
 		return prg
 	
+	def parseActiveProgramsList(self, response):
+		if response is None:
+			return False
+		else:
+			data = response.getData()
+			
+			programNum = int(len(data) / 2)
+			
+			for i in range(programNum):
+				programId   = data[i*2  ]
+				programType = data[i*2+1]
+				
+				if programId == 0:
+					break
+				
+				skip = False
+				for prg in self._activeProgramsList:
+					if prg['id'] == programId:
+						skip = True
+						break
+
+				if skip:
+					continue
+				
+				prg = {'id': programId, 'type': programType}
+				print(f'found prg {programId}')
+				self._activeProgramsList.append(prg)
+			
+			return True
+			
 	def readControllerProgramList(self):
 		printLog('read controller programs list')
+		CanListener.subscribe(self)
+		
 		def generateRequest():
 			request = smartnetMessage(
 			snc.ProgramType['CONTROLLER'],
@@ -85,41 +128,23 @@ class Controller(object):
 			snc.requestFlag['REQUEST'])
 			return request
 		
-		def generateRequiredResponse():
-			response = copy(request)
-			response.setRequestFlag(snc.requestFlag['RESPONSE'])
-			return response
-		
-		def handleResponse():
-			if response is None:
-				return False
-			else:
-				data = response.getData()
-				
-				programNum = int(len(data) / 2)
-				
-				for i in range(programNum):
-					programId   = data[i*2  ]
-					programType = data[i*2+1]
-					prg = {'id': programId, 'type': programType}
-					activeProgramList.append(prg)
-				
-				return True
-				
 		request = generateRequest()
-		responseFilter = generateRequiredResponse()
-		
 		request.send()
+
+		request.send()
+		time.sleep(3)
 		
-		activeProgramList = []
+		CanListener.unsubscribe(self)
 		
-		while True:
-			response = request.recv(responseFilter, 5)
-			if handleResponse() == False:
-				break
-		
-		return activeProgramList
-		
+		return self._activeProgramsList
+	
+	def searchProgramInActiveProgramList(self, programId, programType, activeProgramList = None):
+		if activeProgramList is None:
+			activeProgramList = self.readControllerProgramList()
+		for ap in activeProgramList:
+			if ap['id'] == programId and ap['type'] == snc.ProgramType[programType]:
+				return True
+		return False
 	
 	def sendProgramAddRequest(self, programType, programId, programScheme):
 		printLog('Send program add request')
@@ -129,13 +154,16 @@ class Controller(object):
 			self._controllerId,
 			snc.ControllerFunction['ADD_NEW_PROGRAM'],
 			snc.requestFlag['REQUEST'],
-			[programType, programId, programScheme])
+			[	snc.ProgramType[programType],
+				programId,
+				snc.ProgramScheme[programScheme]
+			])
 			return request
 
 		def generateRequiredResponse():
 			response = copy(request)
 			response.setRequestFlag(snc.requestFlag['RESPONSE'])
-			response.setData([programType, programId])
+			response.setData([snc.ProgramType[programType], programId])
 			return response
 
 		def handleResponse():
@@ -169,7 +197,19 @@ class Controller(object):
 		return preset.loadPreset(self)
 
 	def getProgramList(self): return self._programList
-
+	
+	def OnCanMessageReceived(self, msg):
+		def generateResponse():
+			response = smartnetMessage(
+			snc.ProgramType['CONTROLLER'],
+			self._controllerId,
+			snc.ControllerFunction['GET_ACTIVE_PROGRAMS_LIST'],
+			snc.requestFlag['RESPONSE'])
+			return response
+		
+		if msg.compare(generateResponse()):
+			self.parseActiveProgramsList(msg)
+			
 	def resetConfig(self):
 		printLog('send Controller reset request')
 		def generateRequest():
@@ -210,6 +250,10 @@ class Controller(object):
 	def addProgram(self, program):
 		printLog('add prg to list')
 		self._programList.append(program)
+		
+		prg = {'id': program.getId(), 'type': snc.ProgramType[program.getType()]}
+		
+		self._activeProgramsList.append(prg)
 		if self._gui:
 			self._gui.addProgram(program)
 	
