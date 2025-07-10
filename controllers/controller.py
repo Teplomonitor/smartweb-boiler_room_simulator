@@ -57,7 +57,7 @@ class Controller(object):
 				if self.makeNewProgram(program) == False:
 					printError(f'Preset: program {program.getType()}_{program.getId()} make fail!')
 					
-				time.sleep(2)
+				time.sleep(1)
 		else:
 			activeProgramList = []
 			i = 0
