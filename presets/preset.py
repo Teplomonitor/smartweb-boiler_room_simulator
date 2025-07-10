@@ -31,18 +31,26 @@ class ProgramPreset(object):
 	def getOutput   (self, i): return self._outputs[i]
 	def getPower    (self): return self._power
 
+	def addProgramToControllerHost(self, controller):
+		i = 0
+		while i < 3:
+			result = controller.sendProgramAddRequest(self._type, self._id, self._scheme)
+			
+			if result:
+				return True
+			else:
+				programFound = controller.searchProgramInActiveProgramList(self._id, self._type)
+				
+				if programFound:
+					print('Program %s found on controller, probably message was lost'%(self._title))
+					return True
+				else:
+					print('controller add program retry')
+					i += 1
+					continue
+		return False
 
-	def loadPreset(self, controller):
-		prgType   = snc.ProgramType  [self._type]
-		prgScheme = snc.ProgramScheme[self._scheme]
-
-		result = controller.sendProgramAddRequest(prgType, self._id, prgScheme)
-
-		if not result:
-			print('Program %s add fail'%(self._title))
-			return False
-
-		prg = controller.addProgramFromPreset(self)
+	def bindInputs(self, prg):
 		if self._inputs:
 			i = 0
 			for value in self._inputs:
@@ -50,6 +58,7 @@ class ProgramPreset(object):
 					prg.bindInput(i, value)
 				i = i + 1
 
+	def bindOutputs(self, prg):
 		if self._outputs:
 			i = 0
 			for value in self._outputs:
@@ -57,10 +66,24 @@ class ProgramPreset(object):
 					prg.bindOutput(i, value)
 				i = i + 1
 
+	def loadSettings(self):
 		if self._settings:
 			for value in self._settings.get():
 				value.setProgramId(self._id)
 				value.write()
+				
+	def loadPreset(self, controller):
+		programAddOk = self.addProgramToControllerHost(controller)
+		
+		if not programAddOk:
+			print('Program %s add fail'%(self._title))
+			return False
+		
+		prg = controller.addProgramFromPreset(self)
+
+		self.bindInputs (prg)
+		self.bindOutputs(prg)
+		self.loadSettings()
 
 class ControllerPreset(object):
 	'''
