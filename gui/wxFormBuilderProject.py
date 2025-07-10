@@ -177,6 +177,20 @@ class MainFrame ( wx.Frame ):
 
         self.m_menu1.AppendSubMenu( self.loadPresetSubmenu, _(u"Load preset") )
 
+        self.startScenarioSubmenu = wx.Menu()
+        self.allScenario = wx.MenuItem( self.startScenarioSubmenu, wx.ID_ANY, _(u"All"), wx.EmptyString, wx.ITEM_NORMAL )
+        self.startScenarioSubmenu.Append( self.allScenario )
+
+        self.startScenarioSubmenu.AppendSeparator()
+
+        self.scenario1 = wx.MenuItem( self.startScenarioSubmenu, wx.ID_ANY, _(u"Scenario1"), wx.EmptyString, wx.ITEM_NORMAL )
+        self.startScenarioSubmenu.Append( self.scenario1 )
+
+        self.scenario2 = wx.MenuItem( self.startScenarioSubmenu, wx.ID_ANY, _(u"Scenario2"), wx.EmptyString, wx.ITEM_NORMAL )
+        self.startScenarioSubmenu.Append( self.scenario2 )
+
+        self.m_menu1.AppendSubMenu( self.startScenarioSubmenu, _(u"Scenario") )
+
         self.m_menuItem1 = wx.MenuItem( self.m_menu1, wx.ID_ANY, _(u"Save log")+ u"\t" + u"Ctrl+S", wx.EmptyString, wx.ITEM_NORMAL )
         self.m_menu1.Append( self.m_menuItem1 )
 
@@ -200,6 +214,9 @@ class MainFrame ( wx.Frame ):
         self.Parameter1Slider.Bind( wx.EVT_SCROLL, self.onScroll )
         self.Bind( wx.EVT_MENU, self.onPreset1Select, id = self.preset1.GetId() )
         self.Bind( wx.EVT_MENU, self.onPreset2Select, id = self.preset2.GetId() )
+        self.Bind( wx.EVT_MENU, self.onAllScenarioSelect, id = self.allScenario.GetId() )
+        self.Bind( wx.EVT_MENU, self.onScenario1Select, id = self.scenario1.GetId() )
+        self.Bind( wx.EVT_MENU, self.onScenario2Select, id = self.scenario2.GetId() )
         self.Bind( wx.EVT_MENU, self.OnLogSaveButtonPress, id = self.m_menuItem1.GetId() )
         self.Bind( wx.EVT_MENU, self.OnExitButtonPress, id = self.m_menuItem2.GetId() )
 
@@ -227,6 +244,15 @@ class MainFrame ( wx.Frame ):
         event.Skip()
 
     def onPreset2Select( self, event ):
+        event.Skip()
+
+    def onAllScenarioSelect( self, event ):
+        event.Skip()
+
+    def onScenario1Select( self, event ):
+        event.Skip()
+
+    def onScenario2Select( self, event ):
         event.Skip()
 
     def OnLogSaveButtonPress( self, event ):
