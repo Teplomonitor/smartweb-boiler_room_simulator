@@ -20,10 +20,21 @@ def messageIsImHere():
 def findOnlineController():
 	printLog('Searching controller')
 	msg = smartnetMessage()
-	result = msg.recv(messageIsImHere(), 130)
-	if result:
-		controllerId = result.getProgramId()
-		printLog('Controller %d found' %(controllerId))
-		return controllerId
-	else:
-		return None
+
+	i = 0
+	while i < 3:
+		result = msg.recv(messageIsImHere(), 130)
+		if result:
+			controllerId   = result.getProgramId()
+			controllerType = result.data[0]
+			
+			printLog('Controller %d found' %(controllerId))
+			
+			if controllerType == snc.ControllerType['SWK_1']:
+				printLog('skip extension block')
+				i += 1
+				continue
+			
+			return controllerId
+		else:
+			return None
