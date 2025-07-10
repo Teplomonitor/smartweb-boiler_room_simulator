@@ -97,6 +97,10 @@ def loadPreset(preset):
 	t = mainThread.MainThread()
 	t.loadPreset(preset)
 
+def loadPresetDone():
+	t = mainThread.MainThread()
+	return t.loadPresetDone()
+
 def initMainThread(args):
 	mainThread.MainThread(args)
 
