@@ -143,7 +143,7 @@ class Simulator(object):
 			
 		
 		if flow:
-			k = 0.7
+			k = 0.9
 			dt = self.getTotalPower() / flow * k
 		else:
 			dt = self.getTotalPower() * 0.5
