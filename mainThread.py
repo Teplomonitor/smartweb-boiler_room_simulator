@@ -101,6 +101,7 @@ class MainThread(threading.Thread):
 		
 		if controllerId is None:
 			printError('controller not found. Exit')
+			self.taskStop()
 			sys.exit(1)
 		
 		ioSimulator    = Simulator("simulator thread", 789)
