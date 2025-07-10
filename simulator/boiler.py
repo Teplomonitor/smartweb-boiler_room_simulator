@@ -135,10 +135,11 @@ class Simulator(object):
 
 	def computeTemperature(self):
 		flow = self.getFlow()
+		direct_temp = self.getTemperature()
 		if flow:
 			temp = self.getSupplyBackwardTemperature()
 		else:
-			temp = self.getTemperature()
+			temp = direct_temp
 			
 		
 		if flow:
@@ -147,9 +148,7 @@ class Simulator(object):
 		else:
 			dt = self.getTotalPower() * 0.5
 		
-		dt = limit(-1, dt, 3)
-		
-		temp = temp + dt
+		temp = limit(direct_temp - 1, temp + dt, direct_temp + 1) # don't want temp grow too fast
 		
 		temp = limit(self._tMin, temp, self._tMax + 10)
 
