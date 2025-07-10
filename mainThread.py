@@ -43,6 +43,8 @@ def loadPresetNow(preset):
 	ctrlIo = initVirtualControllers(controllerIoList)
 	ioSimulator.reloadConfig(controllerHost, ctrlIo)
 	
+	MainThread().setCurrentPreset(preset)
+	
 class MainThread(threading.Thread):
 	def __new__(cls, *args, **kwargs):
 		if not hasattr(cls, 'instance'):
@@ -59,13 +61,13 @@ class MainThread(threading.Thread):
 		
 		self._udp_bridge_enable           = int(args.udp)
 		self._profile                     = args.profile
-		
-		preset = self.configParserInstance.getParameterValue(self._profile, 'preset')
-		
 		self._scenario                    = args.scenario
+		self._debug                       = args.debug
+		
+		preset = self.getCurrentPreset()
+		
 		self._programPresetList, self._controllerIoList = presets.preset.getPresetsList(preset)
 		self._taskEnable = True
-		self._debug = args.debug
 		
 		if self._programPresetList is None:
 			printError('wrong preset. Exit')
@@ -85,14 +87,14 @@ class MainThread(threading.Thread):
 		self.deamon = True
 		self.start()
 	
-	def taskEnable(self):
-		return self._taskEnable
-	
-	def taskStop(self):
-		self._taskEnable = False
+	def getCurrentPreset(self):   return self.configParserInstance.getParameterValue(self.getProfile(), 'preset')
+	def setCurrentPreset(self, preset):  self.configParserInstance.setParameterValue(self.getProfile(), 'preset', preset)
+		
+	def getProfile(self): return self._profile
+	def taskEnable(self): return self._taskEnable
+	def taskStop(self): self._taskEnable = False
 		
 	def initSimulator(self):
-		
 		if self._udp_bridge_enable:
 			initUdpBridge(self._udp_bridge_enable)
 		
@@ -127,14 +129,13 @@ class MainThread(threading.Thread):
 			
 			if self._newPreset:
 				loadPresetNow(self._newPreset)
-				
-				self.configParserInstance.setParameterValue(self._profile, 'preset', self._newPreset)
-				
 				self._newPreset = None
 			
 	def loadPreset(self, newPreset):
 		self._newPreset = newPreset
-			
+	
+	def loadPresetDone(self):
+		return self._newPreset == None
 
 def taskEnable():
 	return MainThread().taskEnable()
