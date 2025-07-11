@@ -7,7 +7,6 @@ import time
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
 from scenario.scenario import Scenario   as Parent
-from smartnet.remoteControl import RemoteControlParameter as RemoteControlParameter
 
 from functions.timeOnDelay  import TimeOnDelay  as TimeOnDelay
 
@@ -16,15 +15,14 @@ class Scenario(Parent):
 		super().__init__(controllerHost, sim)
 		
 		self._snowmelter = self._programList['snowmelter']
+		self._outdoor    = self._programList['oat']
 
-	def getScenarioTitle(self):
-		return 'scenario 1'
+	def getScenarioTitle(self): return 'scenario 1'
 	
 	def getScenarioDescription(self):
 		return 'check if circulation pump switch off, if T < TfrostProtect'
 	
-	def getChecklistId(self):
-		return '3.9.1'
+	def getChecklistId(self): return '3.9.1'
 	
 	def getRequiredPrograms(self):
 		requiredProgramTypesList = {
@@ -33,20 +31,28 @@ class Scenario(Parent):
 		}
 		return requiredProgramTypesList
 	
-	def getDefaultPreset(self):
-		return 'snowmelter'
+	def getDefaultPreset(self): return 'snowmelter'
+
+	def readFrostProtectionTemperatureValue(self): return self._snowmelter.readParameterValue('frostProtectionTemp')
+	def readRequiredPlateTemperatureValue(self)  : return self._snowmelter.readParameterValue('reqPlateTemp')
+	def readMinOutdoorTemperature(self)          : return self._snowmelter.readParameterValue('minOutdoorTemp')
+	def readMaxOutdoorTemperature(self)          : return self._snowmelter.readParameterValue('maxOutdoorTemp')
 		
-	def readFrostProtectionTemperatureValue(self):
-		programId = self._snowmelter.getId()
-		param = RemoteControlParameter(
-				'SNOWMELT', 'PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE',
-				parameterType  = 'TEMPERATURE',
-				programId = programId)
+	def setPlateTemperature(self, value):
+		t = self._snowmelter.getPlateTemperature()
+		self.setSensorValue(t, value)
 		
-		param.read()
+	def setOutdoorTemperature(self, value):
+		t = self._outdoor.getOutdoorTemperature()
+		self.setSensorValue(t, value)
 		
-		return param.getValue()
-	
+	def setMediumOutdoorTemperature(self):
+		minTemp = self.readMinOutdoorTemperature()
+		maxTemp = self.readMaxOutdoorTemperature()
+		
+		midTemp = (minTemp + maxTemp)/2
+		self.setOutdoorTemperature(midTemp)
+
 	def getCirculationPumpState(self):
 		return self._snowmelter.getSecondaryPumpState().getValue()
 	
@@ -86,13 +92,28 @@ class Scenario(Parent):
 		return False
 	
 	def run(self):
+		plateSetpoint = self.readRequiredPlateTemperatureValue()
+		
+		if plateSetpoint is None:
+			self._status = 'FAIL'
+			printError('Проблема! не удалось получить уставку плиты')
+			return
+		
 		tFrostProtect = self.readFrostProtectionTemperatureValue()
 		
 		if tFrostProtect is None:
 			self._status = 'FAIL'
 			printError('Test fail! Can\'t get frost protect temp')
 			return
-			
+		
+		printLog('делаем подходящую для снеготайки уличную температуру')
+		self.setMediumOutdoorTemperature()
+		time.sleep(3)
+		
+		printLog('делаем плиту холодной')
+		self.setPlateTemperature(plateSetpoint - 2)
+		time.sleep(3)
+		
 		printLog('Warm up')
 		time.sleep(30)
 		

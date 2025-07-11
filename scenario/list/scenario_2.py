@@ -7,7 +7,6 @@ import time
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
 from scenario.scenario import Scenario   as Parent
-from smartnet.remoteControl import RemoteControlParameter as RemoteControlParameter
 
 from functions.timeOnDelay  import TimeOnDelay  as TimeOnDelay
 
@@ -16,15 +15,16 @@ class Scenario(Parent):
 		super().__init__(controllerHost, sim)
 		
 		self._snowmelter = self._programList['snowmelter']
+		self._outdoor    = self._programList['oat']
 
 	def getScenarioTitle(self):
-		return 'scenario 1'
+		return 'scenario 2'
 	
 	def getScenarioDescription(self):
-		return 'check if circulation pump switch off, if T < TfrostProtect'
+		return 'проверить, что насос циркуляции выключается, если температура плиты выше требуемой больше, чем на 2 градуса'
 	
 	def getChecklistId(self):
-		return '3.9.1'
+		return '3.9.2'
 	
 	def getRequiredPrograms(self):
 		requiredProgramTypesList = {
@@ -36,22 +36,24 @@ class Scenario(Parent):
 	def getDefaultPreset(self):
 		return 'snowmelter'
 		
-	def readFrostProtectionTemperatureValue(self):
-		programId = self._snowmelter.getId()
-		param = RemoteControlParameter(
-				'SNOWMELT', 'PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE',
-				parameterType  = 'TEMPERATURE',
-				programId = programId)
 		
-		param.read()
-		
-		return param.getValue()
+	def readRequiredPlateTemperatureValue(self): return self._snowmelter.readParameterValue('reqPlateTemp')
+	def readMinOutdoorTemperature(self)        : return self._snowmelter.readParameterValue('minOutdoorTemp')
+	def readMaxOutdoorTemperature(self)        : return self._snowmelter.readParameterValue('maxOutdoorTemp')
 	
 	def getCirculationPumpState(self):
 		return self._snowmelter.getSecondaryPumpState().getValue()
 	
 	def setBacwardFlowTemperature(self, value):
 		t = self._snowmelter.getBackwardFlowTemperature()
+		self.setSensorValue(t, value)
+		
+	def setPlateTemperature(self, value):
+		t = self._snowmelter.getPlateTemperature()
+		self.setSensorValue(t, value)
+		
+	def setOutdoorTemperature(self, value):
+		t = self._outdoor.getOutdoorTemperature()
 		self.setSensorValue(t, value)
 		
 	def waitPumpSwitchOn(self, delay):
@@ -85,40 +87,55 @@ class Scenario(Parent):
 				return False
 		return False
 	
-	def run(self):
-		tFrostProtect = self.readFrostProtectionTemperatureValue()
+	def setMediumOutdoorTemperature(self):
+		minTemp = self.readMinOutdoorTemperature()
+		maxTemp = self.readMaxOutdoorTemperature()
 		
-		if tFrostProtect is None:
+		midTemp = (minTemp + maxTemp)/2
+		self.setOutdoorTemperature(midTemp)
+
+	def run(self):
+		plateSetpoint = self.readRequiredPlateTemperatureValue()
+		
+		if plateSetpoint is None:
 			self._status = 'FAIL'
-			printError('Test fail! Can\'t get frost protect temp')
+			printError('Проблема! не удалось получить уставку плиты')
 			return
-			
-		printLog('Warm up')
+		
+		printLog('делаем подходящую для снеготайки уличную температуру')
+		self.setMediumOutdoorTemperature()
+		time.sleep(3)
+		
+		printLog('делаем плиту холодной')
+		self.setPlateTemperature(plateSetpoint - 2)
+		time.sleep(3)
+		
+		printLog('ждём, пока система устаканится')
 		time.sleep(30)
 		
-		printLog('Waiting for circulation pump to switch on')
+		printLog('ждём, пока насос циркуляции не включится')
 		if self.waitPumpSwitchOn(60):
-			printLog('ok, cirulation pump is working')
+			printLog('Хорошо, включился')
 		else:
 			self._status = 'FAIL'
-			printError('Test fail! Pump don\'t work')
+			printError('Плохо. Не включился!')
 			return
 			
 		time.sleep(2)
 		
-		printLog('making "cold" backward flow temperature')
-		self.setBacwardFlowTemperature(tFrostProtect - 1)
+		printLog('делаем плиту горячей')
+		self.setPlateTemperature(plateSetpoint + 2.1)
 		
 		pumpSwitchOffDuration = 60
 		
-		printLog(f'Waiting for circulation pump to switch off for at least {pumpSwitchOffDuration} seconds')
+		printLog(f'Ждём, пока насос циркуляции не выключится хотя бы на {pumpSwitchOffDuration} секунд')
 		time.sleep(10)
 		
 		if self.waitPumpSwitchOff(pumpSwitchOffDuration, 5*60):
-			printLog('Test Ok!')
+			printLog('Хорошо!')
 			self._status = 'OK'
 		else:
-			printError('Test fail! Pump don\'t switch off')
+			printError('Плохо. Насос не выключается!')
 			self._status = 'FAIL'
 		
 
