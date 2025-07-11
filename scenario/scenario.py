@@ -9,8 +9,6 @@ import threading
 
 import main
 import mainThread
-import presets.preset
-from controllers.controller_io import initVirtualControllers as initVirtualControllers
 
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
@@ -54,6 +52,9 @@ class Scenario(object):
 		
 	def done(self):
 		return self._status != 'IN_PROGRESS'
+	
+	def getStatus(self):
+		return self._status
 	
 	def initScenario(self):
 		ok = self.initProgramList(self.getRequiredPrograms())
@@ -133,6 +134,7 @@ class ScenarioThread(threading.Thread):
 		self._controllerHost = controllerHost
 		self._simulator      = simulator
 		self._newScenario    = None
+		self._scenarioResultList = []
 		
 		self._initDone = True
 		
@@ -154,16 +156,44 @@ class ScenarioThread(threading.Thread):
 				self._currentScenario.run()
 			
 				if self._currentScenario.done():
+					self.appendScenarioResult(self._currentScenario)
+					
 					self._currentScenario = self.getNextScenario()
 					if self._currentScenario == None:
-						printLog('All scenario finished!')
+						self.printScenarioRunResult()
 				
 			time.sleep(1)
-	
+			
+	def appendScenarioResult(self, scenario):
+		result = {
+			'checklistId': scenario.getChecklistId(),
+			'result'     : scenario.getStatus()
+		}
+		self._scenarioResultList.append(result)
+		
+	def printScenarioRunResult(self):
+		dt = time.time() - self._scenarioStartTime
+		printLog('All scenario finished!')
+		printLog(f'Time: {dt} seconds')
+		
+		for result in self._scenarioResultList:
+			checklistId = result['checklistId']
+			value = result['result']
+			
+			if value == 'OK':
+				printFunc = printLog
+			else:
+				printFunc = printError
+			
+			printFunc(f'{checklistId}: {value}')
+				
 	def startScenario(self, scenario):
 		self._newScenario = scenario
 	
 	def startScenarioNow(self, scenario):
+		self._scenarioStartTime = time.time()
+		self._scenarioResultList = []
+		
 		if scenario == 'all':
 			self._scenarioIndex = 0
 			self._currentScenario = self.getNextScenario()
