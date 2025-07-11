@@ -21,5 +21,12 @@ class Oat(Program):
 		]
 		
 		self.setInputsRange(inputsRange)
-
+		
+		self._inputId = {
+			'outdoorTemperature'  : 0,
+		}
+		
+	def getOutdoorTemperature(self):
+		return self.getInputChannel(self._inputId['outdoorTemperature'])
+	
 	def getGuiColor (self): return 'blue'
