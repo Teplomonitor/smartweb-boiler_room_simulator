@@ -35,6 +35,9 @@ class Scenario(object):
 	def getScenarioDescription(self):
 		return 'default'
 	
+	def getChecklistId(self):
+		return '--'
+	
 	def __del__(self):
 		for sensor in self._manualSensorsList:
 			sensor.setManual(False)

@@ -23,6 +23,9 @@ class Scenario(Parent):
 	def getScenarioDescription(self):
 		return 'check if circulation pump switch off, if T < TfrostProtect'
 	
+	def getChecklistId(self):
+		return '3.9.1'
+	
 	def getRequiredPrograms(self):
 		requiredProgramTypesList = {
 			'snowmelter': 'SNOWMELT',
