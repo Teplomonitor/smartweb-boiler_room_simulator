@@ -28,24 +28,34 @@ def bytesToTemp(data, littleEndian = False):
 	if value == 0x8001: return 'SHORT'
 	if value == 0x8002: return 'OPEN'
 	
-	value = value/10.0
+	if value > 0x8000:
+		value -= 0x10000
+	
+	value /= 10.0
 	
 	return value
 
 class RemoteControlParameter(object):
 	def __init__(self,
-		programType   ,
-		parameterId   ,
+		programType    = None,
+		parameterId    = None,
 		parameterValue = None,
 		parameterIndex = None,
 		parameterType  = 'UINT8_T',
-		programId      = None
+		programId      = None,
+		parameterInfo  = None
 		):
-		self._programType    = programType   
-		self._parameterId    = parameterId
+		if parameterInfo:
+			self._programType   = parameterInfo['programType']
+			self._parameterId   = parameterInfo['parameter']
+			self._parameterType = parameterInfo['parameterType']
+		else:
+			self._programType    = programType   
+			self._parameterId    = parameterId
+			self._parameterType  = parameterType
+			
 		self._parameterValue = parameterValue
 		self._parameterIndex = parameterIndex
-		self._parameterType  = parameterType
 		self._programId      = programId
 
 	def setProgramId(self, programId):
