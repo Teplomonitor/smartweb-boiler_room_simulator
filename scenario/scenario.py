@@ -19,6 +19,7 @@ class Scenario(object):
 		self._controllerHost = controllerHost
 		self._status = 'IN_PROGRESS'
 		self._sim = sim
+		self._startTime = time.time()
 				
 		printLog(f'starting {self.getScenarioTitle()}')
 		printLog(f'description: {self.getScenarioDescription()}')
@@ -35,6 +36,9 @@ class Scenario(object):
 	
 	def getChecklistId(self):
 		return '--'
+	
+	def getDuration(self):
+		return time.time() - self._startTime
 	
 	def __del__(self):
 		for sensor in self._manualSensorsList:
@@ -71,6 +75,8 @@ class Scenario(object):
 				printError('fail to init program list!')
 			else:
 				printLog('init ok!')
+				
+		self._startTime = time.time()
 
 	def getRequiredPrograms(self):
 		requiredProgramTypesList = {
@@ -167,25 +173,29 @@ class ScenarioThread(threading.Thread):
 	def appendScenarioResult(self, scenario):
 		result = {
 			'checklistId': scenario.getChecklistId(),
-			'result'     : scenario.getStatus()
+			'result'     : scenario.getStatus(),
+			'duration'   : scenario.getDuration()
 		}
 		self._scenarioResultList.append(result)
 		
 	def printScenarioRunResult(self):
 		dt = time.time() - self._scenarioStartTime
+		dtStr = time.strftime('%H:%M:%S', time.gmtime(dt))
+
 		printLog('All scenario finished!')
-		printLog(f'Time: {dt} seconds')
+		printLog(f'Time: {dtStr}')
 		
 		for result in self._scenarioResultList:
 			checklistId = result['checklistId']
-			value = result['result']
-			
+			value       = result['result']
+			duration    = result['duration']
+			durationStr = time.strftime('%H:%M:%S', time.gmtime(duration))
 			if value == 'OK':
 				printFunc = printLog
 			else:
 				printFunc = printError
 			
-			printFunc(f'{checklistId}: {value}')
+			printFunc(f'{checklistId}: {value} ({durationStr})')
 				
 	def startScenario(self, scenario):
 		self._newScenario = scenario
