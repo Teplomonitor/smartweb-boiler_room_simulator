@@ -78,8 +78,6 @@ class Scenario(Parent):
 		pumpNotWorkingDelay = TimeOnDelay()
 		testTimeoutDelay    = TimeOnDelay()
 		
-		pump = False
-		
 		while True:
 			time.sleep(1)
 			
