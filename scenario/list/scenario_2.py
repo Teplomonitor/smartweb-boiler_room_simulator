@@ -91,8 +91,12 @@ class Scenario(Parent):
 		minTemp = self.readMinOutdoorTemperature()
 		maxTemp = self.readMaxOutdoorTemperature()
 		
+		if (minTemp == None) or (maxTemp == None):
+			return False
+		
 		midTemp = (minTemp + maxTemp)/2
 		self.setOutdoorTemperature(midTemp)
+		return True
 
 	def run(self):
 		plateSetpoint = self.readRequiredPlateTemperatureValue()
@@ -103,7 +107,11 @@ class Scenario(Parent):
 			return
 		
 		printLog('делаем подходящую для снеготайки уличную температуру')
-		self.setMediumOutdoorTemperature()
+		if self.setMediumOutdoorTemperature() == False:
+			printError('Проблема! Не удалось задать уличную температуру')
+			self._status = 'FAIL'
+			return
+		
 		time.sleep(3)
 		
 		printLog('делаем плиту холодной')
