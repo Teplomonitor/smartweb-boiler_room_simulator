@@ -25,10 +25,12 @@ class Snowmelter(Program):
 	}
 
 	_remoteControlParameters = {
-		'minOutdoorTemp'     : {'programType': 'SNOWMELT', 'parameter': 'MINIMUM_OUTDOOR_TEMPERATURE'           , 'parameterType': 'TEMPERATURE'},
-		'maxOutdoorTemp'     : {'programType': 'SNOWMELT', 'parameter': 'MAXIMUM_OUTDOOR_TEMPERATURE'           , 'parameterType': 'TEMPERATURE'},
-		'reqPlateTemp'       : {'programType': 'SNOWMELT', 'parameter': 'REQUIRED_PLATE_TEMPERATURE'            , 'parameterType': 'TEMPERATURE'},
-		'frostProtectionTemp': {'programType': 'SNOWMELT', 'parameter': 'PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE', 'parameterType': 'TEMPERATURE'},
+		'minOutdoorTemp'     : {'programType': 'SNOWMELT', 'parameter': 'MINIMUM_OUTDOOR_TEMPERATURE'                            , 'parameterType': 'TEMPERATURE'},
+		'maxOutdoorTemp'     : {'programType': 'SNOWMELT', 'parameter': 'MAXIMUM_OUTDOOR_TEMPERATURE'                            , 'parameterType': 'TEMPERATURE'},
+		'reqFlowTemp'        : {'programType': 'SNOWMELT', 'parameter': 'REQUIRED_CONSTANT_FLOW_TEMPERATURE_OF_SECONDARY_CIRCUIT', 'parameterType': 'TEMPERATURE'},
+		'outdoorTemp'        : {'programType': 'SNOWMELT', 'parameter': 'OUTDOOR_TEMPERATURE'                                    , 'parameterType': 'TEMPERATURE'},
+		'frostProtectionTemp': {'programType': 'SNOWMELT', 'parameter': 'PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE'                 , 'parameterType': 'TEMPERATURE'},
+		'reqPlateTemp'       : {'programType': 'SNOWMELT', 'parameter': 'REQUIRED_PLATE_TEMPERATURE'                             , 'parameterType': 'TEMPERATURE'},
 		#TODO: add more parameters
 	}
 	
