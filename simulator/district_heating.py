@@ -11,26 +11,21 @@ BROADCAST_ID = 0
 
 cw = 4200 # теплоемкость воды  Joule/kg*C
 
-ato = 3000 # теплопередача ТО тоже не трогать
-
-sqwear=1 # Площадь ТО в кв.м.-----------------------
-atos=ato * sqwear
-tau=1 # шаг по времени сек
-
 G = 500 #kg/h
 Gc = G*cw/3600/1000 # kWatt
+
+square=1 # Площадь ТО в кв.м.-----------------------
 
 def limit(lower_bound, value, upper_bound):
 	return max(min(value, upper_bound), lower_bound)
 
 #pdiss=100 # примерно равно мощности отопления
 
-def gss_solver(tintown, pdiss, qtown, qhouse):
+def gss_solver(tintown, pdiss, qtown, qhouse, ato, correction = 1):
 	# Reading number of unknowns
 	n = 3
 	
 	mid_temp=30
-	square=1 # Площадь ТО в кв.м.-----------------------
 	
 	# Making numpy array of n x n+1 size and initializing 
 	# to zero for storing augmented matrix
@@ -54,11 +49,11 @@ def gss_solver(tintown, pdiss, qtown, qhouse):
 
 	a[1][3]=0
 
-	a[2][0]= -qtown*cw - square * ato/2
-	a[2][1]= square*ato/2
-	a[2][2]= square*ato/2 
+	a[2][0]= -qtown*cw - square * ato*correction/2
+	a[2][1]= square*ato*correction/2
+	a[2][2]= square*ato*correction/2 
 
-	a[2][3]= (square*ato/2 - qtown*cw)*tintown
+	a[2][3]= (square*ato*correction/2 - qtown*cw)*tintown
 
 	# Applying Gauss Elimination
 	for i in range(n):
@@ -115,7 +110,6 @@ class Simulator(object):
 
 		self._tMax = 75
 		self._tMin = 20
-		self._qtown = 0 # расход из города при данном угле сервака
 		self._init = True
 		
 		self.setSupplyDirectTemperature(60)
@@ -132,7 +126,6 @@ class Simulator(object):
 		self.tinhouse   = self.getDirectTemperature()
 		self.t_rettown  = self.getSupplyBackwardTemperature()
 		
-		self.qtown  = 0
 		self._pdiss = 100*1000
 
 	def getSupplyDirectTemperature(self):
@@ -269,70 +262,29 @@ class Simulator(object):
 		return t_rethouse
 	
 	def ddtf(self):
+		# тепловой напор - http://ispu.ru/files/u2/Teplovoy_raschet_rekuperativnogo_teploobmennogo_apparata.pdf
+
 		d1 = self.tintown   - self.tinhouse 
 		d2 = self.t_rettown - self.t_rethouse
-		d_tmax=d1
-		d_tmin=d2
-		d = d_tmin/d_tmax
-		if  d > 20: #!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		if abs(d1)>abs(d2):
+			d_tmax=d1
+			d_tmin=d2
+		else:
+			d_tmax=d2
+			d_tmin=d1
+		d_ratio = d_tmax/d_tmin
+		if  d_ratio > 2: #!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			ddt = (d_tmax - d_tmin) / math.log( d_tmax/d_tmin )
 		else :	
 			ddt = (d_tmax + d_tmin)/2 
-		return ddt
+		return ddt, d_ratio
 	
 	def getMaxFlowRateHouse(self):
 		return self._program.getMaxFlowRate1() / 3600 # расход кг/сек в доме постоянный.
 	
 	def getMaxFlowRateTown(self):
 		return self._program.getMaxFlowRate2() / 3600 # расход кг/сек в городе постоянный.
-	
-	def findom(self):
-		# подача и обратка дома
-		if self.secondaryFlowIsStopped():
-			self.tinhouse = self.tempSlowCooling(self.tinhouse)
-			return self.tinhouse
-		
-		qhouse = self.getMaxFlowRateHouse()
-		
-		self.tinhouse = self.qtown*(self.tintown - self.t_rettown)/qhouse + self.t_rethouse
-		return self.tinhouse
-	
-	def ft_rettown(self, ddt):
-		# обратка в город
-		if self.qtown == 0 or self.supplyFlowIsStopped():
-			self.t_rettown = self.tempSlowCooling(self.t_rettown)
-			return self.t_rettown
-		
-		self.t_rettown = self.tintown - atos*ddt/(cw*self.qtown)
-		if self.t_rettown < self.t_rethouse:
-			#print('!!!!!', t_rettown)
-			self.t_rettown = self.t_rethouse
-		return self.t_rettown
-	
-	def mainframe(self):
-		j=0
-		d_teta = 10
-		ddt = self.ddtf() # температурный напор
-		while j<20 and abs(d_teta) > 0.5 : # утрясаем температуры при изменении расхода
-			
-			ddt0=ddt
-			self.findom()
-			
-			#ddtf()
-			self.ft_rettown(ddt)
-			
-			#ddtf()
-#			frettdom()
-			
-			ddt = self.ddtf()
-			d_teta=ddt-ddt0
-			
-			#fenergy() # вроде нормально все с энергией - проверку можно выключить
-			
-			j = j + 1
-			#print('j', j, 'd_teta %.2f.'% d_teta, ddt)	
-		#print('i',i, 'энергия города', etown, ' дом ', ehouse,'----------------------') 
-	
+
 	def computeQHouse(self):
 		if self.getCirculationPumpState():
 			qhouse = self.getMaxFlowRateHouse()
@@ -341,9 +293,38 @@ class Simulator(object):
 		
 		return qhouse
 	
+	def computeTempWithCorrection(self, t_rettown, tinhouse, t_rethouse, qtown, qhouse):
+		igss=0
+		corr=1
+		
+		self._pdiss = self.computePdiss(qhouse)
+		
+		ugolserv = self.getValveState()
+		
+		ddt, d_ratio = self.ddtf() # температурный напор
+		df = qtown/square
+		ato = 300 + 3500*math.tanh(df) # !!!корректируем коэффициент теплопередачи по расходу/площадь
+		
+		print(igss,' ddt %.2f.' % ddt,' d_ratio %.2f.' % d_ratio, ' ugol %.2f.' % ugolserv, 'qtown/S %.2f.' % df, ' rettown %.1f.' % t_rettown,'tinhouse %.2f.' % tinhouse, 'rethous %.1f.' % t_rethouse)
+
+		if d_ratio > 2.1:
+			k = 0
+			correction = 1-(d_ratio - 2)/(2.549*d_ratio+2.78) # коэффициент для корректировки среднего логарифмического
+			while abs(corr - correction) > 0.05:
+				k +=1
+				
+				self.t_rettown, self.tinhouse = gss_solver(self.tintown, self._pdiss, qtown, qhouse, ato, correction)
+				ddt, d_ratio = self.ddtf() # температурный напор
+				print(k, 'corr %.2f.' % correction,' d_ratio %.2f.' % d_ratio, ' ddt %.2f.' % ddt, ' rettown %.1f.' % t_rettown,'tinhouse %.2f.' % tinhouse, 'rethous %.1f.' % t_rethouse)
+				corr = correction
+				correction = 1-(d_ratio - 2)/(2.549*d_ratio+2.78)
+				print('corr 2 %.2f.' % correction, ' ------------------')
+		else:
+			self.t_rettown, self.tinhouse = gss_solver(self.tintown, self._pdiss, qtown, qhouse, ato)
+		
+	
 	def computeTemp(self):
-		valve = self.getValveState()
-		ugolserv = valve
+		ugolserv = self.getValveState()
 		
 		#workaround
 #		if ugolserv > 1:
@@ -356,26 +337,22 @@ class Simulator(object):
 		
 		qtown_max = self.getMaxFlowRateTown()
 		
-		self.qtown = qtown_max * ugolserv * self.getSupplyPumpState()# расход из города при данном угле сервака
+		qtown = qtown_max * ugolserv * self.getSupplyPumpState()# расход из города при данном угле сервака
 
 		qhouse = self.computeQHouse()
 		
 		if qhouse == 0:
 			self.t_rettown = self.tintown - 1
 		
-		if self.qtown == 0:
+		if qtown == 0:
 			self.tinhouse = self.t_rethouse
 			
-		if qhouse == 0 or self.qtown == 0:
+		if qhouse == 0 or qtown == 0:
 			return
 
-		self._pdiss = self.computePdiss()
-		
-		self.t_rettown, self.tinhouse = gss_solver(self.tintown, self._pdiss, self.qtown, qhouse)
+		self.computeTempWithCorrection(self.t_rettown, self.tinhouse, self.t_rethouse, qtown, qhouse)
 	
-	def computePdiss(self):
-		qhouse = self.computeQHouse()
-		
+	def computePdiss(self, qhouse):
 		dT = self.tinhouse - self.t_rethouse
 		pdiss = dT * qhouse * cw
 		

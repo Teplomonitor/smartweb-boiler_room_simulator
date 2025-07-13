@@ -19,12 +19,13 @@ proport = 20 # полоса пропорциональности темпера�
 tau=5 # шаг по времени сек
 
 pdiss=100 # примерно равно мощности отопления
-ato = 3300 # теплопередача ТО тоже не трогать
+#ato = 3300 # теплопередача ТО тоже не трогать
+ato = 500
 square=1 # Площадь ТО в кв.м.-----------------------
 
 ddt=0
 real_time = 0
-ugolserv_0 = 0.1
+ugolserv_0 = 0
 ugolserv_max=1
 qtown = 0 # расход из города при данном угле сервака 
 tinhouse = 20 #температура начальная в контуре отопления ---------------
@@ -37,6 +38,8 @@ bt6="q"
 etown=0
 ehouse=0
 mid_temp=30
+d_ratio=1
+correction = 1
 
 def viewtemp():
 
@@ -52,7 +55,7 @@ def viewtemp():
     beg12.grid(column=1, row=10, pady=2, padx=2)
     
 def ddtf():
-    global ddt
+    global ddt, d_ratio
     # тепловой напор - http://ispu.ru/files/u2/Teplovoy_raschet_rekuperativnogo_teploobmennogo_apparata.pdf
     d1 = tintown - tinhouse 
     d2 = t_rettown - t_rethouse
@@ -62,8 +65,8 @@ def ddtf():
     else:
         d_tmax=d2
         d_tmin=d1
-    d = d_tmin/d_tmax
-    if  d > 20: #!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    d_ratio = d_tmax/d_tmin
+    if  d_ratio > 2: #!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ddt = (d_tmax - d_tmin) / math.log( d_tmax/d_tmin )
     else :    
         ddt = (d_tmax + d_tmin)/2 
@@ -102,11 +105,11 @@ def gss_solver():
 
     a[1][3]=0
 
-    a[2][0]= -qtown*cw - square * ato/2
-    a[2][1]= square*ato/2
-    a[2][2]= square*ato/2 
+    a[2][0]= -qtown*cw - square * ato*correction/2
+    a[2][1]= square*ato*correction/2
+    a[2][2]= square*ato*correction/2 
 
-    a[2][3]= (square*ato/2 - qtown*cw)*tintown
+    a[2][3]= (square*ato*correction/2 - qtown*cw)*tintown
 
     # Applying Gauss Elimination
     for i in range(n):
@@ -195,7 +198,7 @@ def ugolserv_calc():
     if ugolserv > 1 : ugolserv = 1
     
 def mainframe_servo():
-    global tintown, tinhouse, t_rethouse, t_rettown, qtown, ugolserv, calc_number, igss
+    global tintown, tinhouse, t_rethouse, t_rettown, qtown, ugolserv, calc_number, igss, d_ratio, correction, ato
     calc_number +=1
     igss=0
     tinhouse = 20
@@ -206,14 +209,33 @@ def mainframe_servo():
         igss +=1
         ugolserv_calc()           
         qtown = qtown_max * ugolserv # расход из города при данном угле сервака 
-
+        correction = 1
+        corr=1
+        df = qtown/square
+        ato = 300 + 3500*math.tanh(df) # !!!корректируем коэффициент теплопередачи по расходу/площадь
+        
         gss_solver()
+        
         fenergy()
         ddtf()
-        print(igss, "ugol %.2f." % ugolserv, "qtown %.2f." % qtown, ' rettown %.1f.' % t_rettown,'tinhouse %.2f.' % tinhouse, 'rethous %.1f.' % t_rethouse)
-
-        viewtemp()
         
+        print(igss,' ddt %.2f.' % ddt,' d_ratio %.2f.' % d_ratio, ' ugol %.2f.' % ugolserv, 'qtown/S %.2f.' % df, ' rettown %.1f.' % t_rettown,'tinhouse %.2f.' % tinhouse, 'rethous %.1f.' % t_rethouse)
+
+        if d_ratio > 2.1:
+            k = 0
+            correction = 1-(d_ratio - 2)/(2.549*d_ratio+2.78) # коэффициент для корректировки среднего логарифмического
+            while abs(corr - correction) > 0.05:
+                k +=1
+                
+                gss_solver()
+                ddtf()
+                print(k, 'corr %.2f.' % correction,' d_ratio %.2f.' % d_ratio, ' ddt %.2f.' % ddt, ' rettown %.1f.' % t_rettown,'tinhouse %.2f.' % tinhouse, 'rethous %.1f.' % t_rethouse)
+                corr = correction
+                correction = 1-(d_ratio - 2)/(2.549*d_ratio+2.78)
+                print('corr 2 %.2f.' % correction, ' ------------------')
+        
+        viewtemp()
+    print('-------------------------------------')         
     mfs= ' мощность ТО квт ' + str(round(etown/1000, 0)) +'  ddt  ' + str(round(ddt, 1))+'  '  
     calc_mfs = tk.Label(master=clc_form, text=mfs)
     calc_mfs.grid(column=0, row=17, pady=2, padx=2)
