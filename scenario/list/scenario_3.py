@@ -40,7 +40,7 @@ class Scenario(Parent):
 	def readRequiredPlateTemperatureValue(self): return self._snowmelter.readParameterValue('reqPlateTemp')
 	def readMinOutdoorTemperature(self)        : return self._snowmelter.readParameterValue('minOutdoorTemp')
 	def readMaxOutdoorTemperature(self)        : return self._snowmelter.readParameterValue('maxOutdoorTemp')
-	
+	def readSnowmelterOutdoorTemperature(self) : return self._snowmelter.readParameterValue('outdoorTemp')
 	def getCirculationPumpState(self):
 		return self._snowmelter.getSecondaryPumpState().getValue()
 	
@@ -82,13 +82,36 @@ class Scenario(Parent):
 			
 			pump1 = self.getCirculationPumpState()
 			pump2 = self.getLoadingPumpState()
-			if pumpNotWorkingDelay.Get(not (pump1 or pump2), delay):
+			
+			snowmelterIsWorking = (pump1 or pump2)
+			if pumpNotWorkingDelay.Get(not snowmelterIsWorking, delay):
 				return True
 			
-			if testTimeoutDelay.Get(True, timeout):
+			if testTimeoutDelay.Get(snowmelterIsWorking, timeout):
 				return False
 		return False
 	
+	def waitOutdoorTemperatureSet(self, reqOat, condition, timeout):
+		oatSetTimeoutDelay = TimeOnDelay()
+		
+		while True:
+			time.sleep(5)
+			
+			oat = self.readSnowmelterOutdoorTemperature()
+			
+			if condition == 'more':
+				if oat > reqOat:
+					return True
+			elif condition == 'less':
+				if oat < reqOat:
+					return True
+				
+			if oatSetTimeoutDelay.Get(True, timeout):
+				return False
+			
+		return False
+		
+		
 	def setMediumOutdoorTemperature(self):
 		minTemp = self.readMinOutdoorTemperature()
 		maxTemp = self.readMaxOutdoorTemperature()
@@ -99,10 +122,13 @@ class Scenario(Parent):
 	def setHighOutdoorTemperature(self):
 		maxTemp = self.readMaxOutdoorTemperature()
 		self.setOutdoorTemperature(maxTemp + 1)
+		return self.waitOutdoorTemperatureSet(maxTemp, 'more', 5*60)
+			
 		
 	def setLowOutdoorTemperature(self):
 		minTemp = self.readMinOutdoorTemperature()
 		self.setOutdoorTemperature(minTemp - 1)
+		return self.waitOutdoorTemperatureSet(minTemp, 'less', 5*60)
 		
 	def run(self):
 		plateSetpoint = self.readRequiredPlateTemperatureValue()
@@ -134,14 +160,20 @@ class Scenario(Parent):
 		time.sleep(2)
 		
 		printLog('делаем на улице жарко')
-		self.setHighOutdoorTemperature()
+		if self.setHighOutdoorTemperature() == False:
+			printLog('Плохо! Снеготайка не видит, что на улице жарко!')
+			self._status = 'FAIL'
+			return
 		
-		pumpsSwitchOffDuration = 60
+		pumpsSwitchOffTestDuration = 60
 		
-		printLog(f'Ждём, пока насосы не выключатся хотя бы на {pumpsSwitchOffDuration} секунд')
+		printLog(f'Ждём, пока насосы не выключатся хотя бы на {pumpsSwitchOffTestDuration} секунд')
 		time.sleep(10)
 		
-		if self.waitPumpsSwitchOff(pumpsSwitchOffDuration, 6*60):
+		pumpsSwitchOffDelay = 5*60
+		testExtraDelay      = 60
+		
+		if self.waitPumpsSwitchOff(pumpsSwitchOffTestDuration, pumpsSwitchOffDelay + pumpsSwitchOffTestDuration + testExtraDelay):
 			printLog('Хорошо!')
 		else:
 			printError('Плохо. Насосы не выключаются!')
@@ -166,15 +198,18 @@ class Scenario(Parent):
 		time.sleep(2)
 		
 		printLog('делаем на улице холодно')
-		self.setLowOutdoorTemperature()
+		if self.setLowOutdoorTemperature() == False:
+			printLog('Плохо! Снеготайка не видит, что на улице холодно!')
+			self._status = 'FAIL'
+			return
 		
-		printLog(f'Ждём, пока насосы не выключатся хотя бы на {pumpsSwitchOffDuration} секунд')
+		printLog(f'Ждём, пока насосы не выключатся хотя бы на {pumpsSwitchOffTestDuration} секунд')
 		time.sleep(10)
 		
-		if self.waitPumpsSwitchOff(pumpsSwitchOffDuration, 6*60):
+		if self.waitPumpsSwitchOff(pumpsSwitchOffTestDuration, pumpsSwitchOffDelay + pumpsSwitchOffTestDuration + testExtraDelay):
 			printLog('Хорошо!')
 			self._status = 'OK'
 		else:
-			printError('Плохо. Насосы не выключается!')
+			printError('Плохо. Насосы не выключаются!')
 			self._status = 'FAIL'
 		
