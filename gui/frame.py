@@ -370,8 +370,8 @@ class guiThread():
 		self._frame = wx.Frame(None, title='Simple application')
 		self._ex = MainFrame(self._frame, self)
 		self._consoleFrame = ConsoleFrame(self._frame)
-		self._consoleFrame.Show()
 		self._ex.Show()
+		self._consoleFrame.Show()
 		
 		self._initDone = True
 		
