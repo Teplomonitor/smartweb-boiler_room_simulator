@@ -98,22 +98,23 @@ class InputChannel(Channel):
 		self.setLogType('TEMPERATURE')
 		
 		self._isManual = False
+		self._state    = 'normal'
 		
 	def setValue  (self, value, manual = False  ):
 		if self.isManual():
 			if not manual:
 				return
-			
+		
+		if   value == 'short': self.setShort (True); return
+		elif value == 'open' : self.setOpen  (True); return
+		else                 : self.setNormal()
+		
 		super().setValue(value, manual)
-			
+		
 	def isAuto(self):
-		if self._gui:
-			return self._gui._autoRb.GetValue()
-		return True
+		return not self._isManual
 	
 	def isManual(self):
-		if self._gui:
-			return self._gui._manualRb.GetValue()
 		return self._isManual
 	
 	def setManual(self, value):
@@ -122,36 +123,59 @@ class InputChannel(Channel):
 			self._gui._manualRb.SetValue(    value)
 			self._gui._autoRb  .SetValue(not value)
 		
-	
-	def onShort(self, event):
-		event.Skip()
+	def onShort(self, event = None):
+		if event:
+			event.Skip()
 		state = self._gui._shortCheckbox.GetValue()
-		if state:
-			self._gui._openCheckbox.SetValue(False)
-			
-		self._gui._slider.Enable ( not state )
-		self._gui._spinner.Enable( not state )
+		
+		self.setShort(state)
 	
-	def onOpen(self, event):
+	def onOpen(self, event = None):
 		event.Skip()
 		state = self._gui._openCheckbox.GetValue()
-		if state:
-			self._gui._shortCheckbox.SetValue(False)
-		self._gui._slider.Enable ( not state )
-		self._gui._spinner.Enable( not state )
-	
-	
-	def isShort(self):
-		if self._gui:
-			return self._gui._shortCheckbox.GetValue()
-		return False
-	
-	def isOpen(self):
-		if self._gui:
-			return self._gui._openCheckbox.GetValue()
-		return False
 		
+		self.setOpen(state)
 	
+	def isShort(self): return self._state == 'short'
+	def isOpen (self): return self._state == 'open'
+		
+	def setShort(self, state):
+		if state:
+			self._state = 'short'
+		else:
+			self._state = 'normal'
+			
+		if self._gui:
+			self._gui._shortCheckbox.SetValue(state)
+			self._gui._slider.Enable ( not state )
+			self._gui._spinner.Enable( not state )
+			if state:
+				self._gui._openCheckbox.SetValue(False)
+		
+	def setOpen(self, state):
+		if state:
+			self._state = 'open'
+		else:
+			self._state = 'normal'
+			
+		if self._gui:
+			self._gui._openCheckbox.SetValue(state)
+			self._gui._slider.Enable ( not state )
+			self._gui._spinner.Enable( not state )
+			if state:
+				self._gui._shortCheckbox.SetValue(False)
+				
+	def setNormal(self):
+		if self._state == 'normal':
+			return
+		
+		self._state = 'normal'
+		if self._gui:
+			self._gui._openCheckbox .SetValue(False)
+			self._gui._shortCheckbox.SetValue(False)
+			self._gui._slider .Enable( True )
+			self._gui._spinner.Enable( True )
+		
 class OutputChannel(Channel):
 	'''
 	classdocs
