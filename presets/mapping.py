@@ -207,4 +207,20 @@ def DistrictHeatingOutputMapping(
 		analog_valve    ,
 	]
 
+def FillingLoopInputMapping(
+			pressure_sensor   = None,
+			):
+	return [
+		pressure_sensor,
+	]
+
+def FillingLoopOutputMapping(
+			filling_loop_output = None,
+			alarm_signal_output = None,
+			):
+	return [
+		filling_loop_output,
+		alarm_signal_output,
+	]
+
 
