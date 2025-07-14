@@ -13,7 +13,7 @@ def reportSensorValue(sensor, bus = None):
 	if sensorMapping is None: return False
 
 	isShort = sensor.isShort()
-	isOpen  = sensor.isShort()
+	isOpen  = sensor.isOpen ()
 	
 	if isShort:
 		sensorValue = SENSOR_SHORT_VALUE
