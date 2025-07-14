@@ -71,7 +71,7 @@ programId = {
 }
 
 programSettings = {
-	'SNOW_MELTER'   : smSettings(programId['BOILER']),
+	'SNOW_MELTER'   : smSettings(programId['BOILER'], programId['FILLING_LOOP']),
 	'BOILER'        : None,
 	'OUTDOOR_SENSOR': None,
 	'FILLING_LOOP'  : None,
