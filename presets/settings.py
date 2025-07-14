@@ -33,12 +33,15 @@ class DhwSettings(object):
 class SnowMelterSettings(object):
 	def __init__(self,
 			source         = None,
+			alarmProgram   = None
 			):
 		self._source         = source
+		self._alarmProgram   = alarmProgram
 
 	def get(self):
 		return [
-			RemoteControlParameter('CONSUMER', 'GENERATOR_ID', self._source),
+			RemoteControlParameter('CONSUMER', 'GENERATOR_ID'    , self._source),
+			RemoteControlParameter('CONSUMER', 'ALARM_PROGRAM_ID', self._alarmProgram),
 		]
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]
