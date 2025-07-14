@@ -17,25 +17,27 @@ class Scenario(Parent):
 		
 		self._snowmelter = self._programList['snowmelter']
 		self._outdoor    = self._programList['oat']
+		self._pressure   = self._programList['pressure']
 
 	def getScenarioTitle(self):
-		return 'scenario 4'
+		return 'scenario 5'
 	
 	def getScenarioDescription(self):
-		return 'проверить, что насос загрузки поддерживает заданную температуру на выходе из теплообменника'
+		return 'проверить, что снеготайка выключает насосы загрузки и циркуляции, если получает сигнал об аварии от Аварийной программы'
 	
 	def getChecklistId(self):
-		return '3.9.4'
+		return '3.9.5'
 	
 	def getRequiredPrograms(self):
 		requiredProgramTypesList = {
 			'snowmelter': 'SNOWMELT',
 			'oat'       : 'OUTDOOR_SENSOR',
+			'pressure'  : 'FILLING_LOOP',
 		}
 		return requiredProgramTypesList
 	
 	def getDefaultPreset(self):
-		return 'snowmelter'
+		return 'snowmelterWithPressureControl'
 		
 		
 	def readRequiredPlateTemperatureValue(self): return self._snowmelter.readParameterValue('reqPlateTemp')
@@ -91,49 +93,44 @@ class Scenario(Parent):
 		midTemp = (minTemp + maxTemp)/2
 		self.setOutdoorTemperature(midTemp)
 		return True
+		
+	def waitPumpSwitchOn(self, delay):
+		pumpNotWorkingDelay = TimeOnDelay()
+		
+		pump = False
+		
+		while not pump:
+			time.sleep(1)
+			
+			pump = self.getCirculationPumpState()
+			if pumpNotWorkingDelay.Get(not pump, delay):
+				return False
+			
+		return True
 	
-	def checkFlowTemperatureControl(self):
-		tReq = self.readRequiredFlowTemperature()
-		
-		bigDtDelay         = TimeOnDelay()
-		flowControlTimeout = TimeOnDelay()
-		flowControlTimer   = TimeOnDelay()
-		checkTrigger       = PeriodicTrigger()
-		
-		checkPeriod         = 10
-		bigDtTimeout        = 60
-		flowControlDuration = 10*60
-		maxCheckDuration    = 30*60
-		
-		dtAvrMax = 3
-		dtMax = 5
-		
-		dtAvr = 0
-		a = 0.1
-		b = 1 - a
+	def waitPumpsSwitchOff(self, delay, timeout):
+		pumpNotWorkingDelay = TimeOnDelay()
+		testTimeoutDelay    = TimeOnDelay()
 		
 		while True:
 			time.sleep(1)
 			
-			temp = self.getDirectFlowTemperature()
-			dt = temp - tReq
-			dtAvr = dt*a + dtAvr*b
+			pump1 = self.getCirculationPumpState()
+			pump2 = self.getLoadingPumpState()
 			
-			if checkTrigger.Get(checkPeriod):
-				printLog(f'Средняя разница температур {dtAvr:.1f}K')
-				
-			if flowControlTimer.Get(abs(dtAvr) < dtAvrMax, flowControlDuration):
+			snowmelterIsWorking = (pump1 or pump2)
+			if pumpNotWorkingDelay.Get(not snowmelterIsWorking, delay):
 				return True
 			
-			if bigDtDelay.Get(abs(dt) > dtMax, bigDtTimeout):
-				printError(f'Проблема! Слишком большая разница температур ({dt} > {dtMax})')
+			if testTimeoutDelay.Get(snowmelterIsWorking, timeout):
 				return False
-			
-			if flowControlTimeout.Get(True, maxCheckDuration):
-				printError(f'Проблема! Слишком большая средняя разница температур ({dtAvr:.1f} > {dtAvrMax})')
-				return False
-			
+		return False
 	
+	def setAlarmSignal(self, value):
+		t = self._pressure.getPressure()
+		state = 'open' if value else 'short'
+		self.setSensorValue(t, state)
+		
 	def run(self):
 		plateSetpoint = self.readRequiredPlateTemperatureValue()
 		
@@ -157,11 +154,32 @@ class Scenario(Parent):
 		printLog('ждём, пока система устаканится')
 		time.sleep(30)
 		
-		
-		result = self.checkFlowTemperatureControl()
-		
-		if result:
-			self._status = 'OK'
+		printLog('ждём, пока насос циркуляции не включится')
+		if self.waitPumpSwitchOn(60):
+			printLog('Хорошо, включился')
 		else:
 			self._status = 'FAIL'
+			printError('Плохо. Не включился!')
+			return
+			
+		time.sleep(2)
+		
+		printLog('включаем сигнал низкого давление в программе подпитки')
+		self.setAlarmSignal(True)
+		
+		pumpsSwitchOffTestDuration = 60
+		
+		printLog(f'Ждём, пока насосы не выключатся хотя бы на {pumpsSwitchOffTestDuration} секунд')
+		time.sleep(10)
+				
+		pumpsSwitchOffDelay = 60
+		testExtraDelay      = 60
+		
+		if self.waitPumpsSwitchOff(pumpsSwitchOffTestDuration, pumpsSwitchOffDelay + pumpsSwitchOffTestDuration + testExtraDelay):
+			printLog('Хорошо!')
+			self._status = 'OK'
+		else:
+			printError('Плохо. Насосы не выключаются!')
+			self._status = 'FAIL'
+
 
