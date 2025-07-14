@@ -6,11 +6,11 @@ from programs.boiler          import Boiler          as ProgramBoiler
 from programs.heating_circuit import HeatingCircuit  as ProgramHeatingCircuit
 from programs.room            import Room            as ProgramRoom
 from programs.districtHeating import DistrictHeating as ProgramDistrictHeating
-from programs.oat             import Oat        as ProgramOat
-from programs.dhw             import Dhw        as ProgramDhw
-from programs.snowmelter      import Snowmelter as ProgramSnowmelter
-from programs.cascade         import Cascade    as ProgramCascade
-
+from programs.oat             import Oat             as ProgramOat
+from programs.dhw             import Dhw             as ProgramDhw
+from programs.snowmelter      import Snowmelter      as ProgramSnowmelter
+from programs.cascade         import Cascade         as ProgramCascade
+from programs.fillingLoop     import FillingLoop     as ProgramFillingLoop
 
 
 def createProgram(preset):
@@ -25,7 +25,8 @@ def createProgram(preset):
 			'SNOWMELT'        : ProgramSnowmelter     ,
 			'DHW'             : ProgramDhw            ,
 			'DISTRICT_HEATING': ProgramDistrictHeating,
-		}
+			'FILLING_LOOP'    : ProgramFillingLoop    ,
+	}
 	
 	if programType in programCreator:
 		prg = programCreator[programType](preset)
