@@ -31,6 +31,7 @@ class Snowmelter(Program):
 		'outdoorTemp'        : {'programType': 'SNOWMELT', 'parameter': 'OUTDOOR_TEMPERATURE'                                    , 'parameterType': 'TEMPERATURE'},
 		'frostProtectionTemp': {'programType': 'SNOWMELT', 'parameter': 'PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE'                 , 'parameterType': 'TEMPERATURE'},
 		'reqPlateTemp'       : {'programType': 'SNOWMELT', 'parameter': 'REQUIRED_PLATE_TEMPERATURE'                             , 'parameterType': 'TEMPERATURE'},
+		'alarmProgramId'     : {'programType': 'CONSUMER', 'parameter': 'ALARM_PROGRAM_ID'}
 		#TODO: add more parameters
 	}
 	
