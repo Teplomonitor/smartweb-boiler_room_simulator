@@ -15,6 +15,7 @@ import simulator.room
 import simulator.snowmelter
 import simulator.dhw
 import simulator.district_heating
+import simulator.fillingLoop
 import simulator.collector
 
 BROADCAST_ID = 0
@@ -103,6 +104,7 @@ class Simulator(threading.Thread):
 			'SNOWMELT'        : simulator.snowmelter      .Simulator,
 			'DHW'             : simulator.dhw             .Simulator,
 			'DISTRICT_HEATING': simulator.district_heating.Simulator,
+			'FILLING_LOOP'    : simulator.fillingLoop     .Simulator,
 		}
 
 		consumerTypesList = [
