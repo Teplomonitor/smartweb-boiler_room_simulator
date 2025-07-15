@@ -9,7 +9,6 @@ from consoleLog import printError as printError
 from scenario.scenario import Scenario   as Parent
 
 from functions.timeOnDelay  import TimeOnDelay  as TimeOnDelay
-from functions.periodicTrigger  import PeriodicTrigger  as PeriodicTrigger
 
 class Scenario(Parent):
 	def __init__(self, controllerHost, sim):
