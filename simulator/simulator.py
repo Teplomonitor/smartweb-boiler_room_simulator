@@ -17,6 +17,7 @@ import simulator.dhw
 import simulator.district_heating
 import simulator.fillingLoop
 import simulator.collector
+import simulator.tptValve
 
 BROADCAST_ID = 0
 
@@ -96,15 +97,16 @@ class Simulator(threading.Thread):
 		programsList = self._controllerHost.getProgramList()
 		
 		simulatorType = {
-			'OUTDOOR_SENSOR'  : simulator.oat             .Simulator,
-			'BOILER'          : simulator.boiler          .Simulator,
-			'CASCADE_MANAGER' : simulator.cascade         .Simulator,
-			'ROOM_DEVICE'     : simulator.room            .Simulator,
-			'HEATING_CIRCUIT' : simulator.heating_circuit .Simulator,
-			'SNOWMELT'        : simulator.snowmelter      .Simulator,
-			'DHW'             : simulator.dhw             .Simulator,
-			'DISTRICT_HEATING': simulator.district_heating.Simulator,
-			'FILLING_LOOP'    : simulator.fillingLoop     .Simulator,
+			'OUTDOOR_SENSOR'   : simulator.oat             .Simulator,
+			'BOILER'           : simulator.boiler          .Simulator,
+			'CASCADE_MANAGER'  : simulator.cascade         .Simulator,
+			'ROOM_DEVICE'      : simulator.room            .Simulator,
+			'HEATING_CIRCUIT'  : simulator.heating_circuit .Simulator,
+			'SNOWMELT'         : simulator.snowmelter      .Simulator,
+			'DHW'              : simulator.dhw             .Simulator,
+			'DISTRICT_HEATING' : simulator.district_heating.Simulator,
+			'FILLING_LOOP'     : simulator.fillingLoop     .Simulator,
+			'TPT_VALVE_ADAPTER': simulator.tptValve        .Simulator,
 		}
 
 		consumerTypesList = [
