@@ -25,7 +25,8 @@ class TptValve(Program):
 		super().__init__(params)
 
 		
-	def getControlSignal(self):
-		return self.getInputChannel(self._inputId['signal'])
+	def getControlSignal   (self): return self.getInputChannel (self._inputId['signal'])
+	def getValveOpenOutput (self): return self.getOutputChannel(self._outputId['valveOpen'])
+	def getValveCloseOutput(self): return self.getOutputChannel(self._outputId['valveClose'])
 	
 	def getGuiColor (self): return 'yellow'
