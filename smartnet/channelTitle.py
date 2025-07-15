@@ -95,6 +95,9 @@ InputTitleAlarm        = [
 InputTitleFillingLoop  = [
 	'Давление',
 	]
+InputTitleTptValve = [
+	'Управляющий сигнал',
+	]
 
 OutputTitleOat               = []
 OutputTitleCascade           = []
@@ -186,7 +189,10 @@ OutputTitleFillingLoop    = [
 	'Подпитка',
 	'Авария',
 	]
-
+OutputTitleTptValve = [
+	'Смес. откр.',
+	'Смес. закр.',
+	]
 
 ProgramInputTitle = {
 	'OUTDOOR_SENSOR'   : InputTitleOat,
@@ -202,6 +208,7 @@ ProgramInputTitle = {
 	'GENERIC_RELAY'    : InputTitleGenericRelay     ,
 	'ALARM'            : InputTitleAlarm            ,
 	'FILLING_LOOP'     : InputTitleFillingLoop      ,
+	'TPT_VALVE_ADAPTER': InputTitleTptValve         ,
 }
 
 ProgramOutputTitle = {
@@ -218,5 +225,6 @@ ProgramOutputTitle = {
 	'GENERIC_RELAY'    : OutputTitleGenericRelay     ,
 	'ALARM'            : OutputTitleAlarm            ,
 	'FILLING_LOOP'     : OutputTitleFillingLoop      ,
+	'TPT_VALVE_ADAPTER': OutputTitleTptValve         ,
 }
 
