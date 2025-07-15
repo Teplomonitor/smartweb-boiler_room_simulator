@@ -223,4 +223,20 @@ def FillingLoopOutputMapping(
 		alarm_signal_output,
 	]
 
+def TptValveInputMapping(
+			control_signal   = None,
+			):
+	return [
+		control_signal,
+	]
+
+def TptValveOutputMapping(
+			valve_open  = None,
+			valve_close = None,
+			):
+	return [
+		valve_open,
+		valve_close,
+	]
+
 
