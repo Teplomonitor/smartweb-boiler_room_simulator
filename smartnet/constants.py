@@ -54,7 +54,22 @@ ProgramType = {
 	'GENERIC_RELAY'              : 27,
 	'ALARM'                      : 28,
 	'FILLING_LOOP'               : 29,
-    
+	
+	'VIRTUAL_CONTROLLER'         : 30,
+	'DOUBLE_PUMP'                : 31,
+	'LIN_CONTROLLER'             : 32,
+	'LIN_PUMP'                   : 33,
+	'OPEN_THERM_BOILER'          : 34,
+	'MODBUS_TEMPERATURE_SOURCE'  : 35,
+	'MB_OT_ADAPTER'              : 36,
+	'MODBUS_SENSOR'              : 37,
+	'NAVIEN_CASCADE_MANAGER'     : 38,
+	'NAVIEN_NFB'                 : 39,
+	'WAREHOUSE_AREA'             : 40,
+	'CWC_LORA_ADAPTER'           : 32, #//TODO: change ID to 41
+	'TPT_VALVE_ADAPTER'          : 42,
+	
+	
 	'DATALOGGER_MONITOR'       : 0x80,  
 	'EVENT'                    : 0x81, 
 	'FWC_CASCADE'              : 0x82,  # freshwater controller cascading functions
