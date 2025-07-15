@@ -11,21 +11,23 @@ from programs.dhw             import Dhw             as ProgramDhw
 from programs.snowmelter      import Snowmelter      as ProgramSnowmelter
 from programs.cascade         import Cascade         as ProgramCascade
 from programs.fillingLoop     import FillingLoop     as ProgramFillingLoop
+from programs.tptValve        import TptValve        as ProgramTptValve
 
 
 def createProgram(preset):
 	programType = preset.getType()
 	
 	programCreator = {
-			'OUTDOOR_SENSOR'  : ProgramOat            ,
-			'BOILER'          : ProgramBoiler         ,
-			'CASCADE_MANAGER' : ProgramCascade        ,
-			'ROOM_DEVICE'     : ProgramRoom           ,
-			'HEATING_CIRCUIT' : ProgramHeatingCircuit ,
-			'SNOWMELT'        : ProgramSnowmelter     ,
-			'DHW'             : ProgramDhw            ,
-			'DISTRICT_HEATING': ProgramDistrictHeating,
-			'FILLING_LOOP'    : ProgramFillingLoop    ,
+			'OUTDOOR_SENSOR'   : ProgramOat            ,
+			'BOILER'           : ProgramBoiler         ,
+			'CASCADE_MANAGER'  : ProgramCascade        ,
+			'ROOM_DEVICE'      : ProgramRoom           ,
+			'HEATING_CIRCUIT'  : ProgramHeatingCircuit ,
+			'SNOWMELT'         : ProgramSnowmelter     ,
+			'DHW'              : ProgramDhw            ,
+			'DISTRICT_HEATING' : ProgramDistrictHeating,
+			'FILLING_LOOP'     : ProgramFillingLoop    ,
+			'TPT_VALVE_ADAPTER': ProgramTptValve       ,
 	}
 	
 	if programType in programCreator:
