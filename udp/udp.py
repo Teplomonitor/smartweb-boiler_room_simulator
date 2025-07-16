@@ -14,7 +14,7 @@ from smartnet.message import createBus as createBus
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
 
-can_udp_bus = createBus()
+can_udp_bus = createBus('virtual')
 
 
 SCAN_PACKET_DATA_SIZE = 16
