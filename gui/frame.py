@@ -393,7 +393,7 @@ class guiThread():
 		self._ex.Layout()
 
 	def saveProgramPlots(self):
-		pass
+		main.saveProgramPlots()
 	
 	def printConsoleText(self, text):
 		wx.CallAfter(self.printConsoleTextNow, text)
