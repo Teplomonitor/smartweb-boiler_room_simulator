@@ -81,6 +81,7 @@ class MainThread(threading.Thread):
 			self._guiThread = None
 			
 		self._newPreset = None
+		self._saveProgramPlots = False
 
 		self._initDone = True
 		
@@ -93,7 +94,13 @@ class MainThread(threading.Thread):
 	def getProfile(self): return self._profile
 	def taskEnable(self): return self._taskEnable
 	def taskStop(self): self._taskEnable = False
-		
+	def saveProgramPlots(self): self._saveProgramPlots = True
+
+	def saveProgramPlotsNow(self):
+		programList = Controller().getProgramList()
+		for prg in programList:
+			prg.saveLog()
+
 	def initSimulator(self):
 		if self._udp_bridge_enable:
 			initUdpBridge(self._udp_bridge_enable)
@@ -130,7 +137,11 @@ class MainThread(threading.Thread):
 			if self._newPreset:
 				loadPresetNow(self._newPreset)
 				self._newPreset = None
-			
+
+			if self._saveProgramPlots:
+				self._saveProgramPlots = False
+				self.saveProgramPlotsNow()
+				
 	def loadPreset(self, newPreset):
 		self._newPreset = newPreset
 	
