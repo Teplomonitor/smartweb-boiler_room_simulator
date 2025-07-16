@@ -121,3 +121,16 @@ class DistrictHeatingSettings(object):
 		]
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]
+
+class SwimmingPoolSettings(object):
+	def __init__(self,
+			source         = None,
+			):
+		self._source         = source
+
+	def get(self):
+		return [
+			RemoteControlParameter('CONSUMER', 'GENERATOR_ID', self._source),
+		]
+	def getSource    (self): return  self._source
+	def getSourceList(self): return [self._source]

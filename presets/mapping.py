@@ -240,3 +240,27 @@ def TptValveOutputMapping(
 	]
 
 
+def SwimmingPoolInputMapping(
+			temperature    = None,
+			outsideRequest = None,
+			waterLevel     = None,
+			flow           = None,
+			):
+	return [
+		temperature   ,
+		outsideRequest,
+		waterLevel    ,
+		flow          ,
+	]
+
+def SwimmingPoolOutputMapping(
+			circPump          = None,
+			supplyPump        = None,
+			waterLevelControl = None,
+			):
+	return [
+		supplyPump       ,
+		circPump         ,
+		waterLevelControl,
+	]
+

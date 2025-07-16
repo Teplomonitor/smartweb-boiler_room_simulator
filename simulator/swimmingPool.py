@@ -1,6 +1,4 @@
 
-import time
-
 
 def limit(lower_bound, value, upper_bound):
 	return max(min(value, upper_bound), lower_bound)
@@ -12,15 +10,14 @@ class Simulator(object):
 		self._control    = control
 		
 		self.setTemperature(20)
+		self.setBackwardTemperature(20)
 
-
-	def getTemperature(self):
-		return self._program.getTemperature().getValue()
-
-	def setTemperature(self, value):
-#		print(f'dhw: {value}')
-		self._program.setTemperature(value)
-
+	def getTemperature        (self): return self._program.getTemperature().getValue()
+	def getBackwardTemperature(self): return self._backwardTemperature
+	
+	def setTemperature        (self, value): self._program.setTemperature(value)
+	def setBackwardTemperature(self, value): self._backwardTemperature = value
+		
 	def getLoadingPumpState(self):
 		pump = self._program.getLoadingPumpState()
 		if pump.getMapping() is None:
