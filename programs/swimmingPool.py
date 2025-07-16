@@ -52,4 +52,5 @@ class SwimmingPool(Program):
 	def getCirculationPumpState(self): return self.getOutputChannel(self._outputId['circulationPump'])
 	def getLoadingPumpState    (self): return self.getOutputChannel(self._outputId['loadingPump'])
 	
+	def setTemperature  (self, value): self.getInputChannel(self._inputId['poolTemperature']).setValue(value)
 	
