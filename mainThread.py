@@ -6,7 +6,7 @@ import config
 
 import presets.preset
 from consoleLog import printError as printError
-from controllers.search        import findOnlineController   as findOnlineController
+import controllers.search      as ctrlSearch
 
 from smartnet.message          import CanListener            as CanListener
 from controllers.controller_io import initVirtualControllers as initVirtualControllers
@@ -16,7 +16,7 @@ from simulator.simulator       import Simulator              as Simulator
 import scenario.scenario as scenario
 
 import debug
-from udp.udp import initUdpBridge as initUdpBridge
+import udp.udp as udp
 
 def mock_missing(name):
 	def init(self, *args, **kwargs):
@@ -63,6 +63,7 @@ class MainThread(threading.Thread):
 		self._profile                     = args.profile
 		self._scenario                    = args.scenario
 		self._debug                       = args.debug
+		self._canConfig                   = args.can
 		
 		preset = self.getCurrentPreset()
 		
@@ -72,8 +73,6 @@ class MainThread(threading.Thread):
 		if self._programPresetList is None:
 			printError('wrong preset. Exit')
 			sys.exit(1)
-		
-		CanListener()
 		
 		if args.gui:
 			self._guiThread = guiFrameThread.guiThread()
@@ -88,6 +87,8 @@ class MainThread(threading.Thread):
 		self.deamon = True
 		self.start()
 	
+	def getCANBusConfig(self): return self._canConfig
+
 	def getCurrentPreset(self):   return self.configParserInstance.getParameterValue(self.getProfile(), 'preset')
 	def setCurrentPreset(self, preset):  self.configParserInstance.setParameterValue(self.getProfile(), 'preset', preset)
 		
@@ -102,18 +103,20 @@ class MainThread(threading.Thread):
 			prg.saveLog()
 
 	def initSimulator(self):
+		CanListener()
+		
 		if self._udp_bridge_enable:
-			initUdpBridge(self._udp_bridge_enable)
+			udp.initUdpBridge(self._udp_bridge_enable)
 		
 		if self._debug:
 			debug.debug_thread()
 			
-		controllerId = findOnlineController()
+		controllerId = ctrlSearch.findOnlineController()
 		
 		if controllerId is None:
 			printError('controller not found. Exit')
 			self.taskStop()
-			sys.exit(1)
+			return
 		
 		ioSimulator    = Simulator("simulator thread", 789)
 		controllerHost = Controller(controllerId, self._guiThread)
