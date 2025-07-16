@@ -58,7 +58,7 @@ class Scenario(Parent):
 		return 'stop'
 	
 	def computeValvePos(self):
-		if self._valveCheckTrigger(1) == False:
+		if self._valveCheckTrigger.Get(1) == False:
 			return self._valvePos
 		
 		valve = self.getValveState()
@@ -101,6 +101,7 @@ class Scenario(Parent):
 				return True
 			
 			if testTimeoutDelay.Get(True, timeout):
+				printError(f'Слишком большой рассинхрон! 100 -> {valve:.1f} ')
 				return False
 		return False
 	
@@ -176,7 +177,7 @@ class Scenario(Parent):
 	def run(self):
 		printLog('Подаём сигнал на полное закрытие смесителя')
 		self.setControlSignal(0)
-		if self.waitValveClose(60, 100) == False:
+		if self.waitValveClose(20, 100) == False:
 			printError('Проблема! Кран не закрывается полностью!')
 			self._status = 'FAIL'
 			return
@@ -189,7 +190,7 @@ class Scenario(Parent):
 		
 		printLog('Подаём сигнал на полное открытие смесителя')
 		self.setControlSignal(100)
-		if self.waitValveOpen(60, 100) == False:
+		if self.waitValveOpen(20, 100) == False:
 			printError('Проблема! Кран не открывается полностью!')
 			self._status = 'FAIL'
 			return
