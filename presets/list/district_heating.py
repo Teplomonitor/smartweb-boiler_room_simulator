@@ -121,7 +121,7 @@ programInputs = {
 	'ROOM_DEVICE_1'     : roomInputMapping   (inputMapping(2, hostId['HOST_1'])),
 	'ROOM_DEVICE_2'     : roomInputMapping   (inputMapping(3, hostId['HOST_1'])),
 	'DHW'               : dhwInputMapping    (inputMapping(4, hostId['HOST_1'])),
-	'BOILER'            : boilerInputMapping (),
+	'BOILER'            : boilerInputMapping (inputMapping(5, hostId['HOST_1'])),
 	'OUTDOOR_SENSOR'    : oatInputMapping    (inputMapping(0, hostId['HOST_2'])),
 	'DISTRICT_HEATING'  : dhInputMapping     (
 		inputMapping(1, hostId['HOST_2']),
