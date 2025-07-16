@@ -96,6 +96,11 @@ USAGE
 def loadPreset(preset):
 	t = mainThread.MainThread()
 	t.loadPreset(preset)
+	
+
+def saveProgramPlots():
+	t = mainThread.MainThread()
+	t.saveProgramPlots()
 
 def loadPresetDone():
 	t = mainThread.MainThread()
