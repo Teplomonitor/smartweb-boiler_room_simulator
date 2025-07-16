@@ -48,7 +48,7 @@ class SwimmingPool(Program):
 	def getGuiColor (self): return 'blue'
 	
 	
-	def getTemperature         (self): return self.getInputChannel (self._inputId ['poolTemperature'])
+	def getTemperature         (self): return self.getInputChannel (self. _inputId['poolTemperature'])
 	def getCirculationPumpState(self): return self.getOutputChannel(self._outputId['circulationPump'])
 	def getLoadingPumpState    (self): return self.getOutputChannel(self._outputId['loadingPump'])
 	

@@ -9,7 +9,6 @@ class Simulator(object):
 	def __init__(self, program, control):
 		self._program    = program
 		self._preset     = self._program.getPreset()
-		self._time_start = time.time()
 		self._control    = control
 		
 		self.setTemperature(20)
@@ -22,10 +21,7 @@ class Simulator(object):
 #		print(f'dhw: {value}')
 		self._program.setTemperature(value)
 
-	def getElapsedTime(self):
-		return time.time() - self._time_start
-
-	def getPumpState(self):
+	def getLoadingPumpState(self):
 		pump = self._program.getLoadingPumpState()
 		if pump.getMapping() is None:
 			return 1
@@ -33,6 +29,21 @@ class Simulator(object):
 		if pump.getValue():
 			return 1
 
+		return 0
+	
+	def getCirculationPumpState(self):
+		pump = self._program.getCirculationPumpState()
+		if pump.getMapping() is None:
+			return 1
+
+		if pump.getValue():
+			return 1
+
+		return 0
+	
+	def getPumpState(self):
+		if self.getCirculationPumpState() and self.getLoadingPumpState():
+			return 1
 		return 0
 
 	def getMaxPower(self):
