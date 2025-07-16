@@ -7,17 +7,56 @@ import time
 
 import mainThread
 
-def createBus():
+
+
+def mock_missing(name):
+	def init(self, *args, **kwargs):
+		raise ImportError(
+			f'The class {name} you tried to call is not importable; '
+			f'this is likely due to it not being installed.')
+	return type(name, (), {'__init__': init})
+
+try:
+	import candle
+except:
+	candle = mock_missing('guiFrameThread')
+
+
+
+
+def createBus(canConfig = None):
+	if canConfig:
+		return can.Bus(config_context=canConfig)
+
+	canConfig = mainThread.MainThread().getCANBusConfig()
+	
+	if canConfig != 'none':
+		return can.Bus(config_context=canConfig)
+	
 	return can.Bus()
+
+
+class CanBusInterface(object):
+	def __new__(cls, *args, **kwargs):
+		if not hasattr(cls, 'instance'):
+			cls.instance = super(CanBusInterface, cls).__new__(cls)
+		return cls.instance
+
+	def __init__(self, canConfig = None):
+		if hasattr(self, '_initDone'):
+			return
+		
+		self._canbus   = createBus(canConfig)
+	
+		self._initDone = True
+	
+	def Get(self): return self._canbus
+
 
 class Message(object):
 	'''
 	classdocs
 	'''
-	#this for debug purpose. We need to hear own messages
-	_rxbus = createBus()
-#	_txbus = createBus()
-	_txbus = _rxbus
 
 	def __init__(self, programType=None, programId=None, functionId=None, request=None, data=None):
 		'''
@@ -133,7 +172,7 @@ class Message(object):
 		if bus:
 			txbus = bus
 		else:
-			txbus = Message._txbus
+			txbus = CanBusInterface().Get()
 		
 		i = 0
 		while True:
@@ -188,8 +227,7 @@ class Message(object):
 
 	@staticmethod
 	def exit():
-		Message._txbus.shutdown()
-		Message._rxbus.shutdown()
+		CanBusInterface().Get().shutdown()
 
 class CanListener(can.Listener):
 	_listeners   = []
@@ -204,7 +242,7 @@ class CanListener(can.Listener):
 		if hasattr(self, '_initDone'):
 			return
 		
-		self._canbus   = Message._txbus
+		self._canbus   = CanBusInterface().Get()
 		self._notifier = can.Notifier(self._canbus, [self])
 	
 		self._initDone = True
