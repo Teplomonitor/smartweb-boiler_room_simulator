@@ -4,14 +4,13 @@ Created on 4 июл. 2025 г.
 @author: admin
 '''
 
-from smartnet.message import Message as smartnetMessage
+import smartnet.message as snm
 import smartnet.constants as snc
 
 from consoleLog import printLog   as printLog
-from consoleLog import printError as printError
 
 def messageIsImHere():
-	return smartnetMessage(
+	return snm.Message(
 		snc.ProgramType['CONTROLLER'], None, 
 		snc.ControllerFunction['I_AM_HERE'], 
 		snc.requestFlag['RESPONSE'])
@@ -19,7 +18,7 @@ def messageIsImHere():
 
 def findOnlineController():
 	printLog('Searching controller')
-	msg = smartnetMessage()
+	msg = snm.Message()
 
 	i = 0
 	while i < 3:
