@@ -209,6 +209,8 @@ class MainFrame ( wx.Frame ):
         self.m_spinCtrlDouble1.Bind( wx.EVT_SPINCTRLDOUBLE, self.onSpin )
         self.m_spinCtrlDouble1.Bind( wx.EVT_TEXT_ENTER, self.onSpinText )
         self.inputValueSlider.Bind( wx.EVT_SCROLL, self.onScroll )
+        self.inputAutoRadiobutton.Bind( wx.EVT_RADIOBUTTON, self.onAuto )
+        self.inputManualRadioButton.Bind( wx.EVT_RADIOBUTTON, self.onManual )
         self.Parameter1Spin.Bind( wx.EVT_SPINCTRLDOUBLE, self.onSpin )
         self.Parameter1Spin.Bind( wx.EVT_TEXT_ENTER, self.onSpinText )
         self.Parameter1Slider.Bind( wx.EVT_SCROLL, self.onScroll )
@@ -235,6 +237,12 @@ class MainFrame ( wx.Frame ):
         event.Skip()
 
     def onScroll( self, event ):
+        event.Skip()
+
+    def onAuto( self, event ):
+        event.Skip()
+
+    def onManual( self, event ):
         event.Skip()
 
 
