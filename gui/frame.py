@@ -186,6 +186,8 @@ class MainFrame ( wx.Frame ):
 		inputValueSlider  .Bind( wx.EVT_SCROLL        , programInput.onScroll  )
 		inputShortCheckbox.Bind( wx.EVT_CHECKBOX      , programInput.onShort   )
 		inputOpenCheckbox .Bind( wx.EVT_CHECKBOX      , programInput.onOpen    )
+		inputAutoRadiobutton  .Bind(wx.EVT_RADIOBUTTON, programInput.onAuto  )
+		inputManualRadioButton.Bind(wx.EVT_RADIOBUTTON, programInput.onManual)
 		
 		programInput.setGui(guiChannel)
 
