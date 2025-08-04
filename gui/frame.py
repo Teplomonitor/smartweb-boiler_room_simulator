@@ -349,6 +349,7 @@ class ConsoleFrame ( wx.Frame ):
 	# Virtual event handlers, override them in your derived class
 	def doClose( self, event ):
 		event.Skip()
+		main.MainStop()
 		guiThread().ClearNow()
 		exit(0)
 	
