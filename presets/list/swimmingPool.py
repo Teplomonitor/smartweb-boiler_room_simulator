@@ -63,10 +63,7 @@ def outputMapping(channel_id, host_id): return Mapping(channel_id, 'CHANNEL_RELA
 
 programInputs = {
 	'SWIMMING_POOL' : spInputMapping     (
-		inputMapping(0, hostId['HOST_1']),
-		inputMapping(1, hostId['HOST_1']), 
-		inputMapping(2, hostId['HOST_1']), 
-		inputMapping(3, hostId['HOST_1'])
+		inputMapping(0, hostId['HOST_1'])
 	),
 	'BOILER'        : boilerInputMapping (inputMapping(4, hostId['HOST_1'])),
 }
