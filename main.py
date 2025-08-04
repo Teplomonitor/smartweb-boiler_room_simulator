@@ -29,7 +29,6 @@ from argparse import RawDescriptionHelpFormatter
 import mainThread
 import consoleLog
 
-from consoleLog import printLog   as printLog
 
 def mock_missing(name):
 	def init(self, *args, **kwargs):
@@ -151,7 +150,7 @@ def main(argv=None): # IGNORE:C0111
 	except KeyboardInterrupt:
 		### handle keyboard interrupt ###
 		MainStop()
-		printLog('exit')
+		consoleLog.printLog('exit')
 		return 0
 	
 	except Exception as e:
