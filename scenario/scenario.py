@@ -52,6 +52,9 @@ class Scenario(object):
 		if sensor in self._manualSensorsList:
 			return
 		self._manualSensorsList.append(sensor)
+		
+	def wait(self, delay):
+		time.sleep(delay)
 	
 	def setSensorValue(self, sensor, value):
 		self.setManual(sensor, True)
@@ -70,9 +73,9 @@ class Scenario(object):
 			main.loadPreset(self.getDefaultPreset())
 			
 			while main.loadPresetDone() == False:
-				time.sleep(1)
+				self.wait(1)
 			
-			time.sleep(2)
+			self.wait(2)
 			
 			if not self.initProgramList(self.getRequiredPrograms()):
 				printError('fail to init program list!')

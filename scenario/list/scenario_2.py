@@ -62,7 +62,7 @@ class Scenario(Parent):
 		pump = False
 		
 		while not pump:
-			time.sleep(1)
+			self.wait(1)
 			
 			pump = self.getCirculationPumpState()
 			if pumpNotWorkingDelay.Get(not pump, delay):
@@ -77,7 +77,7 @@ class Scenario(Parent):
 		pump = False
 		
 		while True:
-			time.sleep(1)
+			self.wait(1)
 			
 			pump = self.getCirculationPumpState()
 			if pumpNotWorkingDelay.Get(not pump, delay):
@@ -112,14 +112,14 @@ class Scenario(Parent):
 			self._status = 'FAIL'
 			return
 		
-		time.sleep(3)
+		self.wait(3)
 		
 		printLog('делаем плиту холодной')
 		self.setPlateTemperature(plateSetpoint - 2)
-		time.sleep(3)
+		self.wait(3)
 		
 		printLog('ждём, пока система устаканится')
-		time.sleep(30)
+		self.wait(30)
 		
 		printLog('ждём, пока насос циркуляции не включится')
 		if self.waitPumpSwitchOn(60):
@@ -129,7 +129,7 @@ class Scenario(Parent):
 			printError('Плохо. Не включился!')
 			return
 			
-		time.sleep(2)
+		self.wait(2)
 		
 		printLog('делаем плиту горячей')
 		self.setPlateTemperature(plateSetpoint + 2.1)
@@ -137,7 +137,7 @@ class Scenario(Parent):
 		pumpSwitchOffDuration = 60
 		
 		printLog(f'Ждём, пока насос циркуляции не выключится хотя бы на {pumpSwitchOffDuration} секунд')
-		time.sleep(10)
+		self.wait(10)
 		
 		if self.waitPumpSwitchOff(pumpSwitchOffDuration, 5*60):
 			printLog('Хорошо!')

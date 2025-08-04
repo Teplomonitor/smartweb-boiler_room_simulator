@@ -70,7 +70,7 @@ class Scenario(Parent):
 		pump = False
 		
 		while not pump:
-			time.sleep(1)
+			self.wait(1)
 			
 			pump = self.getCirculationPumpState()
 			if pumpNotWorkingDelay.Get(not pump, delay):
@@ -83,7 +83,7 @@ class Scenario(Parent):
 		testTimeoutDelay    = TimeOnDelay()
 		
 		while True:
-			time.sleep(1)
+			self.wait(1)
 			
 			pump = self.getCirculationPumpState()
 			if pumpNotWorkingDelay.Get(not pump, delay):
@@ -114,14 +114,14 @@ class Scenario(Parent):
 			self._status = 'FAIL'
 			return
 		
-		time.sleep(3)
+		self.wait(3)
 		
 		printLog('делаем плиту холодной')
 		self.setPlateTemperature(plateSetpoint - 2)
-		time.sleep(3)
+		self.wait(3)
 		
 		printLog('Warm up')
-		time.sleep(30)
+		self.wait(30)
 		
 		printLog('Waiting for circulation pump to switch on')
 		if self.waitPumpSwitchOn(60):
@@ -131,7 +131,7 @@ class Scenario(Parent):
 			printError('Test fail! Pump don\'t work')
 			return
 			
-		time.sleep(2)
+		self.wait(2)
 		
 		printLog('making "cold" backward flow temperature')
 		self.setBacwardFlowTemperature(tFrostProtect - 1)
@@ -139,7 +139,7 @@ class Scenario(Parent):
 		pumpSwitchOffDuration = 60
 		
 		printLog(f'Waiting for circulation pump to switch off for at least {pumpSwitchOffDuration} seconds')
-		time.sleep(10)
+		self.wait(10)
 		
 		if self.waitPumpSwitchOff(pumpSwitchOffDuration, 5*60):
 			printLog('Test Ok!')

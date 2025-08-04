@@ -65,7 +65,7 @@ class Scenario(Parent):
 		pump = False
 		
 		while not pump:
-			time.sleep(1)
+			self.wait(1)
 			
 			pump = self.getCirculationPumpState()
 			if pumpNotWorkingDelay.Get(not pump, delay):
@@ -78,7 +78,7 @@ class Scenario(Parent):
 		testTimeoutDelay    = TimeOnDelay()
 		
 		while True:
-			time.sleep(1)
+			self.wait(1)
 			
 			pump1 = self.getCirculationPumpState()
 			pump2 = self.getLoadingPumpState()
@@ -95,7 +95,7 @@ class Scenario(Parent):
 		oatSetTimeoutDelay = TimeOnDelay()
 		
 		while True:
-			time.sleep(5)
+			self.wait(5)
 			
 			oat = self.readSnowmelterOutdoorTemperature()
 			
@@ -148,14 +148,14 @@ class Scenario(Parent):
 			self._status = 'FAIL'
 			return
 		
-		time.sleep(3)
+		self.wait(3)
 		
 		printLog('делаем плиту холодной')
 		self.setPlateTemperature(plateSetpoint - 2)
-		time.sleep(3)
+		self.wait(3)
 		
 		printLog('ждём, пока система устаканится')
-		time.sleep(30)
+		self.wait(30)
 		
 		printLog('ждём, пока насос циркуляции не включится')
 		if self.waitPumpSwitchOn(60):
@@ -165,7 +165,7 @@ class Scenario(Parent):
 			printError('Плохо. Не включился!')
 			return
 			
-		time.sleep(2)
+		self.wait(2)
 		
 		printLog('делаем на улице жарко')
 		if self.setHighOutdoorTemperature() == False:
@@ -176,7 +176,7 @@ class Scenario(Parent):
 		pumpsSwitchOffTestDuration = 60
 		
 		printLog(f'Ждём, пока насосы не выключатся хотя бы на {pumpsSwitchOffTestDuration} секунд')
-		time.sleep(10)
+		self.wait(10)
 		
 		pumpsSwitchOffDelay = 5*60
 		testExtraDelay      = 60
@@ -190,10 +190,10 @@ class Scenario(Parent):
 		
 		printLog('снова делаем подходящую для снеготайки уличную температуру')
 		self.setMediumOutdoorTemperature()
-		time.sleep(3)
+		self.wait(3)
 
 		printLog('ждём, пока система устаканится')
-		time.sleep(30)
+		self.wait(30)
 				
 		printLog('ждём, пока насос циркуляции не включится')
 		if self.waitPumpSwitchOn(60):
@@ -203,7 +203,7 @@ class Scenario(Parent):
 			printError('Плохо. Не включился!')
 			return
 			
-		time.sleep(2)
+		self.wait(2)
 		
 		printLog('делаем на улице холодно')
 		if self.setLowOutdoorTemperature() == False:
@@ -212,7 +212,7 @@ class Scenario(Parent):
 			return
 		
 		printLog(f'Ждём, пока насосы не выключатся хотя бы на {pumpsSwitchOffTestDuration} секунд')
-		time.sleep(10)
+		self.wait(10)
 		
 		if self.waitPumpsSwitchOff(pumpsSwitchOffTestDuration, pumpsSwitchOffDelay + pumpsSwitchOffTestDuration + testExtraDelay):
 			printLog('Хорошо!')

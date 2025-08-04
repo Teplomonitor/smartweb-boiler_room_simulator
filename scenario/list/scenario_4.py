@@ -64,7 +64,7 @@ class Scenario(Parent):
 		oatSetTimeoutDelay = TimeOnDelay()
 		
 		while True:
-			time.sleep(5)
+			self.wait(5)
 			
 			oat = self.readSnowmelterOutdoorTemperature()
 			
@@ -113,7 +113,7 @@ class Scenario(Parent):
 		b = 1 - a
 		
 		while True:
-			time.sleep(1)
+			self.wait(1)
 			
 			temp = self.getDirectFlowTemperature()
 			dt = temp - tReq
@@ -148,14 +148,14 @@ class Scenario(Parent):
 			self._status = 'FAIL'
 			return
 		
-		time.sleep(3)
+		self.wait(3)
 		
 		printLog('делаем плиту холодной')
 		self.setPlateTemperature(plateSetpoint - 2)
-		time.sleep(3)
+		self.wait(3)
 		
 		printLog('ждём, пока система устаканится')
-		time.sleep(30)
+		self.wait(30)
 		
 		
 		result = self.checkFlowTemperatureControl()
