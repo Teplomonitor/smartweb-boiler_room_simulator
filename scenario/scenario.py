@@ -41,6 +41,9 @@ class Scenario(object):
 		return time.time() - self._startTime
 	
 	def __del__(self):
+		for prg in self._programList.values():
+			prg.enableGuiControl()
+			
 		for sensor in self._manualSensorsList:
 			sensor.setManual(False)
 			
@@ -75,6 +78,11 @@ class Scenario(object):
 				printError('fail to init program list!')
 			else:
 				printLog('init ok!')
+				ok = True
+				
+		if ok:
+			for prg in self._programList.values():
+				prg.disableGuiControl()
 				
 		self._startTime = time.time()
 
