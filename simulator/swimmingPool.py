@@ -1,4 +1,5 @@
 
+from functions.periodPulse import PeriodPulse
 
 def limit(lower_bound, value, upper_bound):
 	return max(min(value, upper_bound), lower_bound)
@@ -8,9 +9,10 @@ class Simulator(object):
 		self._program    = program
 		self._preset     = self._program.getPreset()
 		self._control    = control
+		self._coldWaterTime = PeriodPulse()
 		
-		self.setTemperature(20)
-		self.setBackwardTemperature(20)
+		self.setTemperature(15)
+		self.setBackwardTemperature(15)
 
 	def getTemperature        (self): return self._program.getTemperature().getValue()
 	def getBackwardTemperature(self): return self._backwardTemperature
@@ -69,10 +71,10 @@ class Simulator(object):
 		temp  = self.getTemperature()
 
 		dT = sourceTemp - temp
-		return dT * 0.003 * self.getPumpState()
+		return dT * 0.001 * self.getPumpState()
 
 	def getCooling(self):
-		if self._washTime.Get(1*60, 10*60):
+		if self._coldWaterTime.Get(1*60, 10*60):
 			return -0.1
 
 		return -0.01 # should depend on shower time and so on
@@ -82,7 +84,7 @@ class Simulator(object):
 
 		temp = temp + self.getHeating() + self.getCooling()
 
-		temp = limit(10, temp, 120)
+		temp = limit(10, temp, 35)
 
 		return temp
 	
