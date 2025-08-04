@@ -18,6 +18,7 @@ import simulator.district_heating
 import simulator.fillingLoop
 import simulator.collector
 import simulator.tptValve
+import simulator.swimmingPool
 
 BROADCAST_ID = 0
 
@@ -107,12 +108,14 @@ class Simulator(threading.Thread):
 			'DISTRICT_HEATING' : simulator.district_heating.Simulator,
 			'FILLING_LOOP'     : simulator.fillingLoop     .Simulator,
 			'TPT_VALVE_ADAPTER': simulator.tptValve        .Simulator,
+			'POOL'             : simulator.swimmingPool    .Simulator,
 		}
 
 		consumerTypesList = [
-			'HEATING_CIRCUIT', 
-			'SNOWMELT', 
+			'HEATING_CIRCUIT',
+			'SNOWMELT',
 			'DHW',
+			'POOL',
 		]
 
 		sourceTypesList = [
