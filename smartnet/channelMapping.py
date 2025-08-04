@@ -184,6 +184,25 @@ class InputChannel(Channel):
 			self._gui._shortCheckbox.SetValue(False)
 			self._gui._slider .Enable( True )
 			self._gui._spinner.Enable( True )
+	
+	def enableGuiControl(self):
+		if self._gui:
+			self._gui._openCheckbox .Enable( True )
+			self._gui._shortCheckbox.Enable( True )
+			self._gui._manualRb.Enable( True )
+			self._gui._autoRb  .Enable( True )
+			if self._state == 'normal':
+				self._gui._slider .Enable( True )
+				self._gui._spinner.Enable( True )
+		
+	def disableGuiControl(self):
+		if self._gui:
+			self._gui._openCheckbox .Enable( False )
+			self._gui._shortCheckbox.Enable( False )
+			self._gui._slider .Enable( False )
+			self._gui._spinner.Enable( False )
+			self._gui._manualRb.Enable( False )
+			self._gui._autoRb  .Enable( False )
 		
 class OutputChannel(Channel):
 	'''
