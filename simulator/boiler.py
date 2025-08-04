@@ -13,6 +13,7 @@ class Simulator(object):
 		self._preset     = self._program.getPreset()
 		self._time_start    = time.time()
 		self._control    = control
+		self._currentPower = 0
 		
 		self._boilerOverheatDelay = TimeOnOffDelay()
 		
@@ -89,7 +90,7 @@ class Simulator(object):
 	def getMaxPower(self):
 		return self._program.getMaxPower()
 	
-	def getPower(self):
+	def computePower(self):	
 		if self.getStageState():
 			offset = 20
 			temp = self.getTemperature()
@@ -98,13 +99,14 @@ class Simulator(object):
 			overheatOffDelay = 2*60
 			
 			if self._boilerOverheatDelay.Get(temp > self._tMax, overheatOnDelay, overheatOffDelay):
-				return 0
+				Pmax = 0
+			else:
+				Pmax = self.getMaxPower()
+				
+			Pmin = 0.6 * Pmax
 			
 			t1 = self._tMax - offset
 			t2 = self._tMax
-			
-			Pmax = self.getMaxPower()
-			Pmin = 0.6 * Pmax
 			
 			if temp < t1:
 				P = Pmax
@@ -113,10 +115,16 @@ class Simulator(object):
 			else:
 				Pmin = Pmax*0.6
 				P = Pmax + (Pmin - Pmax) * (temp - t1)/(t2 - t1)
-			
-			return P
 		else:
-			return 0
+			P = 0
+		
+		if self._currentPower < P:
+			self._currentPower += 0.1
+		else:
+			self._currentPower -= 0.2
+			
+	def getPower(self):
+		return self._currentPower
 
 	def getMaxFlowRate(self):
 		return self._program.getMaxFlowRate()
@@ -158,4 +166,5 @@ class Simulator(object):
 
 	def run(self):
 		self.setTemperature(self.computeTemperature())
+		self.computePower()
 
