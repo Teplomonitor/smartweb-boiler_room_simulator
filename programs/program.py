@@ -116,6 +116,14 @@ class Program(object):
 	def getPreset   (self): return self._preset
 	def getGuiColor (self): return 'default'
 
+	def disableGuiControl(self):
+		for prgInput in self._inputs:
+			prgInput.disableGuiControl()
+			
+	def enableGuiControl(self):
+		for prgInput in self._inputs:
+			prgInput.enableGuiControl()
+		
 	def bindInput(self, channel_id, mapping):
 		printLog(f'bind program input {channel_id}')
 		def generateRequest():
