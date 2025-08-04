@@ -105,7 +105,7 @@ programId = {
 
 programSettings = {
 	'HEATING_CIRCUIT_1' : hcSettings(programId['CASCADE_MANAGER']),
-	'HEATING_CIRCUIT_2' : hcSettings(programId['CASCADE_MANAGER'], 60),
+	'HEATING_CIRCUIT_2' : hcSettings(programId['CASCADE_MANAGER'], 0.6),
 	'ROOM_DEVICE_1'     : roomSettings(None                          , programId['HEATING_CIRCUIT_1']),
 	'ROOM_DEVICE_2'     : roomSettings(programId['HEATING_CIRCUIT_2'], programId['HEATING_CIRCUIT_1']),
 	'DHW'               : dhwSettings(programId['CASCADE_MANAGER']),

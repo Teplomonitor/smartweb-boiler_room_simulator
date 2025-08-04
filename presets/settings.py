@@ -12,7 +12,7 @@ class HeatingCircuitSettings(object):
 	def get(self):
 		return [
 			RemoteControlParameter('CONSUMER', 'GENERATOR_ID', self._source),
-			RemoteControlParameter('CIRCUIT', 'HEATING_SLOPE', self._heatingSlope),
+			RemoteControlParameter('CIRCUIT', 'HEATING_SLOPE', int(self._heatingSlope*100)),
 		]
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]
