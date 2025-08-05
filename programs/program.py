@@ -229,6 +229,18 @@ class Program(object):
 			
 		return value
 	
+	def getParameterInfo(self, parameter):
+		return None
+	
+	def readParameterValue(self, parameter):
+		p = self.getParameterInfo(parameter)
+		if p is None:
+			return None
+		remoteParam = RemoteControlParameter(parameterInfo = p, programId = self.getId() )
+		remoteParam.read()
+		
+		return remoteParam.getValue()
+
 	def setInputsRange(self, inputsRange):
 		i = 0
 		for inputRange in inputsRange:
@@ -247,4 +259,4 @@ class Program(object):
 			programInput.saveLog(logDirInputs)
 		for programOutput in self._outputs:
 			programOutput.saveLog(logDirOutputs)
-	
+
