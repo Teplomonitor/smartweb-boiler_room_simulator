@@ -23,6 +23,22 @@ class SwimmingPool(Program):
 		'waterLevelControl': 2,
 	}
 
+	_remoteControlParameters = {
+		'requiredPoolTemperatureComfort' : {'programType': 'POOL', 'parameter': 'REQUIRED_POOL_TEMPERATURE'          , 'parameterType': 'TEMPERATURE'},
+		'requiredPoolTemperatureEconom'  : {'programType': 'POOL', 'parameter': 'REQUIRED_POOL_TEMPERATURE_ECONOM'   , 'parameterType': 'TEMPERATURE'},
+		'currentRequiredPoolTemperature' : {'programType': 'POOL', 'parameter': 'CURRENT_REQUIRED_POOL_TEMPERATURE'  , 'parameterType': 'TEMPERATURE'},
+		'workMode'                       : {'programType': 'POOL', 'parameter': 'WORK_MODE'                          , 'parameterType': 'UINT8_T'},
+#		'schedule'                       : {'programType': 'POOL', 'parameter': 'SCHEDULE'                           , 'parameterType': 'SCHEDULE'},
+		'circulationPumpWorkMode'        : {'programType': 'POOL', 'parameter': 'CIRCULATION_PUMP_WORK_MODE'         , 'parameterType': 'UINT8_T'},
+#		'circulationPumpWorkPeriodOn'    : {'programType': 'POOL', 'parameter': 'CIRCULATION_PUMP_WORK_PERIOD_ON'    , 'parameterType': 'TIME_MS'},
+#		'circulationPumpWorkPeriodOff'   : {'programType': 'POOL', 'parameter': 'CIRCULATION_PUMP_WORK_PERIOD_OFF'   , 'parameterType': 'TIME_MS'},
+#		'fillingDuration'                : {'programType': 'POOL', 'parameter': 'FILLING_DURATION'                   , 'parameterType': 'TIME_MS'},
+		'lowWaterLevelAlarmReset'        : {'programType': 'POOL', 'parameter': 'LOW_WATER_LEVEL_ALARM_RESET'        , 'parameterType': 'UINT8_T'},
+		'currentWorkModeStatus'          : {'programType': 'POOL', 'parameter': 'CURRENT_WORK_MODE_STATUS'           , 'parameterType': 'UINT8_T'},
+		
+		#TODO: add more parameters
+	}
+	
 
 	def __init__(self, params):
 		'''
@@ -53,4 +69,7 @@ class SwimmingPool(Program):
 	def getLoadingPumpState    (self): return self.getOutputChannel(self._outputId['loadingPump'])
 	
 	def setTemperature  (self, value): self.getInputChannel(self._inputId['poolTemperature']).setValue(value)
+
+	def getParameterInfo(self, parameter):
+		return self._remoteControlParameters[parameter]
 	
