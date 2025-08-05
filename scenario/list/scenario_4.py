@@ -101,7 +101,7 @@ class Scenario(Parent):
 		checkTrigger       = PeriodicTrigger()
 		
 		checkPeriod         = 10
-		bigDtTimeout        = 60
+		bigDtTimeout        = 4*60
 		flowControlDuration = 10*60
 		maxCheckDuration    = 30*60
 		
