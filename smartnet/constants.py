@@ -325,6 +325,20 @@ DistrictHeatingParameter = {
 	'PARAM_CURRENT_MAXIMUM_BACKWARD_TEMPERATURE'   : 17,
 }
 
+SwimmingPoolParameter = {
+	'REQUIRED_POOL_TEMPERATURE'         :  1,
+	'CURRENT_REQUIRED_POOL_TEMPERATURE' :  2,
+	'WORK_MODE'                         :  3,
+	'SCHEDULE'                          :  4,
+	'CIRCULATION_PUMP_WORK_MODE'        :  5,
+	'CIRCULATION_PUMP_WORK_PERIOD_ON'   :  6,
+	'CIRCULATION_PUMP_WORK_PERIOD_OFF'  :  7,
+	'REQUIRED_POOL_TEMPERATURE_ECONOM'  :  8,
+	'FILLING_DURATION'                  :  9,
+	'LOW_WATER_LEVEL_ALARM_RESET'       : 10,
+	'CURRENT_WORK_MODE_STATUS'          : 11,
+}
+
 ParameterDict = {
 	'PROGRAM'         : ProgramParameter,
 	'ROOM_DEVICE'     : RoomDeviceParameter,
@@ -335,6 +349,7 @@ ParameterDict = {
 	'DISTRICT_HEATING': DistrictHeatingParameter,
 	'SNOWMELT'        : SnowMelterParameter,
 	'CIRCUIT'         : CircuitParameter,
+	'POOL'            : SwimmingPoolParameter,
 }
 
 
