@@ -4,7 +4,6 @@
 
 from .program import Program
 from gui.parameter import GuiParameter as GuiParameter
-from smartnet.remoteControl import RemoteControlParameter as RemoteControlParameter
 
 class Snowmelter(Program):
 	'''
@@ -97,9 +96,5 @@ class Snowmelter(Program):
 	def getMaxFlowRate2(self):
 		return self._parameters['max_flow_rate2'].getValue()
 	
-	def readParameterValue(self, parameter):
-		p = self._remoteControlParameters[parameter]
-		remoteParam = RemoteControlParameter(parameterInfo = p, programId = self.getId() )
-		remoteParam.read()
-		
-		return remoteParam.getValue()
+	def getParameterInfo(self, parameter):
+		return self._remoteControlParameters[parameter]
