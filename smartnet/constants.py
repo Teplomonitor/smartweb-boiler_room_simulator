@@ -251,6 +251,7 @@ ConsumerParameter = {
 	'REQUIRED_TEMPERATURE'      :  6,
 	'GENERATOR_TEMPERATURE'     :  7,
 	'HEAT_EXTRICATION_ENABLED'  :  8,
+	'ALARM_PROGRAM_ID'          :  9,
 }
 
 SnowMelterParameter = {
