@@ -44,7 +44,15 @@ class ScenarioItem(object):
 
 	def onScenarioSelect(self, event):
 		event.Skip()
+		
+		if self._scenario == 'Stop':
+			self.stopScenario()
+			return
+		
 		self.startScenario()
+		
+	def stopScenario(self):
+		sc.stopScenario()
 
 class MainFrame ( wx.Frame ):
 	
@@ -66,13 +74,21 @@ class MainFrame ( wx.Frame ):
 		
 		scenarioList = sc.getScenarioFilesList()
 		scenarioList.insert(0, 'all')
+		scenarioList.append('Stop')
 
+		listSize = len(scenarioList)
+		i = 0
 		appendSeparator = True
 		for scenario in scenarioList:
 			scenarioItem     = ScenarioItem(scenario)
 			scenarioMenuItem = wx.MenuItem( startScenarioSubmenu, wx.ID_ANY, _(scenario), wx.EmptyString, wx.ITEM_NORMAL )
 			startScenarioSubmenu.Append( scenarioMenuItem )
 			self.Bind( wx.EVT_MENU, scenarioItem.onScenarioSelect, id = scenarioMenuItem.GetId() )
+			
+			i += 1
+			
+			if i == (listSize - 1):
+				appendSeparator = True
 			
 			if appendSeparator:
 				appendSeparator = False
@@ -140,6 +156,11 @@ class MainFrame ( wx.Frame ):
 
 	def OnExitButtonPress( self, event ):
 		self.doClose(event)
+
+	def OnScenarioStopButtonPress( self, event ):
+		event.Skip()
+		stopScenarioEvent = sc.getStopScenarioEvent()
+		stopScenarioEvent.set()
 
 	def __init__( self, parent , guithread):
 		self.makeFrame(parent)
@@ -350,7 +371,7 @@ class ConsoleFrame ( wx.Frame ):
 	def doClose( self, event ):
 		event.Skip()
 		main.MainStop()
-		guiThread().ClearNow()
+		guiThread().Clear()
 		exit(0)
 	
 	def printText(self, text):
