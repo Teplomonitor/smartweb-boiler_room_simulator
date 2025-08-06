@@ -80,7 +80,7 @@ class MainThread(threading.Thread):
 			self._guiThread = None
 			
 		self._newPreset = None
-		self._saveProgramPlots = False
+		self._saveProgramPlots = threading.Event()
 
 		self._initDone = True
 		
@@ -95,7 +95,7 @@ class MainThread(threading.Thread):
 	def getProfile(self): return self._profile
 	def taskEnable(self): return self._taskStopEvent.is_set() == False
 	def taskStop(self): self._taskStopEvent.set()
-	def saveProgramPlots(self): self._saveProgramPlots = True
+	def saveProgramPlots(self): self._saveProgramPlots.set()
 
 	def saveProgramPlotsNow(self):
 		programList = Controller().getProgramList()
@@ -141,8 +141,8 @@ class MainThread(threading.Thread):
 				loadPresetNow(self._newPreset)
 				self._newPreset = None
 
-			if self._saveProgramPlots:
-				self._saveProgramPlots = False
+			if self._saveProgramPlots.is_set():
+				self._saveProgramPlots.clear()
 				self.saveProgramPlotsNow()
 				
 		time.sleep(1)
