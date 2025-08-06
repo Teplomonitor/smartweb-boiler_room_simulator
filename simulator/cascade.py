@@ -5,8 +5,7 @@ import time
 
 BROADCAST_ID = 0
 
-def limit(lower_bound, value, upper_bound):
-	return max(min(value, upper_bound), lower_bound)
+from functions.limit import limit
 
 class Simulator(object):
 	def __init__(self, program, control):

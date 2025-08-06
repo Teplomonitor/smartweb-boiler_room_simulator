@@ -19,6 +19,8 @@ import pytermgui as ptg
 
 import wx
 
+from functions.limit import limit
+
 
 def testTUI1(stdscr):
 	# Clear screen
@@ -379,9 +381,6 @@ def computeNHeating(Tavr, Tplate):
 
 def computeNCooling(Toat, Tplate):
 	return A*S*(Toat - Tplate)
-
-def limit(lower_bound, value, upper_bound):
-	return max(min(value, upper_bound), lower_bound)
 
 def getDirectFlowTemperature():
 	return 50

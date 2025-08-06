@@ -1,10 +1,5 @@
 
 
-
-
-def limit(lower_bound, value, upper_bound):
-	return max(min(value, upper_bound), lower_bound)
-
 class Simulator(object):
 	def __init__(self, control):
 		self._supply_direct_temperature   = 40

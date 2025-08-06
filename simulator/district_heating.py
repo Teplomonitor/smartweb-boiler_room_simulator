@@ -4,7 +4,7 @@ import math
 import time
 import numpy as np
 
-BROADCAST_ID = 0
+from functions.limit import limit
 
 # https://proteplo.org/blog/teplovoy-raschet-teploobmennika
 # начальные условия
@@ -16,8 +16,6 @@ Gc = G*cw/3600/1000 # kWatt
 
 square=1 # Площадь ТО в кв.м.-----------------------
 
-def limit(lower_bound, value, upper_bound):
-	return max(min(value, upper_bound), lower_bound)
 
 #pdiss=100 # примерно равно мощности отопления
 
