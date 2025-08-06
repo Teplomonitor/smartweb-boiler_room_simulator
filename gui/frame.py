@@ -157,11 +157,6 @@ class MainFrame ( wx.Frame ):
 	def OnExitButtonPress( self, event ):
 		self.doClose(event)
 
-	def OnScenarioStopButtonPress( self, event ):
-		event.Skip()
-		stopScenarioEvent = sc.getStopScenarioEvent()
-		stopScenarioEvent.set()
-
 	def __init__( self, parent , guithread):
 		self.makeFrame(parent)
 		self._guithread = guithread
