@@ -1,11 +1,9 @@
 
 import time
 from functions.timeOnOffDelay import TimeOnOffDelay as TimeOnOffDelay
+from functions.limit import limit
 
 BROADCAST_ID = 0
-
-def limit(lower_bound, value, upper_bound):
-	return max(min(value, upper_bound), lower_bound)
 
 class Simulator(object):
 	def __init__(self, program, control):
@@ -33,7 +31,7 @@ class Simulator(object):
 			'backwardTemperature' : 5,
 		}
 
-		self._tMax = 85
+		self._tMax = 75
 		self._tMin = 20
 		self.setTemperature(30)
 
@@ -94,7 +92,7 @@ class Simulator(object):
 		if self.getStageState():
 			offset = 20
 			temp = self.getTemperature()
-			
+
 			overheatOnDelay  = 30
 			overheatOffDelay = 2*60
 			
@@ -119,9 +117,9 @@ class Simulator(object):
 			P = 0
 		
 		if self._currentPower < P:
-			self._currentPower += 0.1
+			self._currentPower += 0.05
 		else:
-			self._currentPower -= 0.2
+			self._currentPower -= 0.5
 			
 	def getPower(self):
 		return self._currentPower
