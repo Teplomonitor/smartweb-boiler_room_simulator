@@ -49,19 +49,21 @@ class Scenario(object):
 		
 	def wait(self, delay):
 		if self._EventStop.is_set():
-			return
+			return False
 		
 		if delay < 3:
 			time.sleep(delay)
-			return
+			return True
 		
 		i = 0
 		while i < delay:
 			if self._EventStop.is_set():
-				return
+				return False
 		
 			i += 1
 			time.sleep(1)
+		
+		return True
 	
 	def setSensorValue(self, sensor, value):
 		self.setManual(sensor, True)
