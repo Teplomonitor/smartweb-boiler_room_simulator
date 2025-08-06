@@ -145,6 +145,11 @@ class MainThread(threading.Thread):
 				self._saveProgramPlots = False
 				self.saveProgramPlotsNow()
 				
+		time.sleep(1)
+		
+		Controller().Clear()
+		CanListener().stop()
+				
 	def loadPreset(self, newPreset):
 		self._newPreset = newPreset
 	
@@ -157,12 +162,6 @@ def taskEnable():
 def MainStop():
 	MainThread().taskStop()
 	
-	time.sleep(1)
-	
-	Simulator().Clear()
-	Controller().Clear()
-	
-	CanListener().stop()
 	
 
 
