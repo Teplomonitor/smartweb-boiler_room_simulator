@@ -62,7 +62,8 @@ class Scenario(Parent):
 		pump = False
 		
 		while not pump:
-			self.wait(1)
+			if self.wait(1) == False:
+				return False
 			
 			pump = self.getCirculationPumpState()
 			if pumpNotWorkingDelay.Get(not pump, delay):
@@ -77,7 +78,8 @@ class Scenario(Parent):
 		pump = False
 		
 		while True:
-			self.wait(1)
+			if self.wait(1) == False:
+				return False
 			
 			pump = self.getCirculationPumpState()
 			if pumpNotWorkingDelay.Get(not pump, delay):
@@ -119,7 +121,8 @@ class Scenario(Parent):
 		self.wait(3)
 		
 		printLog('ждём, пока система устаканится')
-		self.wait(30)
+		if self.wait(30) == False:
+			return
 		
 		printLog('ждём, пока насос циркуляции не включится')
 		if self.waitPumpSwitchOn(60):

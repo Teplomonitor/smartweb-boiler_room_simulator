@@ -78,7 +78,8 @@ class Scenario(Parent):
 		testTimeoutDelay  = TimeOnDelay()
 		
 		while True:
-			time.sleep(1)
+			if self.wait(1) == False:
+				return False
 			
 			valve = self.computeValvePos()
 			if valveClosingDelay.Get(valve < 10, delay):
@@ -94,7 +95,8 @@ class Scenario(Parent):
 		testTimeoutDelay  = TimeOnDelay()
 		
 		while True:
-			time.sleep(1)
+			if self.wait(1) == False:
+				return False
 			
 			valve = self.computeValvePos()
 			if valveOpeningDelay.Get(valve > 90, delay):
@@ -112,6 +114,8 @@ class Scenario(Parent):
 		signalStep = 1
 		
 		while True:
+			if self.wait(1) == False:
+				return False
 			valvePos = self.computeValvePos()
 			self.setControlSignal(signal)
 			
@@ -128,7 +132,6 @@ class Scenario(Parent):
 					return False
 			
 			signal -= signalStep
-			time.sleep(1)
 			
 	def valveSlowOpening(self, targetState):
 		valveTestStopDelay = TimeOnDelay()
@@ -137,6 +140,9 @@ class Scenario(Parent):
 		signalStep = 1
 		
 		while True:
+			if self.wait(1) == False:
+				return False
+			
 			valvePos = self.computeValvePos()
 			self.setControlSignal(signal)
 			
@@ -153,7 +159,6 @@ class Scenario(Parent):
 					return False
 			
 			signal += signalStep
-			time.sleep(1)
 		
 	def valveHalt(self, targetState):
 		valveTestStopDelay = TimeOnDelay()
@@ -162,6 +167,9 @@ class Scenario(Parent):
 		self.setControlSignal(signal)
 		
 		while True:
+			if self.wait(1) == False:
+				return False
+			
 			valvePos = self.computeValvePos()
 			if valveTestStopDelay.Get(True, 60):
 				ds = signal - valvePos
@@ -172,7 +180,6 @@ class Scenario(Parent):
 					printError(f'Слишком большой рассинхрон! {signal} -> {valvePos:.1f} ')
 					return False
 			
-			time.sleep(1)
 			
 	def run(self):
 		printLog('Подаём сигнал на полное закрытие смесителя')

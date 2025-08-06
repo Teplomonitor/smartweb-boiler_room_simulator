@@ -130,9 +130,7 @@ class Scenario(Parent):
 		
 		
 		while True:
-			self.wait(1)
-			
-			if self._EventStop.is_set():
+			if self.wait(1) == False:
 				return False
 			
 #			now = time.time()

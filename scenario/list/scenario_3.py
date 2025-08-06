@@ -65,7 +65,8 @@ class Scenario(Parent):
 		pump = False
 		
 		while not pump:
-			self.wait(1)
+			if self.wait(1) == False:
+				return False
 			
 			pump = self.getCirculationPumpState()
 			if pumpNotWorkingDelay.Get(not pump, delay):
@@ -78,7 +79,8 @@ class Scenario(Parent):
 		testTimeoutDelay    = TimeOnDelay()
 		
 		while True:
-			self.wait(1)
+			if self.wait(1) == False:
+				return False
 			
 			pump1 = self.getCirculationPumpState()
 			pump2 = self.getLoadingPumpState()
@@ -95,7 +97,8 @@ class Scenario(Parent):
 		oatSetTimeoutDelay = TimeOnDelay()
 		
 		while True:
-			self.wait(5)
+			if self.wait(5) == False:
+				return False
 			
 			oat = self.readSnowmelterOutdoorTemperature()
 			
