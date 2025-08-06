@@ -204,7 +204,7 @@ class Simulator(object):
 		
 		temp = temp + n / CHCM
 		
-		temp = limit(oat, temp, 80)
+		temp = limit(oat-20, temp, oat+20)
 
 		return temp
 
