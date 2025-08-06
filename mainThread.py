@@ -68,7 +68,7 @@ class MainThread(threading.Thread):
 		preset = self.getCurrentPreset()
 		
 		self._programPresetList, self._controllerIoList = presets.preset.getPresetsList(preset)
-		self._taskEnable = True
+		self._taskStopEvent = threading.Event()
 		
 		if self._programPresetList is None:
 			printError('wrong preset. Exit')
@@ -93,8 +93,8 @@ class MainThread(threading.Thread):
 	def setCurrentPreset(self, preset):  self.configParserInstance.setParameterValue(self.getProfile(), 'preset', preset)
 		
 	def getProfile(self): return self._profile
-	def taskEnable(self): return self._taskEnable
-	def taskStop(self): self._taskEnable = False
+	def taskEnable(self): return self._taskStopEvent.is_set() == False
+	def taskStop(self): self._taskStopEvent.set()
 	def saveProgramPlots(self): self._saveProgramPlots = True
 
 	def saveProgramPlotsNow(self):
