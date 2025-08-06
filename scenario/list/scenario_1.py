@@ -83,6 +83,9 @@ class Scenario(Parent):
 		testTimeoutDelay    = TimeOnDelay()
 		
 		while True:
+			if self._EventStop.is_set():
+				return False
+			
 			self.wait(1)
 			
 			pump = self.getCirculationPumpState()
@@ -91,6 +94,7 @@ class Scenario(Parent):
 			
 			if testTimeoutDelay.Get(True, timeout):
 				return False
+			
 		return False
 	
 	def run(self):

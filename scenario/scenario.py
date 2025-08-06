@@ -20,6 +20,7 @@ class Scenario(object):
 		self._status = 'IN_PROGRESS'
 		self._sim = sim
 		self._startTime = time.time()
+		self._EventStop = ScenarioThread().getStopScenarioEvent()
 				
 		printLog(f'starting {self.getScenarioTitle()}')
 		printLog(f'description: {self.getScenarioDescription()}')
@@ -40,13 +41,6 @@ class Scenario(object):
 	def getDuration(self):
 		return time.time() - self._startTime
 	
-	def __del__(self):
-		for prg in self._programList.values():
-			prg.enableGuiControl()
-			
-		for sensor in self._manualSensorsList:
-			sensor.setManual(False)
-			
 	def setManual(self, sensor, manual):
 		sensor.setManual(manual)
 		if sensor in self._manualSensorsList:
@@ -54,7 +48,20 @@ class Scenario(object):
 		self._manualSensorsList.append(sensor)
 		
 	def wait(self, delay):
-		time.sleep(delay)
+		if self._EventStop.is_set():
+			return
+		
+		if delay < 3:
+			time.sleep(delay)
+			return
+		
+		i = 0
+		while i < delay:
+			if self._EventStop.is_set():
+				return
+		
+			i += 1
+			time.sleep(1)
 	
 	def setSensorValue(self, sensor, value):
 		self.setManual(sensor, True)
@@ -62,6 +69,13 @@ class Scenario(object):
 		
 	def done(self):
 		return self._status != 'IN_PROGRESS'
+	
+	def clear(self):
+		for prg in self._programList.values():
+			prg.enableGuiControl()
+			
+		for sensor in self._manualSensorsList:
+			sensor.setManual(False)
 	
 	def getStatus(self):
 		return self._status
@@ -152,12 +166,16 @@ class ScenarioThread(threading.Thread):
 		self._simulator      = simulator
 		self._newScenario    = None
 		self._scenarioResultList = []
+		self._stopScenarioEvent = threading.Event()
 		
 		self._initDone = True
 		
 		self.daemon = True
 		self.start()
-		
+	
+	def getStopScenarioEvent(self):
+		return self._stopScenarioEvent
+	
 	def getNextScenario(self):
 		scenario = self.getScenario(self._scenarioIndex)
 		self._scenarioIndex += 1
@@ -171,14 +189,22 @@ class ScenarioThread(threading.Thread):
 			
 			if self._currentScenario:
 				self._currentScenario.run()
-			
+
 				if self._currentScenario.done():
 					self.appendScenarioResult(self._currentScenario)
-					
+					self._currentScenario.clear()
 					self._currentScenario = self.getNextScenario()
 					if self._currentScenario == None:
 						self.printScenarioRunResult()
-				
+							
+			if self._stopScenarioEvent.is_set():
+				self._stopScenarioEvent.clear()
+				if self._currentScenario:
+					printError(f'Сцераний прерван по внешнему запросу')
+					self._currentScenario.clear()
+					self._currentScenario = None
+					self.printScenarioRunResult()
+					
 			time.sleep(1)
 			
 	def appendScenarioResult(self, scenario):
@@ -245,3 +271,7 @@ class ScenarioThread(threading.Thread):
 
 def startScenario(scenario):
 	ScenarioThread().startScenario(scenario)
+	
+
+def stopScenario():
+	ScenarioThread()._stopScenarioEvent.set()
