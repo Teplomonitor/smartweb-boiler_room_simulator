@@ -213,6 +213,7 @@ class Simulator(threading.Thread):
 			
 			time.sleep(1 - dt)
 
+		self.Clear()
 
 def initIoSimulator():
 	simulatorThread = Simulator("simulator thread", 789)
