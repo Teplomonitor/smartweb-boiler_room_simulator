@@ -35,6 +35,10 @@ def bytesToTemp(data, littleEndian = False):
 	
 	return value
 
+def bytesToInt(data, littleEndian = False):
+	value = concatByteArray(data, littleEndian)
+	return value
+
 class RemoteControlParameter(object):
 	def __init__(self,
 		programType    = None,
@@ -196,7 +200,9 @@ class RemoteControlParameter(object):
 	def getParameterSize(self):
 		if self._parameterType == 'UINT8_T'    : return 1
 		if self._parameterType == 'TEMPERATURE': return 2
+		if self._parameterType == 'TIME_MS'    : return 4
 		
 	def dataToValue(self, data):
 		if self._parameterType == 'UINT8_T'    : return data[0]
 		if self._parameterType == 'TEMPERATURE': return bytesToTemp(data)
+		if self._parameterType == 'TIME_MS'    : return bytesToInt(data)
