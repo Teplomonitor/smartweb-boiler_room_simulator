@@ -47,11 +47,11 @@ class Scenario(object):
 			return
 		self._manualSensorsList.append(sensor)
 		
-	def stopScenario(self):
+	def is_stopped(self):
 		return (mainThread.taskEnable() == False) or self._EventStop.is_set()
 	
 	def wait(self, delay):
-		if self.stopScenario():
+		if self.is_stopped():
 			return False
 		
 		if delay < 3:
@@ -60,7 +60,7 @@ class Scenario(object):
 		
 		i = 0
 		while i < delay:
-			if self.stopScenario():
+			if self.is_stopped():
 				return False
 		
 			i += 1
