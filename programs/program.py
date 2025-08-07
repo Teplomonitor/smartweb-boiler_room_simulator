@@ -240,7 +240,22 @@ class Program(object):
 		remoteParam.read()
 		
 		return remoteParam.getValue()
-
+	
+	def writeParameterValue(self, parameter, value):
+		p = self.getParameterInfo(parameter)
+		if p is None:
+			return None
+		
+		remoteParam = RemoteControlParameter(
+			parameterInfo = p,
+			programId = self.getId(),
+			parameterValue = value
+		)
+		
+		remoteParam.write()
+		
+		return remoteParam.getValue()
+	
 	def setInputsRange(self, inputsRange):
 		i = 0
 		for inputRange in inputsRange:
