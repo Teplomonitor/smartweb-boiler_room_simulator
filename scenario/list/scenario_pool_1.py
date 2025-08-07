@@ -2,8 +2,6 @@
 @author: admin
 '''
 
-import time
-
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
 from scenario.scenario import Scenario   as Parent
@@ -15,7 +13,6 @@ class Scenario(Parent):
 		super().__init__(controllerHost, sim)
 		
 		self._pool   = self._programList['pool']
-		self._boiler = self._programList['boiler']
 
 	def getScenarioTitle(self): return 'pool test 1'
 	
@@ -27,7 +24,6 @@ class Scenario(Parent):
 	def getRequiredPrograms(self):
 		requiredProgramTypesList = {
 			'pool'   : 'POOL',
-			'boiler' : 'BOILER',
 		}
 		return requiredProgramTypesList
 	
@@ -46,7 +42,8 @@ class Scenario(Parent):
 		pump = False
 		
 		while True:
-			self.wait(1)
+			if self.wait(1) == False:
+				return False
 			
 			pump = self.getLoadingPumpState()
 			if pump:
@@ -61,7 +58,8 @@ class Scenario(Parent):
 		timeoutDelay = TimeOnDelay()
 		
 		while True:
-			self.wait(1)
+			if self.wait(1) == False:
+				return False
 			
 			pump = self.getLoadingPumpState()
 			
