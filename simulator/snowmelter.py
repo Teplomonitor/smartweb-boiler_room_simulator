@@ -1,5 +1,6 @@
 
 from functions.periodPulse import PeriodPulse as PeriodPulse
+from functions.limit import limit
 
 S = 5*4
 h = 0.15
@@ -21,9 +22,6 @@ def computeNHeating(Tplate, Tavr):
 
 def computeNCooling(Tplate, Toat):
 	return A*S*(Toat - Tplate)
-
-def limit(lower_bound, value, upper_bound):
-	return max(min(value, upper_bound), lower_bound)
 
 class Simulator(object):
 	def __init__(self, program, control):

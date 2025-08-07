@@ -2,17 +2,14 @@
 @author: admin
 '''
 
-import time
-
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
 from scenario.scenario import Scenario   as Parent
 
 from functions.timeOnDelay  import TimeOnDelay  as TimeOnDelay
 from functions.periodicTrigger import PeriodicTrigger
+from functions.limit import limit
 
-def limit(lower_bound, value, upper_bound):
-	return max(min(value, upper_bound), lower_bound)
 
 class Scenario(Parent):
 	def __init__(self, controllerHost, sim):
