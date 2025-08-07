@@ -1,4 +1,5 @@
 
+import os
 
 try:
 	import wx
@@ -36,11 +37,16 @@ class PresetItem(object):
 		self.loadPreset()
 
 class ScenarioItem(object):
-	def __init__(self, scenario):
+	def __init__(self, scenario, scenarioDir):
 		self._scenario = scenario
+		self._dir = scenarioDir
 	
 	def startScenario(self):
-		sc.startScenario(self._scenario)
+		scenario = self._scenario
+		if self._dir:
+			scenario = os.path.join(self._dir, self._scenario)
+			
+		sc.startScenario(scenario)
 
 	def onScenarioSelect(self, event):
 		event.Skip()
@@ -70,30 +76,42 @@ class MainFrame ( wx.Frame ):
 		self.m_menu1.AppendSubMenu( loadPresetSubmenu, _(u"Load preset") )
 		
 	def addScenarioMenu(self):
-		startScenarioSubmenu = wx.Menu()
-		
-		scenarioList = sc.getScenarioFilesList()
-		scenarioList.insert(0, 'all')
-		scenarioList.append('Stop')
-
-		listSize = len(scenarioList)
-		i = 0
-		appendSeparator = True
-		for scenario in scenarioList:
-			scenarioItem     = ScenarioItem(scenario)
-			scenarioMenuItem = wx.MenuItem( startScenarioSubmenu, wx.ID_ANY, _(scenario), wx.EmptyString, wx.ITEM_NORMAL )
-			startScenarioSubmenu.Append( scenarioMenuItem )
+		def addScenarioItem(submenu, scenarioTitle, scenarioDir = None):
+			scenarioItem = ScenarioItem(scenarioTitle, scenarioDir)
+			scenarioMenuItem = wx.MenuItem( submenu, wx.ID_ANY, _(scenarioTitle), wx.EmptyString, wx.ITEM_NORMAL )
+			submenu.Append( scenarioMenuItem )
 			self.Bind( wx.EVT_MENU, scenarioItem.onScenarioSelect, id = scenarioMenuItem.GetId() )
-			
-			i += 1
-			
-			if i == (listSize - 1):
-				appendSeparator = True
-			
-			if appendSeparator:
-				appendSeparator = False
-				startScenarioSubmenu.AppendSeparator()
-
+		
+		startScenarioSubmenu = wx.Menu()
+		addScenarioItem(startScenarioSubmenu, 'all')
+		startScenarioSubmenu.AppendSeparator()
+		
+		scenarioDir = sc.getScenarioDir()
+		
+		def addScenarioItems(subMenu, scenarioDir):
+			def filterScenarioItems():
+				if '__pycache__' in dirs : dirs .remove('__pycache__')  # don't visit __pycache__ directories
+				if '__init__.py' in files: files.remove('__init__.py')  # don't use __init__.py files
+				
+			for root, dirs, files in os.walk(scenarioDir):
+				filterScenarioItems()
+				print(f'{root} -- {dirs} -- {files}')
+				
+				for scenarioFile in files:
+					addScenarioItem(subMenu, scenarioFile, scenarioDir)
+					
+				for scenarioSubDir in dirs:
+					scenarioSubmenu = wx.Menu()
+					subMenu.AppendSubMenu(scenarioSubmenu, _(scenarioSubDir))
+					
+					addScenarioItems(scenarioSubmenu, os.path.join(scenarioDir, scenarioSubDir))
+				break
+				
+		addScenarioItems(startScenarioSubmenu, scenarioDir)
+		
+		startScenarioSubmenu.AppendSeparator()
+		addScenarioItem(startScenarioSubmenu, 'Stop')
+		
 		self.m_menu1.AppendSubMenu( startScenarioSubmenu, _(u"Scenario") )
 
 	def makeFrame(self, parent ):
