@@ -8,6 +8,7 @@ from os.path import dirname, join
 from pydoc import importfile
 import time
 import threading
+import datetime
 
 import main
 import mainThread
@@ -161,7 +162,6 @@ def getScenarioFilesList():
 			
 		for root, dirs, files in os.walk(scenarioDir):
 			filterScenarioItems()
-			print(f'{root} -- {dirs} -- {files}')
 			
 			for scenarioFile in files:
 				__all__.append(join(scenarioDir, scenarioFile))
@@ -205,10 +205,21 @@ class ScenarioThread(threading.Thread):
 		return self._stopScenarioEvent
 	
 	def getNextScenario(self):
+		if self._stopScenarioEvent.is_set():
+			return None
+		
 		scenario = self.getScenario(self._scenarioIndex)
 		self._scenarioIndex += 1
 		return scenario
-		
+	
+	def saveScenarioLog(self, scenario):
+		programList = self._controllerHost.getProgramList()
+		now = datetime.datetime.now()
+		date_time = now.strftime("%Y-%m-%d_%H_%M")
+		logDir = date_time + '_' + scenario.getScenarioTitle().replace(" ", "_")
+		for prg in programList:
+			prg.saveLog(logDir)
+			
 	def run(self):
 		while mainThread.taskEnable():
 			if self._newScenario:
@@ -220,6 +231,9 @@ class ScenarioThread(threading.Thread):
 
 				if self._currentScenario.done():
 					self.appendScenarioResult(self._currentScenario)
+					if self._currentScenario.getStatus() != 'OK':
+						self.saveScenarioLog(self._currentScenario)
+						
 					self._currentScenario.clear()
 					self._currentScenario = self.getNextScenario()
 					if self._currentScenario == None:
