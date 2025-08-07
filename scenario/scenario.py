@@ -1,9 +1,11 @@
 '''
 @author: admin
 '''
-from os.path import dirname, basename, isfile, join
-import glob
 
+import os
+from os.path import dirname, join
+
+from pydoc import importfile
 import time
 import threading
 
@@ -146,11 +148,32 @@ class Scenario(object):
 					return program
 		return None
 
+def getScenarioDir():
+	return join(dirname(__file__),'list')
+
 def getScenarioFilesList():
-	regex = join(dirname(__file__),'list', "*.py")
+	__all__ = []
 	
-	modules = glob.glob(regex)
-	__all__ = [ basename(f)[:-3] for f in modules if isfile(f) and not f.endswith('__init__.py')]
+	def addScenarioItems(scenarioDir):
+		def filterScenarioItems():
+			if '__pycache__' in dirs : dirs .remove('__pycache__')  # don't visit __pycache__ directories
+			if '__init__.py' in files: files.remove('__init__.py')  # don't use __init__.py files
+			
+		for root, dirs, files in os.walk(scenarioDir):
+			filterScenarioItems()
+			print(f'{root} -- {dirs} -- {files}')
+			
+			for scenarioFile in files:
+				__all__.append(join(scenarioDir, scenarioFile))
+				
+			for scenarioSubDir in dirs:
+				addScenarioItems(os.path.join(scenarioDir, scenarioSubDir))
+				
+			break
+			
+	
+	addScenarioItems(getScenarioDir())
+	
 	return __all__
 
 class ScenarioThread(threading.Thread):
@@ -172,7 +195,7 @@ class ScenarioThread(threading.Thread):
 		self._newScenario    = None
 		self._scenarioResultList = []
 		self._stopScenarioEvent = threading.Event()
-		
+		self._scenarioList = getScenarioFilesList()
 		self._initDone = True
 		
 		self.daemon = True
@@ -251,26 +274,25 @@ class ScenarioThread(threading.Thread):
 			self._currentScenario = self.getNextScenario()
 			return
 		
-		__all__ = getScenarioFilesList()
+		__all__ = self._scenarioList
 		
 		if scenario in __all__:
 			self._scenarioIndex   = len(__all__)
-			self._currentScenario = self.getScenarioModule(scenario)
+			self._currentScenario = self.getScenarioObject(scenario)
 		else:
 			printError(f'{scenario} not in scenario list!')
 			
 	
-	def getScenarioModule(self, scenarioId):
-		moduleId = 'scenario.list.%s' % scenarioId
-		scenario_module = __import__(moduleId, fromlist=["scenario.list"])
+	def getScenarioObject(self, scenarioId):
+		scenario_module = importfile(scenarioId)
 		return scenario_module.Scenario(self._controllerHost, self._simulator)
 
 	def getScenario(self, scenarioIndex):
-		__all__ = getScenarioFilesList()
+		__all__ = self._scenarioList
 		
 		if scenarioIndex < len(__all__): 
 			scenarioId = __all__[scenarioIndex]
-			return self.getScenarioModule(scenarioId)
+			return self.getScenarioObject(scenarioId)
 		
 		return None
 
