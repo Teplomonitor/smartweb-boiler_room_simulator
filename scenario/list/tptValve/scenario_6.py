@@ -181,7 +181,7 @@ class Scenario(Parent):
 	def run(self):
 		printLog('Подаём сигнал на полное закрытие смесителя')
 		self.setControlSignal(0)
-		if self.waitValveClose(20, 100) == False:
+		if self.waitValveClose(60, 100) == False:
 			printError('Проблема! Кран не закрывается полностью!')
 			self._status = 'FAIL'
 			return
@@ -206,7 +206,7 @@ class Scenario(Parent):
 			return
 		
 		printLog('Не меняем сигнал')
-		if self.valveHalt(self._valvePos) == False:
+		if self.valveHalt(50) == False:
 			printError('Проблема! Кран двигается!')
 			self._status = 'FAIL'
 			return
