@@ -95,7 +95,6 @@ class MainFrame ( wx.Frame ):
 				
 			for root, dirs, files in os.walk(scenarioDir):
 				filterScenarioItems()
-				print(f'{root} -- {dirs} -- {files}')
 				
 				for scenarioFile in files:
 					addScenarioItem(subMenu, scenarioFile, scenarioDir)
