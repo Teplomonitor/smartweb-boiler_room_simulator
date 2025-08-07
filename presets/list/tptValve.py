@@ -56,7 +56,7 @@ programInputs = {
 }
 
 programOutputs = {
-	'TPT_VALVE': TptValveOutputMapping(outputMapping(0, hostId['HOST_1']), outputMapping(0, hostId['HOST_1'])),
+	'TPT_VALVE': TptValveOutputMapping(outputMapping(0, hostId['HOST_1']), outputMapping(1, hostId['HOST_1'])),
 }
 
 programPower = {
