@@ -264,8 +264,11 @@ class Program(object):
 				self._inputs[i].setMax(inputRange[1])
 			i = i + 1
 
-	def saveLog(self):
+	def saveLog(self, logDir = None):
 		titleCommon = self.getTitle() + '_' + str(self.getId())
+		
+		if logDir:
+			titleCommon = os.path.join(logDir, titleCommon)
 		
 		logDirInputs  = os.path.join(titleCommon, 'inputs')
 		logDirOutputs = os.path.join(titleCommon, 'outputs')
