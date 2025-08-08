@@ -35,8 +35,23 @@ def bytesToTemp(data, littleEndian = False):
 	
 	return value
 
+def tempToData(value, littleEndian = False):
+	if value == 'UNDEF': return 0x8003
+	if value == 'SHORT': return 0x8001
+	if value == 'OPEN' : return 0x8002
+	
+	return value * 10
+
+def timeToData(value, littleEndian = False):
+	return value*1000
+
 def bytesToInt(data, littleEndian = False):
 	value = concatByteArray(data, littleEndian)
+	return value
+
+def bytesToTime(data, littleEndian = False):
+	value = bytesToInt(data, littleEndian)
+	value /=1000
 	return value
 
 class RemoteControlParameter(object):
@@ -86,11 +101,16 @@ class RemoteControlParameter(object):
 
 		def generateRequest():
 			parameterIdCode = self.getParameterIdCode()
+			
+			parameterValue = self.valueToData(self._parameterValue)
+			
 			if self._parameterIndex is None:
-				data = [snc.ProgramType[self._programType], parameterIdCode, self._parameterValue]
+				data = [snc.ProgramType[self._programType], parameterIdCode]
 			else:
-				data = [snc.ProgramType[self._programType], parameterIdCode, self._parameterIndex, self._parameterValue]
-
+				data = [snc.ProgramType[self._programType], parameterIdCode, self._parameterIndex]
+			
+			data.extend(parameterValue)
+			
 			request = smartnetMessage(
 			snc.ProgramType['REMOTE_CONTROL'],
 			self._programId,
@@ -205,4 +225,12 @@ class RemoteControlParameter(object):
 	def dataToValue(self, data):
 		if self._parameterType == 'UINT8_T'    : return data[0]
 		if self._parameterType == 'TEMPERATURE': return bytesToTemp(data)
-		if self._parameterType == 'TIME_MS'    : return bytesToInt(data)
+		if self._parameterType == 'TIME_MS'    : return bytesToTime(data)
+		return data[0]
+		
+	def valueToData(self, value):
+		data = value
+		if self._parameterType == 'UINT8_T'    : data = value
+		if self._parameterType == 'TEMPERATURE': data = tempToData(value)
+		if self._parameterType == 'TIME_MS'    : data = timeToData(value)
+		return list(data.to_bytes(self.getParameterSize(), 'little'))
