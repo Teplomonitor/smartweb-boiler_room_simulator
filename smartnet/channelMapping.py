@@ -214,6 +214,7 @@ class OutputChannel(Channel):
 		Constructor
 		'''
 		super().__init__(mapping, value, title, gui)
+		self._log.setType('RELAY')
 		self._lastUpdateTime = None
 		
 	def setValue(self, value, manual = False):
