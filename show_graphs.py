@@ -69,7 +69,7 @@ def showPlots():
 					if valueFormat == 'RELAY':
 						plt.step(converted_dates, y, c=getRandomColor(),
 						#	linestyle = 'dashed',
-							where = 'post',
+							where = 'post', #The y value is continued constantly to the right from every x position
 							marker = 'o',
 							label = label)
 					else:
@@ -80,7 +80,7 @@ def showPlots():
 	
 	### Generate the plot
 	plt.xlabel('Time')
-	plt.ylabel('Temperature(°C)')
+	plt.ylabel('Value')
 	plt.title('Simulator log', fontsize = 20)
 	plt.grid()
 	plt.legend()
