@@ -55,7 +55,7 @@ class MainThread(threading.Thread):
 		if hasattr(self, '_initDone'):
 			return
 		
-		threading.Thread.__init__(self, name = 'MainThread')
+		threading.Thread.__init__(self, name = 'MyMainThread')
 
 		self.configParserInstance = config.ConfigParserInstance()
 		
@@ -64,6 +64,7 @@ class MainThread(threading.Thread):
 		self._scenario                    = args.scenario
 		self._debug                       = args.debug
 		self._canConfig                   = args.can
+		self._debug_thread                = None
 		
 		preset = self.getCurrentPreset()
 		
@@ -109,7 +110,7 @@ class MainThread(threading.Thread):
 			udp.initUdpBridge(self._udp_bridge_enable)
 		
 		if self._debug:
-			debug.debug_thread()
+			self._debug_thread = debug.debug_thread()
 			
 		controllerId = ctrlSearch.findOnlineController()
 		
@@ -130,6 +131,17 @@ class MainThread(threading.Thread):
 		if self._scenario != 'none':
 			scenario.startScenario(self._scenario)
 			
+	
+	def checkAliveThreads(self):
+		if not Simulator().is_alive():
+			print('Simulator is dead!')
+			return False
+		
+		if not scenario.ScenarioThread().is_alive():
+			print('Scenario is dead!')
+			return False
+		
+		return True
 		
 	def run(self):
 		self.initSimulator()
@@ -144,12 +156,25 @@ class MainThread(threading.Thread):
 			if self._saveProgramPlots.is_set():
 				self._saveProgramPlots.clear()
 				self.saveProgramPlotsNow()
+			
+			if self.checkAliveThreads() == False:
+				self.taskStop()
 				
+			
+		self.Clear()
+
+	def Clear(self):
 		time.sleep(1)
 		
+		if self._debug_thread:
+			self._debug_thread.stop()
+			
 		Controller().Clear()
 		CanListener().stop()
-				
+		
+		if self._guiThread:
+			self._guiThread.stop()
+			
 	def loadPreset(self, newPreset):
 		self._newPreset = newPreset
 	
