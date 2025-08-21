@@ -35,15 +35,30 @@ def bytesToTemp(data, littleEndian = False):
 	
 	return value
 
+def bytesToTdpFloat(data, littleEndian = False):
+	value = concatByteArray(data, littleEndian)
+	value /= 100.0
+	
+	return value
+	
 def tempToData(value, littleEndian = False):
 	if value == 'UNDEF': return 0x8003
 	if value == 'SHORT': return 0x8001
 	if value == 'OPEN' : return 0x8002
 	
-	return value * 10
+	return int(value * 10)
 
+def tdpFloatToData(value, littleEndian = False):
+	return int(value * 100)
+	
 def timeToData(value, littleEndian = False):
 	return value*1000
+
+def schedulePeriodToData(value, littleEndian = False):
+	start = int(value[0] / 60)
+	stop  = int(value[1] / 60)
+	data  = start | stop << 16
+	return data
 
 def bytesToInt(data, littleEndian = False):
 	value = concatByteArray(data, littleEndian)
@@ -54,7 +69,22 @@ def bytesToTime(data, littleEndian = False):
 	value /=1000
 	return value
 
+def bytesToSchedulePeriod(data, littleEndian = False):
+	start = bytesToInt(data[0:2], littleEndian)
+	stop  = bytesToInt(data[2:4], littleEndian)
+	return [start*60, stop*60]
+	
+
 class RemoteControlParameter(object):
+	'''
+		parameterType - value type used in CANBUS data transfer.
+		Can be 
+		'UINT8_T'    : 1 byte value, unsigned
+		'TEMPERATURE': 2 byte value, used mostly for temperature. Value x10
+		'TIME_MS'    : 4 byte value, used for time parameters. Milliseconds
+		'SCHEDULE'   : table parameter (day, period). One table element - 4 bytes: 2 bytes - period start, 2 bytes - end (in minutes).
+		'TDP_FLOAT'  : two decimal places float value x100. Used mostly for heating slope
+	'''
 	def __init__(self,
 		programType    = None,
 		parameterId    = None,
@@ -218,19 +248,26 @@ class RemoteControlParameter(object):
 		return result
 	
 	def getParameterSize(self):
-		if self._parameterType == 'UINT8_T'    : return 1
-		if self._parameterType == 'TEMPERATURE': return 2
-		if self._parameterType == 'TIME_MS'    : return 4
+		if   self._parameterType == 'UINT8_T'    : return 1
+		elif self._parameterType == 'TEMPERATURE': return 2
+		elif self._parameterType == 'TIME_MS'    : return 4
+		elif self._parameterType == 'SCHEDULE'   : return 4
+		elif self._parameterType == 'TDP_FLOAT'  : return 2
+		return 1
 		
 	def dataToValue(self, data):
-		if self._parameterType == 'UINT8_T'    : return data[0]
-		if self._parameterType == 'TEMPERATURE': return bytesToTemp(data)
-		if self._parameterType == 'TIME_MS'    : return bytesToTime(data)
+		if   self._parameterType == 'UINT8_T'    : return data[0]
+		elif self._parameterType == 'TEMPERATURE': return bytesToTemp(data)
+		elif self._parameterType == 'TIME_MS'    : return bytesToTime(data)
+		elif self._parameterType == 'SCHEDULE'   : return bytesToSchedulePeriod(data)
+		if   self._parameterType == 'TDP_FLOAT'  : return bytesToTdpFloat(data)
 		return data[0]
 		
 	def valueToData(self, value):
 		data = value
-		if self._parameterType == 'UINT8_T'    : data = value
-		if self._parameterType == 'TEMPERATURE': data = tempToData(value)
-		if self._parameterType == 'TIME_MS'    : data = timeToData(value)
+		if   self._parameterType == 'UINT8_T'    : data = value
+		elif self._parameterType == 'TEMPERATURE': data = tempToData(value)
+		elif self._parameterType == 'TIME_MS'    : data = timeToData(value)
+		elif self._parameterType == 'SCHEDULE'   : data = schedulePeriodToData(value)
+		elif self._parameterType == 'TDP_FLOAT'  : data = tdpFloatToData(value)
 		return list(data.to_bytes(self.getParameterSize(), 'little'))
