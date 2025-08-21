@@ -67,7 +67,7 @@ class Simulator(threading.Thread):
 		self.thread_ID   = thread_ID
 		
 		
-		sensor_report_thread(self)
+		self._srt = sensor_report_thread(self)
 		
 		self._initDone = True
 		
@@ -212,6 +212,10 @@ class Simulator(threading.Thread):
 				dt = 1 
 			
 			time.sleep(1 - dt)
+			
+			if not self._srt.is_alive():
+				print('Oh shi! Sensor report is dead')
+				break
 
 		self.Clear()
 
