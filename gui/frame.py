@@ -414,6 +414,13 @@ class guiThread():
 	def Clear(self):
 		wx.CallAfter(self.ClearNow)
 	
+	def stopNow(self):
+		self.ClearNow()
+		exit(0)
+		
+	def stop(self):
+		wx.CallAfter(self.stopNow)
+		
 	def ClearNow(self):
 		self._ex.programsWrapSizer.Clear(True)
 		self._ex.programsWrapSizer.Layout()
