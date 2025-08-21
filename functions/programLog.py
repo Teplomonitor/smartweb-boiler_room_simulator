@@ -69,6 +69,7 @@ class ParameterLog(object):
 				self.doAppend(value)
 	
 	def saveToCsv(self, logDir):
+		self.doAppend(self.getValue(-1)) # force last value append to log before save
 		
 		fullLogDir = os.path.join(logsRootDir, logDir)
 		
