@@ -46,24 +46,24 @@ class ParameterLog(object):
 			return
 		
 		lastTimestamp = self.getTimestamp(-1)
-		lastValue     = self.getValue(-1)
 		
 		now = time.time()
 		
 		dt  = now - lastTimestamp
-		dv  = abs(value - lastValue)
 		# don't save too often
 		if dt < 1:
 			return
+		
+		lastValue     = self.getValue(-1)
+		dv  = abs(value - lastValue)
 		
 		if self._saveType == 'ALWAYS':
 			if (dv == 0) and dt < 3:
 				return
 			self.doAppend(value)
 		elif self._saveType == 'ON_CHANGE':
-			if dv != 0:
+			if dv != 0 or dt > 60:
 				self.doAppend(value)
-			return
 		elif self._saveType == 'TEMPERATURE':
 			if (dv > 1) or dt > 10:
 				self.doAppend(value)
