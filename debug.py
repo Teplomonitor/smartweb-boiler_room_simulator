@@ -3,6 +3,8 @@ import threading
 import can
 import time
 
+import mainThread
+
 import smartnet.constants as snc
 from smartnet.message import Message as smartnetMessage
 from smartnet.message import createBus as createBus
@@ -27,7 +29,7 @@ class i_am_here_thread(threading.Thread):
 		msg.send(bus = self._canbus)
 
 	def run(self):
-		while True:
+		while mainThread.taskEnable():
 			self.sendImHere()
 			time.sleep(10)
 
