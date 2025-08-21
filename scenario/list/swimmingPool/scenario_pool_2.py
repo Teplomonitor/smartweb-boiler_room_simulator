@@ -224,6 +224,18 @@ class Scenario(Parent):
 		
 		return True
 		
+	def checkCirculationScheduleWorkMode(self):
+		mode = 'CIRCULATION_PROG'
+		if self.setCirculationPumpWorkMode(mode) == False:
+			self._status = 'FAIL'
+			return False
+			
+
+		# прочитать текущее время на контроллере
+		# задать расписание насоса циркуляции, на каждый день разное
+		# проверить, что насос включится и выключится в заданное на сегодня время
+		return True
+		
 	def checkCirculationPeriodicWorkMode(self):
 		mode = 'CIRCULATION_PERIOD'
 		if self.setCirculationPumpWorkMode(mode) == False:
