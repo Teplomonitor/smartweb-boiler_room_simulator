@@ -65,7 +65,8 @@ def initArgParser(program_license):
 	parser.add_argument('-d', '--debug'   , action='store_true'                          , help='start debugger that will reply on simulator commands') 
 	parser.add_argument('-p', '--profile' , nargs='?', const='main', default='main'      , help='select program profile')
 	parser.add_argument('-u', '--udp'     , nargs='?', const=31987 , default=0           , help='enable CAN-UDP bridge. Can be value from 0 to 65535. 0 - disable CAN-UDP bridge')
-	parser.add_argument(      '--gui'     , action='store_true'                          , help='enable gui window') 
+	parser.add_argument(      '--gui'     , action='store_true'    , default=True        , help='enable gui window. [DEPRECATED] GUI always enable by default now. Use --no-gui to switch off GUI') 
+	parser.add_argument(      '--no-gui'  , action='store_false'   , dest='gui'          , help='disable gui window') 
 	parser.add_argument('-s', '--scenario', nargs='?', const='all'    , default='none'   , help='enable automatic scenarion run')
 	parser.add_argument('-c', '--can'     , nargs='?', const='default', default='none'   , help='select CANBus config')
 	
