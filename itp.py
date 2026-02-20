@@ -256,90 +256,91 @@ def mainframe_servo():
     calc_mfs = tk.Label(master=clc_form, text=mfs, fg=color)
     calc_mfs.grid(column=0, row=18, pady=2, padx=2)
     
+def main():
+    # создаем корневое окно
+    window = tk.Tk()
+    
+    # заголовок
+    window.title("ввод начальных данных")
+    
+    # размеры
+    window.geometry('500x500')
+    
+    frm_form = tk.Frame(relief=tk.RAISED, borderwidth=5)
+    clc_form = tk.Frame(relief=tk.SUNKEN, borderwidth=5)
+    # Помещает рамку в окно приложения.
+    frm_form.pack()
+    clc_form.pack()
+    
+    # ввод начальных данных----------------------------------
+    lbl = tk.Label(master=frm_form, text="площадь ТО")
+    lbl.grid(column=0, row=1)
+    entry = tk.Entry(master=frm_form, width=5)  
+    entry.grid(column=1, row=1)
+    entry.insert(0, square)
+    entry.focus()
+    result = tk.Label(master=frm_form, text=str(square))
+    result.grid(column=3, row=1, padx=10)
+    
+    lbl1 = tk.Label(master=frm_form, text="расход от котла л/с")
+    lbl1.grid(column=0, row=2)
+    entry1 = tk.Entry(master=frm_form, width=5)  
+    entry1.grid(column=1, row=2)
+    entry1.insert(0, qtown_max)
+    result1 = tk.Label(master=frm_form, text=str(qtown_max))
+    result1.grid(column=3, row=2, padx=10)
+    
+    lbl2 = tk.Label(master=frm_form, text="темп подачи от котла")
+    lbl2.grid(column=0, row=3)
+    entry2 = tk.Entry(master=frm_form, width=5)  
+    entry2.grid(column=1, row=3)
+    entry2.insert(0, tintown)
+    result2 = tk.Label(master=frm_form, text=str(tintown))
+    result2.grid(column=3, row=3, padx=10)
+    
+    lbl3 = tk.Label(master=frm_form, text="расход в доме")
+    lbl3.grid(column=0, row=4)
+    entry3 = tk.Entry(master=frm_form, width=5)  
+    entry3.grid(column=1, row=4)
+    entry3.insert(0, qhouse)
+    result3 = tk.Label(master=frm_form, text=str(qhouse))
+    result3.grid(column=3, row=4, padx=10)
+    
+    lbl4 = tk.Label(master=frm_form, text="мощь рассеивания, квт")
+    lbl4.grid(column=0, row=5)
+    entry4 = tk.Entry(master=frm_form, width=5)  
+    entry4.grid(column=1, row=5)
+    entry4.insert(0, pdiss)
+    result4 = tk.Label(master=frm_form, text=str(pdiss))
+    result4.grid(column=3, row=5, padx=10)
+    
+    lbl5 = tk.Label(master=frm_form, text="требуемая темп. после ТО")
+    lbl5.grid(column=0, row=6)
+    entry5 = tk.Entry(master=frm_form, width=5)  
+    entry5.grid(column=1, row=6)
+    entry5.insert(0, tinhouse_demand)
+    result5 = tk.Label(master=frm_form, text=str(tinhouse_demand))
+    result5.grid(column=3, row=6, padx=10)
+    
+    lbl6 = tk.Label(master=frm_form, text="ожидаемая средн Т после ТО")
+    lbl6.grid(column=0, row=7)
+    entry6 = tk.Entry(master=frm_form, width=5)  
+    entry6.grid(column=1, row=7)
+    entry6.insert(0, mid_temp)
+    result6 = tk.Label(master=frm_form, text=str(mid_temp))
+    result6.grid(column=3, row=7, padx=10)
+    #---------------------------------------------------------
+    btn_recalc = tk.Button( master=frm_form, text="обновить нач. данные", command=initialcond)
+    btn_recalc.grid(row=8, column=1, pady=2, padx=5)
+    
+    #---------------------------------
+    btn_mf = tk.Button(master=clc_form, text="расчет Т потоков", command = mainframe_servo)
+    btn_mf.grid(row=12, column=0, pady=2, padx=10)
+    window.after(1000, initialcond)  # Обновлять каждую секунду
+    # ----------------------------------------
+    window.mainloop()
         
-# создаем корневое окно
-window = tk.Tk()
-
-# заголовок
-window.title("ввод начальных данных")
-
-# размеры
-window.geometry('500x500')
-
-frm_form = tk.Frame(relief=tk.RAISED, borderwidth=5)
-clc_form = tk.Frame(relief=tk.SUNKEN, borderwidth=5)
-# Помещает рамку в окно приложения.
-frm_form.pack()
-clc_form.pack()
-
-# ввод начальных данных----------------------------------
-lbl = tk.Label(master=frm_form, text="площадь ТО")
-lbl.grid(column=0, row=1)
-entry = tk.Entry(master=frm_form, width=5)  
-entry.grid(column=1, row=1)
-entry.insert(0, square)
-entry.focus()
-result = tk.Label(master=frm_form, text=str(square))
-result.grid(column=3, row=1, padx=10)
-
-lbl1 = tk.Label(master=frm_form, text="расход от котла л/с")
-lbl1.grid(column=0, row=2)
-entry1 = tk.Entry(master=frm_form, width=5)  
-entry1.grid(column=1, row=2)
-entry1.insert(0, qtown_max)
-result1 = tk.Label(master=frm_form, text=str(qtown_max))
-result1.grid(column=3, row=2, padx=10)
-
-lbl2 = tk.Label(master=frm_form, text="темп подачи от котла")
-lbl2.grid(column=0, row=3)
-entry2 = tk.Entry(master=frm_form, width=5)  
-entry2.grid(column=1, row=3)
-entry2.insert(0, tintown)
-result2 = tk.Label(master=frm_form, text=str(tintown))
-result2.grid(column=3, row=3, padx=10)
-
-lbl3 = tk.Label(master=frm_form, text="расход в доме")
-lbl3.grid(column=0, row=4)
-entry3 = tk.Entry(master=frm_form, width=5)  
-entry3.grid(column=1, row=4)
-entry3.insert(0, qhouse)
-result3 = tk.Label(master=frm_form, text=str(qhouse))
-result3.grid(column=3, row=4, padx=10)
-
-lbl4 = tk.Label(master=frm_form, text="мощь рассеивания, квт")
-lbl4.grid(column=0, row=5)
-entry4 = tk.Entry(master=frm_form, width=5)  
-entry4.grid(column=1, row=5)
-entry4.insert(0, pdiss)
-result4 = tk.Label(master=frm_form, text=str(pdiss))
-result4.grid(column=3, row=5, padx=10)
-
-lbl5 = tk.Label(master=frm_form, text="требуемая темп. после ТО")
-lbl5.grid(column=0, row=6)
-entry5 = tk.Entry(master=frm_form, width=5)  
-entry5.grid(column=1, row=6)
-entry5.insert(0, tinhouse_demand)
-result5 = tk.Label(master=frm_form, text=str(tinhouse_demand))
-result5.grid(column=3, row=6, padx=10)
-
-lbl6 = tk.Label(master=frm_form, text="ожидаемая средн Т после ТО")
-lbl6.grid(column=0, row=7)
-entry6 = tk.Entry(master=frm_form, width=5)  
-entry6.grid(column=1, row=7)
-entry6.insert(0, mid_temp)
-result6 = tk.Label(master=frm_form, text=str(mid_temp))
-result6.grid(column=3, row=7, padx=10)
-#---------------------------------------------------------
-btn_recalc = tk.Button( master=frm_form, text="обновить нач. данные", command=initialcond)
-btn_recalc.grid(row=8, column=1, pady=2, padx=5)
-
-#---------------------------------
-btn_mf = tk.Button(master=clc_form, text="расчет Т потоков", command = mainframe_servo)
-btn_mf.grid(row=12, column=0, pady=2, padx=10)
-window.after(1000, initialcond)  # Обновлять каждую секунду
-# ----------------------------------------
-window.mainloop()
-     
-realtime=tau*igss
-print('gameover ', realtime, ' время = шаг х колво шагов')    
-
+    realtime=tau*igss
+    print('gameover ', realtime, ' время = шаг х колво шагов')    
+    
+    
