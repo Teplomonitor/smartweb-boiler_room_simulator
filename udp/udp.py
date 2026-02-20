@@ -14,8 +14,6 @@ from smartnet.message import createBus as createBus
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
 
-can_udp_bus = createBus('virtual')
-
 
 SCAN_PACKET_DATA_SIZE = 16
 
@@ -29,6 +27,22 @@ self_id_bytes[SCAN_PACKET_DATA_SIZE-1] = 0;
 scan_msg = make_scan_message(self_id_bytes)
 
 DATA_PACKET_SIZE = 24
+
+class UdpCanBusInterface(object):
+	def __new__(cls, *args, **kwargs):
+		if not hasattr(cls, 'instance'):
+			cls.instance = super(UdpCanBusInterface, cls).__new__(cls)
+		return cls.instance
+
+	def __init__(self, canConfig = 'virtual'):
+		if hasattr(self, '_initDone'):
+			return
+		
+		self._canbus   = createBus(canConfig)
+	
+		self._initDone = True
+	
+	def Get(self): return self._canbus
 
 
 def update_ip_list(data, ip):
@@ -98,7 +112,7 @@ class can_thread(threading.Thread):
 		self.thread_name = thread_name
 		self.thread_ID   = thread_ID
 		self._port       = port
-		self._canbus     = can_udp_bus
+		self._canbus     = UdpCanBusInterface().Get()
 		self._send_can_time = time.time()
 		self._sock       = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
 		self._connectionReady = False
@@ -168,7 +182,7 @@ class udp_listen_thread(threading.Thread):
 		self.thread_ID   = thread_ID
 		self._port       = port
 		self._sock       = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		self._canbus     = can_udp_bus
+		self._canbus     = UdpCanBusInterface().Get()
 
 		ip_any = '0.0.0.0'
 
