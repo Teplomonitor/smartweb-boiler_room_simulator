@@ -113,6 +113,14 @@ ProgramScheme = {
 	'CIRCUIT_HEAT_EXCHANGE' : 1,
 	'CIRCUIT_DIRECT'        : 2,
 	'CIRCUIT_HEATING_LINE'  : 3,
+	
+	
+	'PROGRAM_SCHEME_0': 0,
+	'PROGRAM_SCHEME_1': 1,
+	'PROGRAM_SCHEME_2': 2,
+	'PROGRAM_SCHEME_3': 3,
+	'PROGRAM_SCHEME_4': 4,
+	'PROGRAM_SCHEME_5': 5,
 }
 
 RoomDeviceParameter = {                             
@@ -410,7 +418,7 @@ ControllerFunction = {
 	'GET_DEVICE_INFO2'               : 64, 
 	'INIT_LOG_TRANSMIT'              : 80, 
 	'GET_LOG_PART'                   : 81, 
-}                
+}
 
 
 RemoteControlFunction = {
