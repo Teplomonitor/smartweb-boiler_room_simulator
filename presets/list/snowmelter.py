@@ -83,7 +83,7 @@ programOutputs = {
 }
 
 programPower = {
-	'SNOW_MELTER'   :  2,
+	'SNOW_MELTER'   : -2,
 	'BOILER'        :  3,
 	'OUTDOOR_SENSOR': None,
 }

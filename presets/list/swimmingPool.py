@@ -80,7 +80,7 @@ programOutputs = {
 }
 
 programPower = {
-	'SWIMMING_POOL' :  2,
+	'SWIMMING_POOL' : -2,
 	'BOILER'        :  3,
 }
 
