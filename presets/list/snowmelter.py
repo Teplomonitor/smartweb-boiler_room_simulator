@@ -1,5 +1,6 @@
 
-from smartnet.channelMapping import ChannelMapping as Mapping
+from presets.mapping import inputMapping  as inputMapping
+from presets.mapping import outputMapping as outputMapping
 
 from presets.mapping import BoilerInputMapping          as boilerInputMapping
 from presets.mapping import BoilerOutputMapping         as boilerOutputMapping
@@ -68,10 +69,6 @@ programSettings = {
 	'BOILER'        : None,
 	'OUTDOOR_SENSOR': None,
 }
-
-def inputMapping (channel_id, host_id): return Mapping(channel_id, 'CHANNEL_SENSOR', host_id)
-def outputMapping(channel_id, host_id): return Mapping(channel_id, 'CHANNEL_RELAY' , host_id)
-
 
 programInputs = {
 	'SNOW_MELTER'   : smInputMapping     (inputMapping(0, hostId['HOST_1']), inputMapping(1, hostId['HOST_1']), inputMapping(2, hostId['HOST_1'])),
