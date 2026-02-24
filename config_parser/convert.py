@@ -44,6 +44,87 @@ def computeControllersNum(inputs, outputs):
 	return max(controller_required_num_1, controller_required_num_2)
 	
 
+def getHeader():
+	return '''
+	
+from presets.mapping import inputMapping  as inputMapping
+from presets.mapping import outputMapping as outputMapping
+
+'''
+
+hostCommonTitle = 'HOST_'
+hostCommonId    = 123
+hostCommonType = 'SWK_1'
+
+def getHostDeclaration(hostNum):
+	output_string = 'hostList = [\n'
+	for ctr in range(0, hostNum):
+		output_string += f"'{hostCommonTitle}{ctr}',\n"
+	output_string += ']\n'
+	return output_string
+	
+def getHostId(hostNum):
+	output_string = 'hostId = [\n'
+	for ctr in range(0, hostNum):
+		output_string += f"'{hostCommonTitle}{ctr}' : {hostCommonId+ctr},\n"
+	output_string += ']\n'
+	return output_string
+	
+def getHostType(hostNum):
+	output_string = 'hostType = [\n'
+	for ctr in range(0, hostNum):
+		output_string += f"'{hostCommonTitle}{ctr}' : '{hostCommonType}',\n"
+	output_string += ']\n'
+	return output_string
+
+def getHostTitle(hostNum):
+	output_string = 'hostTitle = [\n'
+	for ctr in range(0, hostNum):
+		output_string += f"'{hostCommonTitle}{ctr}' : 'SWK_{hostCommonId+ctr}',\n"
+	output_string += ']\n'
+	return output_string
+
+def getHostString(hostNum):
+	output_string = ''
+	output_string += getHostDeclaration(hostNum)
+	output_string += getHostId         (hostNum)
+	output_string += getHostType       (hostNum)
+	output_string += getHostTitle      (hostNum)
+	return output_string
+	
+def getProgramId(prg):
+	return prg['id']
+
+def getProgramDeclaration(programs):
+	output_string = 'programList = [\n'
+	for prg in programs:
+		output_string += f"'{getProgramId(prg)}',\n"
+	output_string += ']\n'
+	return output_string
+	
+def getProgramType(programs):
+	output_string = 'programType = [\n'
+	for prg in programs:
+		output_string += f"'{getProgramId(prg)}' : '{prg['type']}',\n"
+	output_string += ']\n'
+	return output_string
+
+def getProgramScheme(programs):
+	output_string = 'programScheme = [\n'
+	for prg in programs:
+		output_string += f"'{getProgramId(prg)}' : '{prg['scheme']}',\n"
+	output_string += ']\n'
+	return output_string
+
+def getProgramString(programs):
+	output_string = ''
+	output_string += getProgramDeclaration(programs)
+	output_string += getProgramType       (programs)
+	output_string += getProgramScheme     (programs)
+#	output_string += getHostType       (hostNum)
+#	output_string += getHostTitle      (hostNum)
+	return output_string
+	
 def convertConfigToPreset(json_string ):
 	
 	# Парсинг JSON в словарь Python
@@ -61,11 +142,15 @@ def convertConfigToPreset(json_string ):
 		for key, value in ProgramTypes.items():
 			if int(p['type']) == value:
 				new_program = {}
-				new_program['type'] = key
-				new_program['id'] = int(p['id'])
-				new_program['title'] = p['title']
-				new_program['inputs']  = []
+				new_program['type'   ] = key
+				new_program['id'     ] = p['id']
+				new_program['title'  ] = p['title']
+				new_program['inputs' ] = []
 				new_program['outputs'] = []
+				for param in p['parameters']:
+					if param['code'] == 262:
+						new_program['scheme' ] = param['value']
+						break
 				
 				for inputMapping in p['input_mappings']:
 					new_program['inputs'].append(strToMapping(inputMapping))
@@ -90,18 +175,12 @@ def convertConfigToPreset(json_string ):
 	
 	controller_required_num = computeControllersNum(total_inputs, total_outputs)
 	
-	output_string = '''
-	
-from presets.mapping import inputMapping  as inputMapping
-from presets.mapping import outputMapping as outputMapping
+	output_string = ''
+	output_string += getHeader()
+	output_string += getHostString(controller_required_num)
+	output_string += getProgramString(parsed_programs)
 
-'''
 	
-	
-	output_string += 'hostList = [\n'
-	for ctr in range(0, controller_required_num):
-		output_string += f"'HOST_{ctr+1}',\n"
-	output_string += ']\n'
 	
 	
 	return output_string 
