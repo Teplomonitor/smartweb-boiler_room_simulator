@@ -145,29 +145,29 @@ class MainFrame ( wx.Frame ):
                 self.m_textCtrl2.Clear()
                 self.m_textCtrl2.SetValue(text)
                 
-     # сохраняем текст из текстового поля в файл
+    # сохраняем текст из текстового поля в файл
     def save_file(self, filepath):
         if filepath != "":
             text = self.m_textCtrl3.GetValue()
-            with open(filepath, "w") as file:
+            with open(filepath, "w", encoding="utf-8") as file:
                 file.write(text)
 
 class guiThread():
-	def __new__(cls, *args, **kwargs):
-		if not hasattr(cls, 'instance'):
-			cls.instance = super(guiThread, cls).__new__(cls)
-		return cls.instance
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(guiThread, cls).__new__(cls)
+        return cls.instance
 
-	def __init__(self):
-		if hasattr(self, '_initDone'):
-			return
-		
-		self._app = wx.App()
-		self._frame = wx.Frame(None, title='Simple application')
-		self._ex = MainFrame(self._frame)
-		self._ex.Show()
-		
-		self._initDone = True
-		
-	def run(self):
-		self._app.MainLoop()
+    def __init__(self):
+        if hasattr(self, '_initDone'):
+            return
+        
+        self._app = wx.App()
+        self._frame = wx.Frame(None, title='Simple application')
+        self._ex = MainFrame(self._frame)
+        self._ex.Show()
+        
+        self._initDone = True
+        
+    def run(self):
+        self._app.MainLoop()
