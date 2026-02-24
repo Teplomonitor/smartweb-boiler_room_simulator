@@ -1,4 +1,11 @@
 
+from smartnet.channelMapping import ChannelMapping as Mapping
+
+
+def inputMapping (channel_id, host_id): return Mapping(channel_id, 'CHANNEL_SENSOR', host_id)
+def outputMapping(channel_id, host_id): return Mapping(channel_id, 'CHANNEL_RELAY' , host_id)
+
+
 def HeatingCircuitInputMapping(
 			temperature         = None,
 			thermostat          = None,
