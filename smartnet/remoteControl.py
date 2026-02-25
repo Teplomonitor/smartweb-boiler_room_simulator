@@ -46,9 +46,16 @@ def tempToData(value, littleEndian = False):
 	if value == 'SHORT': return 0x8001
 	if value == 'OPEN' : return 0x8002
 	
+	if isinstance(value, str):
+		value = float(value)
+	
+	
 	return int(value * 10)
 
 def tdpFloatToData(value, littleEndian = False):
+	if isinstance(value, str):
+		value = float(value)
+		
 	return int(value * 100)
 	
 def timeToData(value, littleEndian = False):
@@ -265,7 +272,7 @@ class RemoteControlParameter(object):
 		
 	def valueToData(self, value):
 		data = value
-		if   self._parameterType == 'UINT8_T'    : data = value
+		if   self._parameterType == 'UINT8_T'    : data = int(value)
 		elif self._parameterType == 'TEMPERATURE': data = tempToData(value)
 		elif self._parameterType == 'TIME_MS'    : data = timeToData(value)
 		elif self._parameterType == 'SCHEDULE'   : data = schedulePeriodToData(value)
