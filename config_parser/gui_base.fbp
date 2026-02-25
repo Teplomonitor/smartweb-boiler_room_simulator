@@ -47,10 +47,10 @@
       <property name="hidden">0</property>
       <property name="id">wxID_ANY</property>
       <property name="maximum_size">800,650</property>
-      <property name="minimum_size">700,650</property>
+      <property name="minimum_size">650,650</property>
       <property name="name">MainFrame</property>
       <property name="pos"></property>
-      <property name="size">700,650</property>
+      <property name="size">650,650</property>
       <property name="style">wxDEFAULT_FRAME_STYLE</property>
       <property name="subclass">; ; forward_declare</property>
       <property name="title"></property>
@@ -75,16 +75,16 @@
         <property name="vgap">0</property>
         <object class="sizeritem" expanded="true">
           <property name="border">5</property>
-          <property name="flag">wxEXPAND</property>
+          <property name="flag">wxALIGN_CENTER_HORIZONTAL</property>
           <property name="proportion">1</property>
           <object class="wxBoxSizer" expanded="true">
-            <property name="minimum_size">400,100</property>
+            <property name="minimum_size">600,100</property>
             <property name="name">bSizer6</property>
             <property name="orient">wxHORIZONTAL</property>
             <property name="permission">none</property>
             <object class="sizeritem" expanded="false">
               <property name="border">5</property>
-              <property name="flag">wxALL</property>
+              <property name="flag">wxALL|wxEXPAND</property>
               <property name="proportion">0</property>
               <object class="wxTextCtrl" expanded="false">
                 <property name="BottomDockable">1</property>
@@ -117,8 +117,8 @@
                 <property name="id">wxID_ANY</property>
                 <property name="max_size"></property>
                 <property name="maximize_button">0</property>
-                <property name="maximum_size"></property>
-                <property name="maxlength">200</property>
+                <property name="maximum_size">800,-1</property>
+                <property name="maxlength">300</property>
                 <property name="min_size"></property>
                 <property name="minimize_button">0</property>
                 <property name="minimum_size">300,400</property>
@@ -133,7 +133,7 @@
                 <property name="resize">Resizable</property>
                 <property name="show">1</property>
                 <property name="size">300,300</property>
-                <property name="style">wxHSCROLL|wxTE_CHARWRAP|wxTE_LEFT|wxTE_MULTILINE|wxTE_WORDWRAP</property>
+                <property name="style">wxTE_CHARWRAP|wxTE_LEFT|wxTE_MULTILINE|wxTE_WORDWRAP</property>
                 <property name="subclass">; ; forward_declare</property>
                 <property name="toolbar_pane">0</property>
                 <property name="tooltip"></property>

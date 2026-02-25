@@ -34,8 +34,8 @@ class MainFrame ( wx.Frame ):
         bSizer6 = wx.BoxSizer( wx.HORIZONTAL )
 
         bSizer6.SetMinSize( wx.Size( 600,100 ) )
-        self.m_textCtrl2 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 300,300 ), wx.HSCROLL|wx.TE_CHARWRAP|wx.TE_LEFT|wx.TE_MULTILINE|wx.TE_WORDWRAP )
-        self.m_textCtrl2.SetMaxLength( 600 )
+        self.m_textCtrl2 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 300,300 ), wx.TE_CHARWRAP|wx.TE_LEFT|wx.TE_MULTILINE|wx.TE_WORDWRAP )
+        self.m_textCtrl2.SetMaxLength( 300 )
         self.m_textCtrl2.SetMinSize( wx.Size( 300,400 ) )
         self.m_textCtrl2.SetMaxSize( wx.Size( 800,-1 ) )
 
