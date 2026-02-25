@@ -9,7 +9,7 @@ import socket
 
 import mainThread
 from udp.message import udp_to_can, can_to_udp, make_scan_message, udp_msg_is_scan, get_scan_id
-from smartnet.message import createBus as createBus
+import smartnet.message as sm
 
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
@@ -38,7 +38,7 @@ class UdpCanBusInterface(object):
 		if hasattr(self, '_initDone'):
 			return
 		
-		self._canbus   = createBus(canConfig)
+		self._canbus   = sm.createBus(canConfig)
 	
 		self._initDone = True
 	

@@ -5,16 +5,15 @@ Created on 9 апр. 2025 г.
 '''
 
 import time
-from smartnet.message        import CanListener as CanListener
-from smartnet.message        import Message     as smartnetMessage
-from smartnet.channelMapping import Channel     as Channel
+import smartnet.message   as sm
+import smartnet.channelMapping as scm
 from functions.periodicTrigger import PeriodicTrigger as PeriodicTrigger
 import smartnet.constants as snc
 
 def reportOutputMapping(controllerId, outputId, mapping):
 	if mapping is None: return False
 
-	msg = smartnetMessage(
+	msg = sm.Message(
 			snc.ProgramType['CONTROLLER'],
 			controllerId,
 			snc.ControllerFunction['GET_RELAY_MAPPING'],
@@ -25,7 +24,7 @@ def reportOutputMapping(controllerId, outputId, mapping):
 	return True
 
 def sendImHere(controllerId, controllerType):
-	msg = smartnetMessage(
+	msg = sm.Message(
 		snc.ProgramType['CONTROLLER'],
 		controllerId,
 		snc.ControllerFunction['I_AM_HERE'],
@@ -57,8 +56,8 @@ class ControllerIO(object):
 		inputs_num  = self.getInputNumber ()
 		outputs_num = self.getOutputNumber()
 		
-		self._inputs  = [Channel(None, None) for _ in range(inputs_num )]
-		self._outputs = [Channel(None, None) for _ in range(outputs_num)]
+		self._inputs  = [scm.Channel(None, None) for _ in range(inputs_num )]
+		self._outputs = [scm.Channel(None, None) for _ in range(outputs_num)]
 		
 		sendImHere(self.getId(), self.getType())
 		self.reportChannelNumber()
@@ -69,10 +68,10 @@ class ControllerIO(object):
 		self._outputs = []
 		
 	def CanSubscribe(self):
-		CanListener.subscribe(self)
+		sm.CanListener.subscribe(self)
 		
 	def CanUnSubscribe(self):
-		CanListener.unsubscribe(self)
+		sm.CanListener.unsubscribe(self)
 		
 	def __del__(self):
 		print('kill ctrlIO')
@@ -130,7 +129,7 @@ class ControllerIO(object):
 		reportOutputMapping(self.getId(), channelId, mapping)
 		
 	def reportChannelNumber(self):
-		msg = smartnetMessage(
+		msg = sm.Message(
 		snc.ProgramType['CONTROLLER'],
 		self.getId(),
 		snc.ControllerFunction['GET_CHANNEL_NUMBER'],

@@ -8,9 +8,9 @@ from copy import copy
 
 import smartnet.constants as snc
 
-from smartnet.remoteControl  import RemoteControlParameter as RemoteControlParameter
-from smartnet.message        import CanListener      as CanListener
-from smartnet.message        import Message          as smartnetMessage
+import smartnet.remoteControl  as sr
+import smartnet.message        as sm
+
 from smartnet.channelMapping import InputChannel     as InputChannel
 from smartnet.channelMapping import OutputChannel    as OutputChannel
 from smartnet.channelTitle import ProgramInputTitle  as InputTitle
@@ -65,10 +65,10 @@ class Program(object):
 		
 	
 	def CanSubscribe(self):
-		CanListener.subscribe(self)
+		sm.CanListener.subscribe(self)
 		
 	def CanUnSubscribe(self):
-		CanListener.unsubscribe(self)
+		sm.CanListener.unsubscribe(self)
 		
 	def __del__(self):
 		self.CanUnSubscribe()
@@ -127,7 +127,7 @@ class Program(object):
 	def bindInput(self, channel_id, mapping):
 		printLog(f'bind program input {channel_id}')
 		def generateRequest():
-			request = smartnetMessage(
+			request = sm.Message(
 			snc.ProgramType['REMOTE_CONTROL'],
 			self.getId(),
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
@@ -173,7 +173,7 @@ class Program(object):
 	def bindOutput(self, channel_id, mapping):
 		printLog(f'bind program output {channel_id}')
 		def generateRequest():
-			request = smartnetMessage(
+			request = sm.Message(
 			snc.ProgramType['REMOTE_CONTROL'],
 			self.getId(),
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
@@ -217,7 +217,7 @@ class Program(object):
 		return result
 	
 	def readOutput(self, outputId):
-		param = RemoteControlParameter(
+		param = sr.RemoteControlParameter(
 			'PROGRAM', 'OUTPUT',
 			parameterIndex = outputId,
 			programId = self.getId())
@@ -236,7 +236,7 @@ class Program(object):
 		p = self.getParameterInfo(parameter)
 		if p is None:
 			return None
-		remoteParam = RemoteControlParameter(parameterInfo = p, programId = self.getId() )
+		remoteParam = sr.RemoteControlParameter(parameterInfo = p, programId = self.getId() )
 		remoteParam.read()
 		
 		return remoteParam.getValue()
@@ -246,7 +246,7 @@ class Program(object):
 		if p is None:
 			return None
 		
-		remoteParam = RemoteControlParameter(
+		remoteParam = sr.RemoteControlParameter(
 			parameterInfo = p,
 			programId = self.getId(),
 			parameterValue = value

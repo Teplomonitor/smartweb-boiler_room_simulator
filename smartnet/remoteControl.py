@@ -2,7 +2,7 @@
 from copy import copy
 
 import smartnet.constants as snc
-from smartnet.message import Message as smartnetMessage
+import smartnet.message as sm
 
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
@@ -97,18 +97,15 @@ class RemoteControlParameter(object):
 		parameterId    = None,
 		parameterValue = None,
 		parameterIndex = None,
-		parameterType  = 'UINT8_T',
 		programId      = None,
 		parameterInfo  = None
 		):
 		if parameterInfo:
 			self._programType   = parameterInfo['programType']
 			self._parameterId   = parameterInfo['parameter']
-			self._parameterType = parameterInfo['parameterType']
 		else:
 			self._programType    = programType   
 			self._parameterId    = parameterId
-			self._parameterType  = parameterType
 			
 		self._parameterValue = parameterValue
 		self._parameterIndex = parameterIndex
@@ -120,7 +117,10 @@ class RemoteControlParameter(object):
 	def getValue(self): return self._parameterValue
 
 	def getParameterIdCode(self):
-		return snc.ParameterDict[self._programType][self._parameterId]
+		return snc.ParameterDict[self._programType][self._parameterId]['id']
+	
+	def getParameterType(self):
+		return snc.ParameterDict[self._programType][self._parameterId]['type']
 	
 	def write(self):
 		if self._programId is None:
@@ -148,7 +148,7 @@ class RemoteControlParameter(object):
 			
 			data.extend(parameterValue)
 			
-			request = smartnetMessage(
+			request = sm.Message(
 			snc.ProgramType['REMOTE_CONTROL'],
 			self._programId,
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
@@ -207,7 +207,7 @@ class RemoteControlParameter(object):
 			else:
 				data = [snc.ProgramType[self._programType], parameterIdCode, self._parameterIndex]
 
-			request = smartnetMessage(
+			request = sm.Message(
 				snc.ProgramType['REMOTE_CONTROL'],
 				self._programId,
 				snc.RemoteControlFunction['GET_PARAMETER_VALUE'],
@@ -255,26 +255,29 @@ class RemoteControlParameter(object):
 		return result
 	
 	def getParameterSize(self):
-		if   self._parameterType == 'UINT8_T'    : return 1
-		elif self._parameterType == 'TEMPERATURE': return 2
-		elif self._parameterType == 'TIME_MS'    : return 4
-		elif self._parameterType == 'SCHEDULE'   : return 4
-		elif self._parameterType == 'TDP_FLOAT'  : return 2
+		parameterType = self.getParameterType()
+		if   parameterType == 'UINT8_T'    : return 1
+		elif parameterType == 'TEMPERATURE': return 2
+		elif parameterType == 'TIME_MS'    : return 4
+		elif parameterType == 'SCHEDULE'   : return 4
+		elif parameterType == 'TDP_FLOAT'  : return 2
 		return 1
 		
 	def dataToValue(self, data):
-		if   self._parameterType == 'UINT8_T'    : return data[0]
-		elif self._parameterType == 'TEMPERATURE': return bytesToTemp(data)
-		elif self._parameterType == 'TIME_MS'    : return bytesToTime(data)
-		elif self._parameterType == 'SCHEDULE'   : return bytesToSchedulePeriod(data)
-		if   self._parameterType == 'TDP_FLOAT'  : return bytesToTdpFloat(data)
+		parameterType = self.getParameterType()
+		if   parameterType == 'UINT8_T'    : return data[0]
+		elif parameterType == 'TEMPERATURE': return bytesToTemp(data)
+		elif parameterType == 'TIME_MS'    : return bytesToTime(data)
+		elif parameterType == 'SCHEDULE'   : return bytesToSchedulePeriod(data)
+		if   parameterType == 'TDP_FLOAT'  : return bytesToTdpFloat(data)
 		return data[0]
 		
 	def valueToData(self, value):
+		parameterType = self.getParameterType()
 		data = value
-		if   self._parameterType == 'UINT8_T'    : data = int(value)
-		elif self._parameterType == 'TEMPERATURE': data = tempToData(value)
-		elif self._parameterType == 'TIME_MS'    : data = timeToData(value)
-		elif self._parameterType == 'SCHEDULE'   : data = schedulePeriodToData(value)
-		elif self._parameterType == 'TDP_FLOAT'  : data = tdpFloatToData(value)
+		if   parameterType == 'UINT8_T'    : data = int(value)
+		elif parameterType == 'TEMPERATURE': data = tempToData(value)
+		elif parameterType == 'TIME_MS'    : data = timeToData(value)
+		elif parameterType == 'SCHEDULE'   : data = schedulePeriodToData(value)
+		elif parameterType == 'TDP_FLOAT'  : data = tdpFloatToData(value)
 		return list(data.to_bytes(self.getParameterSize(), 'little'))

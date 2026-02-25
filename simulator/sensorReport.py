@@ -1,6 +1,6 @@
 
 import smartnet.constants as snc
-from smartnet.message import Message as smartnetMessage
+import smartnet.message   as  sm
 from smartnet.units import TEMPERATURE as TEMPERATURE
 from smartnet.units import SENSOR_SHORT_VALUE as SENSOR_SHORT_VALUE
 from smartnet.units import SENSOR_OPEN_VALUE  as SENSOR_OPEN_VALUE
@@ -26,7 +26,7 @@ def reportSensorValue(sensor, bus = None):
 		(sensorValue >> 0) &0xFF,
 		(sensorValue >> 8) &0xFF,
 		]
-	msg = smartnetMessage(
+	msg = sm.Message(
 			snc.ProgramType['CONTROLLER'],
 			sensorMapping.getHostId(),
 			snc.ControllerFunction['GET_OUTPUT_VALUE'],

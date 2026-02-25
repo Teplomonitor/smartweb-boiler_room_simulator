@@ -4,7 +4,7 @@ import threading
 
 import mainThread
 
-from simulator.sensorReport  import reportSensorValue as reportSensorValue
+import simulator.sensorReport  as ssr
 from smartnet.channelMapping import ChannelMapping    as ChannelMapping
 
 import simulator.oat
@@ -35,7 +35,7 @@ class sensor_report_thread(threading.Thread):
 			program = sim._program
 			for programInput in program.getInputs():
 				if programInput.isMapped():
-					if reportSensorValue(programInput):
+					if ssr.reportSensorValue(programInput):
 						time.sleep(0.1)
 						
 	def run(self):

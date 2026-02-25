@@ -8,10 +8,10 @@ import presets.preset
 from consoleLog import printError as printError
 import controllers.search      as ctrlSearch
 
-from smartnet.message          import CanListener            as CanListener
-from controllers.controller_io import initVirtualControllers as initVirtualControllers
-from controllers.controller    import Controller             as Controller
-from simulator.simulator       import Simulator              as Simulator
+import smartnet.message as sm
+import controllers.controller_io as ccio
+import controllers.controller    as cc
+import simulator.simulator       as ss
 
 import scenario.scenario as scenario
 
@@ -33,14 +33,14 @@ except:
 def loadPresetNow(preset):
 	programList, controllerIoList = presets.preset.getPresetsList(preset)
 
-	ioSimulator    = Simulator()
-	controllerHost = Controller()
+	ioSimulator    = ss.Simulator()
+	controllerHost = cc.Controller()
 	
 	ioSimulator.Clear()
 	controllerHost.Clear()
 	
 	controllerHost.initController(True, programList)
-	ctrlIo = initVirtualControllers(controllerIoList)
+	ctrlIo = ccio.initVirtualControllers(controllerIoList)
 	ioSimulator.reloadConfig(controllerHost, ctrlIo)
 	
 	MainThread().setCurrentPreset(preset)
@@ -99,12 +99,12 @@ class MainThread(threading.Thread):
 	def saveProgramPlots(self): self._saveProgramPlots.set()
 
 	def saveProgramPlotsNow(self):
-		programList = Controller().getProgramList()
+		programList = cc.Controller().getProgramList()
 		for prg in programList:
 			prg.saveLog()
 
 	def initSimulator(self):
-		CanListener()
+		sm.CanListener()
 		
 		if self._udp_bridge_enable:
 			udp.initUdpBridge(self._udp_bridge_enable)
@@ -119,11 +119,11 @@ class MainThread(threading.Thread):
 			self.taskStop()
 			return
 		
-		ioSimulator    = Simulator("simulator thread", 789)
-		controllerHost = Controller(controllerId, self._guiThread)
+		ioSimulator    = ss.Simulator("simulator thread", 789)
+		controllerHost = cc.Controller(controllerId, self._guiThread)
 		
 		controllerHost.initController(False, self._programPresetList)
-		ctrlIo = initVirtualControllers(self._controllerIoList)
+		ctrlIo = ccio.initVirtualControllers(self._controllerIoList)
 		ioSimulator.reloadConfig(controllerHost, ctrlIo)
 		
 		scenario.ScenarioThread(controllerHost, ioSimulator)
@@ -133,7 +133,7 @@ class MainThread(threading.Thread):
 			
 	
 	def checkAliveThreads(self):
-		if not Simulator().is_alive():
+		if not ss.Simulator().is_alive():
 			print('Simulator is dead!')
 			return False
 		
@@ -169,8 +169,8 @@ class MainThread(threading.Thread):
 		if self._debug_thread:
 			self._debug_thread.stop()
 			
-		Controller().Clear()
-		CanListener().stop()
+		cc.Controller().Clear()
+		sm.CanListener().stop()
 		
 		if self._guiThread:
 			self._guiThread.stop()

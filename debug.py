@@ -6,8 +6,7 @@ import time
 import mainThread
 
 import smartnet.constants as snc
-from smartnet.message import Message as smartnetMessage
-from smartnet.message import createBus as createBus
+import smartnet.message   as sm
 
 
 class i_am_here_thread(threading.Thread):
@@ -19,7 +18,7 @@ class i_am_here_thread(threading.Thread):
 
 	def sendImHere(self):
 		dummyControllerId = 123
-		msg = smartnetMessage(
+		msg = sm.Message(
 			snc.ProgramType['CONTROLLER'],
 			dummyControllerId,
 			snc.ControllerFunction['I_AM_HERE'],
@@ -71,7 +70,7 @@ def programOutputMappingFilter(msg):
 
 class debug_thread(can.Listener):
 	def __init__(self):
-		self._canbus   = createBus()
+		self._canbus   = sm.createBus()
 		self._notifier = can.Notifier(self._canbus, [self])
 
 		thread1 = i_am_here_thread("IMH", 1001, self._canbus)
@@ -85,7 +84,7 @@ class debug_thread(can.Listener):
 
 #		print(f"db: {message.arbitration_id:08X} - {' '.join(format(x, '02x') for x in message.data)}")
 
-		msg = smartnetMessage()
+		msg = sm.Message()
 		msg.parse(message)
 
 		if programsResetFilter(msg):

@@ -5,11 +5,10 @@
 import time
 from copy import copy
 
-from smartnet.message import CanListener as CanListener
-from smartnet.message import Message     as smartnetMessage
+import smartnet.message as sm
 
 import smartnet.constants as snc
-from programs.factory import createProgram as createProgram
+import programs.factory   as pf
 
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
@@ -82,7 +81,7 @@ class Controller(object):
 				self.addProgramFromPreset(program)
 		
 	def addProgramFromPreset(self, program):
-		prg = createProgram(program)
+		prg = pf.createProgram(program)
 		self.addProgram(prg)
 		return prg
 	
@@ -118,10 +117,10 @@ class Controller(object):
 			
 	def readControllerProgramList(self):
 		printLog('read controller programs list')
-		CanListener.subscribe(self)
+		sm.CanListener.subscribe(self)
 		
 		def generateRequest():
-			request = smartnetMessage(
+			request = sm.Message(
 			snc.ProgramType['CONTROLLER'],
 			self._controllerId,
 			snc.ControllerFunction['GET_ACTIVE_PROGRAMS_LIST'],
@@ -134,7 +133,7 @@ class Controller(object):
 		request.send()
 		time.sleep(3)
 		
-		CanListener.unsubscribe(self)
+		sm.CanListener.unsubscribe(self)
 		
 		return self._activeProgramsList
 	
@@ -149,7 +148,7 @@ class Controller(object):
 	def sendProgramAddRequest(self, programType, programId, programScheme):
 		printLog('Send program add request')
 		def generateRequest():
-			request = smartnetMessage(
+			request = sm.Message(
 			snc.ProgramType['CONTROLLER'],
 			self._controllerId,
 			snc.ControllerFunction['ADD_NEW_PROGRAM'],
@@ -200,7 +199,7 @@ class Controller(object):
 	
 	def OnCanMessageReceived(self, msg):
 		def generateResponse():
-			response = smartnetMessage(
+			response = sm.Message(
 			snc.ProgramType['CONTROLLER'],
 			self._controllerId,
 			snc.ControllerFunction['GET_ACTIVE_PROGRAMS_LIST'],
@@ -213,7 +212,7 @@ class Controller(object):
 	def resetConfig(self):
 		printLog('send Controller reset request')
 		def generateRequest():
-			request = smartnetMessage(
+			request = sm.Message(
 			snc.ProgramType['CONTROLLER'],
 			self._controllerId,
 			snc.ControllerFunction['RESET_PROGRAMS'],
