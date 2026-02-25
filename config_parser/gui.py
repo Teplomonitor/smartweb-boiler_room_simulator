@@ -18,11 +18,10 @@ _ = gettext.gettext
 ## Class MainFrame
 ###########################################################################
 class MainFrame ( wx.Frame ):
-
     def __init__( self, parent ):
-        wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 700,600 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+        wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 500,600 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 
-        self.SetSizeHints( wx.Size( 500,660 ), wx.Size( 600,700 ) )
+        self.SetSizeHints( wx.Size( 500,660 ), wx.Size( 800,700 ) )
 
         fgSizer2 = wx.FlexGridSizer( 2, 1, 0, 0 )
         fgSizer2.SetFlexibleDirection( wx.BOTH )
@@ -32,35 +31,13 @@ class MainFrame ( wx.Frame ):
         bSizer6 = wx.BoxSizer( wx.HORIZONTAL )
 
         bSizer6.SetMinSize( wx.Size( 100,100 ) )
-        self.m_textCtrl2 = wx.TextCtrl( self, wx.ID_ANY, _('''
-{
-  "controller": {
-    "type": "X_S62",
-    "title": "SWX 173"
-  },
-  "programs": [
-    {
-      "id": 164,
-      "type": 42,
-      "title": "Смеситель",
-      "input_mappings": [
-        173
-      ],
-      "output_mappings": [
-        8365,
-        8621
-      ]
-    }
-  ]
-}'''
-        
-        ), wx.DefaultPosition, wx.Size( 300,300 ), wx.HSCROLL|wx.TE_CHARWRAP|wx.TE_LEFT|wx.TE_MULTILINE|wx.TE_WORDWRAP )
+        self.m_textCtrl2 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 300,300 ), wx.HSCROLL|wx.TE_CHARWRAP|wx.TE_LEFT|wx.TE_MULTILINE|wx.TE_WORDWRAP )
         self.m_textCtrl2.SetMaxLength( 100 )
         self.m_textCtrl2.SetMinSize( wx.Size( 300,400 ) )
 
         bSizer6.Add( self.m_textCtrl2, 0, wx.ALL, 5 )
 
-        self.m_textCtrl3 = wx.TextCtrl( self, wx.ID_ANY, _(''), wx.DefaultPosition, wx.Size( 300,300 ), wx.HSCROLL|wx.TE_CHARWRAP|wx.TE_LEFT|wx.TE_MULTILINE|wx.TE_WORDWRAP )
+        self.m_textCtrl3 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 300,300 ), wx.HSCROLL|wx.TE_CHARWRAP|wx.TE_LEFT|wx.TE_MULTILINE|wx.TE_WORDWRAP )
         self.m_textCtrl3.SetMinSize( wx.Size( 300,400 ) )
 
         bSizer6.Add( self.m_textCtrl3, 0, wx.ALL, 5 )

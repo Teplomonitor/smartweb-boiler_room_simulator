@@ -46,11 +46,11 @@
       <property name="font"></property>
       <property name="hidden">0</property>
       <property name="id">wxID_ANY</property>
-      <property name="maximum_size">600,700</property>
+      <property name="maximum_size">800,700</property>
       <property name="minimum_size">500,660</property>
       <property name="name">MainFrame</property>
       <property name="pos"></property>
-      <property name="size">700,600</property>
+      <property name="size">500,600</property>
       <property name="style">wxDEFAULT_FRAME_STYLE</property>
       <property name="subclass">; ; forward_declare</property>
       <property name="title"></property>
@@ -141,7 +141,7 @@
                 <property name="validator_style">wxFILTER_NONE</property>
                 <property name="validator_type">wxDefaultValidator</property>
                 <property name="validator_variable"></property>
-                <property name="value">dfgsdfgsdgsbsdfgsdg sdfgsdgsdg dfgsdg</property>
+                <property name="value"></property>
                 <property name="window_extra_style"></property>
                 <property name="window_name"></property>
                 <property name="window_style"></property>
@@ -206,7 +206,7 @@
                 <property name="validator_style">wxFILTER_NONE</property>
                 <property name="validator_type">wxDefaultValidator</property>
                 <property name="validator_variable"></property>
-                <property name="value">sdfg dsfgsdfgs dfgsdgfsdg</property>
+                <property name="value"></property>
                 <property name="window_extra_style"></property>
                 <property name="window_name"></property>
                 <property name="window_style"></property>
