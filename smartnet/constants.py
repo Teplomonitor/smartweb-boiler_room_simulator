@@ -94,15 +94,15 @@ ProgramType = {
 }
 
 ProgramParameter = {
-	'ID'                 : {'id': 0, 'type': 0},
-	'INPUT'              : {'id': 1, 'type': 0},
-	'OUTPUT'             : {'id': 2, 'type': 0},
-	'TITLE'              : {'id': 3, 'type': 0},
+	'ID'                 : {'id': 0, 'type': 'UINT8_T'},
+	'INPUT'              : {'id': 1, 'type': 'TEMPERATURE', 'array_size': 10},
+	'OUTPUT'             : {'id': 2, 'type': 'UINT8_T', 'array_size': 10},
+	'TITLE'              : {'id': 3, 'type': 'STRING'},
 	'INPUT_MAPPING'      : {'id': 4, 'type': 0},
 	'OUTPUT_MAPPING'     : {'id': 5, 'type': 0},
-	'SCHEME'             : {'id': 6, 'type': 0},
-	'TRAINING_ENABLED'   : {'id': 7, 'type': 0},
-	'MANUAL_MODE_ENABLED': {'id': 8, 'type': 0},
+	'SCHEME'             : {'id': 6, 'type': 'UINT8_T'},
+	'TRAINING_ENABLED'   : {'id': 7, 'type': 'UINT8_T'},
+	'MANUAL_MODE_ENABLED': {'id': 8, 'type': 'UINT8_T'},
 	'OUTPUT_MANUAL_STATE': {'id': 9, 'type': 0},
 }
 
@@ -272,13 +272,15 @@ SnowMelterParameter = {
 	'REQUIRED_PLATE_TEMPERATURE'                              : {'id':  7, 'type': 'TEMPERATURE'},
 }
 
+CASCADE_SOURCES_MAX_NUM = 8
+
 CascadeManagerParameter = {
-	'PARAM_ROTATION_PERIOD'                        : {'id':  1, 'type': 0},
-	'PARAM_TEMPERATURE_SOURCE_ID'                  : {'id':  2, 'type': 'UINT8_T'},
-	'PARAM_TEMPERATURE_SOURCE_TYPE'                : {'id':  3, 'type': 'UINT8_T'},
-	'PARAM_TEMPERATURE_SOURCE_POWER'               : {'id':  4, 'type': 'UINT8_T'},
-	'PARAM_TEMPERATURE_SOURCE_WORKTIME'            : {'id':  5, 'type': 'UINT8_T'},
-	'PARAM_TEMPERATURE_SOURCE_PRIORITY'            : {'id':  6, 'type': 'UINT8_T'},
+	'PARAM_ROTATION_PERIOD'                        : {'id':  1, 'type': 'UINT8_T'},
+	'PARAM_TEMPERATURE_SOURCE_ID'                  : {'id':  2, 'type': 'UINT8_T', 'array_size':CASCADE_SOURCES_MAX_NUM},
+	'PARAM_TEMPERATURE_SOURCE_TYPE'                : {'id':  3, 'type': 'UINT8_T', 'array_size':CASCADE_SOURCES_MAX_NUM},
+	'PARAM_TEMPERATURE_SOURCE_POWER'               : {'id':  4, 'type': 'UINT8_T', 'array_size':CASCADE_SOURCES_MAX_NUM},
+	'PARAM_TEMPERATURE_SOURCE_WORKTIME'            : {'id':  5, 'type': 'UINT8_T', 'array_size':CASCADE_SOURCES_MAX_NUM},
+	'PARAM_TEMPERATURE_SOURCE_PRIORITY'            : {'id':  6, 'type': 'UINT8_T', 'array_size':CASCADE_SOURCES_MAX_NUM},
 	'PARAM_P_FACTOR'                               : {'id':  7, 'type': 'UINT8_T'},
 	'PARAM_I_FACTOR'                               : {'id':  8, 'type': 'UINT8_T'},
 	'PARAM_D_FACTOR'                               : {'id':  9, 'type': 'UINT8_T'},
@@ -314,17 +316,17 @@ DistrictHeatingParameter = {
 }
 
 SwimmingPoolParameter = {
-	'REQUIRED_POOL_TEMPERATURE'         : {'id':  1, 'type': 0},
-	'CURRENT_REQUIRED_POOL_TEMPERATURE' : {'id':  2, 'type': 0},
-	'WORK_MODE'                         : {'id':  3, 'type': 0},
-	'SCHEDULE'                          : {'id':  4, 'type': 0},
-	'CIRCULATION_PUMP_WORK_MODE'        : {'id':  5, 'type': 0},
-	'CIRCULATION_PUMP_WORK_PERIOD_ON'   : {'id':  6, 'type': 0},
-	'CIRCULATION_PUMP_WORK_PERIOD_OFF'  : {'id':  7, 'type': 0},
-	'REQUIRED_POOL_TEMPERATURE_ECONOM'  : {'id':  8, 'type': 0},
-	'FILLING_DURATION'                  : {'id':  9, 'type': 0},
-	'LOW_WATER_LEVEL_ALARM_RESET'       : {'id': 10, 'type': 0},
-	'CURRENT_WORK_MODE_STATUS'          : {'id': 11, 'type': 0},
+	'REQUIRED_POOL_TEMPERATURE'         : {'id':  1, 'type': 'TEMPERATURE'},
+	'CURRENT_REQUIRED_POOL_TEMPERATURE' : {'id':  2, 'type': 'TEMPERATURE'},
+	'WORK_MODE'                         : {'id':  3, 'type': 'UINT8_T'},
+	'SCHEDULE'                          : {'id':  4, 'type': 'SCHEDULE'},
+	'CIRCULATION_PUMP_WORK_MODE'        : {'id':  5, 'type': 'UINT8_T'},
+	'CIRCULATION_PUMP_WORK_PERIOD_ON'   : {'id':  6, 'type': 'TIME_MS'},
+	'CIRCULATION_PUMP_WORK_PERIOD_OFF'  : {'id':  7, 'type': 'TIME_MS'},
+	'REQUIRED_POOL_TEMPERATURE_ECONOM'  : {'id':  8, 'type': 'TEMPERATURE'},
+	'FILLING_DURATION'                  : {'id':  9, 'type': 'TIME_MS'},
+	'LOW_WATER_LEVEL_ALARM_RESET'       : {'id': 10, 'type': 'UINT8_T'},
+	'CURRENT_WORK_MODE_STATUS'          : {'id': 11, 'type': 'UINT8_T'},
 }
 
 ParameterDict = {
