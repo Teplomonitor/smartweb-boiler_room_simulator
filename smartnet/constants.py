@@ -93,6 +93,8 @@ ProgramType = {
 	'CHARLIE'                  : 0xC0,
 }
 
+SCHEDULE_ARRAY_SIZE = 7*3*2
+
 ProgramParameter = {
 	'ID'                 : {'id': 0, 'type': 'UINT8_T'},
 	'INPUT'              : {'id': 1, 'type': 'TEMPERATURE', 'array_size': 10},
@@ -145,7 +147,7 @@ RoomDeviceParameter = {
 	'CIRCUIT_2_SHIFT'                   : {'id': 19, 'type': 'TEMPERATURE'},
 	'CIRCUIT_3_SHIFT'                   : {'id': 20, 'type': 'TEMPERATURE'},
 	'ROOM_OFF_TEMPERATURE'              : {'id': 21, 'type': 'TEMPERATURE'},
-	'SCHEDULE'                          : {'id': 22, 'type': 'SCHEDULE'},
+	'SCHEDULE'                          : {'id': 22, 'type': 'SCHEDULE', 'array_size':SCHEDULE_ARRAY_SIZE},
 	'FLOOR_REQUIRED_TEMPERATURE'        : {'id': 23, 'type': 'TEMPERATURE'},
 	'CURRENT_FLOOR_REQUIRED_TEMPERATURE': {'id': 24, 'type': 'TEMPERATURE'},
 	'WALL_REQUIRED_TEMPERATURE'         : {'id': 25, 'type': 'TEMPERATURE'},
@@ -159,8 +161,8 @@ RoomDeviceParameter = {
 	'POOL_CIRCUIT'                      : {'id': 33, 'type': 'UINT8_T'},
 	'POOL_TEMPERATURE_OFFSET'           : {'id': 34, 'type': 'TEMPERATURE'},
 
-	'SCHEDULE_2_0': 35,
-	'LOCATION'    : 36,
+	'SCHEDULE_2_0': {'id': 35, 'type': 'UINT8_T'},
+	'LOCATION'    : {'id': 36, 'type': 'UINT8_T'},
 }
 
 ControllerParameter = {
@@ -284,7 +286,7 @@ CascadeManagerParameter = {
 	'PARAM_P_FACTOR'                               : {'id':  7, 'type': 'UINT8_T'},
 	'PARAM_I_FACTOR'                               : {'id':  8, 'type': 'UINT8_T'},
 	'PARAM_D_FACTOR'                               : {'id':  9, 'type': 'UINT8_T'},
-	'SCHEDULE'                                     : {'id': 10, 'type': 'SCHEDULE'},
+	'SCHEDULE'                                     : {'id': 10, 'type': 'SCHEDULE', 'array_size':SCHEDULE_ARRAY_SIZE},
 	'REQUIRED_POWER'                               : {'id': 11, 'type': 'UINT8_T'},
 	'NEXT_TEMPERATURE_SRC_ON_DELAY'                : {'id': 12, 'type': 'UINT8_T'},
 	'ROTATION_TYPE'                                : {'id': 13, 'type': 'UINT8_T'},
@@ -319,7 +321,7 @@ SwimmingPoolParameter = {
 	'REQUIRED_POOL_TEMPERATURE'         : {'id':  1, 'type': 'TEMPERATURE'},
 	'CURRENT_REQUIRED_POOL_TEMPERATURE' : {'id':  2, 'type': 'TEMPERATURE'},
 	'WORK_MODE'                         : {'id':  3, 'type': 'UINT8_T'},
-	'SCHEDULE'                          : {'id':  4, 'type': 'SCHEDULE'},
+	'SCHEDULE'                          : {'id':  4, 'type': 'SCHEDULE', 'array_size':SCHEDULE_ARRAY_SIZE},
 	'CIRCULATION_PUMP_WORK_MODE'        : {'id':  5, 'type': 'UINT8_T'},
 	'CIRCULATION_PUMP_WORK_PERIOD_ON'   : {'id':  6, 'type': 'TIME_MS'},
 	'CIRCULATION_PUMP_WORK_PERIOD_OFF'  : {'id':  7, 'type': 'TIME_MS'},

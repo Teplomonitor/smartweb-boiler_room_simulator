@@ -85,7 +85,7 @@ class Program(object):
 			data   = msg.getData()
 			dataOk = (
 				(data[0] == snc.ProgramType['PROGRAM']) and
-				(data[1] == snc.ProgramParameter['OUTPUT']))
+				(data[1] == snc.ProgramParameter['OUTPUT']['id']))
 			
 			if dataOk:
 				outputId    = data[2]
@@ -132,7 +132,7 @@ class Program(object):
 			self.getId(),
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
 			snc.requestFlag['REQUEST'],
-			[snc.ProgramType['PROGRAM'], snc.ProgramParameter['INPUT_MAPPING'], channel_id, mapping.getRaw(0), mapping.getRaw(1)])
+			[snc.ProgramType['PROGRAM'], snc.ProgramParameter['INPUT_MAPPING']['id'], channel_id, mapping.getRaw(0), mapping.getRaw(1)])
 			return request
 
 		def generateRequiredResponse():
@@ -178,7 +178,7 @@ class Program(object):
 			self.getId(),
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
 			snc.requestFlag['REQUEST'],
-			[snc.ProgramType['PROGRAM'], snc.ProgramParameter['OUTPUT_MAPPING'], channel_id, mapping.getRaw(0), mapping.getRaw(1)])
+			[snc.ProgramType['PROGRAM'], snc.ProgramParameter['OUTPUT_MAPPING']['id'], channel_id, mapping.getRaw(0), mapping.getRaw(1)])
 			return request
 
 		def generateRequiredResponse():
@@ -277,4 +277,46 @@ class Program(object):
 			programInput.saveLog(logDirInputs)
 		for programOutput in self._outputs:
 			programOutput.saveLog(logDirOutputs)
-
+	
+	# TODO: move to derived consumer class
+	def getTemperatureSource(self):
+		preset = self.getPreset()
+		settings = preset.getSettings().get()
+		for setting in settings:
+			if setting.getProgramType() == 'CONSUMER' and setting.getParameterIdCode() == 'GENERATOR_ID':
+				return setting.getValue()
+		return 0
+	
+	def getTemperatureSourceList(self):
+		return [self.getTemperatureSource()]
+	
+	
+	def getRoomTemperatureSourceList(self):
+		preset = self.getPreset()
+		settings = preset.getSettings().get()
+		
+		circuitList = [0, 0, 0]
+		
+		for setting in settings:
+			if setting.getProgramType() == 'ROOM_DEVICE':
+				if setting.getParameterIdCode() == 'RESPONSIBLE_CIRCUIT_1':
+					circuitList[0] = setting.getValue()
+				if setting.getParameterIdCode() == 'RESPONSIBLE_CIRCUIT_2':
+					circuitList[1] = setting.getValue()
+				if setting.getParameterIdCode() == 'RESPONSIBLE_CIRCUIT_3':
+					circuitList[2] = setting.getValue()
+		return circuitList
+	
+	def getCascadeManagerSourceList(self):
+		preset = self.getPreset()
+		settings = preset.getSettings().get()
+		
+		sourceList = [0, 0, 0, 0, 0, 0, 0, 0]
+		for setting in settings:
+			if setting.getProgramType() == 'CASCADE_MANAGER':
+				if setting.getParameterIdCode() == 'PARAM_TEMPERATURE_SOURCE_ID':
+					sourceList[setting.getParameterIndex()] = setting.getValue()
+		
+		return sourceList
+	
+	

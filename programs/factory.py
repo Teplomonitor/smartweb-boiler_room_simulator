@@ -16,23 +16,22 @@ from programs.fillingLoop     import FillingLoop     as ProgramFillingLoop
 from programs.tptValve        import TptValve        as ProgramTptValve
 from programs.swimmingPool    import SwimmingPool    as ProgramSwimmingPool
 
+programCreator = {
+		'OUTDOOR_SENSOR'   : ProgramOat            ,
+		'BOILER'           : ProgramBoiler         ,
+		'CASCADE_MANAGER'  : ProgramCascade        ,
+		'ROOM_DEVICE'      : ProgramRoom           ,
+		'HEATING_CIRCUIT'  : ProgramHeatingCircuit ,
+		'SNOWMELT'         : ProgramSnowmelter     ,
+		'DHW'              : ProgramDhw            ,
+		'DISTRICT_HEATING' : ProgramDistrictHeating,
+		'FILLING_LOOP'     : ProgramFillingLoop    ,
+		'TPT_VALVE_ADAPTER': ProgramTptValve       ,
+		'POOL'             : ProgramSwimmingPool   ,
+}
 
 def createProgram(preset):
 	programType = preset.getType()
-	
-	programCreator = {
-			'OUTDOOR_SENSOR'   : ProgramOat            ,
-			'BOILER'           : ProgramBoiler         ,
-			'CASCADE_MANAGER'  : ProgramCascade        ,
-			'ROOM_DEVICE'      : ProgramRoom           ,
-			'HEATING_CIRCUIT'  : ProgramHeatingCircuit ,
-			'SNOWMELT'         : ProgramSnowmelter     ,
-			'DHW'              : ProgramDhw            ,
-			'DISTRICT_HEATING' : ProgramDistrictHeating,
-			'FILLING_LOOP'     : ProgramFillingLoop    ,
-			'TPT_VALVE_ADAPTER': ProgramTptValve       ,
-			'POOL'             : ProgramSwimmingPool   ,
-	}
 	
 	if programType in programCreator:
 		prg = programCreator[programType](preset)

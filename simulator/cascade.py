@@ -13,6 +13,7 @@ class Simulator(object):
 		self._preset     = self._program.getPreset()
 		self._time_start    = time.time()
 		self._control    = control
+		self._sourceList = self._program.getCascadeManagerSourceList()
 		
 		self.setTemperature(30)
 
@@ -32,11 +33,10 @@ class Simulator(object):
 
 	def getPower(self):
 		sourceList     = self._control.getSourceList()
-		selfSourceList = self._program.getPreset().getSettings().getSourceList()
 
 		power = 0
 		for source in sourceList:
-			if source._program.getId() in selfSourceList:
+			if source._program.getId() in self._sourceList:
 				power = power + source.getPower()
 
 		return power
@@ -45,7 +45,7 @@ class Simulator(object):
 		return -1
 
 	def getTotalPower(self):
-		return self.getPower() + self.getConsumersPower() + self.getCoolDownPower()
+		return self.getPower() - self.getConsumersPower() + self.getCoolDownPower()
 
 	def computeTemperature(self):
 		temp = self._control._collector.getDirectTemperature()

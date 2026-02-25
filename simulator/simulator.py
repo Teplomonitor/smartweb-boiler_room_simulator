@@ -170,7 +170,7 @@ class Simulator(threading.Thread):
 		programList = self.getConsumerList()
 		consumerList = []
 		for program in programList:
-			sourceList = program._program.getPreset().getSettings().getSourceList()
+			sourceList = program._program.getTemperatureSourceList()
 			if ((sourceId in sourceList) or
 				(BROADCAST_ID in sourceList) ):
 				consumerList.append(program)

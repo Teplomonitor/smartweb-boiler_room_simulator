@@ -27,6 +27,8 @@ class Simulator(object):
 		}
 
 		self.setTemperature(20)
+		
+		self._roomSourceList = self._program.getRoomTemperatureSourceList()
 
 
 	def getOat(self):
@@ -47,12 +49,12 @@ class Simulator(object):
 	
 	def getSourceTemperature(self, sourceId):
 		sourceList       = self._control.getHeatingCircuitList()
-		roomSourceList   = self._program.getPreset().getSettings().getSourceList()
+		
 #		print(f'source list {roomSourceList}')
 		for source in sourceList:
 			programId = source._program.getId()
 #			print(f'source id = {programId}')
-			if programId == roomSourceList[sourceId]:
+			if programId == self._roomSourceList[sourceId]:
 #				print(f'source {sourceId} found')
 				if source.getPower():
 					return source.getTemperature()
@@ -61,9 +63,9 @@ class Simulator(object):
 	
 	def getSourcePower(self, sourceId):
 		sourceList       = self._control.getHeatingCircuitList()
-		roomSourceList   = self._program.getPreset().getSettings().getSourceList()
+		
 		for source in sourceList:
-			if source._program.getId() == roomSourceList[sourceId]:
+			if source._program.getId() == self._roomSourceList[sourceId]:
 				return source.getPower()
 
 		return 0

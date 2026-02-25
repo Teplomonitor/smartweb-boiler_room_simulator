@@ -150,7 +150,10 @@ class MainThread(threading.Thread):
 			time.sleep(1)
 			
 			if self._newPreset:
-				loadPresetNow(self._newPreset)
+				try:
+					loadPresetNow(self._newPreset)
+				except:
+					print('Wrong preset!!!')
 				self._newPreset = None
 
 			if self._saveProgramPlots.is_set():

@@ -58,7 +58,7 @@ def programInputMappingFilter(msg):
 
 	data = msg.getData()
 	return ((data[0] == snc.ProgramType['PROGRAM']) and
-			(data[1] == snc.ProgramParameter['INPUT_MAPPING']))
+			(data[1] == snc.ProgramParameter['INPUT_MAPPING']['id']))
 
 def programOutputMappingFilter(msg):
 	if not remoteControlSetRequest(msg):
@@ -66,7 +66,7 @@ def programOutputMappingFilter(msg):
 
 	data = msg.getData()
 	return ((data[0] == snc.ProgramType['PROGRAM']) and
-			(data[1] == snc.ProgramParameter['OUTPUT_MAPPING']))
+			(data[1] == snc.ProgramParameter['OUTPUT_MAPPING']['id']))
 
 class debug_thread(can.Listener):
 	def __init__(self):

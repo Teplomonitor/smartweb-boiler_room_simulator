@@ -1,8 +1,6 @@
 from os.path import dirname, basename, isfile, join
 import glob
 
-import smartnet.constants as snc
-
 class ProgramPreset(object):
 	'''
 	classdocs

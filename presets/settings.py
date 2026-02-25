@@ -1,6 +1,17 @@
 
 from smartnet.remoteControl import RemoteControlParameter as RemoteControlParameter
 
+class DefaultSettings(object):
+	def __init__(self,
+				settings
+			):
+		self._settings = settings
+
+	def get(self):
+		return self._settings
+	def getSource    (self): return  0
+	def getSourceList(self): return [0]
+	
 class HeatingCircuitSettings(object):
 	def __init__(self,
 			source         = None,

@@ -1,5 +1,6 @@
 
 import json
+import collections.abc
 
 import smartnet.remoteControl as rc
 from smartnet.channelMapping import ChannelMapping as Mapping
@@ -41,7 +42,7 @@ def parseParameterCode(code, parameterValue):
 	parameterId = bytes_val[1]
 	
 	programTypeKey = None
-	param          = None
+	parameterIdKey = None
 	
 	for key, value in ProgramTypes.items():
 		if programType == value:
@@ -51,11 +52,15 @@ def parseParameterCode(code, parameterValue):
 	if programTypeKey in ParameterDict:
 		params = ParameterDict[programTypeKey]
 		for key, value in params.items():
-			if parameterId == value:
-				param = key
+			if parameterId == value['id']:
+				parameterIdKey = key
 				break
+	try:
+		value = json.loads(parameterValue)  
+	except ValueError:
+		value = parameterValue
 	
-	return {'type':programTypeKey, 'param':param, 'value':parameterValue}
+	return {'programType':programTypeKey, 'parameterId':parameterIdKey, 'value':value}
 	
 	
 def strToMapping(mappingValue):
@@ -88,10 +93,11 @@ def computeControllersNum(parsed_programs):
 
 def getHeader():
 	return '''
-from smartnet.remoteControl import RemoteControlParameter as RemoteControlParameter
+import smartnet.remoteControl as rc
 from smartnet.channelMapping import ChannelMapping as Mapping
 
 import presets.preset
+import presets.settings as ps
 
 '''
 def getFootter():
@@ -132,11 +138,11 @@ programDefaultPower = {
 	'DISTRICT_HEATING' :   7,
 	'CASCADE_MANAGER'  :   0,
 	'OUTDOOR_SENSOR'   :   0,
-	'SNOWMELT'         :  -2,
-	'HEATING_CIRCUIT'  :  -2,
-	'DHW'              :  -4,
-	'ROOM_DEVICE'      :  -2,
-	'POOL'             :  -2,
+	'SNOWMELT'         :   2,
+	'HEATING_CIRCUIT'  :   2,
+	'DHW'              :   4,
+	'ROOM_DEVICE'      :   2,
+	'POOL'             :   2,
 }
 
 
@@ -199,7 +205,7 @@ def getProgramType(programs):
 def convertProgramScheme(prg):
 	if 'scheme' in prg:
 		scheme_id = prg['scheme']
-		return 'PROGRAM_SCHEME_' + scheme_id
+		return f'PROGRAM_SCHEME_{scheme_id}'
 	return 'DEFAULT'
 
 def getProgramScheme(programs):
@@ -225,18 +231,43 @@ def getProgramIdArray(programs):
 	output_string += '}\n\n'
 	return output_string
 
+def paramIsString(param):
+	param = ParameterDict[param['programType']][param['parameterId']]
+	return param['type'] == 'STRING'
+
+def paramIsArray(param):
+	param = ParameterDict[param['programType']][param['parameterId']]
+	if 'array_size' in param and param['array_size'] > 1:
+		return True
+	return False
+
+def getParameterSettingString(param, value):
+	if paramIsString(param):
+		value = f"'{value}'"
+	return f"\trc.RemoteControlParameter('{param['programType']}', '{param['parameterId']}', {value}),\n"
+
+def getParameterArraySettingString(param, value, i):
+	if paramIsString(param):
+		value = f"'{value}'"
+	return f"\trc.RemoteControlParameter('{param['programType']}', '{param['parameterId']}', {value}, {i}),\n"
+
 def getProgramSettings(programs):
 	output_string = 'programSettings = {\n'
 	for prg in programs:
-		output_string += f"'{getProgramId(prg)}' : [\n"
+		output_string += f"'{getProgramId(prg)}' : ps.DefaultSettings([\n"
 		for param in prg['parameters']:
-			if (param['type'] != None) and (param['param'] != None):
+			if (param['programType'] != None) and (param['parameterId'] != None):
 				value = param['value']
-				rcp = rc.RemoteControlParameter(param['type'], param['param'])
-				if rcp.getParameterType() == 'STRING':
-					value = f"'{value}'"
-				output_string += f"\tRemoteControlParameter('{param['type']}', '{param['param']}', {value}),\n"
-		output_string += '],\n'
+				
+				if paramIsArray(param):
+					i = 0
+					for v in value:
+						output_string += getParameterArraySettingString(param, v, i)
+						i += 1
+				else:
+					output_string += getParameterSettingString(param, value)
+
+		output_string += ']),\n'
 	output_string += '}\n\n'
 	return output_string
 
@@ -342,7 +373,7 @@ def convertConfigToPreset(json_string ):
 						new_program['parameters'].append(parseParameterCode(param['code'], param['value']))
 						
 				for param in new_program['parameters']:
-					if param['type'] == 'PROGRAM' and param['param'] == 'SCHEME':
+					if param['programType'] == 'PROGRAM' and param['parameterId'] == 'SCHEME':
 						new_program['scheme' ] = param['value']
 						break
 				

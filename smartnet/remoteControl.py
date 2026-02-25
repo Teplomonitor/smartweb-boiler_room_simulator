@@ -111,16 +111,20 @@ class RemoteControlParameter(object):
 		self._parameterIndex = parameterIndex
 		self._programId      = programId
 
-	def setProgramId(self, programId):
-		self._programId      = programId
-		
-	def getValue(self): return self._parameterValue
-
-	def getParameterIdCode(self):
-		return snc.ParameterDict[self._programType][self._parameterId]['id']
+	def setProgramId(self, programId): self._programId = programId
 	
-	def getParameterType(self):
-		return snc.ParameterDict[self._programType][self._parameterId]['type']
+	def getValue         (self): return self._parameterValue
+	def getProgramType   (self): return self._programType
+	def getParameterIndex(self): return self._parameterIndex
+	
+	def getParameterIdCode(self): return snc.ParameterDict[self._programType][self._parameterId]['id']
+	def getParameterType  (self): return snc.ParameterDict[self._programType][self._parameterId]['type']
+	
+	def getParameterArraySize(self):
+		param = snc.ParameterDict[self._programType][self._parameterId]
+		if 'array_size' in param:
+			return param['array_size']
+		return 1
 	
 	def write(self):
 		if self._programId is None:
@@ -131,11 +135,19 @@ class RemoteControlParameter(object):
 #			print(f'prg {self._programId} skip parameter {self._programType}.{self._parameterId}')
 			return
 		
+		#not supported yet
+		if self.getParameterType() == 'STRING':
+			return
+		if self.getParameterType() == 'SCHEDULE':
+			return
+		
 		if self._parameterIndex is None:
 			actionStr = f'prg {self._programId} write parameter {self._programType}.{self._parameterId} = {self._parameterValue}'
 		else:
 			actionStr = f'prg {self._programId} write parameter {self._programType}.{self._parameterId}.{self._parameterIndex} = {self._parameterValue}'
 
+		print(actionStr)
+		
 		def generateRequest():
 			parameterIdCode = self.getParameterIdCode()
 			
