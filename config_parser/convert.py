@@ -1,6 +1,7 @@
 
 import json
 
+import smartnet.remoteControl as rc
 from smartnet.channelMapping import ChannelMapping as Mapping
 from smartnet.constants      import ProgramType    as ProgramTypes
 from smartnet.constants      import ParameterDict  as ParameterDict
@@ -230,7 +231,11 @@ def getProgramSettings(programs):
 		output_string += f"'{getProgramId(prg)}' : [\n"
 		for param in prg['parameters']:
 			if (param['type'] != None) and (param['param'] != None):
-				output_string += f"\tRemoteControlParameter('{param['type']}', '{param['param']}', '{param['value']}'),\n"
+				value = param['value']
+				rcp = rc.RemoteControlParameter(param['type'], param['param'])
+				if rcp.getParameterType() == 'STRING':
+					value = f"'{value}'"
+				output_string += f"\tRemoteControlParameter('{param['type']}', '{param['param']}', {value}),\n"
 		output_string += '],\n'
 	output_string += '}\n\n'
 	return output_string
@@ -339,6 +344,7 @@ def convertConfigToPreset(json_string ):
 				for param in new_program['parameters']:
 					if param['type'] == 'PROGRAM' and param['param'] == 'SCHEME':
 						new_program['scheme' ] = param['value']
+						break
 				
 				for inputMapping in p['input_mappings']:
 					new_program['inputs'].append(strToMapping(inputMapping))
