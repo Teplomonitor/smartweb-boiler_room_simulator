@@ -1,8 +1,6 @@
 
 import json
-import collections.abc
 
-import smartnet.remoteControl as rc
 from smartnet.channelMapping import ChannelMapping as Mapping
 from smartnet.constants      import ProgramType    as ProgramTypes
 from smartnet.constants      import ParameterDict  as ParameterDict
@@ -24,7 +22,6 @@ host_controller_max_outputs = 7
 hostCommonTitle = 'HOST_'
 hostCommonId    = 123
 hostCommonType = 'SWK_1'
-programCommonId = 101
 
 def parseMappingValue(value):
 	host = value[0]
@@ -93,6 +90,14 @@ def computeControllersNum(parsed_programs):
 
 def getHeader():
 	return '''
+# -*- coding: utf-8 -*-
+
+###########################################################################
+## Python code generated with main_config_parser.py
+##
+##
+###########################################################################
+
 import smartnet.remoteControl as rc
 from smartnet.channelMapping import ChannelMapping as Mapping
 
@@ -218,16 +223,16 @@ def getProgramScheme(programs):
 def getProgramTitle(programs):
 	output_string = 'programTitle = {\n'
 	for prg in programs:
-		output_string += f"'{getProgramId(prg)}' : '{prg['title']}',\n"
+		programId = getProgramId(prg)
+		output_string += f"'{programId}' : '{prg['title']} {programId}',\n"
 	output_string += '}\n\n'
 	return output_string
 
 def getProgramIdArray(programs):
-	programId = programCommonId
 	output_string = 'programId = {\n'
 	for prg in programs:
-		output_string += f"'{getProgramId(prg)}' : {programId},\n"
-		programId += 1
+		programId = getProgramId(prg)
+		output_string += f"'{programId}' : {programId},\n"
 	output_string += '}\n\n'
 	return output_string
 
