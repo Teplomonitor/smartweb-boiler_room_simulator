@@ -287,9 +287,14 @@ class RemoteControlParameter(object):
 	def valueToData(self, value):
 		parameterType = self.getParameterType()
 		data = value
+		signedValue = False
 		if   parameterType == 'UINT8_T'    : data = int(value)
-		elif parameterType == 'TEMPERATURE': data = tempToData(value)
+		elif parameterType == 'TEMPERATURE': data = tempToData(value); signedValue = True
 		elif parameterType == 'TIME_MS'    : data = timeToData(value)
 		elif parameterType == 'SCHEDULE'   : data = schedulePeriodToData(value)
 		elif parameterType == 'TDP_FLOAT'  : data = tdpFloatToData(value)
-		return list(data.to_bytes(self.getParameterSize(), 'little'))
+		
+		parameterSize = self.getParameterSize()
+		data_bytes = data.to_bytes(parameterSize, 'little', signed = signedValue)
+		
+		return list(data_bytes)
