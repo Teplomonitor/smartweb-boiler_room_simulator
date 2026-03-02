@@ -34,6 +34,11 @@ def findOnlineController():
 				i += 1
 				continue
 			
+			if controllerType == snc.ControllerType['VIRTUAL']:
+				printLog('skip virtual controller')
+				i += 1
+				continue
+			
 			return controllerId
 		else:
 			return None
