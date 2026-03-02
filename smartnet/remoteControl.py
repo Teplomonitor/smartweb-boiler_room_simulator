@@ -8,6 +8,15 @@ from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
 
 
+ParameterSize =  {
+	'UINT8_T'    : 1,
+	'TEMPERATURE': 2,
+	'TIME_MS'    : 4,
+	'SCHEDULE'   : 4,
+	'TDP_FLOAT'  : 2,
+}
+
+
 def concatByteArray(data, littleEndian = False):
 	value = 0
 	i = 0
@@ -268,11 +277,8 @@ class RemoteControlParameter(object):
 	
 	def getParameterSize(self):
 		parameterType = self.getParameterType()
-		if   parameterType == 'UINT8_T'    : return 1
-		elif parameterType == 'TEMPERATURE': return 2
-		elif parameterType == 'TIME_MS'    : return 4
-		elif parameterType == 'SCHEDULE'   : return 4
-		elif parameterType == 'TDP_FLOAT'  : return 2
+		if parameterType in ParameterSize:
+			return ParameterSize[parameterType]
 		return 1
 		
 	def dataToValue(self, data):
