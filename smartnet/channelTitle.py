@@ -98,6 +98,7 @@ InputTitleFillingLoop  = [
 InputTitleTptValve = [
 	'Управляющий сигнал',
 	]
+InputTitleVirtualController = []
 
 OutputTitleOat               = []
 OutputTitleCascade           = []
@@ -193,6 +194,7 @@ OutputTitleTptValve = [
 	'Смес. откр.',
 	'Смес. закр.',
 	]
+OutputTitleVirtualController = []
 
 ProgramInputTitle = {
 	'OUTDOOR_SENSOR'   : InputTitleOat,
@@ -209,6 +211,7 @@ ProgramInputTitle = {
 	'ALARM'            : InputTitleAlarm            ,
 	'FILLING_LOOP'     : InputTitleFillingLoop      ,
 	'TPT_VALVE_ADAPTER': InputTitleTptValve         ,
+	'VIRTUAL_CONTROLLER': InputTitleVirtualController,
 }
 
 ProgramOutputTitle = {
@@ -226,5 +229,6 @@ ProgramOutputTitle = {
 	'ALARM'            : OutputTitleAlarm            ,
 	'FILLING_LOOP'     : OutputTitleFillingLoop      ,
 	'TPT_VALVE_ADAPTER': OutputTitleTptValve         ,
+	'VIRTUAL_CONTROLLER': OutputTitleVirtualController,
 }
 

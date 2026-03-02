@@ -15,6 +15,7 @@ from programs.cascade         import Cascade         as ProgramCascade
 from programs.fillingLoop     import FillingLoop     as ProgramFillingLoop
 from programs.tptValve        import TptValve        as ProgramTptValve
 from programs.swimmingPool    import SwimmingPool    as ProgramSwimmingPool
+from programs.virtualController import VirtualController as ProgramVirtualController
 
 programCreator = {
 		'OUTDOOR_SENSOR'   : ProgramOat            ,
@@ -28,6 +29,7 @@ programCreator = {
 		'FILLING_LOOP'     : ProgramFillingLoop    ,
 		'TPT_VALVE_ADAPTER': ProgramTptValve       ,
 		'POOL'             : ProgramSwimmingPool   ,
+		'VIRTUAL_CONTROLLER' : ProgramVirtualController,
 }
 
 def createProgram(preset):

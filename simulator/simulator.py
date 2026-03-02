@@ -19,8 +19,38 @@ import simulator.fillingLoop
 import simulator.collector
 import simulator.tptValve
 import simulator.swimmingPool
+import simulator.virtualController
 
 BROADCAST_ID = 0
+
+simulatorType = {
+	'OUTDOOR_SENSOR'   : simulator.oat             .Simulator,
+	'BOILER'           : simulator.boiler          .Simulator,
+	'CASCADE_MANAGER'  : simulator.cascade         .Simulator,
+	'ROOM_DEVICE'      : simulator.room            .Simulator,
+	'HEATING_CIRCUIT'  : simulator.heating_circuit .Simulator,
+	'SNOWMELT'         : simulator.snowmelter      .Simulator,
+	'DHW'              : simulator.dhw             .Simulator,
+	'DISTRICT_HEATING' : simulator.district_heating.Simulator,
+	'FILLING_LOOP'     : simulator.fillingLoop     .Simulator,
+	'TPT_VALVE_ADAPTER': simulator.tptValve        .Simulator,
+	'POOL'             : simulator.swimmingPool    .Simulator,
+	'VIRTUAL_CONTROLLER': simulator.virtualController.Simulator,
+}
+
+consumerTypesList = [
+	'HEATING_CIRCUIT',
+	'SNOWMELT',
+	'DHW',
+	'POOL',
+]
+
+sourceTypesList = [
+	'BOILER',
+	'CASCADE_MANAGER',
+	'DISTRICT_HEATING',
+]
+
 
 class sensor_report_thread(threading.Thread):
 	def __init__(self, simulator):
@@ -97,34 +127,6 @@ class Simulator(threading.Thread):
 
 		programsList = self._controllerHost.getProgramList()
 		
-		simulatorType = {
-			'OUTDOOR_SENSOR'   : simulator.oat             .Simulator,
-			'BOILER'           : simulator.boiler          .Simulator,
-			'CASCADE_MANAGER'  : simulator.cascade         .Simulator,
-			'ROOM_DEVICE'      : simulator.room            .Simulator,
-			'HEATING_CIRCUIT'  : simulator.heating_circuit .Simulator,
-			'SNOWMELT'         : simulator.snowmelter      .Simulator,
-			'DHW'              : simulator.dhw             .Simulator,
-			'DISTRICT_HEATING' : simulator.district_heating.Simulator,
-			'FILLING_LOOP'     : simulator.fillingLoop     .Simulator,
-			'TPT_VALVE_ADAPTER': simulator.tptValve        .Simulator,
-			'POOL'             : simulator.swimmingPool    .Simulator,
-		}
-
-		consumerTypesList = [
-			'HEATING_CIRCUIT',
-			'SNOWMELT',
-			'DHW',
-			'POOL',
-		]
-
-		sourceTypesList = [
-			'BOILER',
-			'CASCADE_MANAGER',
-			'DISTRICT_HEATING',
-		]
-		
-		
 		for program in programsList:
 			programId = program.getId()
 			i = 0
@@ -159,6 +161,7 @@ class Simulator(threading.Thread):
 		self._collector = simulator.collector.Simulator(self)
 		self._simulator_ready = True
 
+	def getControllersIOList (self): return self._controllerIo
 	def getConsumerList      (self): return self._consumersList
 	def getHeatingCircuitList(self): return self._heatingCircuitList
 	def getSourceList        (self): return self._generatorsList
