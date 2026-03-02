@@ -12,6 +12,10 @@ def reportSensorValue(sensor, bus = None):
 	if sensorValue   is None: return False
 	if sensorMapping is None: return False
 
+	hostId = sensorMapping.getHostId()
+	
+	
+	
 	isShort = sensor.isShort()
 	isOpen  = sensor.isOpen ()
 	
@@ -28,7 +32,7 @@ def reportSensorValue(sensor, bus = None):
 		]
 	msg = sm.Message(
 			snc.ProgramType['CONTROLLER'],
-			sensorMapping.getHostId(),
+			hostId,
 			snc.ControllerFunction['GET_OUTPUT_VALUE'],
 			snc.requestFlag['RESPONSE'],
 			[sensorMapping.getRaw(0), sensorMapping.getRaw(1), value[1], value[0]])
