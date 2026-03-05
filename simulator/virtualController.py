@@ -8,9 +8,11 @@ class Simulator(object):
 	def __init__(self, program, control):
 		self._program    = program
 		self._time_start = time.time()
+		self._control    = control
 
 		for i in range(0,VIRTUAL_SENSORS_MAX_NUM):
 			self.setSensor(i, 20 + i*5)
+			self.setControlOptions(i, ['sin', 'ещё опции','и ещё вот'])
 	
 	def getElapsedTime(self):
 		return time.time() - self._time_start
@@ -18,18 +20,26 @@ class Simulator(object):
 	def getSensor(self, index):
 		return self._program.getSensor(index).getValue()
 
+	def getControlOption(self, index):
+		return self._program.getSensorControlOption(index)
+	
+	def setControlOptions(self, index, options):
+		self._program.setSensorControlOptions(index, options)
+		
+	
 	def setSensor(self, index, value):
 #		print(f'oat: {value}')
 		self._program.setSensor(index, value)
 
 	def computeTemperature(self, index):
 		value  = self.getSensor(index)
-
-		pi = 3.14
-		ds = math.cos(self.getElapsedTime()/100.0 + pi/2)
-
-		value = value + ds * 0.1
-
+		option = self.getControlOption(index)
+		
+		if option == 'sin':
+			pi = 3.14
+			ds = math.cos(self.getElapsedTime()/100.0 + pi/2)
+			value = value + ds * 0.5
+			
 		return value
 
 	def run(self):

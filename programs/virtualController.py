@@ -60,9 +60,14 @@ class VirtualController(Program):
 		for i in range(0,PARAMETER_NUM):
 			param = GuiParameter(30, f'Датчик {i+1}')
 			param.setProperties(-30, 120, 0.1, 'у.е.')
-			param.setOptions(['sin','freeze', 'other'])
+			param.setOptions(['none'])
 			self._parameters[f'gui_sensor_value{i}'] = param
 		
+	def getSensorControlOption(self, index):
+		return self.getSensor(index).getSelectedOption()
+	
+	def setSensorControlOptions(self, index, options):
+		self.getSensor(index).setOptions(options)
 		
 	def getParameterInfo(self, parameter):
 		return self._remoteControlParameters[parameter]
