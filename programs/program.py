@@ -24,6 +24,40 @@ class Program(object):
 	classdocs
 	'''
 
+	def initInputs(self):
+		self._inputs  = []
+		
+		prgType        = self.getType()
+		inputMappings  = self._preset.getInputs ()
+		inputTitle     = InputTitle [prgType]
+		
+		for _ in inputTitle:
+			self._inputs .append(InputChannel())
+		
+		i = 0
+		for mapping in inputMappings:
+			self._inputs[i] = InputChannel (mapping)
+			self._inputs[i].setTitle(inputTitle[i])
+			i += 1
+	
+	def initOutputs(self):
+		self._outputs = []
+		
+		prgType        = self.getType()
+		outputMappings = self._preset.getOutputs()
+		outputTitle    = OutputTitle[prgType]
+		
+		for _ in outputTitle:
+			self._outputs.append(OutputChannel())
+			
+		i = 0
+		for mapping in outputMappings:
+			self._outputs[i] = OutputChannel(mapping)
+			self._outputs[i].setTitle(outputTitle[i])
+			if self._outputs[i].isMapped():
+				self.readOutput(i)
+			i += 1
+		
 	def __init__(self, preset):
 		'''
 		Constructor
@@ -31,29 +65,10 @@ class Program(object):
 		
 		self._preset  = preset
 
-		inputMappings  = preset.getInputs ()
-		outputMappings = preset.getOutputs()
+		self.initInputs()
+		self.initOutputs()
 
-		self._inputs  = [InputChannel (mapping) for mapping in inputMappings ]
-		self._outputs = [OutputChannel(mapping) for mapping in outputMappings]
-	
 		self._parameters = {}
-		
-		prgType     = self.getType()
-		inputTitle  = InputTitle [prgType]
-		outputTitle = OutputTitle[prgType]
-		
-		i = 0
-		for programInput in self._inputs:
-			programInput.setTitle(inputTitle[i])
-			i += 1
-
-		i = 0
-		for programOutput in self._outputs:
-			programOutput.setTitle(outputTitle[i])
-			if programOutput.isMapped():
-				self.readOutput(i)
-			i += 1
 		
 		self.CanSubscribe()
 	
