@@ -186,8 +186,11 @@ class Simulator(threading.Thread):
 	
 	
 	def runProgramSimulators(self):
-		for sim in self._simList:
-			sim.run()
+		try:
+			for sim in self._simList:
+				sim.run()
+		except:
+			print('prg sim fault')
 			
 	def runVirtualControllers(self):
 		for ctrlIo in self._controllerIo:
