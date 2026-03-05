@@ -24,6 +24,7 @@ class GuiParameter(object):
 		self._step    = 0.1
 		self._units   = '°C'
 		self._needUpdateGuiValue = True
+		self._options = None
 		
 		if self._value is None:
 			self._value = self._min
@@ -35,14 +36,15 @@ class GuiParameter(object):
 		return self._value
 	def getTitle  (self): return self._title
 	def getUnits  (self): return self._units
+	def getOptions(self): return self._options
 	
 	def setValue  (self, value, manual = False):
 		self._value = value
 		self.setGuiValue(value)
 		
-		
-	def setTitle(self, title): self._title = title
-	def setUnits(self, units): self._units = units
+	def setTitle  (self, title)  : self._title   = title
+	def setUnits  (self, units)  : self._units   = units
+	def setOptions(self, options): self._options = options
 	
 	def onSpin(self, event):
 		event.Skip()
@@ -102,9 +104,10 @@ class GuiParameter(object):
 			
 
 class GuiParameterApi(object):
-	def __init__(self, spinner, slider):
+	def __init__(self, spinner, slider, combobox = None):
 		self._spinner       = spinner
 		self._slider        = slider
+		self._combobox      = combobox
 	
 	def SetValue(self, value):
 		wx.CallAfter(self.SetValueNow, value)
