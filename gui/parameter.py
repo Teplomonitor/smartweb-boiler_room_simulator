@@ -44,8 +44,16 @@ class GuiParameter(object):
 		
 	def setTitle  (self, title)  : self._title   = title
 	def setUnits  (self, units)  : self._units   = units
-	def setOptions(self, options): self._options = options
+	def setOptions(self, options):
+		self._options = options
+		if self._gui:
+			self._gui.setOptions(options)
+		
 	
+	def getSelectedOption(self):
+		if self._gui:
+			return self._gui.getSelectedOption()
+		
 	def onSpin(self, event):
 		event.Skip()
 		self.setValue(self._gui._spinner.GetValue(), True)
@@ -126,6 +134,14 @@ class GuiParameterApi(object):
 		
 	def SetIncrement(self, value):
 		self._spinner.SetIncrement(value)
+		
+	def getSelectedOption(self):
+		if self._combobox:
+			return self._combobox.GetStringSelection()
+	
+	def setOptions(self, options):
+		if self._combobox:
+			return self._combobox.Append(options)
 
 class GuiInputChannel(GuiParameterApi):
 	def __init__(self, spinner, slider, shortCheckbox, openCheckbox, autoRb, manualRb):
