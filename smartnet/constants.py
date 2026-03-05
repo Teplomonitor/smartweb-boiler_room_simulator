@@ -331,6 +331,26 @@ SwimmingPoolParameter = {
 	'CURRENT_WORK_MODE_STATUS'          : {'id': 11, 'type': 'UINT8_T'},
 }
 
+VirtualControllerParameter = {
+	'CONTROLLERID' : {'id':  1, 'type': 'UINT8_T'    },
+	'SENSOR01'     : {'id':  2, 'type': 'TEMPERATURE'},
+	'SENSOR02'     : {'id':  3, 'type': 'TEMPERATURE'},
+	'SENSOR03'     : {'id':  4, 'type': 'TEMPERATURE'},
+	'SENSOR04'     : {'id':  5, 'type': 'TEMPERATURE'},
+	'SENSOR05'     : {'id':  6, 'type': 'TEMPERATURE'},
+	'SENSOR06'     : {'id':  7, 'type': 'TEMPERATURE'},
+	'SENSOR07'     : {'id':  8, 'type': 'TEMPERATURE'},
+	'SENSOR08'     : {'id':  9, 'type': 'TEMPERATURE'},
+	'SENSOR09'     : {'id': 10, 'type': 'TEMPERATURE'},
+	'SENSOR10'     : {'id': 11, 'type': 'TEMPERATURE'},
+	'SENSOR11'     : {'id': 12, 'type': 'TEMPERATURE'},
+	'SENSOR12'     : {'id': 13, 'type': 'TEMPERATURE'},
+	'SENSOR13'     : {'id': 14, 'type': 'TEMPERATURE'},
+	'SENSOR14'     : {'id': 15, 'type': 'TEMPERATURE'},
+	'SENSOR15'     : {'id': 16, 'type': 'TEMPERATURE'},
+	'SENSOR16'     : {'id': 17, 'type': 'TEMPERATURE'},
+}
+
 ParameterDict = {
 	'PROGRAM'         : ProgramParameter,
 	'ROOM_DEVICE'     : RoomDeviceParameter,
@@ -342,6 +362,7 @@ ParameterDict = {
 	'SNOWMELT'        : SnowMelterParameter,
 	'CIRCUIT'         : CircuitParameter,
 	'POOL'            : SwimmingPoolParameter,
+	'VIRTUAL_CONTROLLER': VirtualControllerParameter,
 }
 
 
