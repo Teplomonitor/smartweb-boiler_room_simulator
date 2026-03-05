@@ -247,8 +247,10 @@ class MainFrame ( wx.Frame ):
 		programOutput.setGui(guiChannel)
 	
 	def addParameter(self, ProgramParametersBox, programParameter):
-		parameterTitle = programParameter.getTitle()
-		parameterUnits = programParameter.getUnits()
+		parameterTitle   = programParameter.getTitle()
+		parameterUnits   = programParameter.getUnits()
+		parameterOptions = programParameter.getOptions()
+		
 		ProgramParameterBox = wx.StaticBoxSizer( wx.StaticBox( ProgramParametersBox.GetStaticBox(), wx.ID_ANY, _(f'{parameterTitle} ({parameterUnits})') ), wx.HORIZONTAL )
 
 		parameterSpinCtrl = wx.SpinCtrlDouble( ProgramParameterBox.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS|wx.TE_PROCESS_ENTER, 0, 100, 0, 0.1 )
@@ -258,11 +260,20 @@ class MainFrame ( wx.Frame ):
 		parameterSlider = wx.Slider( ProgramParameterBox.GetStaticBox(), wx.ID_ANY, 50, 0, 100, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL )
 		ProgramParameterBox.Add( parameterSlider, 0, wx.ALL, 5 )
 
+		if parameterOptions:
+			m_comboBox1Choices = parameterOptions
+			parameterComboboxCtr = wx.ComboBox( ProgramParameterBox.GetStaticBox(), wx.ID_ANY, m_comboBox1Choices[0], wx.DefaultPosition, wx.DefaultSize, m_comboBox1Choices, 0 )
+			parameterComboboxCtr.SetMinSize( wx.Size( 80,-1 ) )
+			ProgramParameterBox.Add( parameterComboboxCtr, 0, wx.ALL, 5 )
+		else:
+			parameterComboboxCtr = None
+		
 		ProgramParametersBox.Add( ProgramParameterBox, 1, wx.EXPAND, 5 )
 		
 		guiChannel = GuiParameterApi(
 			parameterSpinCtrl,
-			parameterSlider
+			parameterSlider,
+			parameterComboboxCtr
 			)
 		
 		parameterSpinCtrl.Bind( wx.EVT_SPINCTRLDOUBLE, programParameter.onSpin    )
