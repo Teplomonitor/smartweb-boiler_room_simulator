@@ -151,9 +151,9 @@ class RemoteControlParameter(object):
 			return
 		
 		if self._parameterIndex is None:
-			actionStr = f'prg {self._programId} write parameter {self._programType}.{self._parameterId} = {self._parameterValue}'
+			actionStr = f'prg {self._programId} write parameter {self._programType}.{self._parameterId} = {self._parameterValue:.2f}'
 		else:
-			actionStr = f'prg {self._programId} write parameter {self._programType}.{self._parameterId}.{self._parameterIndex} = {self._parameterValue}'
+			actionStr = f'prg {self._programId} write parameter {self._programType}.{self._parameterId}.{self._parameterIndex} = {self._parameterValue:.2f}'
 
 		print(actionStr)
 		
