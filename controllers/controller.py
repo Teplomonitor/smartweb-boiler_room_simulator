@@ -188,7 +188,7 @@ class Controller(object):
 		request        = generateRequest()
 		responseFilter = generateRequiredResponse()
 
-		response = request.send(responseFilter, 30)
+		response = request.send(responseFilter, 10)
 
 		return handleResponse()
 
