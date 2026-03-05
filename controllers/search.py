@@ -6,8 +6,10 @@ Created on 4 июл. 2025 г.
 
 import smartnet.message as snm
 import smartnet.constants as snc
+import functions.timeOnDelay as delay
 
 from consoleLog import printLog   as printLog
+from consoleLog import printError as printError
 
 def messageIsImHere():
 	return snm.Message(
@@ -19,9 +21,9 @@ def messageIsImHere():
 def findOnlineController():
 	printLog('Searching controller')
 	msg = snm.Message()
-
-	i = 0
-	while i < 3:
+	timeout = delay.TimeOnDelay()
+	
+	while not timeout.Get(True, 3*60):
 		result = msg.recv(messageIsImHere(), 130)
 		if result:
 			controllerId   = result.getProgramId()
@@ -31,14 +33,15 @@ def findOnlineController():
 			
 			if controllerType == snc.ControllerType['SWK_1']:
 				printLog('skip extension block')
-				i += 1
 				continue
 			
 			if controllerType == snc.ControllerType['VIRTUAL']:
 				printLog('skip virtual controller')
-				i += 1
 				continue
 			
 			return controllerId
 		else:
 			return None
+	
+	printError('Searching controller timeout')
+	return None	
