@@ -65,7 +65,7 @@ class Program(object):
 		
 		self._preset  = preset
 
-		self.initInputs()
+		self.initInputs ()
 		self.initOutputs()
 
 		self._parameters = {}
@@ -256,7 +256,7 @@ class Program(object):
 		
 		return remoteParam.getValue()
 	
-	def writeParameterValue(self, parameter, value):
+	def writeParameterValue(self, parameter, value, index = None):
 		p = self.getParameterInfo(parameter)
 		if p is None:
 			return None
@@ -264,7 +264,8 @@ class Program(object):
 		remoteParam = sr.RemoteControlParameter(
 			parameterInfo = p,
 			programId = self.getId(),
-			parameterValue = value
+			parameterValue = value,
+			parameterIndex = index
 		)
 		
 		remoteParam.write()
