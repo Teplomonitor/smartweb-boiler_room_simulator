@@ -67,6 +67,12 @@ class MainFrame ( wx.Frame ):
         self.inputManualRadioButton = wx.RadioButton( ProgramInput1BoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Manual"), wx.DefaultPosition, wx.DefaultSize, 0 )
         ProgramInput1BoxSizer.Add( self.inputManualRadioButton, 0, wx.ALL, 5 )
 
+        m_comboBox1Choices = [ _(u"a"), _(u"b"), _(u"sadf"), _(u"sdf") ]
+        self.m_comboBox1 = wx.ComboBox( ProgramInput1BoxSizer.GetStaticBox(), wx.ID_ANY, _(u"Combo!"), wx.DefaultPosition, wx.DefaultSize, m_comboBox1Choices, 0 )
+        self.m_comboBox1.SetMinSize( wx.Size( 80,-1 ) )
+
+        ProgramInput1BoxSizer.Add( self.m_comboBox1, 0, wx.ALL, 5 )
+
 
         ProgramInputsBox.Add( ProgramInput1BoxSizer, 1, wx.EXPAND, 5 )
 
