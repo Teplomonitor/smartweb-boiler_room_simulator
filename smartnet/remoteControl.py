@@ -155,7 +155,7 @@ class RemoteControlParameter(object):
 		else:
 			actionStr = f'prg {self._programId} write parameter {self._programType}.{self._parameterId}.{self._parameterIndex} = {self._parameterValue:.2f}'
 
-		print(actionStr)
+#		print(actionStr)
 		
 		def generateRequest():
 			parameterIdCode = self.getParameterIdCode()
