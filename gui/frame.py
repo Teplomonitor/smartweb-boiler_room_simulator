@@ -263,7 +263,9 @@ class MainFrame ( wx.Frame ):
 		if parameterOptions:
 			m_comboBox1Choices = parameterOptions
 			parameterComboboxCtr = wx.ComboBox( ProgramParameterBox.GetStaticBox(), wx.ID_ANY, m_comboBox1Choices[0], wx.DefaultPosition, wx.DefaultSize, m_comboBox1Choices, 0 )
+			parameterComboboxCtr.SetSelection( 0 )
 			parameterComboboxCtr.SetMinSize( wx.Size( 80,-1 ) )
+			
 			ProgramParameterBox.Add( parameterComboboxCtr, 0, wx.ALL, 5 )
 		else:
 			parameterComboboxCtr = None
