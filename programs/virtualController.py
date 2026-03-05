@@ -60,6 +60,7 @@ class VirtualController(Program):
 		for i in range(0,PARAMETER_NUM):
 			param = GuiParameter(30, f'Датчик {i+1}')
 			param.setProperties(-30, 120, 0.1, 'у.е.')
+			param.setOptions(['sin','freeze', 'other'])
 			self._parameters[f'gui_sensor_value{i}'] = param
 		
 		
