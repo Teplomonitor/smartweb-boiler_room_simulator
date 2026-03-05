@@ -132,7 +132,7 @@ class GuiInputChannel(GuiParameterApi):
 		self._autoRb        = autoRb       
 		self._manualRb      = manualRb    
 
-class GuiOutputChannel():
+class GuiOutputChannel(object):
 	def __init__(self, gauge):
 		self._gauge       = gauge
 		
