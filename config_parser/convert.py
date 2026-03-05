@@ -74,11 +74,11 @@ def computeControllersNum(parsed_programs):
 	total_outputs = 0
 	for prg in parsed_programs:
 		for programInput in prg['inputs']:
-			if programInput.getChannelType() != 'CHANNEL_UNDEFINED':
+			if programInput.getChannelType() in ['CHANNEL_SENSOR_LOCAL', 'CHANNEL_SENSOR']:
 				total_inputs += 1
 				
 		for programOutput in prg['outputs']:
-			if programOutput.getChannelType() != 'CHANNEL_UNDEFINED':
+			if programOutput.getChannelType() in ['CHANNEL_RELAY_LOCAL', 'CHANNEL_RELAY']:
 				total_outputs += 1
 				
 	
@@ -285,7 +285,7 @@ def getProgramInputs(programs):
 			channelId   = programChannel.getChannelId()
 			hostId      = programChannel.getHostId()
 			
-			if channelType == 'CHANNEL_SENSOR_LOCAL':
+			if channelType in ['CHANNEL_SENSOR_LOCAL', 'CHANNEL_SENSOR']:
 				channelType = 'CHANNEL_SENSOR' # make it remote
 				channelId   = getProgramInputs.counter
 				hostId      = hostCommonId + int(getProgramInputs.counter/host_controller_max_inputs)
@@ -309,7 +309,7 @@ def getProgramOutputs(programs):
 			channelId   = programChannel.getChannelId()
 			hostId      = programChannel.getHostId()
 			
-			if channelType == 'CHANNEL_RELAY_LOCAL':
+			if channelType in ['CHANNEL_RELAY_LOCAL', 'CHANNEL_RELAY']:
 				channelType = 'CHANNEL_RELAY' # make it remote
 				channelId   = getProgramOutputs.counter
 				hostId      = hostCommonId + int(getProgramOutputs.counter/host_controller_max_outputs)
