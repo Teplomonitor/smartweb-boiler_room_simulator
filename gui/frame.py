@@ -34,7 +34,7 @@ class PresetItem(object):
 		
 	def onPresetSelect(self, event):
 		event.Skip()
-		self.loadPreset()
+		wx.CallAfter(self.loadPreset)
 
 class ScenarioItem(object):
 	def __init__(self, scenario, scenarioDir):
