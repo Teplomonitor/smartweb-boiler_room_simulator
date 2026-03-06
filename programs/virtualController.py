@@ -4,6 +4,7 @@
 
 from .program import Program
 from gui.parameter import GuiParameter as GuiParameter
+import functions.periodicTrigger as pt
 
 PARAMETER_NUM = 16
 
@@ -57,6 +58,8 @@ class VirtualController(Program):
 		'''
 		super().__init__(params)
 		
+		self._reportPeriod = pt.PeriodicTrigger()
+		
 		for i in range(0,PARAMETER_NUM):
 			param = GuiParameter(30, f'Датчик {i+1}')
 			param.setProperties(-30, 120, 0.1, 'у.е.')
@@ -75,6 +78,20 @@ class VirtualController(Program):
 	def getSensor(self, index):
 		return self._parameters[f'gui_sensor_value{index}']
 	
-	def setSensor(self, index, value):
-		self.writeParameterValue(self._sensors[index], value)
+	def getSensorValue(self, index):
+		return self.getSensor(index).getValue()
+	
+	def setSensorValue(self, index, value):
 		return self.getSensor(index).setValue(value)
+	
+	def reportSensorValue(self, index, value):
+		#no confirm because we change value pretty often and it cause thread slowdown
+		self.writeParameterValue(self._sensors[index], value, confirm = False)
+	
+	def setSensor(self, index, value):
+		dT = value - self.getSensorValue(index)
+		if (abs(dT) > 1) or self._reportPeriod.Get(10):
+			self._reportPeriod.TimerReset()
+			self.reportSensorValue(index, value)
+			
+		return self.setSensorValue(index, value)
