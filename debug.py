@@ -15,12 +15,14 @@ class i_am_here_thread(threading.Thread):
 		self.thread_name = thread_name
 		self.thread_ID   = thread_ID
 		self._canbus     = canbus
-
+		self._controllerId = 123
+	def setControllerId(self, controllerId):
+		self._controllerId = controllerId
+		
 	def sendImHere(self):
-		dummyControllerId = 123
 		msg = sm.Message(
 			snc.ProgramType['CONTROLLER'],
-			dummyControllerId,
+			self._controllerId,
 			snc.ControllerFunction['I_AM_HERE'],
 			snc.requestFlag['RESPONSE'],
 			[snc.ControllerType['SWK'],]
@@ -69,11 +71,13 @@ def programOutputMappingFilter(msg):
 			(data[1] == snc.ProgramParameter['OUTPUT_MAPPING']['id']))
 
 class debug_thread(can.Listener):
-	def __init__(self):
+	def __init__(self, requiredControllerId):
 		self._canbus   = sm.createBus()
 		self._notifier = can.Notifier(self._canbus, [self])
 
 		thread1 = i_am_here_thread("IMH", 1001, self._canbus)
+		if requiredControllerId != 0:
+			thread1.setControllerId(requiredControllerId)
 		#to kill thread on sys.exit()
 		thread1.daemon = True
 		thread1.start()

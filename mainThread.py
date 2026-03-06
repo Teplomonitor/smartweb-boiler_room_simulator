@@ -65,6 +65,7 @@ class MainThread(threading.Thread):
 		self._debug                       = args.debug
 		self._canConfig                   = args.can
 		self._debug_thread                = None
+		self._controllerId                = int(args.id)
 		
 		preset = self.getCurrentPreset()
 		
@@ -110,9 +111,9 @@ class MainThread(threading.Thread):
 			udp.initUdpBridge(self._udp_bridge_enable)
 		
 		if self._debug:
-			self._debug_thread = debug.debug_thread()
+			self._debug_thread = debug.debug_thread(self._controllerId)
 			
-		controllerId = ctrlSearch.findOnlineController()
+		controllerId = ctrlSearch.findOnlineController(self._controllerId)
 		
 		if controllerId is None:
 			printError('controller not found. Exit')

@@ -18,8 +18,12 @@ def messageIsImHere():
 		snc.requestFlag['RESPONSE'])
 
 
-def findOnlineController():
-	printLog('Searching controller')
+def findOnlineController(searchingControllerId):
+	if searchingControllerId:
+		printLog(f'Searching controller {searchingControllerId}')
+	else:
+		printLog(f'Searching controller')
+	
 	msg = snm.Message()
 	timeout = delay.TimeOnDelay()
 	
@@ -28,6 +32,10 @@ def findOnlineController():
 		if result:
 			controllerId   = result.getProgramId()
 			controllerType = result.getData()[0]
+			
+			if searchingControllerId != 0:
+				if controllerId != searchingControllerId:
+					continue
 			
 			printLog('Controller %d found' %(controllerId))
 			
