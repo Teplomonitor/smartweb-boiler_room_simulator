@@ -256,7 +256,7 @@ class Program(object):
 		
 		return remoteParam.getValue()
 	
-	def writeParameterValue(self, parameter, value, index = None):
+	def writeParameterValue(self, parameter, value, index = None, confirm = True):
 		p = self.getParameterInfo(parameter)
 		if p is None:
 			return None
@@ -268,7 +268,7 @@ class Program(object):
 			parameterIndex = index
 		)
 		
-		remoteParam.write()
+		remoteParam.write(confirm)
 		
 		return remoteParam.getValue()
 	
