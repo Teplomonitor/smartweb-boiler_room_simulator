@@ -135,7 +135,7 @@ class RemoteControlParameter(object):
 			return param['array_size']
 		return 1
 	
-	def write(self):
+	def write(self, confirm = True):
 		if self._programId is None:
 			printError('wrong programId')
 			return
@@ -196,7 +196,11 @@ class RemoteControlParameter(object):
 					printError(f'{actionStr}: write error {result}')
 					return False
 
-		request        = generateRequest()
+		request = generateRequest()
+		
+		if confirm == False:
+			return True
+		
 		responseFilter = generateRequiredResponse()
 
 		i = 0
