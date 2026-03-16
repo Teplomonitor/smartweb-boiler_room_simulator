@@ -35,6 +35,7 @@ def findOnlineController(searchingControllerId):
 			
 			if searchingControllerId != 0:
 				if controllerId != searchingControllerId:
+					printLog(f'skip controller {controllerId}')
 					continue
 			
 			printLog('Controller %d found' %(controllerId))
