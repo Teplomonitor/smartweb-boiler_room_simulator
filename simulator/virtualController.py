@@ -12,7 +12,7 @@ class Simulator(object):
 
 		for i in range(0,VIRTUAL_SENSORS_MAX_NUM):
 			self.setSensor(i, 20 + i*5)
-			self.setControlOptions(i, ['sin', 'ещё опции','и ещё вот'])
+			self.setControlOptions(i, ['var1', 'sin', 'ещё опции','и ещё вот'])
 	
 	def getElapsedTime(self):
 		return time.time() - self._time_start
@@ -39,7 +39,9 @@ class Simulator(object):
 			pi = 3.14
 			ds = math.cos(self.getElapsedTime()/100.0 + pi/2)
 			value = value + ds * 0.5
-			
+		if option == 'var1':
+			inc = 0.01
+			value = 6
 		return value
 
 	def run(self):
