@@ -199,6 +199,7 @@ class RemoteControlParameter(object):
 		request = generateRequest()
 		
 		if confirm == False:
+			request.send()
 			return True
 		
 		responseFilter = generateRequiredResponse()
