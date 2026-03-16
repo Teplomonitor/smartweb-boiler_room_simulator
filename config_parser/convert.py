@@ -287,7 +287,7 @@ def getProgramInputs(programs):
 			
 			if channelType in ['CHANNEL_SENSOR_LOCAL', 'CHANNEL_SENSOR']:
 				channelType = 'CHANNEL_SENSOR' # make it remote
-				channelId   = getProgramInputs.counter
+				channelId   = getProgramInputs.counter % host_controller_max_inputs
 				hostId      = hostCommonId + int(getProgramInputs.counter/host_controller_max_inputs)
 				getProgramInputs.counter += 1
 			
@@ -311,7 +311,7 @@ def getProgramOutputs(programs):
 			
 			if channelType in ['CHANNEL_RELAY_LOCAL', 'CHANNEL_RELAY']:
 				channelType = 'CHANNEL_RELAY' # make it remote
-				channelId   = getProgramOutputs.counter
+				channelId   = getProgramOutputs.counter % host_controller_max_outputs
 				hostId      = hostCommonId + int(getProgramOutputs.counter/host_controller_max_outputs)
 				getProgramOutputs.counter += 1
 			
