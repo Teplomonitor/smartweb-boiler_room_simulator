@@ -61,10 +61,17 @@ class sensor_report_thread(threading.Thread):
 		self.start()
 	
 	def reportSensorsValues(self):
+		ctrlIO = self._simulator.getControllersIOList()
+		
+		selfIdList = []
+		
+		for ctr in ctrlIO:
+			selfIdList.append(ctr.getId())
+		
 		for sim in self._simulator._simList:
 			program = sim._program
 			for programInput in program.getInputs():
-				if programInput.isMapped():
+				if programInput.isMapped() and programInput.getMapping().getHostId() in selfIdList:
 					if ssr.reportSensorValue(programInput):
 						time.sleep(0.1)
 						
