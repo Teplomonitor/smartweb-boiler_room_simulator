@@ -66,7 +66,7 @@ class Simulator(object):
 
 	def getStageState(self):
 		stage = self._program.getOutputChannel(self._outputId['burner1'])
-		if stage.getMapping() is None:
+		if stage.isMapped() is False:
 			return 1
 
 		if stage.getValue():
@@ -76,7 +76,7 @@ class Simulator(object):
 	
 	def getPumpState(self):
 		pumpState = self._program.getOutputChannel(self._outputId['pump'])
-		if pumpState.getMapping() is None:
+		if pumpState.isMapped() is False:
 			return 1
 
 		if pumpState.getValue():
