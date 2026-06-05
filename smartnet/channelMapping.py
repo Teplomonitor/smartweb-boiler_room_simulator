@@ -68,6 +68,7 @@ class Channel(GuiParameter):
 	def isMapped(self):
 		if self._mapping:
 			return self._mapping.isMapped()
+		return False
 		
 	def setMapping(self, mapping): self._mapping = mapping
 	
