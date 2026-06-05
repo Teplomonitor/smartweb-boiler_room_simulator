@@ -3,6 +3,7 @@ encoding//config_parser/gui.py=utf-8
 encoding//config_parser/gui_base.py=utf-8
 encoding//gui/wxFormBuilderProject.py=utf-8
 encoding//gui/wxFormBuilderProjectConsoleFrame.py=utf-8
+encoding//presets/list/json_debug.py=utf-8
 encoding//presets/list/sss.py=utf-8
 encoding//presets/list/test3.py=utf-8
 encoding/<project>=UTF-8
