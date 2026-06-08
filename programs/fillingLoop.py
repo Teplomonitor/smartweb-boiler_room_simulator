@@ -9,6 +9,19 @@ class FillingLoop(Program):
 	classdocs
 	'''
 
+	def getType(self): return 'FILLING_LOOP'
+	
+	def getInputTitles(self):
+		return [
+			'Давление',
+			]
+
+	def getOutputTitles(self):
+		return [
+			'Подпитка',
+			'Авария',
+			]
+		
 	_inputId = {
 		'pressureSensor'  : 0,
 	}

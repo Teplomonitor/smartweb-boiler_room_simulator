@@ -10,6 +10,25 @@ class Boiler(Program):
 	classdocs
 	'''
 
+	def getType(self): return 'BOILER'
+	
+	def getInputTitles(self):
+		return [
+			'Т котла',
+			'Т обратки',
+			'Внешний запрос',
+			'Ошибка котла',
+			]
+
+	def getOutputTitles(self):
+		return [
+			'Насос',
+			'Ступень 1',
+			'Ступень 2',
+			'Мощность',
+			'Температура',
+			'Контроль обратки',
+			]
 
 	def __init__(self, params):
 		'''

@@ -10,6 +10,23 @@ class Dhw(Program):
 	classdocs
 	'''
 
+	def getType(self): return 'DHW'
+	
+	def getInputTitles(self):
+		return [
+			'Т бойлера',
+			'Проток',
+			'Т обратки',
+			]
+
+	def getOutputTitles(self):
+		return [
+			'Насос загрузки',
+			'Цирк. насос',
+			'А. насос загрузки',
+			'Смес. откр',
+			'Смес. закр',
+			]
 
 	def __init__(self, params):
 		'''

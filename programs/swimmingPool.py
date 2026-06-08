@@ -10,6 +10,23 @@ class SwimmingPool(Program):
 	classdocs
 	'''
 
+	def getType(self): return 'POOL'
+	
+	def getInputTitles(self):
+		return [
+			'Т воды',
+			'Внешний запрос',
+			'Уровень воды',
+			'Проток',
+			]
+
+	def getOutputTitles(self):
+		return [
+			'Цирк. насос',
+			'Насос загрузки',
+			'Контроль уровня воды',
+			]
+
 	_inputId = {
 		'poolTemperature': 0,
 		'outsideRequest' : 1,

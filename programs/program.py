@@ -13,8 +13,6 @@ import smartnet.message        as sm
 
 from smartnet.channelMapping import InputChannel     as InputChannel
 from smartnet.channelMapping import OutputChannel    as OutputChannel
-from smartnet.channelTitle import ProgramInputTitle  as InputTitle
-from smartnet.channelTitle import ProgramOutputTitle as OutputTitle
 
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
@@ -24,49 +22,94 @@ class Program(object):
 	classdocs
 	'''
 
-	def initInputs(self):
+	def getType(self): return 'PROGRAM'
+	
+	def getInputTitles(self):
+		return [
+			'In1',
+			'In2',
+			'In3',
+			'In4',
+			'In5',
+			'In6',
+			'In7',
+			'In8',
+			'In9',
+			'In10',
+			]
+
+	def getOutputTitles(self):
+		return [
+			'Out1',
+			'Out2',
+			'Out3',
+			'Out4',
+			'Out5',
+			'Out6',
+			'Out7',
+			'Out8',
+			'Out9',
+			'Out10',
+			]
+
+	def getInputsNum (self): return len(self.getInputTitles ())
+	def getOutputsNum(self): return len(self.getOutputTitles())
+	
+	def initInputs(self, inputMappings = None):
 		self._inputs  = []
 		
-		prgType        = self.getType()
-		inputMappings  = self._preset.getInputs ()
-		inputTitle     = InputTitle [prgType]
+		inputTitle     = self.getInputTitles()
 		
-		for _ in inputTitle:
-			self._inputs .append(InputChannel())
+		channelNum = self.getInputsNum()
 		
-		i = 0
-		for mapping in inputMappings:
-			self._inputs[i] = InputChannel (mapping)
-			self._inputs[i].setTitle(inputTitle[i])
-			i += 1
+		for i in range(channelNum):
+			channel = InputChannel()
+			channel.setTitle(inputTitle[i])
+			if inputMappings:
+				channel.setMapping(inputMappings[i])
+			self._inputs.append(channel)
+			
 	
-	def initOutputs(self):
+	def initOutputs(self, outputMappings = None):
 		self._outputs = []
 		
-		prgType        = self.getType()
-		outputMappings = self._preset.getOutputs()
-		outputTitle    = OutputTitle[prgType]
+		outputTitle = self.getOutputTitles()
 		
-		for _ in outputTitle:
-			self._outputs.append(OutputChannel())
+		channelNum = self.getOutputsNum()
+		
+		for i in range(channelNum):
+			channel = OutputChannel()
+			channel.setTitle(outputTitle[i])
+			if outputMappings:
+				channel.setMapping(outputMappings[i])
+				
+			self._outputs.append(channel)
 			
-		i = 0
-		for mapping in outputMappings:
-			self._outputs[i] = OutputChannel(mapping)
-			self._outputs[i].setTitle(outputTitle[i])
 			if self._outputs[i].isMapped():
 				self.readOutput(i)
-			i += 1
-		
+	
 	def __init__(self, preset):
 		'''
 		Constructor
 		'''
 		
 		self._preset  = preset
-
-		self.initInputs ()
-		self.initOutputs()
+		
+		if preset:
+			self.setScheme(preset.getScheme())
+			self.setId    (preset.getId()    )
+			self.setTitle (preset.getTitle() )
+			
+			self.initInputs (preset.getInputs ())
+			self.initOutputs(preset.getOutputs())
+		else:
+			self.setScheme('DEFAULT')
+			self.setId    (1)
+			self.setTitle ('Program')
+			
+			self.initInputs ()
+			self.initOutputs()
+			
 
 		self._parameters = {}
 		
@@ -121,13 +164,17 @@ class Program(object):
 	
 	def getParameters(self): return self._parameters
 	
-	def getInputTitle (self, i): return self.getInputChannel (i).getTitle()
-	def getOutputTitle(self, i): return self.getOutputChannel(i).getTitle()
+	def getInputTitle (self, i): return self.getInputTitles ()[i]
+	def getOutputTitle(self, i): return self.getOutputTitles()[i]
 
-	def getType     (self): return self._preset.getType()
-	def getScheme   (self): return self._preset.getScheme()
-	def getId       (self): return self._preset.getId()
-	def getTitle    (self): return self._preset.getTitle()
+	def getScheme   (self): return self._scheme
+	def getId       (self): return self._id
+	def getTitle    (self): return self._title
+	
+	def setScheme(self, scheme   ): self._scheme = scheme
+	def setId    (self, programId): self._id     = programId
+	def setTitle (self, title    ): self._title  = title
+	
 	def getPreset   (self): return self._preset
 	def getGuiColor (self): return 'default'
 
@@ -305,34 +352,5 @@ class Program(object):
 	
 	def getTemperatureSourceList(self):
 		return [self.getTemperatureSource()]
-	
-	
-	def getRoomTemperatureSourceList(self):
-		preset = self.getPreset()
-		settings = preset.getSettings().get()
-		
-		circuitList = [0, 0, 0]
-		
-		for setting in settings:
-			if setting.getProgramType() == 'ROOM_DEVICE':
-				if setting.getParameterIdCode() == 'RESPONSIBLE_CIRCUIT_1':
-					circuitList[0] = setting.getValue()
-				if setting.getParameterIdCode() == 'RESPONSIBLE_CIRCUIT_2':
-					circuitList[1] = setting.getValue()
-				if setting.getParameterIdCode() == 'RESPONSIBLE_CIRCUIT_3':
-					circuitList[2] = setting.getValue()
-		return circuitList
-	
-	def getCascadeManagerSourceList(self):
-		preset = self.getPreset()
-		settings = preset.getSettings().get()
-		
-		sourceList = [0, 0, 0, 0, 0, 0, 0, 0]
-		for setting in settings:
-			if setting.getProgramType() == 'CASCADE_MANAGER':
-				if setting.getParameterIdCode() == 'PARAM_TEMPERATURE_SOURCE_ID':
-					sourceList[setting.getParameterIndex()] = setting.getValue()
-		
-		return sourceList
 	
 	

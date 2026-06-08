@@ -9,6 +9,19 @@ class TptValve(Program):
 	classdocs
 	'''
 
+	def getType(self): return 'TPT_VALVE_ADAPTER'
+	
+	def getInputTitles(self):
+		return [
+			'Управляющий сигнал',
+			]
+
+	def getOutputTitles(self):
+		return [
+			'Смес. откр.',
+			'Смес. закр.',
+			]
+		
 	_inputId = {
 		'signal'  : 0,
 	}

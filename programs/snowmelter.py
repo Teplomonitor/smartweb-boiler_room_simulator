@@ -9,7 +9,25 @@ class Snowmelter(Program):
 	'''
 	classdocs
 	'''
-			
+
+
+	def getType(self): return 'SNOWMELT'
+	
+	def getInputTitles(self):
+		return [
+			'Т подачи',
+			'Т обратки',
+			'Т поверхности',
+			'Осадки',
+			]
+
+	def getOutputTitles(self):
+		return [
+			'Насос загрузки',
+			'Цирк. насос',
+			'А. насос загрузки',
+			]
+
 	_inputId = {
 		'directFlowTemperature'  : 0,
 		'backwardTemperature'    : 1,

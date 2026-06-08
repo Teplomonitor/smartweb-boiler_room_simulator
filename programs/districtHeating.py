@@ -10,6 +10,27 @@ class DistrictHeating(Program):
 	classdocs
 	'''
 
+	def getType(self): return 'DISTRICT_HEATING'
+	
+	def getInputTitles(self):
+		return [
+			'Подача из города',
+			'Обратка в город',
+			'Подача в дом',
+			'Обратка из дома',
+			'Теплосчётчик',
+			'Расход',
+			'Внешний запрос',
+			]
+
+	def getOutputTitles(self):
+		return [
+			'Насос загрузки',
+			'Цирк. насос',
+			'Клапан',
+			'А. клапан',
+			]
+
 	def __init__(self, params):
 		'''
 		Constructor

@@ -9,6 +9,27 @@ class HeatingCircuit(Program):
 	'''
 	classdocs
 	'''
+	def getType(self): return 'HEATING_CIRCUIT'
+	
+	def getInputTitles(self):
+		return [
+			'Т подачи',
+			'Термостат',
+			'Внешний запрос',
+			'Управление насосом',
+			'Т обратки',
+			]
+
+	def getOutputTitles(self):
+		return [
+			'А.смеситель',
+			'Смес. откр',
+			'Смес. закр',
+			'Насос',
+			'Клапан',
+			'Насос ТО',
+			'А. насос',
+			]
 
 
 	def __init__(self, preset):

@@ -9,6 +9,17 @@ class Oat(Program):
 	classdocs
 	'''
 
+	def getType(self): return 'OUTDOOR_SENSOR'
+	
+	def getInputTitles(self):
+		return [
+			'Улица',
+			]
+
+	def getOutputTitles(self):
+		return [
+			]
+
 
 	def __init__(self, params):
 		'''
