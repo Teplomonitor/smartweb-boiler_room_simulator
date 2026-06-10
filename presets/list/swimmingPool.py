@@ -79,11 +79,6 @@ programOutputs = {
 	),
 }
 
-programPower = {
-	'SWIMMING_POOL' : -2,
-	'BOILER'        :  3,
-}
-
 def getPresetsList() :
 	programPresetList = []
 	for prg in programList:
@@ -95,7 +90,6 @@ def getPresetsList() :
 			programSettings[prg],
 			programInputs  [prg],
 			programOutputs [prg],
-			programPower   [prg],
 			)
 		)
 

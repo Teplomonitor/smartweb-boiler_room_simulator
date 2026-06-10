@@ -26,30 +26,10 @@ class Program(object):
 	
 	def getInputTitles(self):
 		return [
-			'In1',
-			'In2',
-			'In3',
-			'In4',
-			'In5',
-			'In6',
-			'In7',
-			'In8',
-			'In9',
-			'In10',
 			]
 
 	def getOutputTitles(self):
 		return [
-			'Out1',
-			'Out2',
-			'Out3',
-			'Out4',
-			'Out5',
-			'Out6',
-			'Out7',
-			'Out8',
-			'Out9',
-			'Out10',
 			]
 
 	def getInputsNum (self): return len(self.getInputTitles ())
@@ -88,6 +68,9 @@ class Program(object):
 			if self._outputs[i].isMapped():
 				self.readOutput(i)
 	
+	def initGuiParameters(self):
+		pass
+	
 	def __init__(self, preset):
 		'''
 		Constructor
@@ -113,8 +96,20 @@ class Program(object):
 
 		self._parameters = {}
 		
+		self.initGuiParameters()
+		
 		self.CanSubscribe()
 	
+	def getMaxPower(self):
+		if 'max_power' in self._parameters:
+			return self._parameters['max_power'].getValue()
+		return 0
+	
+	def getMaxFlowRate(self):
+		if 'max_flow_rate' in self._parameters:
+			return self._parameters['max_flow_rate'].getValue()
+		return 0
+
 	def Clear(self):
 		self.CanUnSubscribe()
 		self._inputs  = []

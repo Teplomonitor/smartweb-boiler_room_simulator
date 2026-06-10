@@ -143,18 +143,6 @@ programOutputs = {
 	'OUTDOOR_SENSOR'    : oatOutputMapping(),
 }
 
-programPower = {
-	'HEATING_CIRCUIT_1' : -2,
-	'HEATING_CIRCUIT_2' : -3,
-	'ROOM_DEVICE_1'     : -1,
-	'ROOM_DEVICE_2'     : -2,
-	'DHW'               : -4,
-	'BOILER_1'          :  6,
-	'BOILER_2'          :  6,
-	'CASCADE_MANAGER'   :  0,
-	'OUTDOOR_SENSOR'    : None,
-}
-
 def getPresetsList():
 	programPresetList = []
 	for prg in programList:
@@ -166,7 +154,6 @@ def getPresetsList():
 			programSettings[prg],
 			programInputs  [prg],
 			programOutputs [prg],
-			programPower   [prg],
 			)
 		)
 

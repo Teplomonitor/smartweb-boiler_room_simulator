@@ -72,12 +72,6 @@ class SwimmingPool(Program):
 		self._parameters['max_flow_rate'] = rate
 		self._parameters['max_power']= power
 	
-	def getMaxFlowRate(self):
-		return self._parameters['max_flow_rate'].getValue()
-
-	def getMaxPower(self):
-		return self._parameters['max_power'].getValue()
-	
 	def getGuiColor (self): return 'blue'
 	
 	

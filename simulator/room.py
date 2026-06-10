@@ -45,7 +45,7 @@ class Simulator(object):
 		self._program.getInputChannel(self._inputId['roomTemperature']).setValue(value)
 
 	def getMaxPower(self):
-		return self._preset.getPower()
+		return self._program.getMaxPower()
 	
 	def getSourceTemperature(self, sourceId):
 		sourceList       = self._control.getHeatingCircuitList()

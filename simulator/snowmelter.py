@@ -103,7 +103,7 @@ class Simulator(object):
 		return value / 254
 
 	def getMaxPower(self):
-		return self._preset.getPower()
+		return self._program.getMaxPower()
 
 	def getPower(self):
 		if self.getSecondaryPumpState() == 0:

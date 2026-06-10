@@ -205,7 +205,7 @@ class Simulator(object):
 		return self.getPumpState('circulation_pump')
 
 	def getMaxPower(self):
-		return self._preset.getPower()
+		return self._program.getMaxPower()
 
 	def getPower(self):
 		if self.supplyFlowIsStopped():

@@ -59,10 +59,6 @@ programOutputs = {
 	'TPT_VALVE': TptValveOutputMapping(outputMapping(0, hostId['HOST_1']), outputMapping(1, hostId['HOST_1'])),
 }
 
-programPower = {
-	'TPT_VALVE': None,
-}
-
 def getPresetsList() :
 	programPresetList = []
 	for prg in programList:
@@ -74,7 +70,6 @@ def getPresetsList() :
 			programSettings[prg],
 			programInputs  [prg],
 			programOutputs [prg],
-			programPower   [prg],
 			)
 		)
 

@@ -52,6 +52,19 @@ class Snowmelter(Program):
 		#TODO: add more parameters
 	}
 	
+	def initGuiParameters(self):
+		rate = GuiParameter(1000, 'Расход до теплообменника')
+		rate.setProperties(0, 3000, 1, 'кг/ч')
+		self._parameters['max_flow_rate1'] = rate
+		
+		rate = GuiParameter(1000, 'Расход после теплообменника')
+		rate.setProperties(0, 3000, 1, 'кг/ч')
+		self._parameters['max_flow_rate2'] = rate
+		
+		power = GuiParameter(3, 'Мощность')
+		power.setProperties(0, 30, 1, 'кВт')
+		self._parameters['max_power']= power
+		
 	def __init__(self, params):
 		'''
 		Constructor
@@ -66,14 +79,6 @@ class Snowmelter(Program):
 		
 		self.setInputsRange(inputsRange)
 		
-		rate = GuiParameter(1000, 'Расход до теплообменника')
-		rate.setProperties(0, 3000, 1, 'кг/ч')
-		self._parameters['max_flow_rate1'] = rate
-		
-		rate = GuiParameter(1000, 'Расход после теплообменника')
-		rate.setProperties(0, 3000, 1, 'кг/ч')
-		self._parameters['max_flow_rate2'] = rate
-
 
 	def getDirectFlowTemperature(self):
 		return self.getInputChannel(self._inputId['directFlowTemperature'])

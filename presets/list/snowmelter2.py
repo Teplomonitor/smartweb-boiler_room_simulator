@@ -156,19 +156,6 @@ programOutputs = {
 	'SNOW_MELTER'       : smOutputMapping(None, outputMapping(4, hostId['HOST_2']), outputMapping(6, hostId['HOST_2'])),
 }
 
-programPower = {
-	'HEATING_CIRCUIT_1' : -2,
-	'HEATING_CIRCUIT_2' : -3,
-	'ROOM_DEVICE_1'     : -1,
-	'ROOM_DEVICE_2'     : -2,
-	'DHW'               : -4,
-	'BOILER_1'          : 15,
-	'BOILER_2'          : 15,
-	'CASCADE_MANAGER'   :  0,
-	'OUTDOOR_SENSOR'    : None,
-	'SNOW_MELTER'       : -6,
-}
-
 def getPresetsList() :
 	programPresetList = []
 	for prg in programList:
@@ -180,7 +167,6 @@ def getPresetsList() :
 			programSettings[prg],
 			programInputs  [prg],
 			programOutputs [prg],
-			programPower   [prg],
 			)
 		)
 

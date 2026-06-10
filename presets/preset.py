@@ -8,7 +8,7 @@ class ProgramPreset(object):
 	
 	def __init__(self,
 			programType, programScheme, programId,
-			programTitle, programSettings, programInputs, programOutputs, power):
+			programTitle, programSettings, programInputs, programOutputs):
 		self._type      = programType
 		self._scheme    = programScheme
 		self._id        = programId
@@ -16,7 +16,6 @@ class ProgramPreset(object):
 		self._settings  = programSettings
 		self._inputs    = programInputs
 		self._outputs   = programOutputs
-		self._power     = power
 
 	def getType     (self): return self._type
 	def getScheme   (self): return self._scheme
@@ -27,7 +26,6 @@ class ProgramPreset(object):
 	def getInput    (self, i): return self._inputs[i]
 	def getOutputs  (self   ): return self._outputs
 	def getOutput   (self, i): return self._outputs[i]
-	def getPower    (self): return self._power
 
 	def addProgramToControllerHost(self, controller):
 		i = 0

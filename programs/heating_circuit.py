@@ -31,20 +31,20 @@ class HeatingCircuit(Program):
 			'А. насос',
 			]
 
-
+	def initGuiParameters(self):
+		rate = GuiParameter(1000, 'Расход')
+		rate.setProperties(0, 3000, 1, 'кг/ч')
+		self._parameters['max_flow_rate'] = rate
+		
+		power = GuiParameter(3, 'Мощность')
+		power.setProperties(0, 10, 1, 'кВт')
+		self._parameters['max_power']= power
+		
 	def __init__(self, preset):
 		'''
 		Constructor
 		'''
 		super().__init__(preset)
 		
-		rate = GuiParameter(1000, 'Расход')
-		rate.setProperties(0, 3000, 1, 'кг/ч')
-		
-		self._parameters['max_flow_rate'] = rate
-	
-	def getMaxFlowRate(self):
-		return self._parameters['max_flow_rate'].getValue()
-
 	def getGuiColor (self): return 'green'
 

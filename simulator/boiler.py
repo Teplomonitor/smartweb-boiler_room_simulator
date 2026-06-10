@@ -134,10 +134,10 @@ class Simulator(object):
 		
 	def getCoolDownPower(self):
 		dt = self.getTemperature() - self._tMin
-		return -1 * dt/self._tMax
+		return dt/self._tMax
 
 	def getTotalPower(self):
-		return self.getPower() + self.getCoolDownPower()
+		return self.getPower() - self.getCoolDownPower()
 
 	def computeTemperature(self):
 		flow = self.getFlow()

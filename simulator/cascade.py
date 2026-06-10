@@ -42,10 +42,10 @@ class Simulator(object):
 		return power
 
 	def getCoolDownPower(self):
-		return -1
+		return 1
 
 	def getTotalPower(self):
-		return self.getPower() - self.getConsumersPower() + self.getCoolDownPower()
+		return self.getPower() - self.getConsumersPower() - self.getCoolDownPower()
 
 	def computeTemperature(self):
 		temp = self._control._collector.getDirectTemperature()

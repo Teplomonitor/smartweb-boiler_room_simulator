@@ -146,17 +146,6 @@ programOutputs = {
 		outputMapping(6, hostId['HOST_2'])),
 }
 
-programPower = {
-	'HEATING_CIRCUIT_1' : -2,
-	'HEATING_CIRCUIT_2' : -3,
-	'ROOM_DEVICE_1'     : -1,
-	'ROOM_DEVICE_2'     : -2,
-	'DHW'               : -4,
-	'BOILER'            : 15,
-	'OUTDOOR_SENSOR'    : None,
-	'DISTRICT_HEATING'  :  7,
-}
-
 def getPresetsList() :
 	programPresetList = []
 	for prg in programList:
@@ -168,7 +157,6 @@ def getPresetsList() :
 			programSettings[prg],
 			programInputs  [prg],
 			programOutputs [prg],
-			programPower   [prg],
 			)
 		)
 

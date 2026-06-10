@@ -3,6 +3,7 @@
 '''
 
 from .program import Program
+from gui.parameter import GuiParameter as GuiParameter
 
 class Room(Program):
 	'''
@@ -33,6 +34,12 @@ class Room(Program):
 			'Вентиляция',
 			]
 
+	def initGuiParameters(self):
+		power = GuiParameter(1, 'Мощность')
+		power.setProperties(0, 10, 1, 'кВт')
+		
+		self._parameters['max_power']= power
+	
 	def __init__(self, params):
 		'''
 		Constructor
