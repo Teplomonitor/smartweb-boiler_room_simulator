@@ -72,8 +72,8 @@ class Boiler(Program):
 		self.getInputChannel(self._inputId['temperature']).setValue(value)
 
 	def getStage1(self):
-		return self._program.getOutputChannel(self._outputId['burner1'])
+		return self.getOutputChannel(self._outputId['burner1'])
 	
 	def getPump(self):
-		return self._program.getOutputChannel(self._outputId['pump'])
+		return self.getOutputChannel(self._outputId['pump'])
 		
