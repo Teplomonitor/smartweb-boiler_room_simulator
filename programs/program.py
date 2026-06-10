@@ -17,6 +17,16 @@ from smartnet.channelMapping import OutputChannel    as OutputChannel
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
 
+class ParameterInfo(object):
+	def __init__(self,
+				programType,
+				parameterId):
+		self._programType = programType
+		self._parameterId = parameterId
+	
+	def getProgramType(self): return self._programType
+	def getParameterId(self): return self._parameterId
+
 class Program(object):
 	'''
 	classdocs
