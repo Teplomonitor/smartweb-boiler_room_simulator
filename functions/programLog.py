@@ -30,10 +30,14 @@ class ParameterLog(object):
 	def setSaveType(self, saveType   ): self._saveType       = saveType
 	def getTimestamp(self, index):
 		#return self._valueLog[index].getTimestamp()
+		if len(self._timestampValueList) == 0:
+			return 0
 		return self._timestampValueList[index][0]
 	
 	def getValue(self, index):
 		#return self._valueLog[index].getTimestamp()
+		if len(self._timestampValueList) == 0:
+			return 0
 		return self._timestampValueList[index][1]
 	
 	def doAppend(self, value         ):
@@ -69,6 +73,9 @@ class ParameterLog(object):
 				self.doAppend(value)
 	
 	def saveToCsv(self, logDir):
+		if len(self._timestampValueList) == 0:
+			return
+		
 		self.doAppend(self.getValue(-1)) # force last value append to log before save
 		
 		fullLogDir = os.path.join(logsRootDir, logDir)
@@ -107,5 +114,5 @@ class DataLogger(object):
 			pass
 		
 	def run(self):
-		for prg in self._log:
-			pass
+#		for prg in self._log:
+		pass
