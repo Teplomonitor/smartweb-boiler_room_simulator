@@ -119,7 +119,6 @@ def getPresetsList() :
 			programSettings[prg],
 			programInputs  [prg],
 			programOutputs [prg],
-			programPower   [prg],
 			)
 		)
 
@@ -137,20 +136,6 @@ def getPresetsList() :
 '''
 	
 	
-	
-programDefaultPower = {
-	'BOILER'           :   3,
-	'DISTRICT_HEATING' :   7,
-	'CASCADE_MANAGER'  :   0,
-	'OUTDOOR_SENSOR'   :   0,
-	'SNOWMELT'         :   2,
-	'HEATING_CIRCUIT'  :   2,
-	'DHW'              :   4,
-	'ROOM_DEVICE'      :   2,
-	'POOL'             :   2,
-}
-
-
 roomMandatoryParameter = 0
 
 
@@ -321,16 +306,6 @@ def getProgramOutputs(programs):
 	return output_string
 getProgramOutputs.counter = 0
 
-def getProgramPower(programs):
-	output_string = 'programPower = {\n'
-	for prg in programs:
-		prgPower = 0
-		if prg['type'] in programDefaultPower:
-			prgPower = programDefaultPower[prg['type']]
-		output_string += f"'{getProgramId(prg)}' : {prgPower},\n"
-	output_string += '}\n\n'
-	return output_string
-
 def getProgramString(programs):
 	output_string = ''
 	output_string += getProgramDeclaration(programs)
@@ -341,7 +316,6 @@ def getProgramString(programs):
 	output_string += getProgramSettings   (programs)
 	output_string += getProgramInputs     (programs)
 	output_string += getProgramOutputs    (programs)
-	output_string += getProgramPower      (programs)
 #	output_string += getHostType       (hostNum)
 #	output_string += getHostTitle      (hostNum)
 	return output_string
