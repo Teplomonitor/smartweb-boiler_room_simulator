@@ -30,6 +30,22 @@ class Boiler(Program):
 			'Контроль обратки',
 			]
 
+	_inputId = {
+		'temperature'         : 0,
+		'backwardTemperature' : 1,
+		'outsideRequest'      : 2,
+		'error'               : 3,
+	}
+
+	_outputId = {
+		'pump'                : 0,
+		'burner1'             : 1,
+		'burner2'             : 2,
+		'power'               : 3,
+		'temperature'         : 4,
+		'backwardTemperature' : 5,
+	}
+		
 	def initGuiParameters(self):
 		rate = GuiParameter(3000, 'Расход')
 		rate.setProperties(0, 5000, 1, 'кг/ч')
@@ -47,3 +63,17 @@ class Boiler(Program):
 		
 		
 	def getGuiColor (self): return 'yellow'
+
+	def getTemperature(self):
+		return self.getInputChannel(self._inputId['temperature']).getValue()
+
+	def setTemperature(self, value):
+#		print(f'boiler: {value}')
+		self.getInputChannel(self._inputId['temperature']).setValue(value)
+
+	def getStage1(self):
+		return self._program.getOutputChannel(self._outputId['burner1'])
+	
+	def getPump(self):
+		return self._program.getOutputChannel(self._outputId['pump'])
+		

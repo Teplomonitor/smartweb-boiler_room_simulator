@@ -15,21 +15,6 @@ class Simulator(object):
 		
 		self._boilerOverheatDelay = TimeOnOffDelay()
 		
-		self._inputId = {
-			'temperature'         : 0,
-			'backwardTemperature' : 1,
-			'outsideRequest'      : 2,
-			'error'               : 3,
-		}
-
-		self._outputId = {
-			'pump'                : 0,
-			'burner1'             : 1,
-			'burner2'             : 2,
-			'power'               : 3,
-			'temperature'         : 4,
-			'backwardTemperature' : 5,
-		}
 
 		self._tMax = 75
 		self._tMin = 20
@@ -39,11 +24,11 @@ class Simulator(object):
 		return self._control._collector.getSupplyBackwardTemperature()
 	
 	def getTemperature(self):
-		return self._program.getInputChannel(self._inputId['temperature']).getValue()
+		return self._program.getTemperature()
 
 	def setTemperature(self, value):
 #		print(f'boiler: {value}')
-		self._program.getInputChannel(self._inputId['temperature']).setValue(value)
+		self._program.setTemperature(value)
 
 	def getElapsedTime(self):
 		return time.time() - self._time_start
@@ -52,20 +37,8 @@ class Simulator(object):
 		consumersPower = self._control.getConsumersPower(self._program.getId())
 		return consumersPower
 
-	def temperatureInputIsMapped(self):
-		temp = self._program.getInputChannel(self._inputId['temperature'])
-		mapping = temp.getMapping()
-		if mapping is None:
-			return False
-
-		if mapping.getChannelType() == 'CHANNEL_UNDEFINED':
-			return False
-
-		return True
-
-
 	def getStageState(self):
-		stage = self._program.getOutputChannel(self._outputId['burner1'])
+		stage = self._program.getStage1()
 		if stage.isMapped() is False:
 			return 1
 
@@ -75,7 +48,7 @@ class Simulator(object):
 		return 0
 	
 	def getPumpState(self):
-		pumpState = self._program.getOutputChannel(self._outputId['pump'])
+		pumpState = self._program.getPump()
 		if pumpState.isMapped() is False:
 			return 1
 
