@@ -411,17 +411,17 @@ ControllerFunction = {
 	'RESET_PROGRAMS'                 : 27,
 	'MARK_JOURNAL_MESSAGES_AS_READ'  : 28,
 	'I_AM_RESETED'                   : 40,
-	'DATALOGGER_TEST'                : 41,    
-	'IS_ANYBODY_HERE_CAN2'           : 42,                                    # IS_ANYBODY_HERE that comes over CAN2 or is routed CAN2 -> CAN1
-	'I_AM_HERE_CAN2'                 : 43,                                    # I_AM_HERE that comes over CAN2 or is routed CAN2 -> CAN1
-	'I_AM_RESETED_CAN2'              : 44,                                    # I_AM_RESETED that comes over CAN2 or is routed CAN2 -> CAN1
-	'GET_FW_VERSION'                 : 60, 
-	'INSTALL_FW_UPDATE'              : 61, 
-	'SYSTEM_SELFTEST'                : 62, 
-	'GET_DEVICE_INFO'                : 63, 
-	'GET_DEVICE_INFO2'               : 64, 
-	'INIT_LOG_TRANSMIT'              : 80, 
-	'GET_LOG_PART'                   : 81, 
+	'DATALOGGER_TEST'                : 41,
+	'IS_ANYBODY_HERE_CAN2'           : 42, # IS_ANYBODY_HERE that comes over CAN2 or is routed CAN2 -> CAN1
+	'I_AM_HERE_CAN2'                 : 43, # I_AM_HERE that comes over CAN2 or is routed CAN2 -> CAN1
+	'I_AM_RESETED_CAN2'              : 44, # I_AM_RESETED that comes over CAN2 or is routed CAN2 -> CAN1
+	'GET_FW_VERSION'                 : 60,
+	'INSTALL_FW_UPDATE'              : 61,
+	'SYSTEM_SELFTEST'                : 62,
+	'GET_DEVICE_INFO'                : 63,
+	'GET_DEVICE_INFO2'               : 64,
+	'INIT_LOG_TRANSMIT'              : 80,
+	'GET_LOG_PART'                   : 81,
 }
 
 
