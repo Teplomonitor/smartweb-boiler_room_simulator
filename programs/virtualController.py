@@ -3,6 +3,7 @@
 '''
 
 from .program import Program
+from .program import ParameterInfo as PI
 from gui.parameter import GuiParameter as GuiParameter
 import functions.periodicTrigger as pt
 
@@ -14,23 +15,23 @@ class VirtualController(Program):
 	'''
 
 	_remoteControlParameters = {
-		'controllerId'  : {'programType': 'VIRTUAL_CONTROLLER', 'parameter': 'CONTROLLERID'},
-		'sensorValue01' : {'programType': 'VIRTUAL_CONTROLLER', 'parameter': 'SENSOR01'},
-		'sensorValue02' : {'programType': 'VIRTUAL_CONTROLLER', 'parameter': 'SENSOR02'},
-		'sensorValue03' : {'programType': 'VIRTUAL_CONTROLLER', 'parameter': 'SENSOR03'},
-		'sensorValue04' : {'programType': 'VIRTUAL_CONTROLLER', 'parameter': 'SENSOR04'},
-		'sensorValue05' : {'programType': 'VIRTUAL_CONTROLLER', 'parameter': 'SENSOR05'},
-		'sensorValue06' : {'programType': 'VIRTUAL_CONTROLLER', 'parameter': 'SENSOR06'},
-		'sensorValue07' : {'programType': 'VIRTUAL_CONTROLLER', 'parameter': 'SENSOR07'},
-		'sensorValue08' : {'programType': 'VIRTUAL_CONTROLLER', 'parameter': 'SENSOR08'},
-		'sensorValue09' : {'programType': 'VIRTUAL_CONTROLLER', 'parameter': 'SENSOR09'},
-		'sensorValue10' : {'programType': 'VIRTUAL_CONTROLLER', 'parameter': 'SENSOR10'},
-		'sensorValue11' : {'programType': 'VIRTUAL_CONTROLLER', 'parameter': 'SENSOR11'},
-		'sensorValue12' : {'programType': 'VIRTUAL_CONTROLLER', 'parameter': 'SENSOR12'},
-		'sensorValue13' : {'programType': 'VIRTUAL_CONTROLLER', 'parameter': 'SENSOR13'},
-		'sensorValue14' : {'programType': 'VIRTUAL_CONTROLLER', 'parameter': 'SENSOR14'},
-		'sensorValue15' : {'programType': 'VIRTUAL_CONTROLLER', 'parameter': 'SENSOR15'},
-		'sensorValue16' : {'programType': 'VIRTUAL_CONTROLLER', 'parameter': 'SENSOR16'},
+		'controllerId'  : PI('VIRTUAL_CONTROLLER', 'CONTROLLERID'),
+		'sensorValue01' : PI('VIRTUAL_CONTROLLER', 'SENSOR01'),
+		'sensorValue02' : PI('VIRTUAL_CONTROLLER', 'SENSOR02'),
+		'sensorValue03' : PI('VIRTUAL_CONTROLLER', 'SENSOR03'),
+		'sensorValue04' : PI('VIRTUAL_CONTROLLER', 'SENSOR04'),
+		'sensorValue05' : PI('VIRTUAL_CONTROLLER', 'SENSOR05'),
+		'sensorValue06' : PI('VIRTUAL_CONTROLLER', 'SENSOR06'),
+		'sensorValue07' : PI('VIRTUAL_CONTROLLER', 'SENSOR07'),
+		'sensorValue08' : PI('VIRTUAL_CONTROLLER', 'SENSOR08'),
+		'sensorValue09' : PI('VIRTUAL_CONTROLLER', 'SENSOR09'),
+		'sensorValue10' : PI('VIRTUAL_CONTROLLER', 'SENSOR10'),
+		'sensorValue11' : PI('VIRTUAL_CONTROLLER', 'SENSOR11'),
+		'sensorValue12' : PI('VIRTUAL_CONTROLLER', 'SENSOR12'),
+		'sensorValue13' : PI('VIRTUAL_CONTROLLER', 'SENSOR13'),
+		'sensorValue14' : PI('VIRTUAL_CONTROLLER', 'SENSOR14'),
+		'sensorValue15' : PI('VIRTUAL_CONTROLLER', 'SENSOR15'),
+		'sensorValue16' : PI('VIRTUAL_CONTROLLER', 'SENSOR16'),
 	}
 	
 	_sensors = [

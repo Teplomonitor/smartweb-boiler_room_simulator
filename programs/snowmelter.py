@@ -3,13 +3,13 @@
 '''
 
 from .program import Program
-from gui.parameter import GuiParameter as GuiParameter
+from .program import ParameterInfo as PI
+from gui.parameter import GuiParameter
 
 class Snowmelter(Program):
 	'''
 	classdocs
 	'''
-
 
 	def getType(self): return 'SNOWMELT'
 	
@@ -42,13 +42,13 @@ class Snowmelter(Program):
 	}
 
 	_remoteControlParameters = {
-		'minOutdoorTemp'     : {'programType': 'SNOWMELT', 'parameter': 'MINIMUM_OUTDOOR_TEMPERATURE'                            },
-		'maxOutdoorTemp'     : {'programType': 'SNOWMELT', 'parameter': 'MAXIMUM_OUTDOOR_TEMPERATURE'                            },
-		'reqFlowTemp'        : {'programType': 'SNOWMELT', 'parameter': 'REQUIRED_CONSTANT_FLOW_TEMPERATURE_OF_SECONDARY_CIRCUIT'},
-		'outdoorTemp'        : {'programType': 'SNOWMELT', 'parameter': 'OUTDOOR_TEMPERATURE'                                    },
-		'frostProtectionTemp': {'programType': 'SNOWMELT', 'parameter': 'PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE'                 },
-		'reqPlateTemp'       : {'programType': 'SNOWMELT', 'parameter': 'REQUIRED_PLATE_TEMPERATURE'                             },
-		'alarmProgramId'     : {'programType': 'CONSUMER', 'parameter': 'ALARM_PROGRAM_ID'}
+		'minOutdoorTemp'     : PI('SNOWMELT', 'MINIMUM_OUTDOOR_TEMPERATURE'                            ),
+		'maxOutdoorTemp'     : PI('SNOWMELT', 'MAXIMUM_OUTDOOR_TEMPERATURE'                            ),
+		'reqFlowTemp'        : PI('SNOWMELT', 'REQUIRED_CONSTANT_FLOW_TEMPERATURE_OF_SECONDARY_CIRCUIT'),
+		'outdoorTemp'        : PI('SNOWMELT', 'OUTDOOR_TEMPERATURE'                                    ),
+		'frostProtectionTemp': PI('SNOWMELT', 'PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE'                 ),
+		'reqPlateTemp'       : PI('SNOWMELT', 'REQUIRED_PLATE_TEMPERATURE'                             ),
+		'alarmProgramId'     : PI('CONSUMER', 'ALARM_PROGRAM_ID'                                       ),
 		#TODO: add more parameters
 	}
 	

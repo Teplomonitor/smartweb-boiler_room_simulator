@@ -3,6 +3,7 @@
 '''
 
 from .program import Program
+from .program import ParameterInfo as PI
 from gui.parameter import GuiParameter as GuiParameter
 
 class SwimmingPool(Program):
@@ -41,17 +42,17 @@ class SwimmingPool(Program):
 	}
 
 	_remoteControlParameters = {
-		'requiredPoolTemperatureComfort' : {'programType': 'POOL', 'parameter': 'REQUIRED_POOL_TEMPERATURE'          },
-		'requiredPoolTemperatureEconom'  : {'programType': 'POOL', 'parameter': 'REQUIRED_POOL_TEMPERATURE_ECONOM'   },
-		'currentRequiredPoolTemperature' : {'programType': 'POOL', 'parameter': 'CURRENT_REQUIRED_POOL_TEMPERATURE'  },
-		'workMode'                       : {'programType': 'POOL', 'parameter': 'WORK_MODE'                          },
-#		'schedule'                       : {'programType': 'POOL', 'parameter': 'SCHEDULE'                           },
-		'circulationPumpWorkMode'        : {'programType': 'POOL', 'parameter': 'CIRCULATION_PUMP_WORK_MODE'         },
-		'circulationPumpWorkPeriodOn'    : {'programType': 'POOL', 'parameter': 'CIRCULATION_PUMP_WORK_PERIOD_ON'    },
-		'circulationPumpWorkPeriodOff'   : {'programType': 'POOL', 'parameter': 'CIRCULATION_PUMP_WORK_PERIOD_OFF'   },
-		'fillingDuration'                : {'programType': 'POOL', 'parameter': 'FILLING_DURATION'                   },
-		'lowWaterLevelAlarmReset'        : {'programType': 'POOL', 'parameter': 'LOW_WATER_LEVEL_ALARM_RESET'        },
-		'currentWorkModeStatus'          : {'programType': 'POOL', 'parameter': 'CURRENT_WORK_MODE_STATUS'           },
+		'requiredPoolTemperatureComfort' : PI('POOL', 'REQUIRED_POOL_TEMPERATURE'        ),
+		'requiredPoolTemperatureEconom'  : PI('POOL', 'REQUIRED_POOL_TEMPERATURE_ECONOM' ),
+		'currentRequiredPoolTemperature' : PI('POOL', 'CURRENT_REQUIRED_POOL_TEMPERATURE'),
+		'workMode'                       : PI('POOL', 'WORK_MODE'                        ),
+#		'schedule'                       : PI('POOL', 'SCHEDULE'                         ),
+		'circulationPumpWorkMode'        : PI('POOL', 'CIRCULATION_PUMP_WORK_MODE'       ),
+		'circulationPumpWorkPeriodOn'    : PI('POOL', 'CIRCULATION_PUMP_WORK_PERIOD_ON'  ),
+		'circulationPumpWorkPeriodOff'   : PI('POOL', 'CIRCULATION_PUMP_WORK_PERIOD_OFF' ),
+		'fillingDuration'                : PI('POOL', 'FILLING_DURATION'                 ),
+		'lowWaterLevelAlarmReset'        : PI('POOL', 'LOW_WATER_LEVEL_ALARM_RESET'      ),
+		'currentWorkModeStatus'          : PI('POOL', 'CURRENT_WORK_MODE_STATUS'         ),
 		
 		#TODO: add more parameters
 	}

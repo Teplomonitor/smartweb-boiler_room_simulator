@@ -110,10 +110,10 @@ class RemoteControlParameter(object):
 		parameterInfo  = None
 		):
 		if parameterInfo:
-			self._programType   = parameterInfo['programType']
-			self._parameterId   = parameterInfo['parameter']
+			self._programType   = parameterInfo.getProgramType()
+			self._parameterId   = parameterInfo.getParameterId()
 		else:
-			self._programType    = programType   
+			self._programType    = programType
 			self._parameterId    = parameterId
 			
 		self._parameterValue = parameterValue
