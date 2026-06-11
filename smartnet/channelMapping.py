@@ -54,15 +54,23 @@ class Channel(GuiParameter):
 	classdocs
 	'''
 
-	def __init__(self, mapping = None, value = None, title = None, gui = None):
+	def __init__(self
+				, mapping = None
+				, value = None
+				, title = None
+				, gui = None
+				, channelId = 0
+				):
 		'''
 		Constructor
 		'''
 		super().__init__(value, title, gui = gui)
 		
+		self._id      = channelId
 		self._mapping = mapping
 		self._log     = ChannelLog('SENSOR', title)
 
+	def getId     (self): return self._id
 	def getMapping(self): return self._mapping
 	
 	def isMapped(self):
@@ -90,16 +98,28 @@ class InputChannel(Channel):
 	classdocs
 	'''
 
-	def __init__(self, mapping = None, value = None, title = None, gui = None):
+	def __init__(self
+				, mapping = None
+				, value   = None
+				, title   = None
+				, gui     = None
+				, channelId =   0
+				, minValue  =   0
+				, maxValue  = 100
+				, units     = '°C'
+				):
 		'''
 		Constructor
 		'''
-		super().__init__(mapping, value, title, gui)
+		super().__init__(mapping, value, title, gui, channelId)
 		
 		self.setLogType('TEMPERATURE')
 		
 		self._isManual = False
 		self._state    = 'normal'
+		self.setMin(minValue)
+		self.setMax(maxValue)
+		self.setUnits(units)
 		
 	def setValue  (self, value, manual = False  ):
 		if self.isManual():
@@ -210,11 +230,17 @@ class OutputChannel(Channel):
 	classdocs
 	'''
 
-	def __init__(self, mapping = None, value = None, title = None, gui = None):
+	def __init__(self
+				, mapping = None
+				, value = None
+				, title = None
+				, gui = None
+				, channelId = 0
+				):
 		'''
 		Constructor
 		'''
-		super().__init__(mapping, value, title, gui)
+		super().__init__(mapping, value, title, gui, channelId)
 		self._log.setType('RELAY')
 		self._lastUpdateTime = None
 		

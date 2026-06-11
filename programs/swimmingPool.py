@@ -4,6 +4,8 @@
 
 from .program import Program
 from .program import ParameterInfo as PI
+from .program import InputInfo
+from .program import OutputInfo
 from gui.parameter import GuiParameter as GuiParameter
 
 class SwimmingPool(Program):
@@ -12,34 +14,6 @@ class SwimmingPool(Program):
 	'''
 
 	def getType(self): return 'POOL'
-	
-	def getInputTitles(self):
-		return [
-			'Т воды',
-			'Внешний запрос',
-			'Уровень воды',
-			'Проток',
-			]
-
-	def getOutputTitles(self):
-		return [
-			'Цирк. насос',
-			'Насос загрузки',
-			'Контроль уровня воды',
-			]
-
-	_inputId = {
-		'poolTemperature': 0,
-		'outsideRequest' : 1,
-		'waterLevel'     : 2,
-		'flow'           : 3,
-	}
-	
-	_outputId = {
-		'circulationPump'  : 0,
-		'loadingPump'      : 1,
-		'waterLevelControl': 2,
-	}
 
 	_remoteControlParameters = {
 		'requiredPoolTemperatureComfort' : PI('POOL', 'REQUIRED_POOL_TEMPERATURE'        ),
@@ -57,30 +31,36 @@ class SwimmingPool(Program):
 		#TODO: add more parameters
 	}
 	
+	def getParameterInfo(self, parameter): return self._remoteControlParameters[parameter]
+	
+	def initInputs(self):
+		self._inputs['poolTemperature'] = InputInfo(0, 'Т воды'        )
+		self._inputs['outsideRequest' ] = InputInfo(1, 'Внешний запрос')
+		self._inputs['waterLevel'     ] = InputInfo(2, 'Уровень воды'  )
+		self._inputs['flow'           ] = InputInfo(3, 'Проток'        )
+		
+	def initOutputs(self):
+		self._outputs['circulationPump'  ] = OutputInfo(0, 'Цирк. насос'         )
+		self._outputs['loadingPump'      ] = OutputInfo(1, 'Насос загрузки'      )
+		self._outputs['waterLevelControl'] = OutputInfo(2, 'Контроль уровня воды')
 
+	def initGuiParameters(self):
+		self._parameters['max_flow_rate'] = GuiParameter(1000, 'Расход', 0, 3000, 1, 'кг/ч')
+		self._parameters['max_power'    ] = GuiParameter(1, 'Мощность', 0, 10, 1, 'кВт')
+		
 	def __init__(self, params):
 		'''
 		Constructor
 		'''
 		super().__init__(params)
-				
-		rate = GuiParameter(1000, 'Расход')
-		rate.setProperties(0, 3000, 1, 'кг/ч')
 		
-		power = GuiParameter(1, 'Мощность')
-		power.setProperties(0, 10, 1, 'кВт')
-		
-		self._parameters['max_flow_rate'] = rate
-		self._parameters['max_power']= power
-	
 	def getGuiColor (self): return 'blue'
 	
+	def getTemperature         (self): return self.getInputChannel ('poolTemperature')
+	def getCirculationPumpState(self): return self.getOutputChannel('circulationPump')
+	def getLoadingPumpState    (self): return self.getOutputChannel('loadingPump')
 	
-	def getTemperature         (self): return self.getInputChannel (self. _inputId['poolTemperature'])
-	def getCirculationPumpState(self): return self.getOutputChannel(self._outputId['circulationPump'])
-	def getLoadingPumpState    (self): return self.getOutputChannel(self._outputId['loadingPump'])
-	
-	def setTemperature  (self, value): self.getInputChannel(self._inputId['poolTemperature']).setValue(value)
+	def setTemperature  (self, value): self.getTemperature().setValue(value)
 	
 	def setCirculationPumpWorkMode(self, value):
 		workMode = {
@@ -92,6 +72,4 @@ class SwimmingPool(Program):
 		
 		return self.writeParameterValue('circulationPumpWorkMode', workMode[value])
 	
-	def getParameterInfo(self, parameter):
-		return self._remoteControlParameters[parameter]
 	

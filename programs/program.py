@@ -17,6 +17,10 @@ from smartnet.channelMapping import OutputChannel    as OutputChannel
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
 
+def InputInfo (channelId, title): return InputChannel (channelId = channelId, title = title)
+def OutputInfo(channelId, title): return OutputChannel(channelId = channelId, title = title)
+
+
 class ParameterInfo(object):
 	def __init__(self,
 				programType,
@@ -34,49 +38,31 @@ class Program(object):
 
 	def getType(self): return 'PROGRAM'
 	
-	def getInputTitles(self):
-		return [
-			]
-
-	def getOutputTitles(self):
-		return [
-			]
-
-	def getInputsNum (self): return len(self.getInputTitles ())
-	def getOutputsNum(self): return len(self.getOutputTitles())
+	def getInputsNum (self): return len(self._inputs )
+	def getOutputsNum(self): return len(self._outputs)
 	
-	def initInputs(self, inputMappings = None):
-		self._inputs  = []
-		
-		inputTitle     = self.getInputTitles()
-		
-		channelNum = self.getInputsNum()
-		
-		for i in range(channelNum):
-			channel = InputChannel()
-			channel.setTitle(inputTitle[i])
-			if inputMappings:
-				channel.setMapping(inputMappings[i])
-			self._inputs.append(channel)
+	def initInputMappings(self, mappings):
+		for i in range(len(mappings)):
+			for channel in self._inputs.values():
+				if channel.getId() == i:
+					channel.setMapping(mappings[i])
+					break
 			
 	
-	def initOutputs(self, outputMappings = None):
-		self._outputs = []
-		
-		outputTitle = self.getOutputTitles()
-		
-		channelNum = self.getOutputsNum()
-		
-		for i in range(channelNum):
-			channel = OutputChannel()
-			channel.setTitle(outputTitle[i])
-			if outputMappings:
-				channel.setMapping(outputMappings[i])
-				
-			self._outputs.append(channel)
-			
-			if self._outputs[i].isMapped():
-				self.readOutput(i)
+	def initOutputMappings(self, mappings):
+		for i in range(len(mappings)):
+			for channel in self._outputs.values():
+				if channel.getId() == i:
+					channel.setMapping(mappings[i])
+					if channel.isMapped():
+						self.readOutput(channel)
+					break
+	
+	def initInputs(self):
+		pass
+	
+	def initOutputs(self):
+		pass
 	
 	def initGuiParameters(self):
 		pass
@@ -88,26 +74,27 @@ class Program(object):
 		
 		self._preset  = preset
 		
+		self._inputs  = {}
+		self._outputs = {}
+		self._parameters = {}
+		
+		self.initInputs ()
+		self.initOutputs()
+		self.initGuiParameters()
+		
 		if preset:
 			self.setScheme(preset.getScheme())
 			self.setId    (preset.getId()    )
 			self.setTitle (preset.getTitle() )
 			
-			self.initInputs (preset.getInputs ())
-			self.initOutputs(preset.getOutputs())
+			self.initInputMappings (preset.getInputs ())
+			self.initOutputMappings(preset.getOutputs())
 		else:
 			self.setScheme('DEFAULT')
 			self.setId    (1)
 			self.setTitle ('Program')
 			
-			self.initInputs ()
-			self.initOutputs()
 			
-
-		self._parameters = {}
-		
-		self.initGuiParameters()
-		
 		self.CanSubscribe()
 	
 	def getMaxPower(self):
@@ -122,8 +109,8 @@ class Program(object):
 
 	def Clear(self):
 		self.CanUnSubscribe()
-		self._inputs  = []
-		self._outputs = []
+		self._inputs  = {}
+		self._outputs = {}
 		self._parameters = {}
 		
 	
@@ -158,20 +145,16 @@ class Program(object):
 					self.setOutputValue(outputId, outputValue)
 		
 		
-	def getInputs(self   ): return self._inputs
-	def getInputChannel (self, i): return self._inputs [i]
-	def setInput (self, i, value): self._inputs [i] = value
+	def getInputs (self): return self._inputs
+	def getOutputs(self): return self._outputs
 	
-	def getOutputs(self   ): return self._outputs
-	def getOutputChannel (self, i): return self._outputs[i]
-	def setOutputChannel (self, i, channel): self._outputs[i] = channel
-	def setOutputValue   (self, i, value): self.getOutputChannel(i).setValue(value)
+	def getInputChannel (self, channel): return self._inputs [channel]
+	def getOutputChannel(self, channel): return self._outputs[channel]
+	
+	def setOutputValue   (self, channel, value): self.getOutputChannel(channel).setValue(value)
 	
 	def getParameters(self): return self._parameters
 	
-	def getInputTitle (self, i): return self.getInputTitles ()[i]
-	def getOutputTitle(self, i): return self.getOutputTitles()[i]
-
 	def getScheme   (self): return self._scheme
 	def getId       (self): return self._id
 	def getTitle    (self): return self._title
@@ -199,7 +182,13 @@ class Program(object):
 			self.getId(),
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
 			snc.requestFlag['REQUEST'],
-			[snc.ProgramType['PROGRAM'], snc.ProgramParameter['INPUT_MAPPING']['id'], channel_id, mapping.getRaw(0), mapping.getRaw(1)])
+			[
+				snc.ProgramType['PROGRAM'],
+				snc.ProgramParameter['INPUT_MAPPING']['id'],
+				channel_id,
+				mapping.getRaw(0),
+				mapping.getRaw(1)
+			])
 			return request
 
 		def generateRequiredResponse():
@@ -245,7 +234,13 @@ class Program(object):
 			self.getId(),
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
 			snc.requestFlag['REQUEST'],
-			[snc.ProgramType['PROGRAM'], snc.ProgramParameter['OUTPUT_MAPPING']['id'], channel_id, mapping.getRaw(0), mapping.getRaw(1)])
+			[
+				snc.ProgramType['PROGRAM'],
+				snc.ProgramParameter['OUTPUT_MAPPING']['id'],
+				channel_id,
+				mapping.getRaw(0),
+				mapping.getRaw(1)
+			])
 			return request
 
 		def generateRequiredResponse():
@@ -283,16 +278,16 @@ class Program(object):
 			
 		return result
 	
-	def readOutput(self, outputId):
+	def readOutput(self, channel):
 		param = sr.RemoteControlParameter(
 			'PROGRAM', 'OUTPUT',
-			parameterIndex = outputId,
+			parameterIndex = channel.getId(),
 			programId = self.getId())
 		
 		value = None
 		if param.read():
 			value = param.getValue()
-			self.setOutputValue(outputId, value)
+			channel.setValue(value)
 			
 		return value
 	
@@ -324,14 +319,6 @@ class Program(object):
 		
 		return remoteParam.getValue()
 	
-	def setInputsRange(self, inputsRange):
-		i = 0
-		for inputRange in inputsRange:
-			if inputRange:
-				self._inputs[i].setMin(inputRange[0])
-				self._inputs[i].setMax(inputRange[1])
-			i = i + 1
-
 	def saveLog(self, logDir = None):
 		titleCommon = self.getTitle() + '_' + str(self.getId())
 		

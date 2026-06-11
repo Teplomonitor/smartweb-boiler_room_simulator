@@ -60,15 +60,15 @@ class Boiler(Program):
 	def getGuiColor (self): return 'yellow'
 
 	def getTemperature(self):
-		return self.getInputChannel(self._inputId['temperature']).getValue()
+		return self.getInputChannel('temperature').getValue()
 
 	def setTemperature(self, value):
 #		print(f'boiler: {value}')
-		self.getInputChannel(self._inputId['temperature']).setValue(value)
+		self.getInputChannel('temperature').setValue(value)
 
 	def getStage1(self):
-		return self.getOutputChannel(self._outputId['burner1'])
+		return self.getOutputChannel('burner1')
 	
 	def getPump(self):
-		return self.getOutputChannel(self._outputId['pump'])
+		return self.getOutputChannel('pump')
 		

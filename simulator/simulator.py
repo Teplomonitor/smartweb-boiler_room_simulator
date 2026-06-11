@@ -70,7 +70,7 @@ class sensor_report_thread(threading.Thread):
 		
 		for sim in self._simulator._simList:
 			program = sim._program
-			for programInput in program.getInputs():
+			for programInput in program.getInputs().values():
 				if programInput.isMapped() and programInput.getMapping().getHostId() in selfIdList:
 					if ssr.reportSensorValue(programInput):
 						time.sleep(0.1)
@@ -137,7 +137,7 @@ class Simulator(threading.Thread):
 		for program in programsList:
 			programId = program.getId()
 			i = 0
-			for output in program.getOutputs():
+			for output in program.getOutputs().values():
 				mapping = output.getMapping()
 				if mapping:
 					for ctrlIo in self._controllerIo:
