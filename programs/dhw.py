@@ -29,13 +29,8 @@ class Dhw(Program):
 			]
 
 	def initGuiParameters(self):
-		rate = GuiParameter(1000, 'Расход')
-		rate.setProperties(0, 3000, 1, 'кг/ч')
-		self._parameters['max_flow_rate'] = rate
-		
-		power = GuiParameter(1, 'Мощность')
-		power.setProperties(0, 10, 1, 'кВт')
-		self._parameters['max_power']= power
+		self._parameters['max_flow_rate'] = GuiParameter(1000, 'Расход', 0, 3000, 1, 'кг/ч')
+		self._parameters['max_power'    ] = GuiParameter(1, 'Мощность', 0, 10, 1, 'кВт')
 		
 	def __init__(self, params):
 		'''

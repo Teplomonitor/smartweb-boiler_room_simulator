@@ -53,6 +53,12 @@ class VirtualController(Program):
 		'sensorValue16',
 		]
 
+	def initGuiParameters(self):
+		for i in range(0,PARAMETER_NUM):
+			param = GuiParameter(30, f'Датчик {i+1}', -30, 120, 0.1, 'у.е.')
+			param.setOptions(['none'])
+			self._parameters[f'gui_sensor_value{i}'] = param
+		
 	def __init__(self, params):
 		'''
 		Constructor
@@ -60,12 +66,6 @@ class VirtualController(Program):
 		super().__init__(params)
 		
 		self._reportPeriod = pt.PeriodicTrigger()
-		
-		for i in range(0,PARAMETER_NUM):
-			param = GuiParameter(30, f'Датчик {i+1}')
-			param.setProperties(-30, 120, 0.1, 'у.е.')
-			param.setOptions(['none'])
-			self._parameters[f'gui_sensor_value{i}'] = param
 		
 	def getSensorControlOption(self, index):
 		return self.getSensor(index).getSelectedOption()

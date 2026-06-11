@@ -58,7 +58,7 @@ class Channel(GuiParameter):
 		'''
 		Constructor
 		'''
-		super().__init__(value, title, gui)
+		super().__init__(value, title, gui = gui)
 		
 		self._mapping = mapping
 		self._log     = ChannelLog('SENSOR', title)

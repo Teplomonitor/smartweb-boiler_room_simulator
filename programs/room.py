@@ -35,10 +35,7 @@ class Room(Program):
 			]
 
 	def initGuiParameters(self):
-		power = GuiParameter(1, 'Мощность')
-		power.setProperties(0, 10, 1, 'кВт')
-		
-		self._parameters['max_power']= power
+		self._parameters['max_power']= GuiParameter(1, 'Мощность', 0, 10, 1, 'кВт')
 	
 	def __init__(self, params):
 		'''

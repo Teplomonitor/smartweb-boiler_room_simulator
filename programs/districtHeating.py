@@ -32,19 +32,10 @@ class DistrictHeating(Program):
 			]
 
 	def initGuiParameters(self):
-		rate = GuiParameter(3000, 'Расход в доме')
-		rate.setProperties(100, 6000, 1, 'кг/ч')
-		self._parameters['max_flow_rate1'] = rate
+		self._parameters['max_flow_rate1'] = GuiParameter(3000, 'Расход в доме', 100, 6000, 1, 'кг/ч')
+		self._parameters['max_flow_rate2'] = GuiParameter(3000, 'Расход в городе', 100, 6000, 1, 'кг/ч')
+		self._parameters['max_power'     ] = GuiParameter(30, 'Мощность', 5, 300, 1, 'кВт')
 		
-		rate = GuiParameter(3000, 'Расход в городе')
-		rate.setProperties(100, 6000, 1, 'кг/ч')
-		self._parameters['max_flow_rate2'] = rate
-		
-		power = GuiParameter(30, 'Мощность')
-		power.setProperties(5, 300, 1, 'кВт')
-		self._parameters['max_power']= power
-		
-	
 	def __init__(self, params):
 		'''
 		Constructor

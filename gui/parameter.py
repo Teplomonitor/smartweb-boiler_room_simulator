@@ -12,17 +12,26 @@ class GuiParameter(object):
 	classdocs
 	'''
 
-	def __init__(self, value = None, title = None, gui = None):
+	def __init__(
+			self
+			, value = None
+			, title = None
+			, minValue = 0
+			, maxValue = 100
+			, step = 0.1
+			, units = '°C'
+			, gui = None
+			):
 		'''
 		Constructor
 		'''
 		self._value   = value
 		self._title   = title
 		self._gui     = gui
-		self._min     =   0
-		self._max     = 100
-		self._step    = 0.1
-		self._units   = '°C'
+		self._min     = minValue
+		self._max     = maxValue
+		self._step    = step
+		self._units   = units
 		self._needUpdateGuiValue = True
 		self._options = None
 		

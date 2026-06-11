@@ -47,13 +47,8 @@ class Boiler(Program):
 	}
 		
 	def initGuiParameters(self):
-		rate = GuiParameter(3000, 'Расход')
-		rate.setProperties(0, 5000, 1, 'кг/ч')
-		self._parameters['max_flow_rate'] = rate
-		
-		power = GuiParameter(30, 'Мощность')
-		power.setProperties(5, 300, 1, 'кВт')
-		self._parameters['max_power']= power
+		self._parameters['max_flow_rate'] = GuiParameter(3000, 'Расход', 0, 5000, 1, 'кг/ч')
+		self._parameters['max_power'    ] = GuiParameter(30, 'Мощность', 5, 300, 1, 'кВт')
 		
 	def __init__(self, params):
 		'''

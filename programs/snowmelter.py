@@ -4,7 +4,7 @@
 
 from .program import Program
 from .program import ParameterInfo as PI
-from gui.parameter import GuiParameter
+from gui.parameter import GuiParameter as GP
 
 class Snowmelter(Program):
 	'''
@@ -53,17 +53,9 @@ class Snowmelter(Program):
 	}
 	
 	def initGuiParameters(self):
-		rate = GuiParameter(1000, 'Расход до теплообменника')
-		rate.setProperties(0, 3000, 1, 'кг/ч')
-		self._parameters['max_flow_rate1'] = rate
-		
-		rate = GuiParameter(1000, 'Расход после теплообменника')
-		rate.setProperties(0, 3000, 1, 'кг/ч')
-		self._parameters['max_flow_rate2'] = rate
-		
-		power = GuiParameter(3, 'Мощность')
-		power.setProperties(0, 30, 1, 'кВт')
-		self._parameters['max_power']= power
+		self._parameters['max_flow_rate1'] = GP(1000, 'Расход до теплообменника', 0, 3000, 1, 'кг/ч')
+		self._parameters['max_flow_rate2'] = GP(1000, 'Расход после теплообменника', 0, 3000, 1, 'кг/ч')
+		self._parameters['max_power'     ] = GP(10, 'Мощность', 0, 30, 1, 'кВт')
 		
 	def __init__(self, params):
 		'''
@@ -79,7 +71,6 @@ class Snowmelter(Program):
 		
 		self.setInputsRange(inputsRange)
 		
-
 	def getDirectFlowTemperature(self):
 		return self.getInputChannel(self._inputId['directFlowTemperature'])
 
