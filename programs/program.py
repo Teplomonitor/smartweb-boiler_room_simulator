@@ -99,6 +99,8 @@ class Program(object):
 		self.initOutputs()
 		self.initGuiParameters()
 		
+		self._preset = preset
+		
 		if preset:
 			self.setScheme(preset.getScheme())
 			self.setId    (preset.getId()    )
@@ -113,6 +115,9 @@ class Program(object):
 			
 			
 		self.CanSubscribe()
+	
+	def getPreset(self):
+		return self._preset
 	
 	def getMaxPower(self):
 		if 'max_power' in self._parameters:
