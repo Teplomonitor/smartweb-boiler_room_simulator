@@ -17,8 +17,27 @@ from smartnet.channelMapping import OutputChannel    as OutputChannel
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
 
-def InputInfo (channelId, title): return InputChannel (channelId = channelId, title = title)
-def OutputInfo(channelId, title): return OutputChannel(channelId = channelId, title = title)
+def InputInfo (channelId,
+			title,
+			minValue = 0,
+			maxValue = 100,
+			step     = 1,
+			units    = '°C'):
+	channel = InputChannel(
+		channelId = channelId,
+		title     = title,
+		minValue  = minValue,
+		maxValue  = maxValue,
+		units     = units
+		)
+	channel.setStep(step)
+	return channel
+	
+def OutputInfo(channelId, title):
+	return OutputChannel(
+		channelId = channelId,
+		title     = title
+		)
 
 
 class ParameterInfo(object):
@@ -36,7 +55,8 @@ class Program(object):
 	classdocs
 	'''
 
-	def getType(self): return 'PROGRAM'
+	@staticmethod
+	def getType(): return 'PROGRAM'
 	
 	def getInputsNum (self): return len(self._inputs )
 	def getOutputsNum(self): return len(self._outputs)
@@ -48,7 +68,6 @@ class Program(object):
 					channel.setMapping(mappings[i])
 					break
 			
-	
 	def initOutputMappings(self, mappings):
 		for i in range(len(mappings)):
 			for channel in self._outputs.values():
@@ -71,8 +90,6 @@ class Program(object):
 		'''
 		Constructor
 		'''
-		
-		self._preset  = preset
 		
 		self._inputs  = {}
 		self._outputs = {}
@@ -163,7 +180,6 @@ class Program(object):
 	def setId    (self, programId): self._id     = programId
 	def setTitle (self, title    ): self._title  = title
 	
-	def getPreset   (self): return self._preset
 	def getGuiColor (self): return 'default'
 
 	def disableGuiControl(self):

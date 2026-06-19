@@ -13,7 +13,8 @@ class SwimmingPool(Program):
 	classdocs
 	'''
 
-	def getType(self): return 'POOL'
+	@staticmethod
+	def getType(): return 'POOL'
 
 	_remoteControlParameters = {
 		'requiredPoolTemperatureComfort' : PI('POOL', 'REQUIRED_POOL_TEMPERATURE'        ),
@@ -34,7 +35,7 @@ class SwimmingPool(Program):
 	def getParameterInfo(self, parameter): return self._remoteControlParameters[parameter]
 	
 	def initInputs(self):
-		self._inputs['poolTemperature'] = InputInfo(0, 'Т воды'        )
+		self._inputs['poolTemperature'] = InputInfo(0, 'Т воды'        , -10, 50)
 		self._inputs['outsideRequest' ] = InputInfo(1, 'Внешний запрос')
 		self._inputs['waterLevel'     ] = InputInfo(2, 'Уровень воды'  )
 		self._inputs['flow'           ] = InputInfo(3, 'Проток'        )
@@ -43,7 +44,7 @@ class SwimmingPool(Program):
 		self._outputs['circulationPump'  ] = OutputInfo(0, 'Цирк. насос'         )
 		self._outputs['loadingPump'      ] = OutputInfo(1, 'Насос загрузки'      )
 		self._outputs['waterLevelControl'] = OutputInfo(2, 'Контроль уровня воды')
-
+	
 	def initGuiParameters(self):
 		self._parameters['max_flow_rate'] = GuiParameter(1000, 'Расход', 0, 3000, 1, 'кг/ч')
 		self._parameters['max_power'    ] = GuiParameter(1, 'Мощность', 0, 10, 1, 'кВт')

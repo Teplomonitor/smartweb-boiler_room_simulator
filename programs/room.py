@@ -3,6 +3,8 @@
 '''
 
 from .program import Program
+from .program import InputInfo
+from .program import OutputInfo
 from gui.parameter import GuiParameter as GuiParameter
 
 class Room(Program):
@@ -10,29 +12,26 @@ class Room(Program):
 	classdocs
 	'''
 
-	def getType(self): return 'ROOM_DEVICE'
+	@staticmethod
+	def getType(): return 'ROOM_DEVICE'
 	
-	def getInputTitles(self):
-		return [
-			'Т помещения',
-			'Режим',
-			'Т пола',
-			'Т стены',
-			'Влажность',
-			'CO2',
-			'Движение',
-			]
-
-	def getOutputTitles(self):
-		return [
-			'Клапан ТП',
-			'Клапан РО',
-			'Клапан ДН',
-			'Сигнал ТП',
-			'Сигнал РО',
-			'Сигнал ДН',
-			'Вентиляция',
-			]
+	def initInputs(self):
+		self._inputs['roomTemperature' ] = InputInfo(0, 'Т помещения', -10,   50)
+		self._inputs['mode_deprecated' ] = InputInfo(1, 'Режим'                 )
+		self._inputs['floorTemperature'] = InputInfo(2, 'Т пола'     , -10,   70)
+		self._inputs['wallTemperature' ] = InputInfo(3, 'Т стены'    , -10,   70)
+		self._inputs['humidity'        ] = InputInfo(4, 'Влажность'  ,   0,  100)
+		self._inputs['CO2'             ] = InputInfo(5, 'CO2'        ,   0, 2000)
+		self._inputs['motion'          ] = InputInfo(6, 'Движение'              )
+		
+	def initOutputs(self):
+		self._outputs['valve1'      ] = OutputInfo(0, 'Клапан ТП' )
+		self._outputs['valve2'      ] = OutputInfo(1, 'Клапан РО' )
+		self._outputs['valve3'      ] = OutputInfo(2, 'Клапан ДН' )
+		self._outputs['analogValve1'] = OutputInfo(3, 'Сигнал ТП' )
+		self._outputs['analogValve2'] = OutputInfo(4, 'Сигнал РО' )
+		self._outputs['analogValve3'] = OutputInfo(5, 'Сигнал ДН' )
+		self._outputs['ventilation' ] = OutputInfo(6, 'Вентиляция')
 
 	def initGuiParameters(self):
 		self._parameters['max_power']= GuiParameter(1, 'Мощность', 0, 10, 1, 'кВт')
@@ -43,16 +42,10 @@ class Room(Program):
 		'''
 		super().__init__(params)
 		
-		inputsRange = [
-			[-10, 50],
-			None,
-			[-10,   70],
-			[-10,   70],
-			[  0,  100],
-			[  0, 2000],
-		]
-		
-		self.setInputsRange(inputsRange)
+
+	def getTemperature(self): return self.getInputChannel('roomTemperature').getValue()
+
+	def setTemperature(self, value): self.getInputChannel('roomTemperature').setValue(value)
 
 	def getRoomTemperatureSourceList(self):
 		preset = self.getPreset()

@@ -14,6 +14,9 @@ class VirtualController(Program):
 	classdocs
 	'''
 
+	@staticmethod
+	def getType(): return 'VIRTUAL_CONTROLLER'
+	
 	_remoteControlParameters = {
 		'controllerId'  : PI('VIRTUAL_CONTROLLER', 'CONTROLLERID'),
 		'sensorValue01' : PI('VIRTUAL_CONTROLLER', 'SENSOR01'),

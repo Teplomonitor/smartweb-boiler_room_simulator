@@ -3,44 +3,31 @@
 '''
 
 from .program import Program
+from .program import InputInfo
+from .program import OutputInfo
 
 class FillingLoop(Program):
 	'''
 	classdocs
 	'''
 
-	def getType(self): return 'FILLING_LOOP'
-	
-	def getInputTitles(self):
-		return [
-			'Давление',
-			]
+	@staticmethod
+	def getType(): return 'FILLING_LOOP'
 
-	def getOutputTitles(self):
-		return [
-			'Подпитка',
-			'Авария',
-			]
+	def initInputs(self):
+		self._inputs['pressureSensor'      ] = InputInfo(0, 'Давление', 0, 10, 0.1, 'бар')
 		
-	_inputId = {
-		'pressureSensor'  : 0,
-	}
-	
-	_outputId = {
-		'filling_loop_output' : 0,
-		'alarm_output'        : 1,
-	}
+	def initOutputs(self):
+		self._outputs['filling_loop_output'] = OutputInfo(0, 'Подпитка'   )
+		self._outputs['alarm_output'       ] = OutputInfo(1, 'Авария'     )
 
 	def __init__(self, params):
 		'''
 		Constructor
 		'''
 		super().__init__(params)
-
-		self.getPressure().setProperties(0, 10, 0.1, 'бар')
-		
 		
 	def getPressure(self):
-		return self.getInputChannel(self._inputId['pressureSensor'])
+		return self.getInputChannel('pressureSensor')
 	
 	def getGuiColor (self): return 'blue'

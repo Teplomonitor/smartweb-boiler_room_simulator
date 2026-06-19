@@ -3,30 +3,25 @@
 '''
 
 from .program import Program
+from .program import InputInfo
 
 class Cascade(Program):
 	'''
 	classdocs
 	'''
 
-	def getType(self): return 'CASCADE_MANAGER'
+	@staticmethod
+	def getType(): return 'CASCADE_MANAGER'
 	
-	def getInputTitles(self):
-		return [
-			'Коллектор',
-			'Внешний запрос',
-			]
-
-	def getOutputTitles(self):
-		return [
-			]
-
-
-	def __init__(self, params):
+	def initInputs(self):
+		self._inputs['temperature'   ] = InputInfo(0, 'Коллектор'     )
+		self._inputs['outsideRequest'] = InputInfo(1, 'Внешний запрос')
+		
+	def __init__(self, preset):
 		'''
 		Constructor
 		'''
-		super().__init__(params)
+		super().__init__(preset)
 	
 	def getCascadeManagerSourceList(self):
 		preset = self.getPreset()

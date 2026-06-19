@@ -3,6 +3,8 @@
 '''
 
 from .program import Program
+from .program import InputInfo
+from .program import OutputInfo
 from .program import ParameterInfo as PI
 from gui.parameter import GuiParameter as GP
 
@@ -10,37 +12,9 @@ class Snowmelter(Program):
 	'''
 	classdocs
 	'''
-
-	def getType(self): return 'SNOWMELT'
+	@staticmethod
+	def getType(): return 'SNOWMELT'
 	
-	def getInputTitles(self):
-		return [
-			'Т подачи',
-			'Т обратки',
-			'Т поверхности',
-			'Осадки',
-			]
-
-	def getOutputTitles(self):
-		return [
-			'Насос загрузки',
-			'Цирк. насос',
-			'А. насос загрузки',
-			]
-
-	_inputId = {
-		'directFlowTemperature'  : 0,
-		'backwardTemperature'    : 1,
-		'plateTemperature'       : 2,
-		'snowSensor'             : 3,
-	}
-
-	_outputId = {
-		'primaryPump'              : 0,
-		'secondaryPump'            : 1,
-		'primaryPumpAnalogSignal'  : 2,
-	}
-
 	_remoteControlParameters = {
 		'minOutdoorTemp'     : PI('SNOWMELT', 'MINIMUM_OUTDOOR_TEMPERATURE'                            ),
 		'maxOutdoorTemp'     : PI('SNOWMELT', 'MAXIMUM_OUTDOOR_TEMPERATURE'                            ),
@@ -52,6 +26,17 @@ class Snowmelter(Program):
 		#TODO: add more parameters
 	}
 	
+	def initInputs(self):
+		self._inputs['directFlowTemperature'] = InputInfo(0, 'Т подачи'     , -10, 100)
+		self._inputs['backwardTemperature'  ] = InputInfo(1, 'Т обратки'    , -10, 100)
+		self._inputs['plateTemperature'     ] = InputInfo(2, 'Т поверхности', -30,  40)
+		self._inputs['snowSensor'           ] = InputInfo(3, 'Осадки'       )
+		
+	def initOutputs(self):
+		self._outputs['primaryPump'            ] = OutputInfo(0, 'Насос загрузки'   )
+		self._outputs['secondaryPump'          ] = OutputInfo(1, 'Цирк. насос'      )
+		self._outputs['primaryPumpAnalogSignal'] = OutputInfo(2, 'А. насос загрузки')
+
 	def initGuiParameters(self):
 		self._parameters['max_flow_rate1'] = GP(1000, 'Расход до теплообменника', 0, 3000, 1, 'кг/ч')
 		self._parameters['max_flow_rate2'] = GP(1000, 'Расход после теплообменника', 0, 3000, 1, 'кг/ч')
@@ -63,52 +48,24 @@ class Snowmelter(Program):
 		'''
 		super().__init__(params)
 		
-		inputsRange = [
-			[-10, 100],
-			[-10, 100],
-			[-30,  40],
-		]
-		
-		self.setInputsRange(inputsRange)
-		
-	def getDirectFlowTemperature(self):
-		return self.getInputChannel(self._inputId['directFlowTemperature'])
-
-	def setDirectFlowTemperature(self, value):
-		self.getInputChannel(self._inputId['directFlowTemperature']).setValue(value)
-
-	def getBackwardFlowTemperature(self):
-		return self.getInputChannel(self._inputId['backwardTemperature'])
+	def getDirectFlowTemperature  (self): return self.getInputChannel('directFlowTemperature')
+	def getBackwardFlowTemperature(self): return self.getInputChannel('backwardTemperature'  )
+	def getPlateTemperature       (self): return self.getInputChannel('plateTemperature'     )
+	def getSnowSensor             (self): return self.getInputChannel('snowSensor'           )
 	
-	def setBackwardFlowTemperature(self, value):
-		self.getInputChannel(self._inputId['backwardTemperature']).setValue(value)
+	def getPrimaryPumpState  (self): return self.getOutputChannel('primaryPump'            )
+	def getSecondaryPumpState(self): return self.getOutputChannel('secondaryPump'          )
+	def getAnalogPumpSignal  (self): return self.getOutputChannel('primaryPumpAnalogSignal')
 
-	def getPlateTemperature(self):
-		return self.getInputChannel(self._inputId['plateTemperature'])
+	def setDirectFlowTemperature  (self, value): self.getDirectFlowTemperature  ().setValue(value)
+	def setBackwardFlowTemperature(self, value): self.getBackwardFlowTemperature().setValue(value)
+	def setPlateTemperature       (self, value): self.getPlateTemperature       ().setValue(value)
+	def setSnowSensor             (self, value): self.getSnowSensor             ().setValue(value)
 
-	def setPlateTemperature(self, value):
-		self.getInputChannel(self._inputId['plateTemperature']).setValue(value)
-
-	def getSnowSensor(self):
-		return self.getInputChannel(self._inputId['snowSensor'])
-
-	def setSnowSensor(self, value):
-		self.getInputChannel(self._inputId['snowSensor']).setValue(value)
-		
-	def getPrimaryPumpState(self):
-		return self.getOutputChannel(self._outputId['primaryPump'])
-
-	def getSecondaryPumpState(self):
-		return self.getOutputChannel(self._outputId['secondaryPump'])
-	
-	def getAnalogPumpSignal(self):
-		return self.getOutputChannel(self._outputId['primaryPumpAnalogSignal'])
-	
-	def getMaxFlowRate1(self):
-		return self._parameters['max_flow_rate1'].getValue()
-	
-	def getMaxFlowRate2(self):
-		return self._parameters['max_flow_rate2'].getValue()
+	def getMaxFlowRate1(self): return self._parameters['max_flow_rate1'].getValue()
+	def getMaxFlowRate2(self): return self._parameters['max_flow_rate2'].getValue()
 	
 	def getParameterInfo(self, parameter):
 		return self._remoteControlParameters[parameter]
+
+	def getGuiColor (self): return 'blue'

@@ -7,24 +7,6 @@ class Simulator(object):
 		self._preset     = self._program.getPreset()
 		self._control    = control
 		
-		self._outputId = {
-			'analogValve'     : 0,
-			'tptValveOpen'    : 1,
-			'tptValveClose'   : 2,
-			'pump'            : 3,
-			'thermomotor'     : 4,
-			'heatchangePump'  : 5,
-			'analogPump'      : 6,
-		}
-
-		self._inputId = {
-			'temperature'         : 0,
-			'thermostat'          : 1,
-			'outsideRequest'      : 2,
-			'pumpControl'         : 3,
-			'backwardTemperature' : 4,
-		}
-		
 		self._roomTemp = 24
 		self.setTemperature(20)
 		self.setBackwardTemperature(20)
@@ -41,10 +23,10 @@ class Simulator(object):
 		return self._roomTemp
 
 	def getTemperature(self):
-		return self._program.getInputChannel(self._inputId['temperature']).getValue()
+		return self._program.getInputChannel('temperature').getValue()
 
 	def setTemperature(self, value):
-		self._program.getInputChannel(self._inputId['temperature']).setValue(value)
+		self._program.getInputChannel('temperature').setValue(value)
 
 	def getBackwardTemperature(self):
 		return self._supplyBackwardTemperature
@@ -53,16 +35,16 @@ class Simulator(object):
 		self._supplyBackwardTemperature = value
 
 	def getBackwardTemperature2(self):
-		return self._program.getInputChannel(self._inputId['backwardTemperature']).getValue()
+		return self._program.getInputChannel('backwardTemperature').getValue()
 
 	def setBackwardTemperature2(self, value):
-		self._program.getInputChannel(self._inputId['backwardTemperature']).setValue(value)
+		self._program.getInputChannel('backwardTemperature').setValue(value)
 
 	def getMaxFlowRate(self):
 		return self._program.getMaxFlowRate()
 	
 	def getPumpState(self):
-		pump = self._program.getOutputChannel(self._outputId['pump'])
+		pump = self._program.getOutputChannel('pump')
 		if pump.getMapping() is None:
 			return 1
 
@@ -72,7 +54,7 @@ class Simulator(object):
 		return 0
 
 	def getValveState(self):
-		valve = self._program.getOutputChannel(self._outputId['analogValve'])
+		valve = self._program.getOutputChannel('analogValve')
 		if valve.getMapping() is None:
 			return 1
 

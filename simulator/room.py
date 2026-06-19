@@ -6,25 +6,6 @@ class Simulator(object):
 		self._program    = program
 		self._preset     = self._program.getPreset()
 		self._control    = control
-		
-		self._inputId = {
-			'roomTemperature'   : 0,
-			'mode_deprecated'   : 1,
-			'floorTemperature'  : 2,
-			'wallTemperature'   : 3,
-			'humidity'          : 4,
-			'CO2'               : 5,
-			'motion'            : 6,
-		}
-
-		self._outputId = {
-			'valve1'       : 0,
-			'valve2'       : 1,
-			'valve3'       : 2,
-			'analogValve1' : 3,
-			'analogValve2' : 4,
-			'analogValve3' : 5,
-		}
 
 		self.setTemperature(20)
 		
@@ -39,10 +20,10 @@ class Simulator(object):
 		return oat.getTemperature()
 
 	def getTemperature(self):
-		return self._program.getInputChannel(self._inputId['roomTemperature']).getValue()
+		return self._program.getTemperature().getValue()
 
 	def setTemperature(self, value):
-		self._program.getInputChannel(self._inputId['roomTemperature']).setValue(value)
+		self._program.getTemperature().setValue(value)
 
 	def getMaxPower(self):
 		return self._program.getMaxPower()

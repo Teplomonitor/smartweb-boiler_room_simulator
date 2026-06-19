@@ -12,42 +12,28 @@ class Simulator(object):
 		self._control    = control
 		self._washTime   = PeriodPulse()
 		
-		self._inputId = {
-			'temperature'         : 0,
-			'flow'                : 1,
-			'backwardTemperature' : 2,
-		}
-
-		self._outputId = {
-			'supplyPump'       : 0,
-			'circPump'         : 1,
-			'analogSupplyPump' : 2,
-			'tptValveOpen'     : 3,
-			'tptValveClose'    : 4,
-		}
-
 		self.setTemperature(20)
 
 
 	def getTemperature(self):
-		return self._program.getInputChannel(self._inputId['temperature']).getValue()
+		return self._program.getInputChannel('temperature').getValue()
 
 	def setTemperature(self, value):
 #		print(f'dhw: {value}')
-		self._program.getInputChannel(self._inputId['temperature']).setValue(value)
+		self._program.getInputChannel('temperature').setValue(value)
 
 	def getBackwardTemperature(self):
-		return self._program.getInputChannel(self._inputId['backwardTemperature']).getValue()
+		return self._program.getInputChannel('backwardTemperature').getValue()
 
 	def setBackwardTemperature(self, value):
 #		print(f'dhw: {value}')
-		self._program.getInputChannel(self._inputId['backwardTemperature']).setValue(value)
+		self._program.getInputChannel('backwardTemperature').setValue(value)
 
 	def getElapsedTime(self):
 		return time.time() - self._time_start
 
 	def getPumpState(self):
-		pump = self._program.getOutputChannel(self._outputId['supplyPump'])
+		pump = self._program.getOutputChannel('supplyPump')
 		if pump.getMapping() is None:
 			return 1
 

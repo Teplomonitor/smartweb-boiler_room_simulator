@@ -3,6 +3,8 @@
 '''
 
 from .program import Program
+from .program import InputInfo
+from .program import OutputInfo
 from gui.parameter import GuiParameter as GuiParameter
 
 class DistrictHeating(Program):
@@ -10,26 +12,23 @@ class DistrictHeating(Program):
 	classdocs
 	'''
 
-	def getType(self): return 'DISTRICT_HEATING'
+	@staticmethod
+	def getType(): return 'DISTRICT_HEATING'
 	
-	def getInputTitles(self):
-		return [
-			'Подача из города',
-			'Обратка в город',
-			'Подача в дом',
-			'Обратка из дома',
-			'Теплосчётчик',
-			'Расход',
-			'Внешний запрос',
-			]
-
-	def getOutputTitles(self):
-		return [
-			'Насос загрузки',
-			'Цирк. насос',
-			'Клапан',
-			'А. клапан',
-			]
+	def initInputs(self):
+		self._inputs['supply_direct_temp'  ] = InputInfo(0, 'Подача из города')
+		self._inputs['supply_backward_temp'] = InputInfo(1, 'Обратка в город' )
+		self._inputs['direct_temp'         ] = InputInfo(2, 'Подача в дом'    )
+		self._inputs['backward_temp'       ] = InputInfo(3, 'Обратка из дома' )
+		self._inputs['thermal_output'      ] = InputInfo(4, 'Теплосчётчик'    )
+		self._inputs['volume_flow'         ] = InputInfo(5, 'Расход'          )
+		self._inputs['outside_request'     ] = InputInfo(6, 'Внешний запрос'  )
+		
+	def initOutputs(self):
+		self._outputs['supply_pump'     ] = OutputInfo(0, 'Насос загрузки')
+		self._outputs['circulation_pump'] = OutputInfo(1, 'Цирк. насос'   )
+		self._outputs['valve'           ] = OutputInfo(2, 'Клапан'        )
+		self._outputs['analog_valve'    ] = OutputInfo(3, 'А. клапан'     )
 
 	def initGuiParameters(self):
 		self._parameters['max_flow_rate1'] = GuiParameter(3000, 'Расход в доме', 100, 6000, 1, 'кг/ч')
