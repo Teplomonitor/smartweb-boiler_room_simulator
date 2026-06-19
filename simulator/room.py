@@ -15,7 +15,7 @@ class Simulator(object):
 	def getOat(self):
 		oat = self._control.getOat()
 		if oat is None:
-			oat = 0
+			return 0
 			
 		return oat.getTemperature()
 
@@ -23,7 +23,7 @@ class Simulator(object):
 		return self._program.getTemperature().getValue()
 
 	def setTemperature(self, value):
-		self._program.getTemperature().setValue(value)
+		self._program.setTemperature(value)
 
 	def getMaxPower(self):
 		return self._program.getMaxPower()

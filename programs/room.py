@@ -43,9 +43,9 @@ class Room(Program):
 		super().__init__(params)
 		
 
-	def getTemperature(self): return self.getInputChannel('roomTemperature').getValue()
+	def getTemperature(self): return self.getInputChannel('roomTemperature')
 
-	def setTemperature(self, value): self.getInputChannel('roomTemperature').setValue(value)
+	def setTemperature(self, value): self.getTemperature().setValue(value)
 
 	def getRoomTemperatureSourceList(self):
 		preset = self.getPreset()
