@@ -1,9 +1,6 @@
 
 from smartnet.channelMapping import ChannelMapping as Mapping
 
-from presets.mapping import TptValveInputMapping   as TptValveInputMapping
-from presets.mapping import TptValveOutputMapping  as TptValveOutputMapping
-
 import presets.preset
 
 hostList = [
@@ -52,11 +49,11 @@ def outputMapping(channel_id, host_id): return Mapping(channel_id, 'CHANNEL_RELA
 
 
 programInputs = {
-	'TPT_VALVE'   : TptValveInputMapping(inputMapping(0, hostId['HOST_1'])),
+	'TPT_VALVE'   : [inputMapping(0, hostId['HOST_1'])],
 }
 
 programOutputs = {
-	'TPT_VALVE': TptValveOutputMapping(outputMapping(0, hostId['HOST_1']), outputMapping(1, hostId['HOST_1'])),
+	'TPT_VALVE': [outputMapping(0, hostId['HOST_1']), outputMapping(1, hostId['HOST_1'])],
 }
 
 def getPresetsList() :

@@ -1,11 +1,6 @@
 
 from smartnet.channelMapping import ChannelMapping as Mapping
 
-from presets.mapping import BoilerInputMapping          as boilerInputMapping
-from presets.mapping import BoilerOutputMapping         as boilerOutputMapping
-from presets.mapping import SwimmingPoolInputMapping    as spInputMapping
-from presets.mapping import SwimmingPoolOutputMapping   as spOutputMapping
-
 from presets.settings import SwimmingPoolSettings as spSettings
 
 import presets.preset
@@ -62,21 +57,21 @@ def outputMapping(channel_id, host_id): return Mapping(channel_id, 'CHANNEL_RELA
 
 
 programInputs = {
-	'SWIMMING_POOL' : spInputMapping     (
+	'SWIMMING_POOL' : [
 		inputMapping(0, hostId['HOST_1'])
-	),
-	'BOILER'        : boilerInputMapping (inputMapping(4, hostId['HOST_1'])),
+	],
+	'BOILER'        : [inputMapping(4, hostId['HOST_1'])],
 }
 
 programOutputs = {
-	'SWIMMING_POOL' : spOutputMapping(
+	'SWIMMING_POOL' : [
 		outputMapping(0, hostId['HOST_1']),
 		outputMapping(1, hostId['HOST_1'])
-	),
-	'BOILER'        : boilerOutputMapping(
-		pump    = outputMapping(3, hostId['HOST_1']),
-		burner1 = outputMapping(4, hostId['HOST_1'])
-	),
+	],
+	'BOILER'        : [
+		outputMapping(3, hostId['HOST_1']),
+		outputMapping(4, hostId['HOST_1'])
+	],
 }
 
 def getPresetsList() :

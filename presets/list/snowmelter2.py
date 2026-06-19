@@ -1,21 +1,6 @@
 
 from smartnet.channelMapping import ChannelMapping as Mapping
 
-from presets.mapping import HeatingCircuitInputMapping  as hcInputMapping
-from presets.mapping import HeatingCircuitOutputMapping as hcOutputMapping
-from presets.mapping import RoomInputMapping            as roomInputMapping
-from presets.mapping import RoomOutputMapping           as roomOutputMapping
-from presets.mapping import DhwInputMapping             as dhwInputMapping
-from presets.mapping import DhwOutputMapping            as dhwOutputMapping
-from presets.mapping import BoilerInputMapping          as boilerInputMapping
-from presets.mapping import BoilerOutputMapping         as boilerOutputMapping
-from presets.mapping import CascadeInputMapping         as cascadeInputMapping
-from presets.mapping import CascadeOutputMapping        as cascadeOutputMapping
-from presets.mapping import OatInputMapping             as oatInputMapping
-from presets.mapping import OatOutputMapping            as oatOutputMapping
-from presets.mapping import SnowMelterInputMapping      as smInputMapping
-from presets.mapping import SnowMelterOutputMapping     as smOutputMapping
-
 from presets.settings import HeatingCircuitSettings as hcSettings
 from presets.settings import DhwSettings            as dhwSettings
 from presets.settings import CascadeSettings        as cascadeSettings
@@ -131,29 +116,29 @@ def outputMapping(channel_id, host_id): return Mapping(channel_id, 'CHANNEL_RELA
 
 
 programInputs = {
-	'HEATING_CIRCUIT_1' : hcInputMapping     (inputMapping(0, hostId['HOST_1'])),
-	'HEATING_CIRCUIT_2' : hcInputMapping     (inputMapping(1, hostId['HOST_1'])),
-	'ROOM_DEVICE_1'     : roomInputMapping   (inputMapping(2, hostId['HOST_1'])),
-	'ROOM_DEVICE_2'     : roomInputMapping   (inputMapping(3, hostId['HOST_1'])),
-	'DHW'               : dhwInputMapping    (inputMapping(4, hostId['HOST_1'])),
-	'BOILER_1'          : boilerInputMapping (),
-	'BOILER_2'          : boilerInputMapping (),
-	'CASCADE_MANAGER'   : cascadeInputMapping(inputMapping(0, hostId['HOST_2'])),
-	'OUTDOOR_SENSOR'    : oatInputMapping    (inputMapping(1, hostId['HOST_2'])),
-	'SNOW_MELTER'       : smInputMapping     (inputMapping(2, hostId['HOST_2']), inputMapping(3, hostId['HOST_2']), inputMapping(4, hostId['HOST_2'])),
+	'HEATING_CIRCUIT_1' : [inputMapping(0, hostId['HOST_1'])],
+	'HEATING_CIRCUIT_2' : [inputMapping(1, hostId['HOST_1'])],
+	'ROOM_DEVICE_1'     : [inputMapping(2, hostId['HOST_1'])],
+	'ROOM_DEVICE_2'     : [inputMapping(3, hostId['HOST_1'])],
+	'DHW'               : [inputMapping(4, hostId['HOST_1'])],
+	'BOILER_1'          : [],
+	'BOILER_2'          : [],
+	'CASCADE_MANAGER'   : [inputMapping(0, hostId['HOST_2'])],
+	'OUTDOOR_SENSOR'    : [inputMapping(1, hostId['HOST_2'])],
+	'SNOW_MELTER'       : [inputMapping(2, hostId['HOST_2']), inputMapping(3, hostId['HOST_2']), inputMapping(4, hostId['HOST_2'])],
 }
 
 programOutputs = {
-	'HEATING_CIRCUIT_1' : hcOutputMapping(analogValve = outputMapping(6, hostId['HOST_1']), pump = outputMapping(0, hostId['HOST_1'])),
-	'HEATING_CIRCUIT_2' : hcOutputMapping(analogValve = outputMapping(7, hostId['HOST_1']), pump = outputMapping(1, hostId['HOST_1'])),
-	'ROOM_DEVICE_1'     : roomOutputMapping(),
-	'ROOM_DEVICE_2'     : roomOutputMapping(),
-	'DHW'               : dhwOutputMapping(outputMapping(2, hostId['HOST_1']), outputMapping(3, hostId['HOST_1'])),
-	'BOILER_1'          : boilerOutputMapping(pump = outputMapping(0, hostId['HOST_2']), burner1 = outputMapping(1, hostId['HOST_2'])),
-	'BOILER_2'          : boilerOutputMapping(pump = outputMapping(2, hostId['HOST_2']), burner1 = outputMapping(3, hostId['HOST_2'])),
-	'CASCADE_MANAGER'   : cascadeOutputMapping(),
-	'OUTDOOR_SENSOR'    : oatOutputMapping(),
-	'SNOW_MELTER'       : smOutputMapping(None, outputMapping(4, hostId['HOST_2']), outputMapping(6, hostId['HOST_2'])),
+	'HEATING_CIRCUIT_1' : [outputMapping(6, hostId['HOST_1']), None, None, outputMapping(0, hostId['HOST_1'])],
+	'HEATING_CIRCUIT_2' : [outputMapping(7, hostId['HOST_1']), None, None, outputMapping(1, hostId['HOST_1'])],
+	'ROOM_DEVICE_1'     : [],
+	'ROOM_DEVICE_2'     : [],
+	'DHW'               : [outputMapping(2, hostId['HOST_1']), outputMapping(3, hostId['HOST_1'])],
+	'BOILER_1'          : [outputMapping(0, hostId['HOST_2']), outputMapping(1, hostId['HOST_2'])],
+	'BOILER_2'          : [outputMapping(2, hostId['HOST_2']), outputMapping(3, hostId['HOST_2'])],
+	'CASCADE_MANAGER'   : [],
+	'OUTDOOR_SENSOR'    : [],
+	'SNOW_MELTER'       : [None, outputMapping(4, hostId['HOST_2']), outputMapping(6, hostId['HOST_2'])],
 }
 
 def getPresetsList() :
