@@ -13,11 +13,17 @@ import datetime
 import main
 import mainThread
 
+from functions.timeOnDelay  import TimeOnDelay
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
 
 
 class Scenario(object):
+	RELAY_OFF = 0
+	RELAY_ON  = 255
+	RELAY_MIN = 1
+	RELAY_MAX = 254
+	
 	def __init__(self, controllerHost, sim):
 		self._controllerHost = controllerHost
 		self._status = 'IN_PROGRESS'
@@ -53,24 +59,60 @@ class Scenario(object):
 	def is_stopped(self):
 		return (mainThread.taskEnable() == False) or self._EventStop.is_set()
 	
-	def wait(self, delay):
-		if self.is_stopped():
-			return False
-		
-		if delay < 3:
-			time.sleep(delay)
-			return True
-		
+	
+	def simple_wait(self, delay):
+		time.sleep(delay)
+		return True
+	
+	def delay_with_break_check(self, delay):
 		i = 0
+		STEP = 1
 		while i < delay:
 			if self.is_stopped():
 				return False
 		
-			i += 1
-			time.sleep(1)
+			i += STEP
+			time.sleep(STEP)
 		
 		return True
 	
+	# don't do anything for "delay" seconds
+	def wait(self, delay):
+		if delay < 3: return self.simple_wait(delay)
+		else        : return self.delay_with_break_check(delay)
+	
+	# wait for event() to become True
+	def wait_event(self, event, timeout):
+		timeoutDelay = TimeOnDelay()
+		
+		while True:
+			if self.wait(1) == False:
+				return False
+			
+			result = event()
+			
+			if result:
+				return True
+			
+			if timeoutDelay.Get(True, timeout):
+				return False
+			
+	# wait for the state() remain True for "duration" time
+	def wait_state_permanence(self, state, duration):
+		waitDelay = TimeOnDelay()
+		
+		while True:
+			if self.wait(1) == False:
+				return False
+			
+			result = state()
+			
+			if not result:
+				return False
+			
+			if waitDelay.Get(True, duration):
+				return True
+			
 	def setSensorValue(self, sensor, value):
 		self.setManual(sensor, True)
 		sensor.setValue(value, True)
