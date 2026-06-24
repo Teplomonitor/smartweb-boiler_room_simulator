@@ -59,7 +59,7 @@ def update_ip_list(data, ip):
 		now = time.time()
 		
 		if ip in ip_list:
-			printLog(f'update {ip}')
+#			printLog(f'update {ip}')
 			result = 'UPDATE_IP'
 		else:
 			printLog(f'add new udp-controller {ip}')
