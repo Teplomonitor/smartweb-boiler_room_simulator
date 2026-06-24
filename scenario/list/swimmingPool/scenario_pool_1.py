@@ -6,9 +6,8 @@ from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
 from scenario.scenario import Scenario   as Parent
 
-from functions.timeOnDelay  import TimeOnDelay  as TimeOnDelay
-
 class Scenario(Parent):
+	
 	def __init__(self, controllerHost, sim):
 		super().__init__(controllerHost, sim)
 		
@@ -32,44 +31,13 @@ class Scenario(Parent):
 	def readRequiredPoolTemperatureValue(self): return self._pool.readParameterValue('currentRequiredPoolTemperature')
 	def getLoadingPumpState(self): return self._pool.getLoadingPumpState().getValue()
 	
+	def loadingPumpIsOn (self): return self.getLoadingPumpState() != self.RELAY_OFF
+	def loadingPumpIsOff(self): return not self.loadingPumpIsOn()
+	
 	def setPoolTemperature(self, value):
 		t = self._pool.getTemperature()
 		self.setSensorValue(t, value)
-		
-	def waitPumpSwitchOn(self, delay):
-		timeoutDelay = TimeOnDelay()
-		
-		pump = False
-		
-		while True:
-			if self.wait(1) == False:
-				return False
-			
-			pump = self.getLoadingPumpState()
-			if pump:
-				break
-			
-			if timeoutDelay.Get(True, delay):
-				return False
-			
-		return True
 	
-	def waitPumpSwitchOff(self, delay):
-		timeoutDelay = TimeOnDelay()
-		
-		while True:
-			if self.wait(1) == False:
-				return False
-			
-			pump = self.getLoadingPumpState()
-			
-			if pump == False:
-				break
-			
-			if timeoutDelay.Get(True, delay):
-				return False
-			
-		return True
 	
 	def run(self):
 		printLog('читаем требуемую температуру бассейна')
@@ -79,7 +47,7 @@ class Scenario(Parent):
 			self._status = 'FAIL'
 			printError('Проблема! не удалось получить уставку бассейна')
 			return
-
+		
 		self.wait(1)
 		
 		poolHysteresis = 1
@@ -90,7 +58,7 @@ class Scenario(Parent):
 
 		printLog('Ждём, что насос загрузки выключится')
 		pumpSwitchOffTimeout = 60
-		if self.waitPumpSwitchOff(pumpSwitchOffTimeout):
+		if self.wait_event(self.loadingPumpIsOff, pumpSwitchOffTimeout):
 			printLog('Хорошо, насос выключен')
 		else:
 			self._status = 'FAIL'
@@ -106,7 +74,7 @@ class Scenario(Parent):
 		self.wait(1)
 		
 		pumpSwitchOnTimeout = 60
-		if self.waitPumpSwitchOn(pumpSwitchOnTimeout):
+		if self.wait_event(self.loadingPumpIsOn, pumpSwitchOnTimeout):
 			printLog('Хорошо! Бассейн видит температуру воды, и реагирует на неё')
 			self._status = 'OK'
 		else:
