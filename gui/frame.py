@@ -401,6 +401,13 @@ class ConsoleFrame ( wx.Frame ):
 	
 	def printText(self, text):
 		self.ConsoleTextCtrl.AppendText(text)
+	
+	def setTextColor(self, color):
+		if color == 'GREEN':
+			self.ConsoleTextCtrl.SetForegroundColour( wx.Colour( 14, 173, 5 ) )
+		elif color == 'RED':
+			self.ConsoleTextCtrl.SetForegroundColour( wx.Colour( 173, 40, 40 ) )
+			
 
 	def OnExitButtonPress( self, event ):
 		self.doClose(event)
@@ -457,6 +464,9 @@ class guiThread():
 	def printConsoleTextNow(self, text):
 		self._consoleFrame.printText(text)
 		self._consoleFrame.printText('\n')
+		
+	def setTextColor(self, color):
+		self._consoleFrame.setTextColor(color)
 		
 	def run(self):
 		self._app.MainLoop()
