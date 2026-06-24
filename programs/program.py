@@ -163,9 +163,10 @@ class Program(object):
 				outputId    = data[2]
 				outputValue = data[3]
 				
-				if outputId < len(self._outputs):
-					self.setOutputValue(outputId, outputValue)
-		
+				for out in self._outputs.values():
+					if out.getId() == outputId:
+						out.setValue(outputValue)
+						break
 		
 	def getInputs (self): return self._inputs
 	def getOutputs(self): return self._outputs
@@ -188,11 +189,11 @@ class Program(object):
 	def getGuiColor (self): return 'default'
 
 	def disableGuiControl(self):
-		for prgInput in self._inputs:
+		for prgInput in self._inputs.values():
 			prgInput.disableGuiControl()
 			
 	def enableGuiControl(self):
-		for prgInput in self._inputs:
+		for prgInput in self._inputs.values():
 			prgInput.enableGuiControl()
 		
 	def bindInput(self, channel_id, mapping):
@@ -349,9 +350,9 @@ class Program(object):
 		logDirInputs  = os.path.join(titleCommon, 'inputs')
 		logDirOutputs = os.path.join(titleCommon, 'outputs')
 		
-		for programInput in self._inputs:
+		for programInput in self._inputs.values():
 			programInput.saveLog(logDirInputs)
-		for programOutput in self._outputs:
+		for programOutput in self._outputs.values():
 			programOutput.saveLog(logDirOutputs)
 	
 	# TODO: move to derived consumer class
