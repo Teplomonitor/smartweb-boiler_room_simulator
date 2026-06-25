@@ -91,7 +91,7 @@ class Scenario(Parent):
 		self.wait(1)
 
 		circulationPumpWorkCheckDuration = 5*60
-		circulationPumpWorkCheckTimeout  = 1*60
+		circulationPumpWorkCheckTimeout  = 30
 		
 		workModes = [
 			'CIRCULATION_ON'    ,
@@ -106,13 +106,8 @@ class Scenario(Parent):
 				self._status = 'FAIL'
 				return False
 				
-			if not self.wait_event(self.circulationPumpIsOn, circulationPumpWorkCheckTimeout):
-				printError('Плохо, насос циркуляции не включается')
-				self._status = 'FAIL'
-				return False
-			
-			if not self.wait_state_permanence(self.circulationPumpIsOn, circulationPumpWorkCheckDuration):
-				printError('Плохо, насос циркуляции выключается')
+			if not self.wait_state_permanence(self.circulationPumpIsOn, circulationPumpWorkCheckDuration, circulationPumpWorkCheckTimeout):
+				printError('Плохо, насос циркуляции не работает')
 				self._status = 'FAIL'
 				return False
 				
@@ -133,14 +128,9 @@ class Scenario(Parent):
 			return False
 			
 		circulationPumpWorkCheckDuration = 5*60
-		circulationPumpWorkCheckTimeout  = 1*60
+		circulationPumpWorkCheckTimeout  = 30
 		
-		if not self.wait_event(self.circulationPumpIsOn, circulationPumpWorkCheckTimeout):
-			printError('Плохо, насос циркуляции не включается')
-			self._status = 'FAIL'
-			return False
-		
-		if not self.wait_state_permanence(self.circulationPumpIsOn, circulationPumpWorkCheckDuration):
+		if not self.wait_state_permanence(self.circulationPumpIsOn, circulationPumpWorkCheckDuration, circulationPumpWorkCheckTimeout):
 			printError('Плохо, насос циркуляции выключается')
 			self._status = 'FAIL'
 			return False
@@ -162,14 +152,9 @@ class Scenario(Parent):
 			return False
 			
 		circulationPumpWorkCheckDuration = 5*60
-		circulationPumpWorkCheckTimeout  = 1*60
+		circulationPumpWorkCheckTimeout  = 30
 		
-		if not self.wait_event(self.circulationPumpIsOff, circulationPumpWorkCheckTimeout):
-			printError('Плохо, насос циркуляции не выключается')
-			self._status = 'FAIL'
-			return False
-		
-		if not self.wait_state_permanence(self.circulationPumpIsOff, circulationPumpWorkCheckDuration):
+		if not self.wait_state_permanence(self.circulationPumpIsOff, circulationPumpWorkCheckDuration, circulationPumpWorkCheckTimeout):
 			printError('Плохо, насос циркуляции включился')
 			self._status = 'FAIL'
 			return False
@@ -301,8 +286,9 @@ class Scenario(Parent):
 
 		printLog('Ждём, что насос загрузки выключится')
 		pumpSwitchOffTimeout = 60
+		pumpSwitchOffDuration = 5*60
 		
-		if self.wait_event(self.loadingPumpIsOff, pumpSwitchOffTimeout):
+		if self.wait_state_permanence(self.loadingPumpIsOff, pumpSwitchOffDuration, pumpSwitchOffTimeout):
 			printLog('Хорошо, насос выключен')
 		else:
 			self._status = 'FAIL'

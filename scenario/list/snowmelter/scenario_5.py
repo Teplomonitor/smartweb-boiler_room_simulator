@@ -50,8 +50,16 @@ class Scenario(Parent):
 	def getCirculationPumpState(self):
 		return self._snowmelter.getSecondaryPumpState().getValue()
 	
+	def circulationPumpIsOn (self): return self.getCirculationPumpState() != self.RELAY_OFF
+	def circulationPumpIsOff(self): return self.getCirculationPumpState() == self.RELAY_OFF
+	
 	def getLoadingPumpState(self):
 		return self._snowmelter.getPrimaryPumpState().getValue()
+	
+	def loadingPumpIsOn (self): return self.getLoadingPumpState() != self.RELAY_OFF
+	def loadingPumpIsOff(self): return not self.loadingPumpIsOn()
+	
+	def pumpsAreOff(self): return self.loadingPumpIsOff() and self.circulationPumpIsOff()
 	
 	def setPlateTemperature(self, value):
 		t = self._snowmelter.getPlateTemperature()
@@ -60,26 +68,6 @@ class Scenario(Parent):
 	def setOutdoorTemperature(self, value):
 		t = self._outdoor.getOutdoorTemperature()
 		self.setSensorValue(t, value)
-		
-	def waitOutdoorTemperatureSet(self, reqOat, condition, timeout):
-		oatSetTimeoutDelay = TimeOnDelay()
-		
-		while True:
-			self.wait(5)
-			
-			oat = self.readSnowmelterOutdoorTemperature()
-			
-			if condition == 'more':
-				if oat > reqOat:
-					return True
-			elif condition == 'less':
-				if oat < reqOat:
-					return True
-				
-			if oatSetTimeoutDelay.Get(True, timeout):
-				return False
-			
-		return False
 		
 		
 	def setMediumOutdoorTemperature(self):
@@ -93,40 +81,6 @@ class Scenario(Parent):
 		self.setOutdoorTemperature(midTemp)
 		return True
 		
-	def waitPumpSwitchOn(self, delay):
-		pumpNotWorkingDelay = TimeOnDelay()
-		
-		pump = False
-		
-		while not pump:
-			if self.wait(1) == False:
-				return False
-			
-			pump = self.getCirculationPumpState()
-			if pumpNotWorkingDelay.Get(not pump, delay):
-				return False
-			
-		return True
-	
-	def waitPumpsSwitchOff(self, delay, timeout):
-		pumpNotWorkingDelay = TimeOnDelay()
-		testTimeoutDelay    = TimeOnDelay()
-		
-		while True:
-			if self.wait(1) == False:
-				return False
-			
-			pump1 = self.getCirculationPumpState()
-			pump2 = self.getLoadingPumpState()
-			
-			snowmelterIsWorking = (pump1 or pump2)
-			if pumpNotWorkingDelay.Get(not snowmelterIsWorking, delay):
-				return True
-			
-			if testTimeoutDelay.Get(snowmelterIsWorking, timeout):
-				return False
-		return False
-	
 	def setAlarmSignal(self, value):
 		t = self._pressure.getPressure()
 		state = 'open' if value else 'short'
@@ -155,8 +109,8 @@ class Scenario(Parent):
 		printLog('ждём, пока система устаканится')
 		self.wait(30)
 		
-		printLog('ждём, пока насос циркуляции не включится')
-		if self.waitPumpSwitchOn(60):
+		printLog('ждём, когда насос циркуляции включится')
+		if self.wait_event(self.circulationPumpIsOn, 60):
 			printLog('Хорошо, включился')
 		else:
 			self._status = 'FAIL'
@@ -168,15 +122,16 @@ class Scenario(Parent):
 		printLog('включаем сигнал низкого давление в программе подпитки')
 		self.setAlarmSignal(True)
 		
-		pumpsSwitchOffTestDuration = 60
+		pumpsSwitchOffTestDuration = 5*60
 		
 		printLog(f'Ждём, пока насосы не выключатся хотя бы на {pumpsSwitchOffTestDuration} секунд')
 		self.wait(10)
 				
 		pumpsSwitchOffDelay = 60
 		testExtraDelay      = 60
-		
-		if self.waitPumpsSwitchOff(pumpsSwitchOffTestDuration, pumpsSwitchOffDelay + pumpsSwitchOffTestDuration + testExtraDelay):
+		timeout = pumpsSwitchOffDelay + pumpsSwitchOffTestDuration + testExtraDelay
+
+		if self.wait_state_permanence(self.pumpsAreOff, pumpsSwitchOffTestDuration, timeout):
 			printLog('Хорошо!')
 			self._status = 'OK'
 		else:

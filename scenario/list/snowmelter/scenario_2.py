@@ -2,8 +2,6 @@
 @author: admin
 '''
 
-import time
-
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
 from scenario.scenario import Scenario   as Parent
@@ -44,6 +42,9 @@ class Scenario(Parent):
 	def getCirculationPumpState(self):
 		return self._snowmelter.getSecondaryPumpState().getValue()
 	
+	def circulationPumpIsOn (self): return self.getCirculationPumpState() != self.RELAY_OFF
+	def circulationPumpIsOff(self): return self.getCirculationPumpState() == self.RELAY_OFF
+	
 	def setBacwardFlowTemperature(self, value):
 		t = self._snowmelter.getBackwardFlowTemperature()
 		self.setSensorValue(t, value)
@@ -56,38 +57,6 @@ class Scenario(Parent):
 		t = self._outdoor.getOutdoorTemperature()
 		self.setSensorValue(t, value)
 		
-	def waitPumpSwitchOn(self, delay):
-		pumpNotWorkingDelay = TimeOnDelay()
-		
-		pump = False
-		
-		while not pump:
-			if self.wait(1) == False:
-				return False
-			
-			pump = self.getCirculationPumpState()
-			if pumpNotWorkingDelay.Get(not pump, delay):
-				return False
-			
-		return True
-	
-	def waitPumpSwitchOff(self, delay, timeout):
-		pumpNotWorkingDelay = TimeOnDelay()
-		testTimeoutDelay    = TimeOnDelay()
-		
-		pump = False
-		
-		while True:
-			if self.wait(1) == False:
-				return False
-			
-			pump = self.getCirculationPumpState()
-			if pumpNotWorkingDelay.Get(not pump, delay):
-				return True
-			
-			if testTimeoutDelay.Get(True, timeout):
-				return False
-		return False
 	
 	def setMediumOutdoorTemperature(self):
 		minTemp = self.readMinOutdoorTemperature()
@@ -124,8 +93,8 @@ class Scenario(Parent):
 		if self.wait(30) == False:
 			return
 		
-		printLog('ждём, пока насос циркуляции не включится')
-		if self.waitPumpSwitchOn(60):
+		printLog('ждём, когда насос циркуляции включится')
+		if self.wait_event(self.circulationPumpIsOn, 60):
 			printLog('Хорошо, включился')
 		else:
 			self._status = 'FAIL'
@@ -137,12 +106,12 @@ class Scenario(Parent):
 		printLog('делаем плиту горячей')
 		self.setPlateTemperature(plateSetpoint + 2.1)
 		
-		pumpSwitchOffDuration = 60
+		pumpSwitchOffDuration = 5*60
+		pumpSwitchOffTimeout  = 2*60
 		
 		printLog(f'Ждём, пока насос циркуляции не выключится хотя бы на {pumpSwitchOffDuration} секунд')
-		self.wait(10)
 		
-		if self.waitPumpSwitchOff(pumpSwitchOffDuration, 5*60):
+		if self.wait_state_permanence(self.circulationPumpIsOff, pumpSwitchOffDuration, pumpSwitchOffTimeout):
 			printLog('Хорошо!')
 			self._status = 'OK'
 		else:

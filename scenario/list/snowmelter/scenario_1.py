@@ -2,13 +2,11 @@
 @author: admin
 '''
 
-import time
 
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
 from scenario.scenario import Scenario   as Parent
 
-from functions.timeOnDelay  import TimeOnDelay  as TimeOnDelay
 
 class Scenario(Parent):
 	def __init__(self, controllerHost, sim):
@@ -60,42 +58,13 @@ class Scenario(Parent):
 	def getCirculationPumpState(self):
 		return self._snowmelter.getSecondaryPumpState().getValue()
 	
+	def circulationPumpIsOn (self): return self.getCirculationPumpState() != self.RELAY_OFF
+	def circulationPumpIsOff(self): return self.getCirculationPumpState() == self.RELAY_OFF
+	
 	def setBacwardFlowTemperature(self, value):
 		t = self._snowmelter.getBackwardFlowTemperature()
 		self.setSensorValue(t, value)
 		
-	def waitPumpSwitchOn(self, delay):
-		pumpNotWorkingDelay = TimeOnDelay()
-		
-		pump = False
-		
-		while not pump:
-			if self.wait(1) == False:
-				return False
-			
-			pump = self.getCirculationPumpState()
-			if pumpNotWorkingDelay.Get(not pump, delay):
-				return False
-			
-		return True
-	
-	def waitPumpSwitchOff(self, delay, timeout):
-		pumpNotWorkingDelay = TimeOnDelay()
-		testTimeoutDelay    = TimeOnDelay()
-		
-		while True:
-			if self.wait(1) == False:
-				return False
-			
-			pump = self.getCirculationPumpState()
-			if pumpNotWorkingDelay.Get(not pump, delay):
-				return True
-			
-			if testTimeoutDelay.Get(True, timeout):
-				return False
-			
-		return False
-	
 	def run(self):
 		plateSetpoint = self.readRequiredPlateTemperatureValue()
 		
@@ -127,7 +96,7 @@ class Scenario(Parent):
 		self.wait(30)
 		
 		printLog('Waiting for circulation pump to switch on')
-		if self.waitPumpSwitchOn(60):
+		if self.wait_event(self.circulationPumpIsOn, 60):
 			printLog('ok, cirulation pump is working')
 		else:
 			self._status = 'FAIL'
@@ -139,12 +108,12 @@ class Scenario(Parent):
 		printLog('making "cold" backward flow temperature')
 		self.setBacwardFlowTemperature(tFrostProtect - 1)
 		
-		pumpSwitchOffDuration = 60
+		pumpSwitchOffDuration = 5*60
+		pumpSwitchOffTimeout  = 2*60
 		
 		printLog(f'Waiting for circulation pump to switch off for at least {pumpSwitchOffDuration} seconds')
-		self.wait(10)
 		
-		if self.waitPumpSwitchOff(pumpSwitchOffDuration, 5*60):
+		if self.wait_state_permanence(self.circulationPumpIsOff, pumpSwitchOffDuration, pumpSwitchOffTimeout):
 			printLog('Test Ok!')
 			self._status = 'OK'
 		else:

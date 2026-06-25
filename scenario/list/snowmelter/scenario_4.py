@@ -2,15 +2,9 @@
 @author: admin
 '''
 
-import time
-
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
-from scenario.scenario import Scenario   as Parent
-
-from functions.timeOnDelay  import TimeOnDelay  as TimeOnDelay
-from functions.periodicTrigger  import PeriodicTrigger  as PeriodicTrigger
-from functions.limit import limit
+from scenario.scenario import Scenario as Parent
 
 class Scenario(Parent):
 	def __init__(self, controllerHost, sim):
@@ -64,27 +58,6 @@ class Scenario(Parent):
 		t = self._outdoor.getOutdoorTemperature()
 		self.setSensorValue(t, value)
 		
-	def waitOutdoorTemperatureSet(self, reqOat, condition, timeout):
-		oatSetTimeoutDelay = TimeOnDelay()
-		
-		while True:
-			self.wait(5)
-			
-			oat = self.readSnowmelterOutdoorTemperature()
-			
-			if condition == 'more':
-				if oat > reqOat:
-					return True
-			elif condition == 'less':
-				if oat < reqOat:
-					return True
-				
-			if oatSetTimeoutDelay.Get(True, timeout):
-				return False
-			
-		return False
-		
-		
 	def setMediumOutdoorTemperature(self):
 		minTemp = self.readMinOutdoorTemperature()
 		maxTemp = self.readMaxOutdoorTemperature()
@@ -95,10 +68,11 @@ class Scenario(Parent):
 		midTemp = (minTemp + maxTemp)/2
 		self.setOutdoorTemperature(midTemp)
 		
-		self.waitOutdoorTemperatureSet(maxTemp, 'less', 5*60)
-		self.waitOutdoorTemperatureSet(minTemp, 'more', 5*60)
+		def outdoorTemperatureIsOk():
+			oat = self.readSnowmelterOutdoorTemperature()
+			return oat > minTemp and oat < maxTemp
 		
-		return True
+		return self.wait_event(self.outdoorTemperatureIsOk, 5*60, eventCheckPeriod = 5)
 
 	def getAverageValue(self, array, period):
 		pass
@@ -106,70 +80,21 @@ class Scenario(Parent):
 	def checkFlowTemperatureControl(self):
 		tReq = self.readRequiredFlowTemperature()
 		
-		bigDtDelay         = TimeOnDelay()
-		flowControlTimeout = TimeOnDelay()
-		flowControlTimer   = TimeOnDelay()
-		checkTrigger       = PeriodicTrigger()
+		def getRequiredValue():
+			return tReq
 		
-		checkPeriod         = 10
-		bigDtTimeout        = 4*60
 		flowControlDuration = 10*60
 		maxCheckDuration    = 30*60
 		
-		dtAvrMax = 3
-		dtMax = 5
+		result = self.wait_value_maintaining(
+			self.getDirectFlowTemperature,
+			getRequiredValue,
+			flowControlDuration,
+			maxCheckDuration,
+			supplyValueHandler = self.getSourceTemperature
+			)
 		
-		dtAvr = 0
-		dtAvrSource = 0
-		a = 0.1
-		b = 1 - a
-		
-#		tempArray = []
-#		sourceTempArray = []
-#		timeArray = []
-		
-		
-		while True:
-			if self.wait(1) == False:
-				return False
-			
-#			now = time.time()
-
-			temp       = self.getDirectFlowTemperature()
-			sourceTemp = self.getSourceTemperature()
-			
-			
-#			tempArray      .append(temp)
-#			sourceTempArray.append(sourceTemp)
-#			timeArray      .append(now)
-			
-			
-			dt = temp - tReq
-			dtAvr = dt*a + dtAvr*b
-			
-			dtSource = sourceTemp - tReq
-			dtAvrSource = dtSource*a + dtAvrSource*b
-			
-			if dtAvrSource < 0:
-				dtAvrMax = -dtAvrSource + 5
-			else:
-				dtAvrMax = limit(3, dtAvrSource/2, 10)
-			
-			
-			if checkTrigger.Get(checkPeriod):
-				printLog(f'Средняя разница температур {dtAvr:.1f}K ({dtAvrMax:.1f})')
-				
-			if flowControlTimer.Get(abs(dtAvr) < dtAvrMax, flowControlDuration):
-				return True
-			
-			if bigDtDelay.Get(abs(dt) > dtMax, bigDtTimeout):
-				printError(f'Проблема! Слишком большая разница температур ({dt} > {dtMax})')
-				return False
-			
-			if flowControlTimeout.Get(True, maxCheckDuration):
-				printError(f'Проблема! Программа не смогла удержать температуру в допустимых пределах ({dtAvrMax}K)')
-				return False
-			
+		return result
 	
 	def run(self):
 		plateSetpoint = self.readRequiredPlateTemperatureValue()
@@ -195,6 +120,7 @@ class Scenario(Parent):
 		self.wait(30)
 		
 		
+		printLog('проверяем, что температура держится в пределах заданного значения')
 		result = self.checkFlowTemperatureControl()
 		
 		if result:
