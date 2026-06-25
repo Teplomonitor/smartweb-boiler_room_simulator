@@ -13,7 +13,9 @@ import datetime
 import main
 import mainThread
 
+from functions.limit import limit
 from functions.timeOnDelay  import TimeOnDelay
+from functions.periodicTrigger import PeriodicTrigger
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
 
@@ -82,14 +84,17 @@ class Scenario(object):
 		else        : return self.delay_with_break_check(delay)
 	
 	# wait for event() to become True
-	def wait_event(self, event, timeout):
+	def wait_event(self, event, timeout, arg = None, eventCheckPeriod = 1):
 		timeoutDelay = TimeOnDelay()
 		
 		while True:
-			if self.wait(1) == False:
+			if self.wait(eventCheckPeriod) == False:
 				return False
 			
-			result = event()
+			if arg is None:
+				result = event()
+			else:
+				result = event(arg)
 			
 			if result:
 				return True
@@ -98,7 +103,12 @@ class Scenario(object):
 				return False
 			
 	# wait for the state() remain True for "duration" time
-	def wait_state_permanence(self, state, duration):
+	def wait_state_permanence(self, state, duration, timeout = 0):
+		if timeout:
+			result = self.wait_event(state, timeout)
+			if not result:
+				return False
+		
 		waitDelay = TimeOnDelay()
 		
 		while True:
@@ -112,7 +122,68 @@ class Scenario(object):
 			
 			if waitDelay.Get(True, duration):
 				return True
+	
+	# wait to make sure value is same as setpoint
+	# this function used to check how accurate program can control setpoint
+	def wait_value_maintaining(self
+							, valueHandler               # value we need to sustain (i.e. heating circuit temperature)
+							, requiredValueHandler       # required value (i.e. required temperature) 
+							, duration  = 10*60          # check duration. Value inside bounds should be at least this time to pass test
+							, timeout   = 30*60          # value out of range timeout
+							, dtTimeout = 2*60           # average error timeout
+							, dtAvrMax  = 3              # max average error
+							, dtMax     = 5              # max absolute error
+							, supplyValueHandler = None  # value of the source that give us supply (i.e. boiler temperature)
+							):
+		
+		bigDtDelay         = TimeOnDelay()
+		checkTrigger       = PeriodicTrigger()
+		flowControlTimeout = TimeOnDelay()
+		flowControlTimer   = TimeOnDelay()
+		
+		dtAvr = 0
+		dtAvrSource = 0
+		a = 0.1
+		b = 1 - a
+		checkPeriod = 10
+		
+		while True:
+			if self.wait(1) == False:
+				return False
 			
+			temp       = valueHandler()
+			tReq = requiredValueHandler()
+			
+			
+			dt = temp - tReq
+			dtAvr = dt*a + dtAvr*b
+			
+			if supplyValueHandler:
+				sourceTemp = supplyValueHandler()
+				dtSource = sourceTemp - tReq
+				dtAvrSource = dtSource*a + dtAvrSource*b
+				
+				if dtAvrSource < 0:
+					dtAvrMax = -dtAvrSource + 5
+				else:
+					dtAvrMax = limit(3, dtAvrSource/2, 10)
+			
+			
+			if checkTrigger.Get(checkPeriod):
+				printLog(f'Среднее расхождение {dtAvr:.1f} ({dtAvrMax:.1f})')
+				
+			if flowControlTimer.Get(abs(dtAvr) < dtAvrMax, duration):
+				return True
+			
+			if bigDtDelay.Get(abs(dt) > dtMax, dtTimeout):
+				printError(f'Проблема! Слишком большое расхождение ({dt} > {dtMax})')
+				return False
+			
+			if flowControlTimeout.Get(True, timeout):
+				printError(f'Проблема! Программа не смогла удержать параметр в допустимых пределах ({dtAvrMax})')
+				return False
+	
+	
 	def setSensorValue(self, sensor, value):
 		self.setManual(sensor, True)
 		sensor.setValue(value, True)
