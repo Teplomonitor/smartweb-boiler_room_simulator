@@ -165,7 +165,7 @@ class can_thread(threading.Thread):
 		
 		if now - self._send_scan_time > 60:
 			self._send_scan_time = now
-			print('send SCAN UDP message')
+#			print('send SCAN UDP message')
 			send_broadcast_udp_packet(scan_msg, self._port)
 		
 		return 0
