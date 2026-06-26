@@ -6,8 +6,6 @@ from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
 from scenario.scenario import Scenario   as Parent
 
-from functions.timeOnDelay  import TimeOnDelay  as TimeOnDelay
-
 class Scenario(Parent):
 	def __init__(self, controllerHost, sim):
 		super().__init__(controllerHost, sim)
