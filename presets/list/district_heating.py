@@ -8,7 +8,7 @@ from presets.settings import DistrictHeatingSettings as dhSettings
 
 import presets.preset
 
-def getHostId():
+def get_host_id():
 	return 123
 
 hostList = [

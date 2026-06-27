@@ -290,7 +290,7 @@ class MainFrame ( wx.Frame ):
 		programInputs = programInfo.get_inputs()
 		inputFound = False
 		for programInput in programInputs.values():
-			if programInput.isMapped():
+			if programInput.is_mapped():
 				self.addInput(ProgramInputsBox, programInput)
 				inputFound = True
 				
@@ -303,7 +303,7 @@ class MainFrame ( wx.Frame ):
 		programOutputs = programInfo.get_outputs()
 		outputFound = False
 		for programOutput in programOutputs.values():
-			if programOutput.isMapped():
+			if programOutput.is_mapped():
 				self.addOutput(ProgramOutputsBox, programOutput)
 				outputFound = True
 			

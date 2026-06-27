@@ -71,7 +71,7 @@ class sensor_report_thread(threading.Thread):
 		for sim in self._simulator._simList:
 			program = sim._program
 			for programInput in program.get_inputs().values():
-				if programInput.isMapped() and programInput.getMapping().getHostId() in selfIdList:
+				if programInput.is_mapped() and programInput.get_mapping().get_host_id() in selfIdList:
 					if ssr.reportSensorValue(programInput):
 						time.sleep(0.1)
 						
@@ -138,13 +138,13 @@ class Simulator(threading.Thread):
 			programId = program.get_id()
 			i = 0
 			for output in program.get_outputs().values():
-				mapping = output.getMapping()
+				mapping = output.get_mapping()
 				if mapping:
 					for ctrlIo in self._controllerIo:
-						if (ctrlIo.get_id() == mapping.getHostId()) and (mapping.getChannelType() == 'CHANNEL_RELAY'):
+						if (ctrlIo.get_id() == mapping.get_host_id()) and (mapping.get_channel_type() == 'CHANNEL_RELAY'):
 							ctrlOutputMapping = ChannelMapping(i, 'CHANNEL_OUTPUT', programId)
-							ctrlIo.setOutputMapping(mapping.getChannelId(), ctrlOutputMapping)
-							ctrlIo.reportOutputMapping(mapping.getChannelId())
+							ctrlIo.setOutputMapping(mapping.get_channel_id(), ctrlOutputMapping)
+							ctrlIo.reportOutputMapping(mapping.get_channel_id())
 							
 					time.sleep(0.1)
 				i = i + 1

@@ -65,15 +65,15 @@ class Program(object):
 		for i in range(len(mappings)):
 			for channel in self._inputs.values():
 				if channel.get_id() == i:
-					channel.setMapping(mappings[i])
+					channel.set_mapping(mappings[i])
 					break
 			
 	def init_output_mappings(self, mappings):
 		for i in range(len(mappings)):
 			for channel in self._outputs.values():
 				if channel.get_id() == i:
-					channel.setMapping(mappings[i])
-					if channel.isMapped():
+					channel.set_mapping(mappings[i])
+					if channel.is_mapped():
 						self.read_output(channel)
 					break
 	
@@ -208,8 +208,8 @@ class Program(object):
 				snc.ProgramType['PROGRAM'],
 				snc.ProgramParameter['INPUT_MAPPING']['id'],
 				channel_id,
-				mapping.getRaw(0),
-				mapping.getRaw(1)
+				mapping.get_raw(0),
+				mapping.get_raw(1)
 			])
 			return request
 
@@ -260,8 +260,8 @@ class Program(object):
 				snc.ProgramType['PROGRAM'],
 				snc.ProgramParameter['OUTPUT_MAPPING']['id'],
 				channel_id,
-				mapping.getRaw(0),
-				mapping.getRaw(1)
+				mapping.get_raw(0),
+				mapping.get_raw(1)
 			])
 			return request
 

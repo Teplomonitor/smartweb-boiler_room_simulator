@@ -39,7 +39,7 @@ class Simulator(object):
 
 	def getStageState(self):
 		stage = self._program.get_stage_1()
-		if stage.isMapped() is False:
+		if stage.is_mapped() is False:
 			return 1
 
 		if stage.get_value():
@@ -49,7 +49,7 @@ class Simulator(object):
 	
 	def getPumpState(self):
 		pumpState = self._program.get_pump()
-		if pumpState.isMapped() is False:
+		if pumpState.is_mapped() is False:
 			return 1
 
 		if pumpState.get_value():

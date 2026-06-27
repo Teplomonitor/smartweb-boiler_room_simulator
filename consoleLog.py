@@ -6,7 +6,7 @@ import datetime
 
 gui = None
 
-def initGui(guiThread):
+def init_gui(guiThread):
 	global gui
 	gui = guiThread
 

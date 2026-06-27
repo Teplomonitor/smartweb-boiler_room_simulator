@@ -7,12 +7,12 @@ from smartnet.units import SENSOR_OPEN_VALUE  as SENSOR_OPEN_VALUE
 
 def reportSensorValue(sensor, bus = None):
 	sensorValue   = sensor.get_value()
-	sensorMapping = sensor.getMapping()
+	sensorMapping = sensor.get_mapping()
 
 	if sensorValue   is None: return False
 	if sensorMapping is None: return False
 
-	hostId = sensorMapping.getHostId()
+	hostId = sensorMapping.get_host_id()
 	
 	
 	
@@ -35,6 +35,6 @@ def reportSensorValue(sensor, bus = None):
 			hostId,
 			snc.ControllerFunction['GET_OUTPUT_VALUE'],
 			snc.requestFlag['RESPONSE'],
-			[sensorMapping.getRaw(0), sensorMapping.getRaw(1), value[1], value[0]])
+			[sensorMapping.get_raw(0), sensorMapping.get_raw(1), value[1], value[0]])
 	msg.send(bus = bus)
 	return True

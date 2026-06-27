@@ -74,11 +74,11 @@ def computeControllersNum(parsed_programs):
 	total_outputs = 0
 	for prg in parsed_programs:
 		for programInput in prg['inputs']:
-			if programInput.getChannelType() in ['CHANNEL_SENSOR_LOCAL', 'CHANNEL_SENSOR']:
+			if programInput.get_channel_type() in ['CHANNEL_SENSOR_LOCAL', 'CHANNEL_SENSOR']:
 				total_inputs += 1
 				
 		for programOutput in prg['outputs']:
-			if programOutput.getChannelType() in ['CHANNEL_RELAY_LOCAL', 'CHANNEL_RELAY']:
+			if programOutput.get_channel_type() in ['CHANNEL_RELAY_LOCAL', 'CHANNEL_RELAY']:
 				total_outputs += 1
 				
 	
@@ -146,7 +146,7 @@ def getHostDeclaration(hostNum):
 	output_string += ']\n\n'
 	return output_string
 	
-def getHostId(hostNum):
+def get_host_id(hostNum):
 	output_string = 'hostId = {\n'
 	for ctr in range(0, hostNum):
 		output_string += f"'{hostCommonTitle}{ctr}' : {hostCommonId+ctr},\n"
@@ -170,7 +170,7 @@ def getHostTitle(hostNum):
 def getHostString(hostNum):
 	output_string = ''
 	output_string += getHostDeclaration(hostNum)
-	output_string += getHostId         (hostNum)
+	output_string += get_host_id         (hostNum)
 	output_string += getHostType       (hostNum)
 	output_string += getHostTitle      (hostNum)
 	return output_string
@@ -266,9 +266,9 @@ def getProgramInputs(programs):
 	for prg in programs:
 		output_string += f"'{getProgramId(prg)}' : [\n"
 		for programChannel in prg['inputs']:
-			channelType = programChannel.getChannelType()
-			channelId   = programChannel.getChannelId()
-			hostId      = programChannel.getHostId()
+			channelType = programChannel.get_channel_type()
+			channelId   = programChannel.get_channel_id()
+			hostId      = programChannel.get_host_id()
 			
 			if channelType in ['CHANNEL_SENSOR_LOCAL', 'CHANNEL_SENSOR']:
 				channelType = 'CHANNEL_SENSOR' # make it remote
@@ -290,9 +290,9 @@ def getProgramOutputs(programs):
 	for prg in programs:
 		output_string += f"'{getProgramId(prg)}' : [\n"
 		for programChannel in prg['outputs']:
-			channelType = programChannel.getChannelType()
-			channelId   = programChannel.getChannelId()
-			hostId      = programChannel.getHostId()
+			channelType = programChannel.get_channel_type()
+			channelId   = programChannel.get_channel_id()
+			hostId      = programChannel.get_host_id()
 			
 			if channelType in ['CHANNEL_RELAY_LOCAL', 'CHANNEL_RELAY']:
 				channelType = 'CHANNEL_RELAY' # make it remote

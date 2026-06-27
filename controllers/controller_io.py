@@ -18,7 +18,7 @@ def reportOutputMapping(controllerId, outputId, mapping):
 			controllerId,
 			snc.ControllerFunction['GET_RELAY_MAPPING'],
 			snc.requestFlag['RESPONSE'],
-			[outputId, mapping.getRaw(0), mapping.getRaw(1)])
+			[outputId, mapping.get_raw(0), mapping.get_raw(1)])
 	
 	msg.send()
 	return True
@@ -113,13 +113,13 @@ class ControllerIO(object):
 	
 	
 	def setOutputMapping(self, channelId, mapping):
-		self._outputs[channelId].setMapping(mapping)
+		self._outputs[channelId].set_mapping(mapping)
 	
 	def set_output_value(self, channelId, value):
 		self._outputs[channelId].set_value(value)
 	
 	def getOutputMapping(self, channelId):
-		return self._outputs[channelId].getMapping()
+		return self._outputs[channelId].get_mapping()
 	
 	def getOutputValue(self, channelId):
 		return self._outputs[channelId].get_value()
@@ -172,7 +172,7 @@ class ControllerIO(object):
 		if self._reportOutputMappingTrigger.get(5*60):
 			num = self.getOutputNumber()
 			for output_id in range (num):
-				if self.getOutputMapping(output_id) and self.getOutputMapping(output_id).getChannelType() != 'CHANNEL_UNDEFINED':
+				if self.getOutputMapping(output_id) and self.getOutputMapping(output_id).get_channel_type() != 'CHANNEL_UNDEFINED':
 					self.reportOutputMapping(output_id)
 					time.sleep(0.1)
 			

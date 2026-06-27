@@ -26,16 +26,16 @@ class ChannelMapping(object):
 		self._channelType = channelType
 		self._hostId      = hostId
 
-	def getChannelId   (self): return self._channelId  
-	def getChannelType (self): return self._channelType
-	def getHostId      (self): return self._hostId
+	def get_channel_id   (self): return self._channelId  
+	def get_channel_type (self): return self._channelType
+	def get_host_id      (self): return self._hostId
 	
-	def isMapped(self):
+	def is_mapped(self):
 		if self._channelType == 'CHANNEL_UNDEFINED':
 			return False
 		return True
 
-	def getRaw(self, part=None):
+	def get_raw(self, part=None):
 		raw = (
 			(          self._hostId       <<  0) |
 			(          self._channelId    <<  8) |
@@ -71,14 +71,14 @@ class Channel(GuiParameter):
 		self._log     = ChannelLog('SENSOR', title)
 
 	def get_id     (self): return self._id
-	def getMapping(self): return self._mapping
+	def get_mapping(self): return self._mapping
 	
-	def isMapped(self):
+	def is_mapped(self):
 		if self._mapping:
-			return self._mapping.isMapped()
+			return self._mapping.is_mapped()
 		return False
 		
-	def setMapping(self, mapping): self._mapping = mapping
+	def set_mapping(self, mapping): self._mapping = mapping
 	
 	def set_value  (self, value, manual = False):
 		super().set_value(value, manual)
@@ -255,6 +255,6 @@ class OutputChannel(Channel):
 		now = time.time()
 		return now -self._lastUpdateTime < 10
 	
-	def initGui(self):
+	def init_gui(self):
 		self.setGuiValue(self._value)
 		

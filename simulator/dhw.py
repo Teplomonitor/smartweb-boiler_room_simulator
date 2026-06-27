@@ -34,7 +34,7 @@ class Simulator(object):
 
 	def getPumpState(self):
 		pump = self._program.get_output_channel('supplyPump')
-		if pump.getMapping() is None:
+		if pump.get_mapping() is None:
 			return 1
 
 		if pump.get_value():

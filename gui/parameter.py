@@ -82,9 +82,9 @@ class GuiParameter(object):
 		
 	def setGui(self, gui):
 		self._gui = gui
-		self.initGui()
+		self.init_gui()
 
-	def initGui(self):
+	def init_gui(self):
 		if self._gui:
 			self._gui.SetMin  (self._min)
 			self._gui.SetMax  (self._max)

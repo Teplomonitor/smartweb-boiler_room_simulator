@@ -73,7 +73,7 @@ class Simulator(object):
 
 	def getPrimaryPumpState(self):
 		pump = self._program.getPrimaryPumpState()
-		if pump.getMapping() is None:
+		if pump.get_mapping() is None:
 			return 1
 
 		if pump.get_value():
@@ -83,7 +83,7 @@ class Simulator(object):
 
 	def getSecondaryPumpState(self):
 		pump = self._program.getSecondaryPumpState()
-		if pump.getMapping() is None:
+		if pump.get_mapping() is None:
 			return 1
 
 		if pump.get_value():
@@ -93,7 +93,7 @@ class Simulator(object):
 	
 	def getAnalogPumpSignal(self):
 		pump = self._program.getAnalogPumpSignal()
-		if pump.getMapping() is None:
+		if pump.get_mapping() is None:
 			return self.getPrimaryPumpState()
 
 		value = pump.get_value()

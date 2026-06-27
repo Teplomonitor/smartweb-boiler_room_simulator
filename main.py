@@ -134,7 +134,7 @@ def main(argv=None): # IGNORE:C0111
 		else:
 			guiThread = None
 
-		consoleLog.initGui(guiThread)
+		consoleLog.init_gui(guiThread)
 		
 		initMainThread(args)
 		

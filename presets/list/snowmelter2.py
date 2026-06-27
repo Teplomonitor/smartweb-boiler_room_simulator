@@ -9,7 +9,7 @@ from presets.settings import SnowMelterSettings as smSettings
 
 import presets.preset
 
-def getHostId():
+def get_host_id():
 	return 123
 
 hostList = [

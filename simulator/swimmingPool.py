@@ -20,7 +20,7 @@ class Simulator(object):
 		
 	def getLoadingPumpState(self):
 		pump = self._program.getLoadingPumpState()
-		if pump.getMapping() is None:
+		if pump.get_mapping() is None:
 			return 1
 
 		if pump.get_value():
@@ -30,7 +30,7 @@ class Simulator(object):
 	
 	def getCirculationPumpState(self):
 		pump = self._program.getCirculationPumpState()
-		if pump.getMapping() is None:
+		if pump.get_mapping() is None:
 			return 1
 
 		if pump.get_value():
