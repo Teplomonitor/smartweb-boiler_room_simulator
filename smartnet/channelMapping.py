@@ -47,6 +47,7 @@ class ChannelMapping(object):
 		if part == 0: return (raw >> 0) &0xFF
 		if part == 1: return (raw >> 8) &0xFF
 
+		return raw
 
 
 class Channel(GuiParameter):

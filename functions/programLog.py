@@ -88,7 +88,7 @@ class ParameterLog(object):
 			except OSError as e:
 				print('Error %d: Can\'t create folder for log at "%s"' %(e.errno, fullLogDir))
 				print('\r\n\n')
-				return 1
+				return
 		
 		logPath = os.path.join(fullLogDir, self._parameterTitle + '.csv')
 		

@@ -62,6 +62,7 @@ class GuiParameter(object):
 	def getSelectedOption(self):
 		if self._gui:
 			return self._gui.getSelectedOption()
+		return None
 		
 	def onSpin(self, event):
 		event.Skip()
@@ -147,10 +148,12 @@ class GuiParameterApi(object):
 	def getSelectedOption(self):
 		if self._combobox:
 			return self._combobox.GetStringSelection()
+		return None
 	
 	def setOptions(self, options):
 		if self._combobox:
 			return self._combobox.Append(options)
+		return None
 
 class GuiInputChannel(GuiParameterApi):
 	def __init__(self, spinner, slider, shortCheckbox, openCheckbox, autoRb, manualRb):

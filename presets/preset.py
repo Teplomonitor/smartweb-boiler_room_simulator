@@ -80,6 +80,7 @@ class ProgramPreset(object):
 		self.bind_inputs (prg)
 		self.bind_outputs(prg)
 		self.loadSettings()
+		return True
 
 class ControllerPreset(object):
 	'''

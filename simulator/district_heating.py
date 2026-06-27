@@ -57,7 +57,7 @@ def gss_solver(tintown, pdiss, qtown, qhouse, ato, correction = 1):
 	for i in range(n):
 		if a[i][i] == 0.0:
 			print('Divide by zero detected!')
-			return
+			return 0, 0
 		
 		for j in range(i+1, n):
 			ratio = a[j][i]/a[i][i]

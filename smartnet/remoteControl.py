@@ -138,17 +138,17 @@ class RemoteControlParameter(object):
 	def write(self, confirm = True):
 		if self._programId is None:
 			print_error('wrong programId')
-			return
+			return False
 		
 		if self._parameterValue is None:
 #			print(f'prg {self._programId} skip parameter {self._programType}.{self._parameterId}')
-			return
+			return False
 		
 		#not supported yet
 		if self.getParameterType() == 'STRING':
-			return
+			return False
 		if self.getParameterType() == 'SCHEDULE':
-			return
+			return False
 		
 		if self._parameterIndex is None:
 			actionStr = f'prg {self._programId} write parameter {self._programType}.{self._parameterId} = {self._parameterValue:.2f}'
@@ -218,7 +218,7 @@ class RemoteControlParameter(object):
 	def read(self):
 		if self._programId is None:
 			print_error('wrong programId')
-			return
+			return False
 		
 		if self._parameterIndex is None:
 			actionStr = f'prg {self._programId} read parameter {self._programType}.{self._parameterId}'

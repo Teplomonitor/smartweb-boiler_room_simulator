@@ -197,7 +197,7 @@ class Message(object):
 		if self._responseFilter:
 			CanListener.subscribe(self)
 		else:
-			return
+			return None
 		
 		start_time = time.time()
 		
