@@ -25,34 +25,34 @@ class Simulator(object):
 				self._generatorList.append(source)
 		
 	# temperature given by boilers
-	def getSupplyDirectTemperature(self):
+	def get_supply_direct_temperature(self):
 		return self._supply_direct_temperature
 	
-	def setSupplyDirectTemperature(self, temp):
+	def set_supply_direct_temperature(self, temp):
 		self._supply_direct_temperature = temp
 	
 	# temperature return to boilers
 	def get_supply_backward_temperature(self):
 		return self._supply_backward_temperature
 	
-	def setSupplyBackwardTemperature(self, temp):
+	def get_supply_backward_temperature(self, temp):
 		self._supply_backward_temperature = temp
 	
 	# temperature given to consumers
-	def getDirectTemperature(self):
+	def get_direct_temperature(self):
 		return self._direct_temperature
 	
-	def setDirectTemperature(self, temp):
+	def set_direct_temperature(self, temp):
 		self._direct_temperature = temp
 	
 	# temperature returned from consumers
-	def getBackwardTemperature(self):
+	def get_backward_temperature(self):
 		return self._backward_temperature
 	
-	def setBackwardTemperature(self, temp):
+	def set_backward_temperature(self, temp):
 		self._backward_temperature = temp
 	
-	def computeSupplyDirectTemperature(self):
+	def compute_supply_direct_temperature(self):
 		sumTemp = 0
 		i = 0
 		
@@ -70,9 +70,9 @@ class Simulator(object):
 		
 		return temp
 		
-	def computeSupplyBackwardTemperature(self):
-		direct   = self.getSupplyDirectTemperature()
-		backward = self.getBackwardTemperature()
+	def compute_supply_backward_temperature(self):
+		direct   = self.get_supply_direct_temperature()
+		backward = self.get_backward_temperature()
 		
 		activeConsumersNum  = 0
 		activeGeneratorsNum = 0
@@ -104,16 +104,16 @@ class Simulator(object):
 		alpha = generatorFlow / totalFlow
 		beta  = consumerFlow  / totalFlow
 		
-		backward = self.getBackwardTemperature()
+		backward = self.get_backward_temperature()
 		
 		avrTemp = direct * alpha + backward * beta
 		
 		return avrTemp
 		
-	def computeDirectTemperature(self):
-		return self.getSupplyDirectTemperature() -1 # assume we losing a bit
+	def compute_direct_temperature(self):
+		return self.get_supply_direct_temperature() -1 # assume we losing a bit
 		
-	def computeBackwardTemperature(self):
+	def compute_backward_temperature(self):
 		sumTemp = 0
 		i = 0
 		
@@ -125,26 +125,26 @@ class Simulator(object):
 		
 		for consumer in self._consumerList:
 			if consumer.get_power() != 0:
-				sumTemp = sumTemp + consumer.getBackwardTemperature() * consumer.get_flow() / consumerFlow
+				sumTemp = sumTemp + consumer.get_backward_temperature() * consumer.get_flow() / consumerFlow
 				i = i + 1
 		
 		if i > 0:
 			avrTemp = sumTemp
 		else:
-			avrTemp = self.getDirectTemperature()
+			avrTemp = self.get_direct_temperature()
 		
 		return avrTemp
 	
 	def run(self):
-		self.setSupplyDirectTemperature  (self.computeSupplyDirectTemperature  ())
-		self.setDirectTemperature        (self.computeDirectTemperature  ())
-		self.setBackwardTemperature      (self.computeBackwardTemperature())
-		self.setSupplyBackwardTemperature(self.computeSupplyBackwardTemperature())
+		self.set_supply_direct_temperature  (self.compute_supply_direct_temperature  ())
+		self.set_direct_temperature        (self.compute_direct_temperature  ())
+		self.set_backward_temperature      (self.compute_backward_temperature())
+		self.get_supply_backward_temperature(self.compute_supply_backward_temperature())
 		
-		t1 = self.getSupplyDirectTemperature()
+		t1 = self.get_supply_direct_temperature()
 		t2 = self.get_supply_backward_temperature()
-		t3 = self.getDirectTemperature()
-		t4 = self.getBackwardTemperature()
+		t3 = self.get_direct_temperature()
+		t4 = self.get_backward_temperature()
 		
 		f1 = self._consumerFlow
 		f2 = self._generatorFlow

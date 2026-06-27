@@ -53,7 +53,7 @@ class Simulator(object):
 	def getBackwardFlowTemperature(self):
 		return self._program.getBackwardFlowTemperature().get_value()
 	
-	def getBackwardTemperature(self):
+	def get_backward_temperature(self):
 		return self.getBackwardFlowTemperature()
 
 	def setBackwardFlowTemperature(self, value):
@@ -118,7 +118,7 @@ class Simulator(object):
 		return self.getAnalogPumpSignal() * self.get_max_flow_rate() / 1000 #cube per hour
 	
 	def getSourceTemperature(self):
-		return self._control._collector.getDirectTemperature()
+		return self._control._collector.get_direct_temperature()
 
 
 	def getHeating(self):

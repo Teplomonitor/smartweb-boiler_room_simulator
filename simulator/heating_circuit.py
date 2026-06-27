@@ -9,8 +9,8 @@ class Simulator(object):
 		
 		self._roomTemp = 24
 		self.set_temperature(20)
-		self.setBackwardTemperature(20)
-		self.setBackwardTemperature2(20)
+		self.set_backward_temperature(20)
+		self.set_backward_temperature2(20)
 
 	def getOat(self):
 		oat = self._control.getOat()
@@ -28,16 +28,16 @@ class Simulator(object):
 	def set_temperature(self, value):
 		self._program.get_input_channel('temperature').set_value(value)
 
-	def getBackwardTemperature(self):
+	def get_backward_temperature(self):
 		return self._supplyBackwardTemperature
 
-	def setBackwardTemperature(self, value):
+	def set_backward_temperature(self, value):
 		self._supplyBackwardTemperature = value
 
-	def getBackwardTemperature2(self):
+	def get_backward_temperature2(self):
 		return self._program.get_input_channel('backwardTemperature').get_value()
 
-	def setBackwardTemperature2(self, value):
+	def set_backward_temperature2(self, value):
 		self._program.get_input_channel('backwardTemperature').set_value(value)
 
 	def get_max_flow_rate(self):
@@ -77,10 +77,10 @@ class Simulator(object):
 		return self.get_pump_state() * self.getValveState() * rate
 	
 	def getSourceTemperature(self):
-		return self._control._collector.getDirectTemperature()
+		return self._control._collector.get_direct_temperature()
 
 	def compute_temperature(self):
-		tempBackward = self.getBackwardTemperature2()
+		tempBackward = self.get_backward_temperature2()
 		temp        = self.get_temperature()
 		roomTemp    = self.getRoomTemp()
 
@@ -99,8 +99,8 @@ class Simulator(object):
 
 		return temp
 	
-	def computeBackwardTemperature2(self):
-		temp       = self.getBackwardTemperature2()
+	def compute_backward_temperature2(self):
+		temp       = self.get_backward_temperature2()
 		roomTemp   = self.getRoomTemp()
 		oat        = self.getOat()
 		
@@ -124,8 +124,8 @@ class Simulator(object):
 		
 		return t_rethouse
 	
-	def computeBackwardTemperature(self):
-		temp = self.getBackwardTemperature2()
+	def compute_backward_temperature(self):
+		temp = self.get_backward_temperature2()
 		
 		valve = self.getValveState()
 		sourceTemp = self.getSourceTemperature()
@@ -136,5 +136,5 @@ class Simulator(object):
 
 	def run(self):
 		self.set_temperature         (self.compute_temperature())
-		self.setBackwardTemperature2(self.computeBackwardTemperature2())
-		self.setBackwardTemperature (self.computeBackwardTemperature ())
+		self.set_backward_temperature2(self.compute_backward_temperature2())
+		self.set_backward_temperature (self.compute_backward_temperature ())

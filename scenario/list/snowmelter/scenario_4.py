@@ -33,7 +33,7 @@ class Scenario(Parent):
 		return 'snowmelter'
 		
 	def getSourceTemperature(self):
-		return self._sim._collector.getDirectTemperature()
+		return self._sim._collector.get_direct_temperature()
 
 		
 	def readRequiredPlateTemperatureValue(self): return self._snowmelter.read_parameter_value('reqPlateTemp')

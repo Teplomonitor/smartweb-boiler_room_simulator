@@ -48,7 +48,7 @@ class Simulator(object):
 		return self.get_power() - self.get_consumer_power() - self.get_cooldown_power()
 
 	def compute_temperature(self):
-		temp = self._control._collector.getDirectTemperature()
+		temp = self._control._collector.get_direct_temperature()
 		
 		temp = limit(-30, temp, 100)
 

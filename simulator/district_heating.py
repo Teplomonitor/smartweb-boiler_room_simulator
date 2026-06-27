@@ -94,44 +94,44 @@ class Simulator(object):
 		self._tMin = 20
 		self._init = True
 		
-		self.setSupplyDirectTemperature(60)
-		self.setSupplyBackwardTemperature(50)
-		self.setDirectTemperature(30)
-		self.setBackwardTemperature(30)
+		self.set_supply_direct_temperature(60)
+		self.get_supply_backward_temperature(50)
+		self.set_direct_temperature(30)
+		self.set_backward_temperature(30)
 		self.setThermalOutputSensor(0)
 		self.setVolumeFlowSensor(0)
 		self.setOutsideRequestSensor(0)
 		
-		self.tintown    = self.getSupplyDirectTemperature()
-		self.t_rethouse = self.getBackwardTemperature()
+		self.tintown    = self.get_supply_direct_temperature()
+		self.t_rethouse = self.get_backward_temperature()
 		
-		self.tinhouse   = self.getDirectTemperature()
+		self.tinhouse   = self.get_direct_temperature()
 		self.t_rettown  = self.get_supply_backward_temperature()
 		
 		self._pdiss = 100*1000
 
-	def getSupplyDirectTemperature(self):
+	def get_supply_direct_temperature(self):
 		return self._program.get_input_channel('supply_direct_temp').get_value()
 
-	def setSupplyDirectTemperature(self, value):
+	def set_supply_direct_temperature(self, value):
 		self._program.get_input_channel('supply_direct_temp').set_value(value)
 
 	def get_supply_backward_temperature(self):
 		return self._program.get_input_channel('supply_backward_temp').get_value()
 
-	def setSupplyBackwardTemperature(self, value):
+	def get_supply_backward_temperature(self, value):
 		self._program.get_input_channel('supply_backward_temp').set_value(value)
 
-	def getDirectTemperature(self):
+	def get_direct_temperature(self):
 		return self._program.get_input_channel('direct_temp').get_value()
 
-	def setDirectTemperature(self, value):
+	def set_direct_temperature(self, value):
 		self._program.get_input_channel('direct_temp').set_value(value)
 
-	def getBackwardTemperature(self):
+	def get_backward_temperature(self):
 		return self._program.get_input_channel('backward_temp').get_value()
 
-	def setBackwardTemperature(self, value):
+	def set_backward_temperature(self, value):
 		self._program.get_input_channel('backward_temp').set_value(value)
 
 	def getThermalOutputSensor(self):
@@ -153,7 +153,7 @@ class Simulator(object):
 		self._program.get_input_channel('outside_request').set_value(value)
 
 	def get_temperature(self):
-		return self.getDirectTemperature()
+		return self.get_direct_temperature()
 
 	def get_consumer_power(self):
 		return self._control.get_consumer_power(self._program.get_id())
@@ -197,7 +197,7 @@ class Simulator(object):
 		else:
 			valve      = self.getValveState()
 			t_rettown  = self.get_supply_backward_temperature()
-			tintown    = self.getSupplyDirectTemperature()
+			tintown    = self.get_supply_direct_temperature()
 			ugolserv   = valve
 		
 			qtown_max = self.get_max_flow_rateTown()
@@ -223,8 +223,8 @@ class Simulator(object):
 	def secondaryFlowIsStopped(self):
 		return self.getCirculationPumpState() == 0
 	
-	def computeSupplyDirectTemperature(self):
-		temp = self.getSupplyDirectTemperature()
+	def compute_supply_direct_temperature(self):
+		temp = self.get_supply_direct_temperature()
 		if self.supplyFlowIsStopped():
 			temp = self.tempSlowCooling(temp)
 			return temp
@@ -239,7 +239,7 @@ class Simulator(object):
 
 		return 85
 
-	def computeBackwardTemperature(self):
+	def compute_backward_temperature(self):
 		t_rethouse = self._control._collector.get_supply_backward_temperature()
 		return t_rethouse
 	
@@ -350,13 +350,13 @@ class Simulator(object):
 		return 0
 	
 	def run(self):
-		self.tintown    = self.computeSupplyDirectTemperature()
-		self.t_rethouse = self.computeBackwardTemperature()
+		self.tintown    = self.compute_supply_direct_temperature()
+		self.t_rethouse = self.compute_backward_temperature()
 		
 		self.computeTemp()
 		
-		self.setSupplyDirectTemperature  (self.tintown   )
-		self.setBackwardTemperature      (self.t_rethouse)
-		self.setDirectTemperature        (self.tinhouse  )
-		self.setSupplyBackwardTemperature(self.t_rettown )
+		self.set_supply_direct_temperature  (self.tintown   )
+		self.set_backward_temperature      (self.t_rethouse)
+		self.set_direct_temperature        (self.tinhouse  )
+		self.get_supply_backward_temperature(self.t_rettown )
 

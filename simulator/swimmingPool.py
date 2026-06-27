@@ -10,13 +10,13 @@ class Simulator(object):
 		self._coldWaterTime = PeriodPulse()
 		
 		self.set_temperature(15)
-		self.setBackwardTemperature(15)
+		self.set_backward_temperature(15)
 
 	def get_temperature        (self): return self._program.get_temperature().get_value()
-	def getBackwardTemperature(self): return self._backwardTemperature
+	def get_backward_temperature(self): return self._backwardTemperature
 	
 	def set_temperature        (self, value): self._program.set_temperature(value)
-	def setBackwardTemperature(self, value): self._backwardTemperature = value
+	def set_backward_temperature(self, value): self._backwardTemperature = value
 		
 	def getLoadingPumpState(self):
 		pump = self._program.getLoadingPumpState()
@@ -60,7 +60,7 @@ class Simulator(object):
 		return self.get_pump_state() * self.get_max_flow_rate() / 1000 # cube per hour
 	
 	def getSourceTemperature(self):
-		return self._control._collector.getDirectTemperature()
+		return self._control._collector.get_direct_temperature()
 
 	def getHeating(self):
 		sourceTemp = self.getSourceTemperature()
@@ -86,9 +86,9 @@ class Simulator(object):
 
 		return temp
 	
-	def computeBackwardTemperature(self):
+	def compute_backward_temperature(self):
 		if self.get_pump_state() == 0:
-			collectorBackwardTemp = self._control._collector.getBackwardTemperature()
+			collectorBackwardTemp = self._control._collector.get_backward_temperature()
 			return collectorBackwardTemp
 		
 		temp = self.get_temperature()
@@ -102,4 +102,4 @@ class Simulator(object):
 
 	def run(self):
 		self.set_temperature        (self.compute_temperature())
-		self.setBackwardTemperature(self.computeBackwardTemperature())
+		self.set_backward_temperature(self.compute_backward_temperature())

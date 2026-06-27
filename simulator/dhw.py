@@ -22,10 +22,10 @@ class Simulator(object):
 #		print(f'dhw: {value}')
 		self._program.get_input_channel('temperature').set_value(value)
 
-	def getBackwardTemperature(self):
+	def get_backward_temperature(self):
 		return self._program.get_input_channel('backwardTemperature').get_value()
 
-	def setBackwardTemperature(self, value):
+	def set_backward_temperature(self, value):
 #		print(f'dhw: {value}')
 		self._program.get_input_channel('backwardTemperature').set_value(value)
 
@@ -59,7 +59,7 @@ class Simulator(object):
 		return self.get_pump_state() * self.get_max_flow_rate() / 1000 # cube per hour
 	
 	def getSourceTemperature(self):
-		return self._control._collector.getDirectTemperature()
+		return self._control._collector.get_direct_temperature()
 
 	def getHeating(self):
 		sourceTemp = self.getSourceTemperature()
@@ -85,9 +85,9 @@ class Simulator(object):
 
 		return temp
 	
-	def computeBackwardTemperature(self):
+	def compute_backward_temperature(self):
 		if self.get_pump_state() == 0:
-			collectorBackwardTemp = self._control._collector.getBackwardTemperature()
+			collectorBackwardTemp = self._control._collector.get_backward_temperature()
 			return collectorBackwardTemp
 		
 		temp = self.get_temperature()
@@ -101,4 +101,4 @@ class Simulator(object):
 
 	def run(self):
 		self.set_temperature        (self.compute_temperature())
-		self.setBackwardTemperature(self.computeBackwardTemperature())
+		self.set_backward_temperature(self.compute_backward_temperature())
