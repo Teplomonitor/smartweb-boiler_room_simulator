@@ -336,11 +336,12 @@ def convertConfigToPreset(json_string ):
 	for p in programs:
 		for key, value in ProgramTypes.items():
 			if int(p['type']) == value:
-				new_program = {}
-				new_program['type'   ] = key
-				new_program['id'     ] = p['id']
-				new_program['title'  ] = p['title']
-				
+				new_program = {
+					'type' : key, 
+					'id'   : p['id'], 
+					'title': p['title']
+				}
+
 				if new_program['title'] == '':
 					new_program['title'] = new_program['type'] + '_' + str(new_program['id'])
 				
