@@ -20,20 +20,20 @@ class Scenario(Parent):
 		
 		self._pool   = self._programList['pool']
 
-	def getScenarioTitle(self): return 'pool test 2'
+	def get_scenario_title(self): return 'pool test 2'
 	
-	def getScenarioDescription(self):
+	def get_scenario_description(self):
 		return 'Программа управляет насосом циркуляции в зависимости от заданной программы'
 	
-	def getChecklistId(self): return '3.11.2'
+	def get_checklist_id(self): return '3.11.2'
 	
-	def getRequiredPrograms(self):
+	def get_required_programs(self):
 		requiredProgramTypesList = {
 			'pool'   : 'POOL',
 		}
 		return requiredProgramTypesList
 	
-	def getDefaultPreset(self): return 'swimmingPool'
+	def get_default_preset(self): return 'swimmingPool'
 
 	def readRequiredPoolTemperatureValue(self): return self._pool.readParameterValue('currentRequiredPoolTemperature')
 	def readCirculationPumpWorkPeriodOn (self): return self._pool.readParameterValue('circulationPumpWorkPeriodOn')
@@ -52,7 +52,7 @@ class Scenario(Parent):
 	
 	def setPoolTemperature(self, value):
 		t = self._pool.get_temperature()
-		self.setSensorValue(t, value)
+		self.set_sensor_value(t, value)
 	
 	def setCirculationPumpWorkMode(self, mode):
 		printLog(f'делаем режим насоса {mode}')

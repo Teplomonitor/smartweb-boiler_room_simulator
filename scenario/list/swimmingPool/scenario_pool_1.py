@@ -13,20 +13,20 @@ class Scenario(Parent):
 		
 		self._pool   = self._programList['pool']
 
-	def getScenarioTitle(self): return 'pool test 1'
+	def get_scenario_title(self): return 'pool test 1'
 	
-	def getScenarioDescription(self):
+	def get_scenario_description(self):
 		return 'Программа видит температуру воды в бассейне'
 	
-	def getChecklistId(self): return '3.11.1'
+	def get_checklist_id(self): return '3.11.1'
 	
-	def getRequiredPrograms(self):
+	def get_required_programs(self):
 		requiredProgramTypesList = {
 			'pool'   : 'POOL',
 		}
 		return requiredProgramTypesList
 	
-	def getDefaultPreset(self): return 'swimmingPool'
+	def get_default_preset(self): return 'swimmingPool'
 
 	def readRequiredPoolTemperatureValue(self): return self._pool.readParameterValue('currentRequiredPoolTemperature')
 	def getLoadingPumpState(self): return self._pool.getLoadingPumpState().getValue()
@@ -36,7 +36,7 @@ class Scenario(Parent):
 	
 	def setPoolTemperature(self, value):
 		t = self._pool.get_temperature()
-		self.setSensorValue(t, value)
+		self.set_sensor_value(t, value)
 	
 	
 	def run(self):

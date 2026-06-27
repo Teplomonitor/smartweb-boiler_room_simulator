@@ -41,24 +41,24 @@ class ScenarioItem(object):
 		self._scenario = scenario
 		self._dir = scenarioDir
 	
-	def startScenario(self):
+	def start_scenario(self):
 		scenario = self._scenario
 		if self._dir:
 			scenario = os.path.join(self._dir, self._scenario)
 			
-		sc.startScenario(scenario)
+		sc.start_scenario(scenario)
 
 	def onScenarioSelect(self, event):
 		event.Skip()
 		
 		if self._scenario == 'Stop':
-			self.stopScenario()
+			self.stop_scenario()
 			return
 		
-		self.startScenario()
+		self.start_scenario()
 		
-	def stopScenario(self):
-		sc.stopScenario()
+	def stop_scenario(self):
+		sc.stop_scenario()
 
 class MainFrame ( wx.Frame ):
 	
@@ -86,15 +86,15 @@ class MainFrame ( wx.Frame ):
 		addScenarioItem(startScenarioSubmenu, 'all')
 		startScenarioSubmenu.AppendSeparator()
 		
-		scenarioDir = sc.getScenarioDir()
+		scenarioDir = sc.get_scenario_dir()
 		
-		def addScenarioItems(subMenu, scenarioDir):
-			def filterScenarioItems():
+		def add_scenario_items(subMenu, scenarioDir):
+			def filter_scenario_items():
 				if '__pycache__' in dirs : dirs .remove('__pycache__')  # don't visit __pycache__ directories
 				if '__init__.py' in files: files.remove('__init__.py')  # don't use __init__.py files
 				
 			for root, dirs, files in os.walk(scenarioDir):
-				filterScenarioItems()
+				filter_scenario_items()
 				
 				for scenarioFile in files:
 					addScenarioItem(subMenu, scenarioFile, scenarioDir)
@@ -103,10 +103,10 @@ class MainFrame ( wx.Frame ):
 					scenarioSubmenu = wx.Menu()
 					subMenu.AppendSubMenu(scenarioSubmenu, _(scenarioSubDir))
 					
-					addScenarioItems(scenarioSubmenu, os.path.join(scenarioDir, scenarioSubDir))
+					add_scenario_items(scenarioSubmenu, os.path.join(scenarioDir, scenarioSubDir))
 				break
 				
-		addScenarioItems(startScenarioSubmenu, scenarioDir)
+		add_scenario_items(startScenarioSubmenu, scenarioDir)
 		
 		startScenarioSubmenu.AppendSeparator()
 		addScenarioItem(startScenarioSubmenu, 'Stop')

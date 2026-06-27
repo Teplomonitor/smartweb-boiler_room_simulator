@@ -100,7 +100,7 @@ class MainThread(threading.Thread):
 	def saveProgramPlots(self): self._saveProgramPlots.set()
 
 	def saveProgramPlotsNow(self):
-		programList = cc.Controller().getProgramList()
+		programList = cc.Controller().get_program_list()
 		for prg in programList:
 			prg.saveLog()
 
@@ -130,7 +130,7 @@ class MainThread(threading.Thread):
 		scenario.ScenarioThread(controllerHost, ioSimulator)
 		
 		if self._scenario != 'none':
-			scenario.startScenario(self._scenario)
+			scenario.start_scenario(self._scenario)
 			
 	
 	def checkAliveThreads(self):

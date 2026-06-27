@@ -19,24 +19,24 @@ class Scenario(Parent):
 		self._valvePos = 0
 		self._valveCheckTrigger = PeriodicTrigger()
 
-	def getScenarioTitle(self): return 'scenario 6'
+	def get_scenario_title(self): return 'scenario 6'
 	
-	def getScenarioDescription(self):
+	def get_scenario_description(self):
 		return 'проверить, что программа "Смеситель" корректно переводит входной аналоговый сигнал в управление сигналами на открытие и закрытие смесителя'
 	
-	def getChecklistId(self): return '3.10.1'
+	def get_checklist_id(self): return '3.10.1'
 	
-	def getRequiredPrograms(self):
+	def get_required_programs(self):
 		requiredProgramTypesList = {
 			'tptValve': 'TPT_VALVE_ADAPTER',
 		}
 		return requiredProgramTypesList
 	
-	def getDefaultPreset(self): return 'tptValve'
+	def get_default_preset(self): return 'tptValve'
 
 	def setControlSignal(self, value):
 		t = self._tptValve.getControlSignal()
-		self.setSensorValue(t, value)
+		self.set_sensor_value(t, value)
 
 	def getValveOpenState (self): return self._tptValve.getValveOpenOutput ().getValue()
 	def getValveCloseState(self): return self._tptValve.getValveCloseOutput().getValue()

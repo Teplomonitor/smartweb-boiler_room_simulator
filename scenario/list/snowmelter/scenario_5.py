@@ -18,16 +18,16 @@ class Scenario(Parent):
 		self._outdoor    = self._programList['oat']
 		self._pressure   = self._programList['pressure']
 
-	def getScenarioTitle(self):
+	def get_scenario_title(self):
 		return 'scenario 5'
 	
-	def getScenarioDescription(self):
+	def get_scenario_description(self):
 		return 'проверить, что снеготайка выключает насосы загрузки и циркуляции, если получает сигнал об аварии от Аварийной программы'
 	
-	def getChecklistId(self):
+	def get_checklist_id(self):
 		return '3.9.5'
 	
-	def getRequiredPrograms(self):
+	def get_required_programs(self):
 		requiredProgramTypesList = {
 			'snowmelter': 'SNOWMELT',
 			'oat'       : 'OUTDOOR_SENSOR',
@@ -35,7 +35,7 @@ class Scenario(Parent):
 		}
 		return requiredProgramTypesList
 	
-	def getDefaultPreset(self):
+	def get_default_preset(self):
 		return 'snowmelterWithPressureControl'
 		
 		
@@ -63,11 +63,11 @@ class Scenario(Parent):
 	
 	def setPlateTemperature(self, value):
 		t = self._snowmelter.getPlateTemperature()
-		self.setSensorValue(t, value)
+		self.set_sensor_value(t, value)
 		
 	def setOutdoorTemperature(self, value):
 		t = self._outdoor.getOutdoorTemperature()
-		self.setSensorValue(t, value)
+		self.set_sensor_value(t, value)
 		
 		
 	def setMediumOutdoorTemperature(self):
@@ -84,7 +84,7 @@ class Scenario(Parent):
 	def setAlarmSignal(self, value):
 		t = self._pressure.getPressure()
 		state = 'open' if value else 'short'
-		self.setSensorValue(t, state)
+		self.set_sensor_value(t, state)
 		
 	def run(self):
 		plateSetpoint = self.readRequiredPlateTemperatureValue()

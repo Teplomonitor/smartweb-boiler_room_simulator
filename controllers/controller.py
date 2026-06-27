@@ -195,7 +195,7 @@ class Controller(object):
 	def makeNewProgram(self, preset):
 		return preset.loadPreset(self)
 
-	def getProgramList(self): return self._programList
+	def get_program_list(self): return self._programList
 	
 	def on_can_message_received(self, msg):
 		def generateResponse():

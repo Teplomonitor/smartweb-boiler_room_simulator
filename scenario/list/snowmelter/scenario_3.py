@@ -13,23 +13,23 @@ class Scenario(Parent):
 		self._snowmelter = self._programList['snowmelter']
 		self._outdoor    = self._programList['oat']
 
-	def getScenarioTitle(self):
+	def get_scenario_title(self):
 		return 'scenario 3'
 	
-	def getScenarioDescription(self):
+	def get_scenario_description(self):
 		return 'проверить, что снеготайка не работает, если уличная температура выше или ниже заданного диапазона (задержка 5 минут)'
 	
-	def getChecklistId(self):
+	def get_checklist_id(self):
 		return '3.9.3'
 	
-	def getRequiredPrograms(self):
+	def get_required_programs(self):
 		requiredProgramTypesList = {
 			'snowmelter': 'SNOWMELT',
 			'oat'       : 'OUTDOOR_SENSOR',
 		}
 		return requiredProgramTypesList
 	
-	def getDefaultPreset(self):
+	def get_default_preset(self):
 		return 'snowmelter'
 		
 		
@@ -53,15 +53,15 @@ class Scenario(Parent):
 	
 	def setBacwardFlowTemperature(self, value):
 		t = self._snowmelter.getBackwardFlowTemperature()
-		self.setSensorValue(t, value)
+		self.set_sensor_value(t, value)
 		
 	def setPlateTemperature(self, value):
 		t = self._snowmelter.getPlateTemperature()
-		self.setSensorValue(t, value)
+		self.set_sensor_value(t, value)
 		
 	def setOutdoorTemperature(self, value):
 		t = self._outdoor.getOutdoorTemperature()
-		self.setSensorValue(t, value)
+		self.set_sensor_value(t, value)
 		
 	def outdoorTemperatureIsHot(self, maxValue):
 		oat = self.readSnowmelterOutdoorTemperature()

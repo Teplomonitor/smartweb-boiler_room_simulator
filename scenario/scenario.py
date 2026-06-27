@@ -33,27 +33,27 @@ class Scenario(object):
 		self._startTime = time.time()
 		self._EventStop = ScenarioThread().getStopScenarioEvent()
 				
-		printLog(f'starting {self.getScenarioTitle()}')
-		printLog(f'description: {self.getScenarioDescription()}')
+		printLog(f'starting {self.get_scenario_title()}')
+		printLog(f'description: {self.get_scenario_description()}')
 		
 		self._manualSensorsList = []
 	
-		self.initScenario()
+		self.init_scenario()
 		
-	def getScenarioTitle(self):
+	def get_scenario_title(self):
 		return 'scenario'
 	
-	def getScenarioDescription(self):
+	def get_scenario_description(self):
 		return 'default'
 	
-	def getChecklistId(self):
+	def get_checklist_id(self):
 		return '--'
 	
-	def getDuration(self):
+	def get_duration(self):
 		return time.time() - self._startTime
 	
-	def setManual(self, sensor, manual):
-		sensor.setManual(manual)
+	def set_manual(self, sensor, manual):
+		sensor.set_manual(manual)
 		if sensor in self._manualSensorsList:
 			return
 		self._manualSensorsList.append(sensor)
@@ -184,8 +184,8 @@ class Scenario(object):
 				return False
 	
 	
-	def setSensorValue(self, sensor, value):
-		self.setManual(sensor, True)
+	def set_sensor_value(self, sensor, value):
+		self.set_manual(sensor, True)
 		sensor.setValue(value, True)
 		
 	def done(self):
@@ -196,23 +196,23 @@ class Scenario(object):
 			prg.enable_gui_control()
 			
 		for sensor in self._manualSensorsList:
-			sensor.setManual(False)
+			sensor.set_manual(False)
 	
-	def getStatus(self):
+	def get_status(self):
 		return self._status
 	
-	def initScenario(self):
-		ok = self.initProgramList(self.getRequiredPrograms())
+	def init_scenario(self):
+		ok = self.init_program_list(self.get_required_programs())
 				
 		if not ok:
-			main.loadPreset(self.getDefaultPreset())
+			main.loadPreset(self.get_default_preset())
 			
 			while main.loadPresetDone() == False:
 				self.wait(1)
 			
 			self.wait(2)
 			
-			if not self.initProgramList(self.getRequiredPrograms()):
+			if not self.init_program_list(self.get_required_programs()):
 				printError('fail to init program list!')
 			else:
 				printLog('init ok!')
@@ -224,18 +224,18 @@ class Scenario(object):
 				
 		self._startTime = time.time()
 
-	def getRequiredPrograms(self):
+	def get_required_programs(self):
 		requiredProgramTypesList = {
 		}
 		return requiredProgramTypesList
 		
-	def getDefaultPreset(self):
+	def get_default_preset(self):
 		return 'default'
 	
-	def initProgramList(self, requiredProgramTypesList):
+	def init_program_list(self, requiredProgramTypesList):
 		self._programList = {}
 		for prgKey in requiredProgramTypesList:
-			prg = self.getUnbindedProgram(requiredProgramTypesList[prgKey])
+			prg = self.get_unbinded_program(requiredProgramTypesList[prgKey])
 			if prg is None:
 				printError(f'{prgKey} not in program list!')
 				self._programList = {}
@@ -244,48 +244,48 @@ class Scenario(object):
 				self._programList[prgKey] = prg
 		return True
 		
-	def getProgramList(self):
-		return self._controllerHost.getProgramList()
+	def get_program_list(self):
+		return self._controllerHost.get_program_list()
 	
-	def findProgramInList(self, program):
+	def find_program_in_list(self, program):
 		return [_ for _, prg in self._programList.items() if prg == program]
 	
-	def getUnbindedProgram(self, programType):
-		programsList = self.getProgramList()
+	def get_unbinded_program(self, programType):
+		programsList = self.get_program_list()
 		for program in programsList:
 			if program.get_type() == programType:
 				# in case we need to different programs of the same type
-				if self.findProgramInList(program):
+				if self.find_program_in_list(program):
 					#this one already in list
 					continue
 				else:
 					return program
 		return None
 
-def getScenarioDir():
+def get_scenario_dir():
 	return join(dirname(__file__),'list')
 
-def getScenarioFilesList():
+def get_scenario_files_list():
 	__all__ = []
 	
-	def addScenarioItems(scenarioDir):
-		def filterScenarioItems():
+	def add_scenario_items(scenarioDir):
+		def filter_scenario_items():
 			if '__pycache__' in dirs : dirs .remove('__pycache__')  # don't visit __pycache__ directories
 			if '__init__.py' in files: files.remove('__init__.py')  # don't use __init__.py files
 			
 		for root, dirs, files in os.walk(scenarioDir):
-			filterScenarioItems()
+			filter_scenario_items()
 			
 			for scenarioFile in files:
 				__all__.append(join(scenarioDir, scenarioFile))
 				
 			for scenarioSubDir in dirs:
-				addScenarioItems(os.path.join(scenarioDir, scenarioSubDir))
+				add_scenario_items(os.path.join(scenarioDir, scenarioSubDir))
 				
 			break
 			
 	
-	addScenarioItems(getScenarioDir())
+	add_scenario_items(get_scenario_dir())
 	
 	return __all__
 
@@ -308,7 +308,7 @@ class ScenarioThread(threading.Thread):
 		self._newScenario    = None
 		self._scenarioResultList = []
 		self._stopScenarioEvent = threading.Event()
-		self._scenarioList = getScenarioFilesList()
+		self._scenarioList = get_scenario_files_list()
 		self._initDone = True
 		
 		self.daemon = True
@@ -321,36 +321,36 @@ class ScenarioThread(threading.Thread):
 		if self._stopScenarioEvent.is_set():
 			return None
 		
-		scenario = self.getScenario(self._scenarioIndex)
+		scenario = self.get_scenario(self._scenarioIndex)
 		self._scenarioIndex += 1
 		return scenario
 	
 	def saveScenarioLog(self, scenario):
-		programList = self._controllerHost.getProgramList()
+		programList = self._controllerHost.get_program_list()
 		now = datetime.datetime.now()
 		date_time = now.strftime("%Y-%m-%d_%H_%M")
-		logDir = date_time + '_' + scenario.getScenarioTitle().replace(" ", "_")
+		logDir = date_time + '_' + scenario.get_scenario_title().replace(" ", "_")
 		for prg in programList:
 			prg.saveLog(logDir)
 			
 	def run(self):
 		while mainThread.taskEnable():
 			if self._newScenario:
-				self.startScenarioNow(self._newScenario)
+				self.start_scenario_now(self._newScenario)
 				self._newScenario = None
 			
 			if self._currentScenario:
 				self._currentScenario.run()
 
 				if self._currentScenario.done():
-					self.appendScenarioResult(self._currentScenario)
-					if self._currentScenario.getStatus() != 'OK':
+					self.append_scenario_result(self._currentScenario)
+					if self._currentScenario.get_status() != 'OK':
 						self.saveScenarioLog(self._currentScenario)
 						
 					self._currentScenario.clear()
 					self._currentScenario = self.getNextScenario()
 					if self._currentScenario == None:
-						self.printScenarioRunResult()
+						self.print_scenario_run_result()
 							
 			if self._stopScenarioEvent.is_set():
 				self._stopScenarioEvent.clear()
@@ -358,19 +358,19 @@ class ScenarioThread(threading.Thread):
 					printError(f'Сцераний прерван по внешнему запросу')
 					self._currentScenario.clear()
 					self._currentScenario = None
-					self.printScenarioRunResult()
+					self.print_scenario_run_result()
 					
 			time.sleep(1)
 			
-	def appendScenarioResult(self, scenario):
+	def append_scenario_result(self, scenario):
 		result = {
-			'checklistId': scenario.getChecklistId(),
-			'result'     : scenario.getStatus(),
-			'duration'   : scenario.getDuration()
+			'checklistId': scenario.get_checklist_id(),
+			'result'     : scenario.get_status(),
+			'duration'   : scenario.get_duration()
 		}
 		self._scenarioResultList.append(result)
 		
-	def printScenarioRunResult(self):
+	def print_scenario_run_result(self):
 		dt = time.time() - self._scenarioStartTime
 		dtStr = time.strftime('%H:%M:%S', time.gmtime(dt))
 
@@ -389,10 +389,10 @@ class ScenarioThread(threading.Thread):
 			
 			printFunc(f'{checklistId}: {value} ({durationStr})')
 				
-	def startScenario(self, scenario):
+	def start_scenario(self, scenario):
 		self._newScenario = scenario
 	
-	def startScenarioNow(self, scenario):
+	def start_scenario_now(self, scenario):
 		self._scenarioStartTime = time.time()
 		self._scenarioResultList = []
 		
@@ -405,27 +405,27 @@ class ScenarioThread(threading.Thread):
 		
 		if scenario in __all__:
 			self._scenarioIndex   = len(__all__)
-			self._currentScenario = self.getScenarioObject(scenario)
+			self._currentScenario = self.get_scenario_object(scenario)
 		else:
 			printError(f'{scenario} not in scenario list!')
 			
 	
-	def getScenarioObject(self, scenarioId):
+	def get_scenario_object(self, scenarioId):
 		scenario_module = importfile(scenarioId)
 		return scenario_module.Scenario(self._controllerHost, self._simulator)
 
-	def getScenario(self, scenarioIndex):
+	def get_scenario(self, scenarioIndex):
 		__all__ = self._scenarioList
 		
 		if scenarioIndex < len(__all__): 
 			scenarioId = __all__[scenarioIndex]
-			return self.getScenarioObject(scenarioId)
+			return self.get_scenario_object(scenarioId)
 		
 		return None
 
-def startScenario(scenario):
-	ScenarioThread().startScenario(scenario)
+def start_scenario(scenario):
+	ScenarioThread().start_scenario(scenario)
 	
 
-def stopScenario():
+def stop_scenario():
 	ScenarioThread()._stopScenarioEvent.set()

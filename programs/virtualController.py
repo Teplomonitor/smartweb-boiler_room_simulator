@@ -85,7 +85,7 @@ class VirtualController(Program):
 	def getSensorValue(self, index):
 		return self.getSensor(index).getValue()
 	
-	def setSensorValue(self, index, value):
+	def set_sensor_value(self, index, value):
 		return self.getSensor(index).setValue(value)
 	
 	def reportSensorValue(self, index, value):
@@ -98,4 +98,4 @@ class VirtualController(Program):
 			self._reportPeriod.reset()
 			self.reportSensorValue(index, value)
 			
-		return self.setSensorValue(index, value)
+		return self.set_sensor_value(index, value)

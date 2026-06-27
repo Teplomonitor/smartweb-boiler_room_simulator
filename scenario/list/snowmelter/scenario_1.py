@@ -15,21 +15,21 @@ class Scenario(Parent):
 		self._snowmelter = self._programList['snowmelter']
 		self._outdoor    = self._programList['oat']
 
-	def getScenarioTitle(self): return 'scenario 1'
+	def get_scenario_title(self): return 'scenario 1'
 	
-	def getScenarioDescription(self):
+	def get_scenario_description(self):
 		return 'check if circulation pump switch off, if T < TfrostProtect'
 	
-	def getChecklistId(self): return '3.9.1'
+	def get_checklist_id(self): return '3.9.1'
 	
-	def getRequiredPrograms(self):
+	def get_required_programs(self):
 		requiredProgramTypesList = {
 			'snowmelter': 'SNOWMELT',
 			'oat'       : 'OUTDOOR_SENSOR',
 		}
 		return requiredProgramTypesList
 	
-	def getDefaultPreset(self): return 'snowmelter'
+	def get_default_preset(self): return 'snowmelter'
 
 	def readFrostProtectionTemperatureValue(self): return self._snowmelter.readParameterValue('frostProtectionTemp')
 	def readRequiredPlateTemperatureValue(self)  : return self._snowmelter.readParameterValue('reqPlateTemp')
@@ -38,11 +38,11 @@ class Scenario(Parent):
 		
 	def setPlateTemperature(self, value):
 		t = self._snowmelter.getPlateTemperature()
-		self.setSensorValue(t, value)
+		self.set_sensor_value(t, value)
 		
 	def setOutdoorTemperature(self, value):
 		t = self._outdoor.getOutdoorTemperature()
-		self.setSensorValue(t, value)
+		self.set_sensor_value(t, value)
 		
 	def setMediumOutdoorTemperature(self):
 		minTemp = self.readMinOutdoorTemperature()
@@ -63,7 +63,7 @@ class Scenario(Parent):
 	
 	def setBacwardFlowTemperature(self, value):
 		t = self._snowmelter.getBackwardFlowTemperature()
-		self.setSensorValue(t, value)
+		self.set_sensor_value(t, value)
 		
 	def run(self):
 		plateSetpoint = self.readRequiredPlateTemperatureValue()

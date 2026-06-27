@@ -132,7 +132,7 @@ class Simulator(threading.Thread):
 		self._controllerHost = controllerHost
 		self._controllerIo   = controllerIo
 
-		programsList = self._controllerHost.getProgramList()
+		programsList = self._controllerHost.get_program_list()
 		
 		for program in programsList:
 			programId = program.get_id()
