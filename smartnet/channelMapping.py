@@ -90,7 +90,7 @@ class Channel(GuiParameter):
 		
 	def setLogType(self, logType): self._log.setSaveType(logType)
 	
-	def saveLog(self, title):
+	def save_log(self, title):
 		self._log.saveToCsv(title)
 
 class InputChannel(Channel):

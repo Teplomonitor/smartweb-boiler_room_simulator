@@ -81,7 +81,7 @@ class Message(object):
 	def getProgramId  (self): return self._programId
 	def getFunctionId (self): return self._functionId
 	def getRequestFlag(self): return self._requestFlag
-	def getData       (self): return self._data
+	def get_data       (self): return self._data
 	def getHeader     (self): return self.generateHeader()
 
 	def setProgramType(self, value): self._programType = value
@@ -143,10 +143,10 @@ class Message(object):
 		val = responseFilter.getFunctionId()
 		if (val is not None) and (val is not self.getFunctionId() ): return False
 
-		val = responseFilter.getData()
+		val = responseFilter.get_data()
 		if val is not None:
 			val_size = len(val)
-			data = self.getData()
+			data = self.get_data()
 			int_array = [byte for byte in data]
 			data_cut = int_array[:val_size]
 

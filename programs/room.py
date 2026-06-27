@@ -59,7 +59,7 @@ class Room(Program):
 		
 		for setting in settings:
 			if setting.get_program_type() == 'ROOM_DEVICE':
-				parameterIdCode = setting.get_parameter_idCode()
+				parameterIdCode = setting.get_parameter_id_code()
 				parameterValue  = setting.getValue()
 				if   parameterIdCode == 'RESPONSIBLE_CIRCUIT_1': circuitList[0] = parameterValue
 				elif parameterIdCode == 'RESPONSIBLE_CIRCUIT_2': circuitList[1] = parameterValue

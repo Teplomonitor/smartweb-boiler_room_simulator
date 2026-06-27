@@ -74,7 +74,7 @@ class Program(object):
 				if channel.get_id() == i:
 					channel.setMapping(mappings[i])
 					if channel.isMapped():
-						self.readOutput(channel)
+						self.read_output(channel)
 					break
 	
 	def init_inputs(self):
@@ -154,7 +154,7 @@ class Program(object):
 					(msg.getRequestFlag() == snc.requestFlag['RESPONSE']))
 
 		if headerOk:
-			data   = msg.getData()
+			data   = msg.get_data()
 			dataOk = (
 				(data[0] == snc.ProgramType['PROGRAM']) and
 				(data[1] == snc.ProgramParameter['OUTPUT']['id']))
@@ -198,7 +198,7 @@ class Program(object):
 		
 	def bind_input(self, channel_id, mapping):
 		printLog(f'bind program input {channel_id}')
-		def generateRequest():
+		def generate_request():
 			request = sm.Message(
 			snc.ProgramType['REMOTE_CONTROL'],
 			self.get_id(),
@@ -213,17 +213,17 @@ class Program(object):
 			])
 			return request
 
-		def generateRequiredResponse():
+		def generate_required_response():
 			response = copy(request)
 			response.setRequestFlag(snc.requestFlag['RESPONSE'])
 			return response
 
-		def handleResponse():
+		def handle_response():
 			if response is None:
 				printError('bind input timeout')
 				return False
 			else:
-				data = response.getData()
+				data = response.get_data()
 				resultPos = len(data) - 1
 				result = data[resultPos]
 				if result == snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK']:
@@ -234,13 +234,13 @@ class Program(object):
 					return False
 				
 		
-		request        = generateRequest()
-		responseFilter = generateRequiredResponse()
+		request        = generate_request()
+		responseFilter = generate_required_response()
 
 		i = 0
 		while i < 3:
 			response = request.send(responseFilter, 10)
-			result = handleResponse()
+			result = handle_response()
 			if result:
 				break
 			printLog('retry')
@@ -250,7 +250,7 @@ class Program(object):
 
 	def bind_output(self, channel_id, mapping):
 		printLog(f'bind program output {channel_id}')
-		def generateRequest():
+		def generate_request():
 			request = sm.Message(
 			snc.ProgramType['REMOTE_CONTROL'],
 			self.get_id(),
@@ -265,17 +265,17 @@ class Program(object):
 			])
 			return request
 
-		def generateRequiredResponse():
+		def generate_required_response():
 			response = copy(request)
 			response.setRequestFlag(snc.requestFlag['RESPONSE'])
 			return response
 
-		def handleResponse():
+		def handle_response():
 			if response is None:
 				printError('bind output timeout')
 				return False
 			else:
-				data = response.getData()
+				data = response.get_data()
 				resultPos = len(data) - 1
 				result = data[resultPos]
 				if result == snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK']:
@@ -286,13 +286,13 @@ class Program(object):
 					return False
 				
 		
-		request        = generateRequest()
-		responseFilter = generateRequiredResponse()
+		request        = generate_request()
+		responseFilter = generate_required_response()
 
 		i = 0
 		while i < 3:
 			response = request.send(responseFilter, 10)
-			result = handleResponse()
+			result = handle_response()
 			if result:
 				break
 			printLog('retry')
@@ -300,7 +300,7 @@ class Program(object):
 			
 		return result
 	
-	def readOutput(self, channel):
+	def read_output(self, channel):
 		param = sr.RemoteControlParameter(
 			'PROGRAM', 'OUTPUT',
 			parameterIndex = channel.get_id(),
@@ -313,11 +313,11 @@ class Program(object):
 			
 		return value
 	
-	def getParameterInfo(self, parameter):
+	def get_parameter_info(self, parameter):
 		return None
 	
-	def readParameterValue(self, parameter):
-		p = self.getParameterInfo(parameter)
+	def read_parameter_value(self, parameter):
+		p = self.get_parameter_info(parameter)
 		if p is None:
 			return None
 		remoteParam = sr.RemoteControlParameter(parameterInfo = p, programId = self.get_id() )
@@ -325,8 +325,8 @@ class Program(object):
 		
 		return remoteParam.getValue()
 	
-	def writeParameterValue(self, parameter, value, index = None, confirm = True):
-		p = self.getParameterInfo(parameter)
+	def write_parameter_value(self, parameter, value, index = None, confirm = True):
+		p = self.get_parameter_info(parameter)
 		if p is None:
 			return None
 		
@@ -341,7 +341,7 @@ class Program(object):
 		
 		return remoteParam.getValue()
 	
-	def saveLog(self, logDir = None):
+	def save_log(self, logDir = None):
 		titleCommon = self.get_title() + '_' + str(self.get_id())
 		
 		if logDir:
@@ -351,20 +351,20 @@ class Program(object):
 		logDirOutputs = os.path.join(titleCommon, 'outputs')
 		
 		for programInput in self._inputs.values():
-			programInput.saveLog(logDirInputs)
+			programInput.save_log(logDirInputs)
 		for programOutput in self._outputs.values():
-			programOutput.saveLog(logDirOutputs)
+			programOutput.save_log(logDirOutputs)
 	
 	# TODO: move to derived consumer class
-	def get_temperatureSource(self):
+	def get_temperature_source(self):
 		preset = self.get_preset()
 		settings = preset.getSettings().get()
 		for setting in settings:
-			if setting.get_program_type() == 'CONSUMER' and setting.get_parameter_idCode() == 'GENERATOR_ID':
+			if setting.get_program_type() == 'CONSUMER' and setting.get_parameter_id_code() == 'GENERATOR_ID':
 				return setting.getValue()
 		return 0
 	
-	def get_temperatureSourceList(self):
-		return [self.get_temperatureSource()]
+	def get_temperature_source_list(self):
+		return [self.get_temperature_source()]
 	
 	

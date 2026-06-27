@@ -28,7 +28,7 @@ class Scenario(Parent):
 	
 	def get_default_preset(self): return 'swimmingPool'
 
-	def readRequiredPoolTemperatureValue(self): return self._pool.readParameterValue('currentRequiredPoolTemperature')
+	def readRequiredPoolTemperatureValue(self): return self._pool.read_parameter_value('currentRequiredPoolTemperature')
 	def getLoadingPumpState(self): return self._pool.getLoadingPumpState().getValue()
 	
 	def loadingPumpIsOn (self): return self.getLoadingPumpState() != self.RELAY_OFF

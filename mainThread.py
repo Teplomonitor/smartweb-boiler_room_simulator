@@ -102,13 +102,13 @@ class MainThread(threading.Thread):
 	def saveProgramPlotsNow(self):
 		programList = cc.Controller().get_program_list()
 		for prg in programList:
-			prg.saveLog()
+			prg.save_log()
 
 	def initSimulator(self):
 		sm.CanListener()
 		
 		if self._udp_bridge_enable:
-			udp.initUdpBridge(self._udp_bridge_enable)
+			udp.init_udp_bridge(self._udp_bridge_enable)
 		
 		if self._debug:
 			self._debug_thread = debug.debug_thread(self._controllerId)

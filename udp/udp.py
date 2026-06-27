@@ -136,12 +136,12 @@ class can_thread(threading.Thread):
 		udp_msg = can_to_udp(msg)
 		self._udp_messages_to_send.extend(udp_msg)
 
-	def sendUdpPacket(self, data, udp_ip, udp_port):
+	def send_udp_packet(self, data, udp_ip, udp_port):
 #		print(f'send udp packet {data} to {udp_ip}')
 		self._sock.sendto(data, (udp_ip, udp_port))
 		
 	
-	def doRun(self):
+	def do_run(self):
 		now = time.time()
 		
 		messages = self.get_send_queue()
@@ -159,7 +159,7 @@ class can_thread(threading.Thread):
 				self._send_can_time = now
 #				print(f'udp_tx data {queue_size}')
 				for ip in ip_list:
-					self.sendUdpPacket(bytes(messages), ip, self._port)
+					self.send_udp_packet(bytes(messages), ip, self._port)
 					
 				self.clear_send_queue()
 		
@@ -172,7 +172,7 @@ class can_thread(threading.Thread):
 		
 	def run(self):
 		while mainThread.taskEnable():
-			self.doRun()
+			self.do_run()
 
 
 class udp_listen_thread(threading.Thread):
@@ -203,7 +203,7 @@ class udp_listen_thread(threading.Thread):
 		except:
 			pass
 	
-	def doRun(self):
+	def do_run(self):
 		try:
 			data, addr = self._sock.recvfrom(1024)
 		except socket.timeout:
@@ -236,11 +236,11 @@ class udp_listen_thread(threading.Thread):
 			
 	def run(self):
 		while mainThread.taskEnable():
-			self.doRun()
+			self.do_run()
 			
 
 
-def initUdpBridge(UDP_PORT):
+def init_udp_bridge(UDP_PORT):
 	udp_listen_thread("UDP_listen", 123, UDP_PORT)
 	
 	can_thread  ("UDP_CAN_send", 456, UDP_PORT)

@@ -76,7 +76,7 @@ class VirtualController(Program):
 	def setSensorControlOptions(self, index, options):
 		self.getSensor(index).setOptions(options)
 		
-	def getParameterInfo(self, parameter):
+	def get_parameter_info(self, parameter):
 		return self._remoteControlParameters[parameter]
 	
 	def getSensor(self, index):
@@ -90,7 +90,7 @@ class VirtualController(Program):
 	
 	def reportSensorValue(self, index, value):
 		#no confirm because we change value pretty often and it cause thread slowdown
-		self.writeParameterValue(self._sensors[index], value, confirm = False)
+		self.write_parameter_value(self._sensors[index], value, confirm = False)
 	
 	def setSensor(self, index, value):
 		dT = value - self.getSensorValue(index)

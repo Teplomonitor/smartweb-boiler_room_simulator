@@ -65,7 +65,7 @@ class Snowmelter(Program):
 	def get_max_flow_rate1(self): return self._parameters['max_flow_rate1'].getValue()
 	def get_max_flow_rate2(self): return self._parameters['max_flow_rate2'].getValue()
 	
-	def getParameterInfo(self, parameter):
+	def get_parameter_info(self, parameter):
 		return self._remoteControlParameters[parameter]
 
 	def get_gui_color (self): return 'blue'

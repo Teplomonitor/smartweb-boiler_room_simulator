@@ -32,7 +32,7 @@ class SwimmingPool(Program):
 		#TODO: add more parameters
 	}
 	
-	def getParameterInfo(self, parameter): return self._remoteControlParameters[parameter]
+	def get_parameter_info(self, parameter): return self._remoteControlParameters[parameter]
 	
 	def init_inputs(self):
 		self._inputs['poolTemperature'] = InputInfo(0, 'Т воды'        , -10, 50)
@@ -71,6 +71,6 @@ class SwimmingPool(Program):
 			'CIRCULATION_OFF'   : 3,
 			}
 		
-		return self.writeParameterValue('circulationPumpWorkMode', workMode[value])
+		return self.write_parameter_value('circulationPumpWorkMode', workMode[value])
 	
 	

@@ -158,7 +158,7 @@ class ControllerIO(object):
 			return headerOk
 
 		if controllerOutputMappingRequestFilter():
-			data        = msg.getData()
+			data        = msg.get_data()
 			outputId    = data[0]
 			self.reportOutputMapping(outputId)
 		elif controllerChannelNumberRequestFilter():

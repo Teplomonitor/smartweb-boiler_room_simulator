@@ -35,11 +35,11 @@ class Scenario(Parent):
 	
 	def get_default_preset(self): return 'swimmingPool'
 
-	def readRequiredPoolTemperatureValue(self): return self._pool.readParameterValue('currentRequiredPoolTemperature')
-	def readCirculationPumpWorkPeriodOn (self): return self._pool.readParameterValue('circulationPumpWorkPeriodOn')
-	def readCirculationPumpWorkPeriodOff(self): return self._pool.readParameterValue('circulationPumpWorkPeriodOff')
-	def writeCirculationPumpWorkPeriodOn (self, value): return self._pool.writeParameterValue('circulationPumpWorkPeriodOn' , value)
-	def writeCirculationPumpWorkPeriodOff(self, value): return self._pool.writeParameterValue('circulationPumpWorkPeriodOff', value)
+	def readRequiredPoolTemperatureValue(self): return self._pool.read_parameter_value('currentRequiredPoolTemperature')
+	def readCirculationPumpWorkPeriodOn (self): return self._pool.read_parameter_value('circulationPumpWorkPeriodOn')
+	def readCirculationPumpWorkPeriodOff(self): return self._pool.read_parameter_value('circulationPumpWorkPeriodOff')
+	def writeCirculationPumpWorkPeriodOn (self, value): return self._pool.write_parameter_value('circulationPumpWorkPeriodOn' , value)
+	def writeCirculationPumpWorkPeriodOff(self, value): return self._pool.write_parameter_value('circulationPumpWorkPeriodOff', value)
 	
 	def getLoadingPumpState    (self): return self._pool.getLoadingPumpState().getValue()
 	def getCirculationPumpState(self): return self._pool.getCirculationPumpState().getValue()

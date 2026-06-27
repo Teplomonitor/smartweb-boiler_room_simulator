@@ -31,10 +31,10 @@ class Scenario(Parent):
 	
 	def get_default_preset(self): return 'snowmelter'
 
-	def readFrostProtectionTemperatureValue(self): return self._snowmelter.readParameterValue('frostProtectionTemp')
-	def readRequiredPlateTemperatureValue(self)  : return self._snowmelter.readParameterValue('reqPlateTemp')
-	def readMinOutdoorTemperature(self)          : return self._snowmelter.readParameterValue('minOutdoorTemp')
-	def readMaxOutdoorTemperature(self)          : return self._snowmelter.readParameterValue('maxOutdoorTemp')
+	def readFrostProtectionTemperatureValue(self): return self._snowmelter.read_parameter_value('frostProtectionTemp')
+	def readRequiredPlateTemperatureValue(self)  : return self._snowmelter.read_parameter_value('reqPlateTemp')
+	def readMinOutdoorTemperature(self)          : return self._snowmelter.read_parameter_value('minOutdoorTemp')
+	def readMaxOutdoorTemperature(self)          : return self._snowmelter.read_parameter_value('maxOutdoorTemp')
 		
 	def setPlateTemperature(self, value):
 		t = self._snowmelter.getPlateTemperature()

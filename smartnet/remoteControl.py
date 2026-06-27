@@ -126,7 +126,7 @@ class RemoteControlParameter(object):
 	def get_program_type   (self): return self._programType
 	def getParameterIndex(self): return self._parameterIndex
 	
-	def get_parameter_idCode(self): return snc.ParameterDict[self._programType][self._parameterId]['id']
+	def get_parameter_id_code(self): return snc.ParameterDict[self._programType][self._parameterId]['id']
 	def getParameterType  (self): return snc.ParameterDict[self._programType][self._parameterId]['type']
 	
 	def getParameterArraySize(self):
@@ -157,8 +157,8 @@ class RemoteControlParameter(object):
 
 #		print(actionStr)
 		
-		def generateRequest():
-			parameterIdCode = self.get_parameter_idCode()
+		def generate_request():
+			parameterIdCode = self.get_parameter_id_code()
 			
 			parameterValue = self.valueToData(self._parameterValue)
 			
@@ -177,17 +177,17 @@ class RemoteControlParameter(object):
 			data)
 			return request
 
-		def generateRequiredResponse():
+		def generate_required_response():
 			response = copy(request)
 			response.setRequestFlag(snc.requestFlag['RESPONSE'])
 			return response
 
-		def handleResponse():
+		def handle_response():
 			if response is None:
 				printError(f'{actionStr}: write timeout')
 				return False
 			else:
-				data = response.getData()
+				data = response.get_data()
 				resultPos = len(data) - 1
 				result = data[resultPos]
 				if result == snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK']:
@@ -196,18 +196,18 @@ class RemoteControlParameter(object):
 					printError(f'{actionStr}: write error {result}')
 					return False
 
-		request = generateRequest()
+		request = generate_request()
 		
 		if confirm == False:
 			request.send()
 			return True
 		
-		responseFilter = generateRequiredResponse()
+		responseFilter = generate_required_response()
 
 		i = 0
 		while i < 3:
 			response = request.send(responseFilter, 3)
-			result = handleResponse()
+			result = handle_response()
 			if result:
 				break;
 			printLog(f'{actionStr}: retry')
@@ -225,8 +225,8 @@ class RemoteControlParameter(object):
 		else:
 			actionStr = f'prg {self._programId} read parameter {self._programType}.{self._parameterId}.{self._parameterIndex}'
 
-		def generateRequest():
-			parameterIdCode = self.get_parameter_idCode()
+		def generate_request():
+			parameterIdCode = self.get_parameter_id_code()
 			
 			if self._parameterIndex is None:
 				data = [snc.ProgramType[self._programType], parameterIdCode]
@@ -241,17 +241,17 @@ class RemoteControlParameter(object):
 				data)
 			return request
 
-		def generateRequiredResponse():
+		def generate_required_response():
 			response = copy(request)
 			response.setRequestFlag(snc.requestFlag['RESPONSE'])
 			return response
 
-		def handleResponse():
+		def handle_response():
 			if response is None:
 				printError(f'{actionStr}: read timeout')
 				return False
 			else:
-				data = response.getData()
+				data = response.get_data()
 				
 				if self._parameterIndex is None:
 					valuePos = 2
@@ -266,13 +266,13 @@ class RemoteControlParameter(object):
 #				print('read ok!')
 				return True
 
-		request        = generateRequest()
-		responseFilter = generateRequiredResponse()
+		request        = generate_request()
+		responseFilter = generate_required_response()
 
 		i = 0
 		while i < 3:
 			response = request.send(responseFilter, 3)
-			result = handleResponse()
+			result = handle_response()
 			if result:
 				break;
 			printLog(f'{actionStr}: retry')

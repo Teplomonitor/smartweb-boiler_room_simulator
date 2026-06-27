@@ -89,7 +89,7 @@ class Controller(object):
 		if response is None:
 			return False
 		else:
-			data = response.getData()
+			data = response.get_data()
 			
 			programNum = int(len(data) / 2)
 			
@@ -119,7 +119,7 @@ class Controller(object):
 		printLog('read controller programs list')
 		sm.CanListener.subscribe(self)
 		
-		def generateRequest():
+		def generate_request():
 			request = sm.Message(
 			snc.ProgramType['CONTROLLER'],
 			self._controllerId,
@@ -127,7 +127,7 @@ class Controller(object):
 			snc.requestFlag['REQUEST'])
 			return request
 		
-		request = generateRequest()
+		request = generate_request()
 		request.send()
 
 		request.send()
@@ -147,7 +147,7 @@ class Controller(object):
 	
 	def sendProgramAddRequest(self, programType, programId, programScheme):
 		printLog('Send program add request')
-		def generateRequest():
+		def generate_request():
 			request = sm.Message(
 			snc.ProgramType['CONTROLLER'],
 			self._controllerId,
@@ -159,13 +159,13 @@ class Controller(object):
 			])
 			return request
 
-		def generateRequiredResponse():
+		def generate_required_response():
 			response = copy(request)
 			response.setRequestFlag(snc.requestFlag['RESPONSE'])
 			response.setData([snc.ProgramType[programType], programId])
 			return response
 
-		def handleResponse():
+		def handle_response():
 			if response is None:
 				printError('Program add timeout')
 				return False
@@ -176,7 +176,7 @@ class Controller(object):
 					'STATUS_ADD_PROGRAM_TOO_MANY_PROGRAMS'  : 2,
 					'STATUS_ADD_PROGRAM_UNDEFINED_ERROR'    : 3,
 				}
-				data = response.getData()
+				data = response.get_data()
 				if data[2] == programAddStatus['STATUS_ADD_PROGRAM_OK']:
 					printLog('Program add ok!')
 					return True
@@ -185,12 +185,12 @@ class Controller(object):
 					return False
 
 
-		request        = generateRequest()
-		responseFilter = generateRequiredResponse()
+		request        = generate_request()
+		responseFilter = generate_required_response()
 
 		response = request.send(responseFilter, 10)
 
-		return handleResponse()
+		return handle_response()
 
 	def makeNewProgram(self, preset):
 		return preset.loadPreset(self)
@@ -211,7 +211,7 @@ class Controller(object):
 			
 	def resetConfig(self):
 		printLog('send Controller reset request')
-		def generateRequest():
+		def generate_request():
 			request = sm.Message(
 			snc.ProgramType['CONTROLLER'],
 			self._controllerId,
@@ -219,25 +219,25 @@ class Controller(object):
 			snc.requestFlag['REQUEST'])
 			return request
 
-		def generateRequiredResponse():
+		def generate_required_response():
 			response = copy(request)
 			response.setRequestFlag(snc.requestFlag['RESPONSE'])
 			return response
 
-		def handleResponse():
+		def handle_response():
 			if response is None:
 				printError('Program reset timeout')
 				return False
 			else:
 				return True
 
-		request        = generateRequest()
-		responseFilter = generateRequiredResponse()
+		request        = generate_request()
+		responseFilter = generate_required_response()
 
 		i = 0
 		while i < 3:
 			response = request.send(responseFilter, 10)
-			result = handleResponse()
+			result = handle_response()
 			if result:
 				break;
 			printLog('retry')

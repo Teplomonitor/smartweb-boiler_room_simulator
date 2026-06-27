@@ -58,7 +58,7 @@ def programInputMappingFilter(msg):
 	if not remoteControlSetRequest(msg):
 		return False
 
-	data = msg.getData()
+	data = msg.get_data()
 	return ((data[0] == snc.ProgramType['PROGRAM']) and
 			(data[1] == snc.ProgramParameter['INPUT_MAPPING']['id']))
 
@@ -66,7 +66,7 @@ def programOutputMappingFilter(msg):
 	if not remoteControlSetRequest(msg):
 		return False
 
-	data = msg.getData()
+	data = msg.get_data()
 	return ((data[0] == snc.ProgramType['PROGRAM']) and
 			(data[1] == snc.ProgramParameter['OUTPUT_MAPPING']['id']))
 
@@ -104,21 +104,21 @@ class debug_thread(can.Listener):
 				'STATUS_ADD_PROGRAM_UNDEFINED_ERROR'    : 3,
 			}
 			msg.setRequestFlag(snc.requestFlag['RESPONSE'])
-			data = msg.getData()
+			data = msg.get_data()
 			data[2] = programAddStatus['STATUS_ADD_PROGRAM_OK']
 			msg.send(bus = self._canbus)
 			return
 
 		if remoteControlSetRequest(msg):
 			msg.setRequestFlag(snc.requestFlag['RESPONSE'])
-			data = msg.getData()
+			data = msg.get_data()
 			data.append(snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK'])
 			msg.send(bus = self._canbus)
 			return
 		
 		if remoteControlGetRequest(msg):
 			msg.setRequestFlag(snc.requestFlag['RESPONSE'])
-			data = msg.getData()
+			data = msg.get_data()
 			data.extend([0xFF, 0xFF, 0xFF])
 			msg.send(bus = self._canbus)
 			return

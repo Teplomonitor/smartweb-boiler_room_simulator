@@ -331,7 +331,7 @@ class ScenarioThread(threading.Thread):
 		date_time = now.strftime("%Y-%m-%d_%H_%M")
 		logDir = date_time + '_' + scenario.get_scenario_title().replace(" ", "_")
 		for prg in programList:
-			prg.saveLog(logDir)
+			prg.save_log(logDir)
 			
 	def run(self):
 		while mainThread.taskEnable():
