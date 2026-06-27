@@ -4,8 +4,8 @@
 
 from .program import Program
 from .program import ParameterInfo as PI
-from .program import InputInfo
-from .program import OutputInfo
+from .program import input_info
+from .program import output_info
 from gui.parameter import GuiParameter as GuiParameter
 
 class SwimmingPool(Program):
@@ -35,15 +35,15 @@ class SwimmingPool(Program):
 	def get_parameter_info(self, parameter): return self._remoteControlParameters[parameter]
 	
 	def init_inputs(self):
-		self._inputs['poolTemperature'] = InputInfo(0, 'Т воды'        , -10, 50)
-		self._inputs['outsideRequest' ] = InputInfo(1, 'Внешний запрос')
-		self._inputs['waterLevel'     ] = InputInfo(2, 'Уровень воды'  )
-		self._inputs['flow'           ] = InputInfo(3, 'Проток'        )
+		self._inputs['poolTemperature'] = input_info(0, 'Т воды'        , -10, 50)
+		self._inputs['outsideRequest' ] = input_info(1, 'Внешний запрос')
+		self._inputs['waterLevel'     ] = input_info(2, 'Уровень воды'  )
+		self._inputs['flow'           ] = input_info(3, 'Проток'        )
 		
 	def init_outputs(self):
-		self._outputs['circulationPump'  ] = OutputInfo(0, 'Цирк. насос'         )
-		self._outputs['loadingPump'      ] = OutputInfo(1, 'Насос загрузки'      )
-		self._outputs['waterLevelControl'] = OutputInfo(2, 'Контроль уровня воды')
+		self._outputs['circulationPump'  ] = output_info(0, 'Цирк. насос'         )
+		self._outputs['loadingPump'      ] = output_info(1, 'Насос загрузки'      )
+		self._outputs['waterLevelControl'] = output_info(2, 'Контроль уровня воды')
 	
 	def init_gui_parameters(self):
 		self._parameters['max_flow_rate'] = GuiParameter(1000, 'Расход', 0, 3000, 1, 'кг/ч')

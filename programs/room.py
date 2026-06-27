@@ -3,8 +3,8 @@
 '''
 
 from .program import Program
-from .program import InputInfo
-from .program import OutputInfo
+from .program import input_info
+from .program import output_info
 from gui.parameter import GuiParameter as GuiParameter
 
 class Room(Program):
@@ -17,24 +17,24 @@ class Room(Program):
 	
 	def init_inputs(self):
 		self._inputs.update({
-			'roomTemperature' : InputInfo(0, 'Т помещения', -10,   50),
-			'mode_deprecated' : InputInfo(1, 'Режим'                 ),
-			'floorTemperature': InputInfo(2, 'Т пола'     , -10,   70),
-			'wallTemperature' : InputInfo(3, 'Т стены'    , -10,   70),
-			'humidity'        : InputInfo(4, 'Влажность'  ,   0,  100),
-			'CO2'             : InputInfo(5, 'CO2'        ,   0, 2000),
-			'motion'          : InputInfo(6, 'Движение'              ),
+			'roomTemperature' : input_info(0, 'Т помещения', -10,   50),
+			'mode_deprecated' : input_info(1, 'Режим'                 ),
+			'floorTemperature': input_info(2, 'Т пола'     , -10,   70),
+			'wallTemperature' : input_info(3, 'Т стены'    , -10,   70),
+			'humidity'        : input_info(4, 'Влажность'  ,   0,  100),
+			'CO2'             : input_info(5, 'CO2'        ,   0, 2000),
+			'motion'          : input_info(6, 'Движение'              ),
 		})
 		
 	def init_outputs(self):
 		self._outputs.update({
-			'valve1'      : OutputInfo(0, 'Клапан ТП' ),
-			'valve2'      : OutputInfo(1, 'Клапан РО' ),
-			'valve3'      : OutputInfo(2, 'Клапан ДН' ),
-			'analogValve1': OutputInfo(3, 'Сигнал ТП' ),
-			'analogValve2': OutputInfo(4, 'Сигнал РО' ),
-			'analogValve3': OutputInfo(5, 'Сигнал ДН' ),
-			'ventilation' : OutputInfo(6, 'Вентиляция'),
+			'valve1'      : output_info(0, 'Клапан ТП' ),
+			'valve2'      : output_info(1, 'Клапан РО' ),
+			'valve3'      : output_info(2, 'Клапан ДН' ),
+			'analogValve1': output_info(3, 'Сигнал ТП' ),
+			'analogValve2': output_info(4, 'Сигнал РО' ),
+			'analogValve3': output_info(5, 'Сигнал ДН' ),
+			'ventilation' : output_info(6, 'Вентиляция'),
 		})
 
 	def init_gui_parameters(self):

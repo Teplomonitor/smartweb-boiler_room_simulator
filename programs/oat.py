@@ -2,7 +2,7 @@
 @author: admin
 '''
 
-from .program import InputInfo
+from .program import input_info
 from .program import Program
 
 class Oat(Program):
@@ -14,7 +14,7 @@ class Oat(Program):
 	def get_type(): return 'OUTDOOR_SENSOR'
 	
 	def init_inputs(self):
-		self._inputs['outdoorTemperature'] = InputInfo(0, 'Улица', -40, 40)
+		self._inputs['outdoorTemperature'] = input_info(0, 'Улица', -40, 40)
 		
 	def __init__(self, params):
 		'''

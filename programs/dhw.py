@@ -3,8 +3,8 @@
 '''
 
 from .program import Program
-from .program import InputInfo
-from .program import OutputInfo
+from .program import input_info
+from .program import output_info
 from gui.parameter import GuiParameter as GuiParameter
 
 class Dhw(Program):
@@ -16,16 +16,16 @@ class Dhw(Program):
 	def get_type(): return 'DHW'
 	
 	def init_inputs(self):
-		self._inputs['temperature'        ] = InputInfo(0, 'Т бойлера')
-		self._inputs['flow'               ] = InputInfo(1, 'Проток'   )
-		self._inputs['backwardTemperature'] = InputInfo(2, 'Т обратки')
+		self._inputs['temperature'        ] = input_info(0, 'Т бойлера')
+		self._inputs['flow'               ] = input_info(1, 'Проток'   )
+		self._inputs['backwardTemperature'] = input_info(2, 'Т обратки')
 		
 	def init_outputs(self):
-		self._outputs['supplyPump'        ] = OutputInfo(0, 'Насос загрузки'   )
-		self._outputs['circulationPump'   ] = OutputInfo(1, 'Цирк. насос'      )
-		self._outputs['analogLoadingPump' ] = OutputInfo(2, 'А. насос загрузки')
-		self._outputs['valveOpen'         ] = OutputInfo(3, 'Смес. откр'       )
-		self._outputs['valveClose'        ] = OutputInfo(4, 'Смес. закр'       )
+		self._outputs['supplyPump'        ] = output_info(0, 'Насос загрузки'   )
+		self._outputs['circulationPump'   ] = output_info(1, 'Цирк. насос'      )
+		self._outputs['analogLoadingPump' ] = output_info(2, 'А. насос загрузки')
+		self._outputs['valveOpen'         ] = output_info(3, 'Смес. откр'       )
+		self._outputs['valveClose'        ] = output_info(4, 'Смес. закр'       )
 
 	def init_gui_parameters(self):
 		self._parameters['max_flow_rate'] = GuiParameter(1000, 'Расход', 0, 3000, 1, 'кг/ч')

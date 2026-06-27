@@ -17,7 +17,7 @@ from smartnet.channelMapping import OutputChannel    as OutputChannel
 from consoleLog import printLog   as printLog
 from consoleLog import printError as printError
 
-def InputInfo (channelId,
+def input_info (channelId,
 			title,
 			minValue = 0,
 			maxValue = 100,
@@ -33,7 +33,7 @@ def InputInfo (channelId,
 	channel.setStep(step)
 	return channel
 	
-def OutputInfo(channelId, title):
+def output_info(channelId, title):
 	return OutputChannel(
 		channelId = channelId,
 		title     = title

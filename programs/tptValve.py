@@ -2,8 +2,8 @@
 @author: admin
 '''
 
-from .program import InputInfo
-from .program import OutputInfo
+from .program import input_info
+from .program import output_info
 from .program import Program
 
 class TptValve(Program):
@@ -15,11 +15,11 @@ class TptValve(Program):
 	def get_type(): return 'TPT_VALVE_ADAPTER'
 
 	def init_inputs(self):
-		self._inputs['signal'] = InputInfo(0, 'Управляющий сигнал')
+		self._inputs['signal'] = input_info(0, 'Управляющий сигнал')
 		
 	def init_outputs(self):
-		self._outputs['valveOpen' ] = OutputInfo(0, 'Смес. откр.')
-		self._outputs['valveClose'] = OutputInfo(1, 'Смес. закр.')
+		self._outputs['valveOpen' ] = output_info(0, 'Смес. откр.')
+		self._outputs['valveClose'] = output_info(1, 'Смес. закр.')
 
 	def __init__(self, params):
 		'''

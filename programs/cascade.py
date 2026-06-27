@@ -3,7 +3,7 @@
 '''
 
 from .program import Program
-from .program import InputInfo
+from .program import input_info
 
 class Cascade(Program):
 	'''
@@ -14,8 +14,8 @@ class Cascade(Program):
 	def get_type(): return 'CASCADE_MANAGER'
 	
 	def init_inputs(self):
-		self._inputs['temperature'   ] = InputInfo(0, 'Коллектор'     )
-		self._inputs['outsideRequest'] = InputInfo(1, 'Внешний запрос')
+		self._inputs['temperature'   ] = input_info(0, 'Коллектор'     )
+		self._inputs['outsideRequest'] = input_info(1, 'Внешний запрос')
 		
 	def __init__(self, preset):
 		'''

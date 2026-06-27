@@ -3,8 +3,8 @@
 '''
 
 from .program import Program
-from .program import InputInfo
-from .program import OutputInfo
+from .program import input_info
+from .program import output_info
 from .program import ParameterInfo as PI
 from gui.parameter import GuiParameter as GP
 
@@ -27,15 +27,15 @@ class Snowmelter(Program):
 	}
 	
 	def init_inputs(self):
-		self._inputs['directFlowTemperature'] = InputInfo(0, 'Т подачи'     , -10, 100)
-		self._inputs['backwardTemperature'  ] = InputInfo(1, 'Т обратки'    , -10, 100)
-		self._inputs['plateTemperature'     ] = InputInfo(2, 'Т поверхности', -30,  40)
-		self._inputs['snowSensor'           ] = InputInfo(3, 'Осадки'       )
+		self._inputs['directFlowTemperature'] = input_info(0, 'Т подачи'     , -10, 100)
+		self._inputs['backwardTemperature'  ] = input_info(1, 'Т обратки'    , -10, 100)
+		self._inputs['plateTemperature'     ] = input_info(2, 'Т поверхности', -30,  40)
+		self._inputs['snowSensor'           ] = input_info(3, 'Осадки'       )
 		
 	def init_outputs(self):
-		self._outputs['primaryPump'            ] = OutputInfo(0, 'Насос загрузки'   )
-		self._outputs['secondaryPump'          ] = OutputInfo(1, 'Цирк. насос'      )
-		self._outputs['primaryPumpAnalogSignal'] = OutputInfo(2, 'А. насос загрузки')
+		self._outputs['primaryPump'            ] = output_info(0, 'Насос загрузки'   )
+		self._outputs['secondaryPump'          ] = output_info(1, 'Цирк. насос'      )
+		self._outputs['primaryPumpAnalogSignal'] = output_info(2, 'А. насос загрузки')
 
 	def init_gui_parameters(self):
 		self._parameters['max_flow_rate1'] = GP(1000, 'Расход до теплообменника', 0, 3000, 1, 'кг/ч')
