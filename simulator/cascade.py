@@ -24,37 +24,37 @@ class Simulator(object):
 #		print(f'cascade: {value}')
 		self._program.get_input_channel('temperature').set_value(value)
 
-	def getElapsedTime(self):
+	def get_elapsed_time(self):
 		return time.time() - self._time_start
 
-	def getConsumersPower(self):
-		consumersPower = self._control.getConsumersPower(self._program.get_id())
+	def get_consumer_power(self):
+		consumersPower = self._control.get_consumer_power(self._program.get_id())
 		return consumersPower
 
-	def getPower(self):
+	def get_power(self):
 		sourceList     = self._control.getSourceList()
 
 		power = 0
 		for source in sourceList:
 			if source._program.get_id() in self._sourceList:
-				power = power + source.getPower()
+				power = power + source.get_power()
 
 		return power
 
-	def getCoolDownPower(self):
+	def get_cooldown_power(self):
 		return 1
 
-	def getTotalPower(self):
-		return self.getPower() - self.getConsumersPower() - self.getCoolDownPower()
+	def get_total_power(self):
+		return self.get_power() - self.get_consumer_power() - self.get_cooldown_power()
 
-	def computeTemperature(self):
+	def compute_temperature(self):
 		temp = self._control._collector.getDirectTemperature()
 		
 		temp = limit(-30, temp, 100)
 
 		return temp
 
-	def getFlow(self):
+	def get_flow(self):
 		return 0
 		
 #		sourceList     = self._control.getSourceList()
@@ -63,9 +63,9 @@ class Simulator(object):
 #		flow = 0
 #		for source in sourceList:
 #			if source._program.get_id() in selfSourceList:
-#				flow = flow + source.getFlow()
+#				flow = flow + source.get_flow()
 
 #		return flow
 	
 	def run(self):
-		self.set_temperature(self.computeTemperature())
+		self.set_temperature(self.compute_temperature())

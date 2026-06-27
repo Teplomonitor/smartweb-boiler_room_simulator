@@ -20,8 +20,8 @@ class Simulator(object):
 		self._tMin = 20
 		self.set_temperature(30)
 
-	def getSupplyBackwardTemperature(self):
-		return self._control._collector.getSupplyBackwardTemperature()
+	def get_supply_backward_temperature(self):
+		return self._control._collector.get_supply_backward_temperature()
 	
 	def get_temperature(self):
 		return self._program.get_temperature()
@@ -30,14 +30,14 @@ class Simulator(object):
 #		print(f'boiler: {value}')
 		self._program.set_temperature(value)
 
-	def getElapsedTime(self):
+	def get_elapsed_time(self):
 		return time.time() - self._time_start
 
-	def getConsumersPower(self):
-		consumersPower = self._control.getConsumersPower(self._program.get_id())
+	def get_consumer_power(self):
+		consumersPower = self._control.get_consumer_power(self._program.get_id())
 		return consumersPower
 
-	def getStageState(self):
+	def get_stage_state(self):
 		stage = self._program.get_stage_1()
 		if stage.is_mapped() is False:
 			return 1
@@ -47,7 +47,7 @@ class Simulator(object):
 
 		return 0
 	
-	def getPumpState(self):
+	def get_pump_state(self):
 		pumpState = self._program.get_pump()
 		if pumpState.is_mapped() is False:
 			return 1
@@ -61,8 +61,8 @@ class Simulator(object):
 	def get_max_power(self):
 		return self._program.get_max_power()
 	
-	def computePower(self):	
-		if self.getStageState():
+	def compute_power(self):	
+		if self.get_stage_state():
 			offset = 20
 			temp = self.get_temperature()
 
@@ -94,38 +94,38 @@ class Simulator(object):
 		else:
 			self._currentPower -= 0.5
 			
-	def getPower(self):
+	def get_power(self):
 		return self._currentPower
 
 	def get_max_flow_rate(self):
 		return self._program.get_max_flow_rate()
 	
-	def getFlow(self):
-		if self.getPumpState():
+	def get_flow(self):
+		if self.get_pump_state():
 			return self.get_max_flow_rate() / 1000 # cube per hour
 		return 0
 		
-	def getCoolDownPower(self):
+	def get_cooldown_power(self):
 		dt = self.get_temperature() - self._tMin
 		return dt/self._tMax
 
-	def getTotalPower(self):
-		return self.getPower() - self.getCoolDownPower()
+	def get_total_power(self):
+		return self.get_power() - self.get_cooldown_power()
 
-	def computeTemperature(self):
-		flow = self.getFlow()
+	def compute_temperature(self):
+		flow = self.get_flow()
 		direct_temp = self.get_temperature()
 		if flow:
-			temp = self.getSupplyBackwardTemperature()
+			temp = self.get_supply_backward_temperature()
 		else:
 			temp = direct_temp
 			
 		
 		if flow:
 			k = 0.9
-			dt = self.getTotalPower() / flow * k
+			dt = self.get_total_power() / flow * k
 		else:
-			dt = self.getTotalPower() * 0.5
+			dt = self.get_total_power() * 0.5
 		
 		temp = limit(direct_temp - 1, temp + dt, direct_temp + 1) # don't want temp grow too fast
 		
@@ -136,6 +136,6 @@ class Simulator(object):
 		return temp
 
 	def run(self):
-		self.set_temperature(self.computeTemperature())
-		self.computePower()
+		self.set_temperature(self.compute_temperature())
+		self.compute_power()
 

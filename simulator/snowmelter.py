@@ -105,7 +105,7 @@ class Simulator(object):
 	def get_max_power(self):
 		return self._program.get_max_power()
 
-	def getPower(self):
+	def get_power(self):
 		if self.getSecondaryPumpState() == 0:
 			return 0
 		
@@ -114,7 +114,7 @@ class Simulator(object):
 	def get_max_flow_rate(self):
 		return self._program.get_max_flow_rate1()
 	
-	def getFlow(self):
+	def get_flow(self):
 		return self.getAnalogPumpSignal() * self.get_max_flow_rate() / 1000 #cube per hour
 	
 	def getSourceTemperature(self):

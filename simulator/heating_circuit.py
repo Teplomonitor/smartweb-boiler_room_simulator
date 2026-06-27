@@ -43,7 +43,7 @@ class Simulator(object):
 	def get_max_flow_rate(self):
 		return self._program.get_max_flow_rate()
 	
-	def getPumpState(self):
+	def get_pump_state(self):
 		pump = self._program.get_output_channel('pump')
 		if pump.get_mapping() is None:
 			return 1
@@ -66,25 +66,25 @@ class Simulator(object):
 	def get_max_power(self):
 		return self._program.get_max_power()
 
-	def getPower(self):
-		if self.getPumpState() == 0:
+	def get_power(self):
+		if self.get_pump_state() == 0:
 			return 0
 
 		return self.getValveState()*self.get_max_power()
 
-	def getFlow(self):
+	def get_flow(self):
 		rate = self.get_max_flow_rate() / 1000 # cube per hour
-		return self.getPumpState() * self.getValveState() * rate
+		return self.get_pump_state() * self.getValveState() * rate
 	
 	def getSourceTemperature(self):
 		return self._control._collector.getDirectTemperature()
 
-	def computeTemperature(self):
+	def compute_temperature(self):
 		tempBackward = self.getBackwardTemperature2()
 		temp        = self.get_temperature()
 		roomTemp    = self.getRoomTemp()
 
-		if self.getPumpState() == 0:
+		if self.get_pump_state() == 0:
 			alpha = 0.01
 			beta  = 1 - alpha
 			return temp*beta + roomTemp*alpha
@@ -106,7 +106,7 @@ class Simulator(object):
 		
 		avrRoomTemp = (roomTemp*1.5 + oat*0.5)/2
 		
-		if self.getPumpState() == 0:
+		if self.get_pump_state() == 0:
 			alpha = 0.01
 			beta  = 1 - alpha
 			return temp*beta + avrRoomTemp*alpha
@@ -135,6 +135,6 @@ class Simulator(object):
 		return temp
 
 	def run(self):
-		self.set_temperature         (self.computeTemperature())
+		self.set_temperature         (self.compute_temperature())
 		self.setBackwardTemperature2(self.computeBackwardTemperature2())
 		self.setBackwardTemperature (self.computeBackwardTemperature ())

@@ -176,7 +176,7 @@ class Simulator(threading.Thread):
 	def getCascadeList       (self): return self._cascadeList
 	def getOat               (self): return self._oat
 	
-	def getConsumersPower(self, sourceId):
+	def get_consumer_power(self, sourceId):
 		programList = self.getConsumerList()
 		consumerList = []
 		for program in programList:
@@ -187,7 +187,7 @@ class Simulator(threading.Thread):
 
 		consumerPower = 0
 		for consumer in consumerList:
-			consumerPower = consumerPower + consumer.getPower()
+			consumerPower = consumerPower + consumer.get_power()
 
 		return consumerPower
 	

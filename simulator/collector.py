@@ -32,7 +32,7 @@ class Simulator(object):
 		self._supply_direct_temperature = temp
 	
 	# temperature return to boilers
-	def getSupplyBackwardTemperature(self):
+	def get_supply_backward_temperature(self):
 		return self._supply_backward_temperature
 	
 	def setSupplyBackwardTemperature(self, temp):
@@ -57,14 +57,14 @@ class Simulator(object):
 		i = 0
 		
 		for generator in self._generatorList:
-			if generator.getFlow() != 0:
+			if generator.get_flow() != 0:
 				sumTemp = sumTemp + generator.get_temperature()
 				i = i + 1
 		
 		if i > 0:
 			avrTemp = sumTemp / i
 		else:
-			avrTemp = self.getSupplyBackwardTemperature()
+			avrTemp = self.get_supply_backward_temperature()
 			
 		temp = avrTemp
 		
@@ -79,17 +79,17 @@ class Simulator(object):
 		
 		consumerFlow = 0
 		for consumer in self._consumerList:
-			if consumer.getPower() != 0:
+			if consumer.get_power() != 0:
 				activeConsumersNum = activeConsumersNum + 1
-				consumerFlow = consumerFlow + consumer.getFlow()
+				consumerFlow = consumerFlow + consumer.get_flow()
 				
 		self._consumerFlow = consumerFlow
 		
 		generatorFlow = 0 
 		for generator in self._generatorList:
-			if generator.getFlow() != 0:
+			if generator.get_flow() != 0:
 				activeGeneratorsNum = activeGeneratorsNum + 1
-				generatorFlow = generatorFlow + generator.getFlow()
+				generatorFlow = generatorFlow + generator.get_flow()
 		
 		self._generatorFlow = generatorFlow
 		
@@ -119,13 +119,13 @@ class Simulator(object):
 		
 		consumerFlow = 0
 		for consumer in self._consumerList:
-			if consumer.getPower() != 0:
-				consumerFlow = consumerFlow + consumer.getFlow()
+			if consumer.get_power() != 0:
+				consumerFlow = consumerFlow + consumer.get_flow()
 				i = i + 1
 		
 		for consumer in self._consumerList:
-			if consumer.getPower() != 0:
-				sumTemp = sumTemp + consumer.getBackwardTemperature() * consumer.getFlow() / consumerFlow
+			if consumer.get_power() != 0:
+				sumTemp = sumTemp + consumer.getBackwardTemperature() * consumer.get_flow() / consumerFlow
 				i = i + 1
 		
 		if i > 0:
@@ -142,7 +142,7 @@ class Simulator(object):
 		self.setSupplyBackwardTemperature(self.computeSupplyBackwardTemperature())
 		
 		t1 = self.getSupplyDirectTemperature()
-		t2 = self.getSupplyBackwardTemperature()
+		t2 = self.get_supply_backward_temperature()
 		t3 = self.getDirectTemperature()
 		t4 = self.getBackwardTemperature()
 		

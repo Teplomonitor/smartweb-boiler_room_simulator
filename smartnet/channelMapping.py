@@ -89,7 +89,7 @@ class Channel(GuiParameter):
 		super().set_title(title)
 		self._log.set_title(title)
 		
-	def setLogType(self, logType): self._log.setSaveType(logType)
+	def set_log_type(self, logType): self._log.set_save_type(logType)
 	
 	def save_log(self, title):
 		self._log.saveToCsv(title)
@@ -114,7 +114,7 @@ class InputChannel(Channel):
 		'''
 		super().__init__(mapping, value, title, gui, channelId)
 		
-		self.setLogType('TEMPERATURE')
+		self.set_log_type('TEMPERATURE')
 		
 		self._isManual = False
 		self._state    = 'normal'

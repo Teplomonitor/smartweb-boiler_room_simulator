@@ -29,10 +29,10 @@ class Simulator(object):
 #		print(f'dhw: {value}')
 		self._program.get_input_channel('backwardTemperature').set_value(value)
 
-	def getElapsedTime(self):
+	def get_elapsed_time(self):
 		return time.time() - self._time_start
 
-	def getPumpState(self):
+	def get_pump_state(self):
 		pump = self._program.get_output_channel('supplyPump')
 		if pump.get_mapping() is None:
 			return 1
@@ -46,8 +46,8 @@ class Simulator(object):
 		return self._program.get_max_power()
 	
 
-	def getPower(self):
-		if self.getPumpState() == 0:
+	def get_power(self):
+		if self.get_pump_state() == 0:
 			return 0
 
 		return self.get_max_power()
@@ -55,8 +55,8 @@ class Simulator(object):
 	def get_max_flow_rate(self):
 		return self._program.get_max_flow_rate()
 	
-	def getFlow(self):
-		return self.getPumpState() * self.get_max_flow_rate() / 1000 # cube per hour
+	def get_flow(self):
+		return self.get_pump_state() * self.get_max_flow_rate() / 1000 # cube per hour
 	
 	def getSourceTemperature(self):
 		return self._control._collector.getDirectTemperature()
@@ -68,7 +68,7 @@ class Simulator(object):
 		temp  = self.get_temperature()
 
 		dT = sourceTemp - temp
-		return dT * 0.003 * self.getPumpState()
+		return dT * 0.003 * self.get_pump_state()
 
 	def getCooling(self):
 		if self._washTime.get(1*60, 10*60):
@@ -76,7 +76,7 @@ class Simulator(object):
 
 		return -0.01 # should depend on shower time and so on
 
-	def computeTemperature(self):
+	def compute_temperature(self):
 		temp  = self.get_temperature()
 
 		temp = temp + self.getHeating() + self.getCooling()
@@ -86,7 +86,7 @@ class Simulator(object):
 		return temp
 	
 	def computeBackwardTemperature(self):
-		if self.getPumpState() == 0:
+		if self.get_pump_state() == 0:
 			collectorBackwardTemp = self._control._collector.getBackwardTemperature()
 			return collectorBackwardTemp
 		
@@ -100,5 +100,5 @@ class Simulator(object):
 		return temp
 
 	def run(self):
-		self.set_temperature        (self.computeTemperature())
+		self.set_temperature        (self.compute_temperature())
 		self.setBackwardTemperature(self.computeBackwardTemperature())

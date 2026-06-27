@@ -106,7 +106,7 @@ class Simulator(object):
 		self.t_rethouse = self.getBackwardTemperature()
 		
 		self.tinhouse   = self.getDirectTemperature()
-		self.t_rettown  = self.getSupplyBackwardTemperature()
+		self.t_rettown  = self.get_supply_backward_temperature()
 		
 		self._pdiss = 100*1000
 
@@ -116,7 +116,7 @@ class Simulator(object):
 	def setSupplyDirectTemperature(self, value):
 		self._program.get_input_channel('supply_direct_temp').set_value(value)
 
-	def getSupplyBackwardTemperature(self):
+	def get_supply_backward_temperature(self):
 		return self._program.get_input_channel('supply_backward_temp').get_value()
 
 	def setSupplyBackwardTemperature(self, value):
@@ -155,11 +155,11 @@ class Simulator(object):
 	def get_temperature(self):
 		return self.getDirectTemperature()
 
-	def getConsumersPower(self):
-		return self._control.getConsumersPower(self._program.get_id())
+	def get_consumer_power(self):
+		return self._control.get_consumer_power(self._program.get_id())
 
 
-	def getPumpState(self, pumpId):
+	def get_pump_state(self, pumpId):
 		pump = self._program.get_output_channel(self._outputId[pumpId])
 		if pump.get_mapping() is None:
 			return 1
@@ -170,7 +170,7 @@ class Simulator(object):
 		return 0
 	
 	def getSupplyPumpState(self):
-		return self.getPumpState('supply_pump')
+		return self.get_pump_state('supply_pump')
 	
 	def getValveState(self):
 		valve        = self._program.get_output_channel(self._outputId['valve'])
@@ -186,17 +186,17 @@ class Simulator(object):
 		return valve / 254
 	
 	def getCirculationPumpState(self):
-		return self.getPumpState('circulation_pump')
+		return self.get_pump_state('circulation_pump')
 
 	def get_max_power(self):
 		return self._program.get_max_power()
 
-	def getPower(self):
+	def get_power(self):
 		if self.supplyFlowIsStopped():
 			power = 0
 		else:
 			valve      = self.getValveState()
-			t_rettown  = self.getSupplyBackwardTemperature()
+			t_rettown  = self.get_supply_backward_temperature()
 			tintown    = self.getSupplyDirectTemperature()
 			ugolserv   = valve
 		
@@ -240,7 +240,7 @@ class Simulator(object):
 		return 85
 
 	def computeBackwardTemperature(self):
-		t_rethouse = self._control._collector.getSupplyBackwardTemperature()
+		t_rethouse = self._control._collector.get_supply_backward_temperature()
 		return t_rethouse
 	
 	def ddtf(self):
@@ -344,7 +344,7 @@ class Simulator(object):
 		
 		return self._pdiss
 	
-	def getFlow(self):
+	def get_flow(self):
 		if self.getCirculationPumpState():
 			return self.get_max_flow_rateHouse() / 1000 * 3600# cube per hour
 		return 0

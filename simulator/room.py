@@ -37,7 +37,7 @@ class Simulator(object):
 #			print(f'source id = {programId}')
 			if programId == self._roomSourceList[sourceId]:
 #				print(f'source {sourceId} found')
-				if source.getPower():
+				if source.get_power():
 					return source.get_temperature()
 
 		return self.get_temperature()
@@ -47,7 +47,7 @@ class Simulator(object):
 		
 		for source in sourceList:
 			if source._program.get_id() == self._roomSourceList[sourceId]:
-				return source.getPower()
+				return source.get_power()
 
 		return 0
 	
@@ -94,7 +94,7 @@ class Simulator(object):
 		return dT*0.1
 		
 
-	def computeTemperature(self):
+	def compute_temperature(self):
 		temp = self.get_temperature()
 		temp = temp + (self.getHeating() + self.getCooling())*0.0005
 		temp = limit(-10, temp, 50)
@@ -102,4 +102,4 @@ class Simulator(object):
 		return temp
 
 	def run(self):
-		self.set_temperature(self.computeTemperature())
+		self.set_temperature(self.compute_temperature())

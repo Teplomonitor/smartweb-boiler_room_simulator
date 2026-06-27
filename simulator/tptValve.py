@@ -10,7 +10,7 @@ class Simulator(object):
 
 		self.setControlSignal(0)
 
-	def getElapsedTime(self):
+	def get_elapsed_time(self):
 		return time.time() - self._time_start
 	
 	def getControlSignal(self):
@@ -22,7 +22,7 @@ class Simulator(object):
 
 	def computeSignal(self):
 		pi = 3.14
-		t = self.getElapsedTime()
+		t = self.get_elapsed_time()
 		Amp = 100.0
 		A = Amp / 2
 		offset = A
