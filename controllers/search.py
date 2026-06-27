@@ -27,7 +27,7 @@ def findOnlineController(searchingControllerId):
 	msg = snm.Message()
 	timeout = delay.TimeOnDelay()
 	
-	while not timeout.Get(True, 3*60):
+	while not timeout.get(True, 3*60):
 		result = msg.recv(messageIsImHere(), 130)
 		if result:
 			controllerId   = result.getProgramId()

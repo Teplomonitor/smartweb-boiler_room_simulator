@@ -69,7 +69,7 @@ class Simulator(object):
 			overheatOnDelay  = 30
 			overheatOffDelay = 30
 			
-			if self._boilerOverheatDelay.Get(temp > self._tMax, overheatOnDelay, overheatOffDelay):
+			if self._boilerOverheatDelay.get(temp > self._tMax, overheatOnDelay, overheatOffDelay):
 				Pmax = 0
 			else:
 				Pmax = self.getMaxPower()

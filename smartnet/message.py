@@ -50,7 +50,7 @@ class CanBusInterface(object):
 	
 		self._initDone = True
 	
-	def Get(self): return self._canbus
+	def get(self): return self._canbus
 
 
 class Message(object):
@@ -172,7 +172,7 @@ class Message(object):
 		if bus:
 			txbus = bus
 		else:
-			txbus = CanBusInterface().Get()
+			txbus = CanBusInterface().get()
 		
 		i = 0
 		while True:
@@ -227,7 +227,7 @@ class Message(object):
 
 	@staticmethod
 	def exit():
-		CanBusInterface().Get().shutdown()
+		CanBusInterface().get().shutdown()
 
 class CanListener(can.Listener):
 	_listeners   = []
@@ -242,7 +242,7 @@ class CanListener(can.Listener):
 		if hasattr(self, '_initDone'):
 			return
 		
-		self._canbus   = CanBusInterface().Get()
+		self._canbus   = CanBusInterface().get()
 		self._notifier = can.Notifier(self._canbus, [self])
 	
 		self._initDone = True

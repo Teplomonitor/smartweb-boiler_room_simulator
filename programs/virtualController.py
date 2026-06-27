@@ -94,7 +94,7 @@ class VirtualController(Program):
 	
 	def setSensor(self, index, value):
 		dT = value - self.getSensorValue(index)
-		if (abs(dT) > 1) or self._reportPeriod.Get(10):
+		if (abs(dT) > 1) or self._reportPeriod.get(10):
 			self._reportPeriod.reset()
 			self.reportSensorValue(index, value)
 			

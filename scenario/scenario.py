@@ -99,7 +99,7 @@ class Scenario(object):
 			if result:
 				return True
 			
-			if timeoutDelay.Get(True, timeout):
+			if timeoutDelay.get(True, timeout):
 				return False
 			
 	# wait for the state() remain True for "duration" time
@@ -120,7 +120,7 @@ class Scenario(object):
 			if not result:
 				return False
 			
-			if waitDelay.Get(True, duration):
+			if waitDelay.get(True, duration):
 				return True
 	
 	# wait to make sure value is same as setpoint
@@ -169,17 +169,17 @@ class Scenario(object):
 					dtAvrMax = limit(3, dtAvrSource/2, 10)
 			
 			
-			if checkTrigger.Get(checkPeriod):
+			if checkTrigger.get(checkPeriod):
 				printLog(f'Среднее расхождение {dtAvr:.1f} ({dtAvrMax:.1f})')
 				
-			if flowControlTimer.Get(abs(dtAvr) < dtAvrMax, duration):
+			if flowControlTimer.get(abs(dtAvr) < dtAvrMax, duration):
 				return True
 			
-			if bigDtDelay.Get(abs(dt) > dtMax, dtTimeout):
+			if bigDtDelay.get(abs(dt) > dtMax, dtTimeout):
 				printError(f'Проблема! Слишком большое расхождение ({dt} > {dtMax})')
 				return False
 			
-			if flowControlTimeout.Get(True, timeout):
+			if flowControlTimeout.get(True, timeout):
 				printError(f'Проблема! Программа не смогла удержать параметр в допустимых пределах ({dtAvrMax})')
 				return False
 	

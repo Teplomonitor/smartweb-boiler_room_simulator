@@ -12,14 +12,14 @@ class TimeOnDelay(object):
 	Usage:
 	  tod = TimeOnDelay()
 	  # inside a loop:
-	  if tod.Get(value, on_delay_seconds):
+	  if tod.get(value, on_delay_seconds):
 		  # value has been True for at least on_delay_seconds
 
 	Notes on behavior:
-	  - On first call Get(...) will reset the internal timer.
-	  - GetCropedElapsedTime() returns the measured elapsed time; it updates
+	  - On first call get(...) will reset the internal timer.
+	  - get_cropped_elapsed_time() returns the measured elapsed time; it updates
 		the internal elapsed time while the output is not yet True.
-	  - TimerReset() resets the internal state and restarts timing from now.
+	  - reset() resets the internal state and restarts timing from now.
 	"""
 
 	def __init__(self) -> None:
@@ -29,12 +29,8 @@ class TimeOnDelay(object):
 		self._on_time: float = time.time()
 		# cached elapsed time (seconds)
 		self._elapsed_time: float = 0.0
-		# mark that we haven't run the timer reset on the first Get() call
+		# mark that we haven't run the timer reset on the first get() call
 		self._first_start: bool = True
-
-	def Get(self, value: bool, onDelay: float, manualReset: bool = False) -> bool:
-		"""Backward-compatible method. See `get` for the snake_case version."""
-		return self.get(value, onDelay, manualReset)
 
 	def get(self, value: bool, on_delay: float, manual_reset: bool = False) -> bool:
 		"""Evaluate the on-delay behavior.
@@ -74,10 +70,6 @@ class TimeOnDelay(object):
 			self._elapsed_time = time.time() - self._on_time
 
 		return self._elapsed_time
-
-	def TimerReset(self) -> None:
-		"""Backward-compatible name for `reset`."""
-		self.reset()
 
 	def reset(self) -> None:
 		"""Reset internal state and restart timing from now."""

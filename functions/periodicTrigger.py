@@ -6,7 +6,7 @@ class PeriodicTrigger(object):
 	def __init__(self):
 		self._previousStateSetup = time.time()
 
-	def Get(self, period):
+	def get(self, period):
 		now = time.time()
 		dt  = now - self._previousStateSetup
 		

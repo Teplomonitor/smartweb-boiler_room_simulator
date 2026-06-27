@@ -7,8 +7,8 @@ class TimeOnOffDelay(object):
 		self._onDelay  = TimeOnDelay ()
 		self._offDelay = TimeOffDelay()
 
-	def Get(self, value,  onDelay, offDelay):
-		return self._onDelay.Get(self._offDelay.Get(value, offDelay), onDelay)
+	def get(self, value,  onDelay, offDelay):
+		return self._onDelay.get(self._offDelay.get(value, offDelay), onDelay)
 
 	def reset(self):
 		self._onDelay .reset()

@@ -71,7 +71,7 @@ class Simulator(object):
 		return dT * 0.003 * self.getPumpState()
 
 	def getCooling(self):
-		if self._washTime.Get(1*60, 10*60):
+		if self._washTime.get(1*60, 10*60):
 			return -0.1
 
 		return -0.01 # should depend on shower time and so on

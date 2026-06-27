@@ -55,7 +55,7 @@ class Scenario(Parent):
 		return 'stop'
 	
 	def computeValvePos(self):
-		if self._valveCheckTrigger.Get(1) == False:
+		if self._valveCheckTrigger.get(1) == False:
 			return self._valvePos
 		
 		valve = self.getValveState()
@@ -93,7 +93,7 @@ class Scenario(Parent):
 			if signal < targetState:
 				signalStep = 0
 				
-			if valveTestStopDelay.Get(True, 120):
+			if valveTestStopDelay.get(True, 120):
 				ds = signal - valvePos
 				if abs(ds) < 20:
 					printLog(f'Ok! {signal} -> {valvePos:.1f}')
@@ -120,7 +120,7 @@ class Scenario(Parent):
 			if signal > targetState:
 				signalStep = 0
 				
-			if valveTestStopDelay.Get(True, 120):
+			if valveTestStopDelay.get(True, 120):
 				ds = signal - valvePos
 				if abs(ds) < 20:
 					printLog(f'Ok! {signal} -> {valvePos:.1f}')

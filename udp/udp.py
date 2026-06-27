@@ -42,7 +42,7 @@ class UdpCanBusInterface(object):
 	
 		self._initDone = True
 	
-	def Get(self): return self._canbus
+	def get(self): return self._canbus
 
 
 def update_ip_list(data, ip):
@@ -112,7 +112,7 @@ class can_thread(threading.Thread):
 		self.thread_name = thread_name
 		self.thread_ID   = thread_ID
 		self._port       = port
-		self._canbus     = UdpCanBusInterface().Get()
+		self._canbus     = UdpCanBusInterface().get()
 		self._send_can_time = time.time()
 		self._sock       = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
 		self._connectionReady = False
@@ -182,7 +182,7 @@ class udp_listen_thread(threading.Thread):
 		self.thread_ID   = thread_ID
 		self._port       = port
 		self._sock       = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		self._canbus     = UdpCanBusInterface().Get()
+		self._canbus     = UdpCanBusInterface().get()
 
 		ip_any = '0.0.0.0'
 

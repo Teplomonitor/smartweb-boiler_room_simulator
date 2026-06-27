@@ -6,7 +6,7 @@ class PeriodPulse(object):
 		self._state = False
 		self._previousStateSetup = time.time()
 
-	def Get(self, onPeriod, offPeriod):
+	def get(self, onPeriod, offPeriod):
 		if onPeriod == 0:
 			return False
 		

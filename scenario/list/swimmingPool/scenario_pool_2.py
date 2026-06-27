@@ -230,17 +230,17 @@ class Scenario(Parent):
 			
 			pump = self.circulationPumpIsOn()
 			
-			if onDelay.Get(pump, periodOn + periodOnHyst):
+			if onDelay.get(pump, periodOn + periodOnHyst):
 				printError('Плохо, насос циркуляции работает слишком долго')
 				self._status = 'FAIL'
 				return False
 			
-			if offDelay.Get(not pump, periodOff + periodOffHyst):
+			if offDelay.get(not pump, periodOff + periodOffHyst):
 				printError('Плохо, насос циркуляции выключен слишком долго')
 				self._status = 'FAIL'
 				return False
 			
-			if onTrigger .Get(pump):
+			if onTrigger .get(pump):
 				onTime  = time.time()
 				if offTime:
 					dt = onTime - offTime
@@ -251,7 +251,7 @@ class Scenario(Parent):
 						self._status = 'FAIL'
 						return False
 						
-			if offTrigger.Get(pump):
+			if offTrigger.get(pump):
 				offTime = time.time()
 				if onTime:
 					dt = offTime - onTime

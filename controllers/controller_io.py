@@ -166,10 +166,10 @@ class ControllerIO(object):
 			
 		
 	def run(self):
-		if self._reportImHereTrigger.Get(10):
+		if self._reportImHereTrigger.get(10):
 			sendImHere(self.getId(), self.getType())
 			
-		if self._reportOutputMappingTrigger.Get(5*60):
+		if self._reportOutputMappingTrigger.get(5*60):
 			num = self.getOutputNumber()
 			for output_id in range (num):
 				if self.getOutputMapping(output_id) and self.getOutputMapping(output_id).getChannelType() != 'CHANNEL_UNDEFINED':

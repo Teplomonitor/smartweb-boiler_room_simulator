@@ -11,7 +11,7 @@ class TimeOffDelay(object):
 		self._out = False
 		self._offTime = time.time()
 
-	def Get(self, value, offDelay):
+	def get(self, value, offDelay):
 		if value:
 			self._offTime = time.time()
 		
