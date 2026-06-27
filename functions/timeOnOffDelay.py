@@ -10,7 +10,7 @@ class TimeOnOffDelay(object):
 	def Get(self, value,  onDelay, offDelay):
 		return self._onDelay.Get(self._offDelay.Get(value, offDelay), onDelay)
 
-	def TimerReset(self):
-		self._onDelay .TimerReset()
-		self._offDelay.TimerReset()
+	def reset(self):
+		self._onDelay .reset()
+		self._offDelay.reset()
 

@@ -23,7 +23,7 @@ class PeriodPulse(object):
 		
 		return self._state;
 
-	def TimerReset(self):
+	def reset(self):
 		self._previousStateSetup = time.time()
 		self._state = False
 

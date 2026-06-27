@@ -15,11 +15,11 @@ class TimeOffDelay(object):
 		if value:
 			self._offTime = time.time()
 		
-		self._out = getOutput(value, self._out, offDelay, self.GetCropedElapsedTime(offDelay))
+		self._out = getOutput(value, self._out, offDelay, self.get_cropped_elapsed_time(offDelay))
 		
 		return self._out
 	
-	def GetCropedElapsedTime(self, delay):
+	def get_cropped_elapsed_time(self, delay):
 		now = time.time()
 		if now - self._offTime > delay:
 			self._offTime = now - delay
@@ -29,7 +29,7 @@ class TimeOffDelay(object):
 		else:
 			return 0
 
-	def TimerReset(self):
+	def reset(self):
 		self._offTime = time.time()
 		self._out = False
 

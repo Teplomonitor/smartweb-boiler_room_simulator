@@ -1,6 +1,7 @@
 
 import time
 
+
 class PeriodicTrigger(object):
 	def __init__(self):
 		self._previousStateSetup = time.time()
@@ -15,6 +16,6 @@ class PeriodicTrigger(object):
 		
 		return False
 
-	def TimerReset(self):
+	def reset(self):
 		self._previousStateSetup = time.time()
 

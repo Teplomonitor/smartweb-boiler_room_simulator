@@ -64,10 +64,6 @@ class TimeOnDelay(object):
 
 		return self._out
 
-	def GetCropedElapsedTime(self) -> float:
-		"""Backward-compatible name for `get_cropped_elapsed_time`."""
-		return self.get_cropped_elapsed_time()
-
 	def get_cropped_elapsed_time(self) -> float:
 		"""Return the current elapsed time for the active True period.
 
