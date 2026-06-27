@@ -4,8 +4,8 @@ from copy import copy
 import smartnet.constants as snc
 import smartnet.message as sm
 
-from consoleLog import printLog   as printLog
-from consoleLog import printError as printError
+from consoleLog import print_log   as print_log
+from consoleLog import print_error as print_error
 
 
 ParameterSize =  {
@@ -122,7 +122,7 @@ class RemoteControlParameter(object):
 
 	def setProgramId(self, programId): self._programId = programId
 	
-	def getValue         (self): return self._parameterValue
+	def get_value         (self): return self._parameterValue
 	def get_program_type   (self): return self._programType
 	def getParameterIndex(self): return self._parameterIndex
 	
@@ -137,7 +137,7 @@ class RemoteControlParameter(object):
 	
 	def write(self, confirm = True):
 		if self._programId is None:
-			printError('wrong programId')
+			print_error('wrong programId')
 			return
 		
 		if self._parameterValue is None:
@@ -184,7 +184,7 @@ class RemoteControlParameter(object):
 
 		def handle_response():
 			if response is None:
-				printError(f'{actionStr}: write timeout')
+				print_error(f'{actionStr}: write timeout')
 				return False
 			else:
 				data = response.get_data()
@@ -193,7 +193,7 @@ class RemoteControlParameter(object):
 				if result == snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK']:
 					return True
 				else:
-					printError(f'{actionStr}: write error {result}')
+					print_error(f'{actionStr}: write error {result}')
 					return False
 
 		request = generate_request()
@@ -210,14 +210,14 @@ class RemoteControlParameter(object):
 			result = handle_response()
 			if result:
 				break;
-			printLog(f'{actionStr}: retry')
+			print_log(f'{actionStr}: retry')
 			i = i + 1
 			
 		return result
 	
 	def read(self):
 		if self._programId is None:
-			printError('wrong programId')
+			print_error('wrong programId')
 			return
 		
 		if self._parameterIndex is None:
@@ -248,7 +248,7 @@ class RemoteControlParameter(object):
 
 		def handle_response():
 			if response is None:
-				printError(f'{actionStr}: read timeout')
+				print_error(f'{actionStr}: read timeout')
 				return False
 			else:
 				data = response.get_data()
@@ -275,7 +275,7 @@ class RemoteControlParameter(object):
 			result = handle_response()
 			if result:
 				break;
-			printLog(f'{actionStr}: retry')
+			print_log(f'{actionStr}: retry')
 			i = i + 1
 			
 		return result

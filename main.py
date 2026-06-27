@@ -152,7 +152,7 @@ def main(argv=None): # IGNORE:C0111
 	except KeyboardInterrupt:
 		### handle keyboard interrupt ###
 		MainStop()
-		consoleLog.printLog('exit')
+		consoleLog.print_log('exit')
 		return 0
 	
 	except Exception as e:

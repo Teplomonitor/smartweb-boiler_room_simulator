@@ -14,7 +14,7 @@ class TimestampValue(object):
 		self._value = value
 	def getTimestamp(self):
 		return self._timestamp
-	def getValue(self):
+	def get_value(self):
 		return self._value
 	
 
@@ -34,7 +34,7 @@ class ParameterLog(object):
 			return 0
 		return self._timestampValueList[index][0]
 	
-	def getValue(self, index):
+	def get_value(self, index):
 		#return self._valueLog[index].getTimestamp()
 		if len(self._timestampValueList) == 0:
 			return 0
@@ -58,7 +58,7 @@ class ParameterLog(object):
 		if dt < 1:
 			return
 		
-		lastValue     = self.getValue(-1)
+		lastValue     = self.get_value(-1)
 		dv  = abs(value - lastValue)
 		
 		if self._saveType == 'ALWAYS':
@@ -76,7 +76,7 @@ class ParameterLog(object):
 		if len(self._timestampValueList) == 0:
 			return
 		
-		self.doAppend(self.getValue(-1)) # force last value append to log before save
+		self.doAppend(self.get_value(-1)) # force last value append to log before save
 		
 		fullLogDir = os.path.join(logsRootDir, logDir)
 		

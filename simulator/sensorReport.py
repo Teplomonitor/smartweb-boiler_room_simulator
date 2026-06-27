@@ -6,7 +6,7 @@ from smartnet.units import SENSOR_SHORT_VALUE as SENSOR_SHORT_VALUE
 from smartnet.units import SENSOR_OPEN_VALUE  as SENSOR_OPEN_VALUE
 
 def reportSensorValue(sensor, bus = None):
-	sensorValue   = sensor.getValue()
+	sensorValue   = sensor.get_value()
 	sensorMapping = sensor.getMapping()
 
 	if sensorValue   is None: return False

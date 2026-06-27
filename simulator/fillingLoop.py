@@ -6,10 +6,10 @@ class Simulator(object):
 		self.setPressure(3)
 
 	def getPressure(self):
-		return self._program.getPressure().getValue()
+		return self._program.getPressure().get_value()
 
 	def setPressure(self, value):
-		self._program.getPressure().setValue(value)
+		self._program.getPressure().set_value(value)
 
 	def computePressure(self):
 		pressure  = self.getPressure()

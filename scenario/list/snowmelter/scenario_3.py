@@ -2,8 +2,8 @@
 @author: admin
 '''
 
-from consoleLog import printLog   as printLog
-from consoleLog import printError as printError
+from consoleLog import print_log   as print_log
+from consoleLog import print_error as print_error
 from scenario.scenario import Scenario   as Parent
 
 class Scenario(Parent):
@@ -38,13 +38,13 @@ class Scenario(Parent):
 	def readMaxOutdoorTemperature(self)        : return self._snowmelter.read_parameter_value('maxOutdoorTemp')
 	def readSnowmelterOutdoorTemperature(self) : return self._snowmelter.read_parameter_value('outdoorTemp')
 	def getCirculationPumpState(self):
-		return self._snowmelter.getSecondaryPumpState().getValue()
+		return self._snowmelter.getSecondaryPumpState().get_value()
 	
 	def circulationPumpIsOn (self): return self.getCirculationPumpState() != self.RELAY_OFF
 	def circulationPumpIsOff(self): return self.getCirculationPumpState() == self.RELAY_OFF
 	
 	def getLoadingPumpState(self):
-		return self._snowmelter.getPrimaryPumpState().getValue()
+		return self._snowmelter.getPrimaryPumpState().get_value()
 	
 	def loadingPumpIsOn (self): return self.getLoadingPumpState() != self.RELAY_OFF
 	def loadingPumpIsOff(self): return not self.loadingPumpIsOn()
@@ -97,85 +97,85 @@ class Scenario(Parent):
 		plateSetpoint = self.readRequiredPlateTemperatureValue()
 		
 		if plateSetpoint is None:
-			printError('Проблема! не удалось получить уставку плиты')
+			print_error('Проблема! не удалось получить уставку плиты')
 			self._status = 'FAIL'
 			return
 		
-		printLog('делаем подходящую для снеготайки уличную температуру')
+		print_log('делаем подходящую для снеготайки уличную температуру')
 		if self.setMediumOutdoorTemperature() == False:
-			printError('Проблема! Не удалось задать уличную температуру')
+			print_error('Проблема! Не удалось задать уличную температуру')
 			self._status = 'FAIL'
 			return
 		
 		self.wait(3)
 		
-		printLog('делаем плиту холодной')
+		print_log('делаем плиту холодной')
 		self.setPlateTemperature(plateSetpoint - 2)
 		self.wait(3)
 		
-		printLog('ждём, пока система устаканится')
+		print_log('ждём, пока система устаканится')
 		self.wait(30)
 		
-		printLog('ждём, когда насос циркуляции включится')
+		print_log('ждём, когда насос циркуляции включится')
 		if self.wait_event(self.circulationPumpIsOn, 60):
-			printLog('Хорошо, включился')
+			print_log('Хорошо, включился')
 		else:
 			self._status = 'FAIL'
-			printError('Плохо. Не включился!')
+			print_error('Плохо. Не включился!')
 			return
 			
 		self.wait(2)
 		
-		printLog('делаем на улице жарко')
+		print_log('делаем на улице жарко')
 		if self.setHighOutdoorTemperature() == False:
-			printLog('Плохо! Снеготайка не видит, что на улице жарко!')
+			print_log('Плохо! Снеготайка не видит, что на улице жарко!')
 			self._status = 'FAIL'
 			return
 		
 		pumpsSwitchOffTestDuration = 5*60
 		
-		printLog(f'Ждём, пока насосы не выключатся хотя бы на {pumpsSwitchOffTestDuration} секунд')
+		print_log(f'Ждём, пока насосы не выключатся хотя бы на {pumpsSwitchOffTestDuration} секунд')
 		
 		pumpsSwitchOffDelay = 5*60
 		testExtraDelay      = 60
 		timeout = pumpsSwitchOffDelay + pumpsSwitchOffTestDuration + testExtraDelay
 		
 		if self.wait_state_permanence(self.pumpsAreOff, pumpsSwitchOffTestDuration, timeout):
-			printLog('Хорошо!')
+			print_log('Хорошо!')
 		else:
-			printError('Плохо. Насосы не выключаются!')
+			print_error('Плохо. Насосы не выключаются!')
 			self._status = 'FAIL'
 			return
 		
-		printLog('снова делаем подходящую для снеготайки уличную температуру')
+		print_log('снова делаем подходящую для снеготайки уличную температуру')
 		self.setMediumOutdoorTemperature()
 		self.wait(3)
 
-		printLog('ждём, пока система устаканится')
+		print_log('ждём, пока система устаканится')
 		self.wait(30)
 		
-		printLog('ждём, когда насос циркуляции включится')
+		print_log('ждём, когда насос циркуляции включится')
 		if self.wait_event(self.circulationPumpIsOn, 60):
-			printLog('Хорошо, включился')
+			print_log('Хорошо, включился')
 		else:
 			self._status = 'FAIL'
-			printError('Плохо. Не включился!')
+			print_error('Плохо. Не включился!')
 			return
 			
 		self.wait(2)
 		
-		printLog('делаем на улице холодно')
+		print_log('делаем на улице холодно')
 		if self.setLowOutdoorTemperature() == False:
-			printLog('Плохо! Снеготайка не видит, что на улице холодно!')
+			print_log('Плохо! Снеготайка не видит, что на улице холодно!')
 			self._status = 'FAIL'
 			return
 		
-		printLog(f'Ждём, пока насосы не выключатся хотя бы на {pumpsSwitchOffTestDuration} секунд')
+		print_log(f'Ждём, пока насосы не выключатся хотя бы на {pumpsSwitchOffTestDuration} секунд')
 		
 		if self.wait_state_permanence(self.pumpsAreOff, pumpsSwitchOffTestDuration, timeout):
-			printLog('Хорошо!')
+			print_log('Хорошо!')
 			self._status = 'OK'
 		else:
-			printError('Плохо. Насосы не выключаются!')
+			print_error('Плохо. Насосы не выключаются!')
 			self._status = 'FAIL'
 		

@@ -31,7 +31,7 @@ class Cascade(Program):
 		for setting in settings:
 			if setting.get_program_type() == 'CASCADE_MANAGER':
 				if setting.get_parameter_id_code() == 'PARAM_TEMPERATURE_SOURCE_ID':
-					sourceList[setting.getParameterIndex()] = setting.getValue()
+					sourceList[setting.getParameterIndex()] = setting.get_value()
 		
 		return sourceList
 	

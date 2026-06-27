@@ -11,8 +11,8 @@ import mainThread
 from udp.message import udp_to_can, can_to_udp, make_scan_message, udp_msg_is_scan, get_scan_id
 import smartnet.message as sm
 
-from consoleLog import printLog   as printLog
-from consoleLog import printError as printError
+from consoleLog import print_log   as print_log
+from consoleLog import print_error as print_error
 
 
 SCAN_PACKET_DATA_SIZE = 16
@@ -53,16 +53,16 @@ def update_ip_list(data, ip):
 #	print(f'compare {body} and {self_id_bytes}')
 	if body == self_id_bytes:
 		self_ip_list.append(ip)
-		printLog(f'add self ip {ip}')
+		print_log(f'add self ip {ip}')
 		result = 'SELF_IP_FOUND'
 	else:
 		now = time.time()
 		
 		if ip in ip_list:
-#			printLog(f'update {ip}')
+#			print_log(f'update {ip}')
 			result = 'UPDATE_IP'
 		else:
-			printLog(f'add new udp-controller {ip}')
+			print_log(f'add new udp-controller {ip}')
 			result = 'NEW_CONTROLLER_FOUND'
 			
 		ip_list[ip] = now
@@ -71,7 +71,7 @@ def update_ip_list(data, ip):
 		
 		for ip in ip_list:
 			if now - ip_list[ip] > timeout:
-				printLog(f'delete {ip}')
+				print_log(f'delete {ip}')
 				del ip_list[ip]
 	
 	return result

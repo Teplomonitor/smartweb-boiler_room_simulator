@@ -80,8 +80,8 @@ class Channel(GuiParameter):
 		
 	def setMapping(self, mapping): self._mapping = mapping
 	
-	def setValue  (self, value, manual = False):
-		super().setValue(value, manual)
+	def set_value  (self, value, manual = False):
+		super().set_value(value, manual)
 		self._log.append(value)
 		
 	def set_title  (self, title  ):
@@ -121,7 +121,7 @@ class InputChannel(Channel):
 		self.setMax(maxValue)
 		self.setUnits(units)
 		
-	def setValue  (self, value, manual = False  ):
+	def set_value  (self, value, manual = False  ):
 		if self.isManual():
 			if not manual:
 				return
@@ -130,7 +130,7 @@ class InputChannel(Channel):
 		elif value == 'open' : self.setOpen  (True); return
 		else                 : self.setNormal()
 		
-		super().setValue(value, manual)
+		super().set_value(value, manual)
 		
 	def isAuto(self):
 		return not self._isManual
@@ -244,9 +244,9 @@ class OutputChannel(Channel):
 		self._log.setType('RELAY')
 		self._lastUpdateTime = None
 		
-	def setValue(self, value, manual = False):
+	def set_value(self, value, manual = False):
 #		print(f'{self.get_title()} = {value}')
-		super().setValue(value, manual)
+		super().set_value(value, manual)
 		self._lastUpdateTime = time.time()
 		
 	def valueIsUpToDate(self):

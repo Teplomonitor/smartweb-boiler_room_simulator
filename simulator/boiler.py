@@ -42,7 +42,7 @@ class Simulator(object):
 		if stage.isMapped() is False:
 			return 1
 
-		if stage.getValue():
+		if stage.get_value():
 			return 1
 
 		return 0
@@ -52,7 +52,7 @@ class Simulator(object):
 		if pumpState.isMapped() is False:
 			return 1
 
-		if pumpState.getValue():
+		if pumpState.get_value():
 			return 1
 
 		return 0

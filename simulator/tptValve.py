@@ -14,11 +14,11 @@ class Simulator(object):
 		return time.time() - self._time_start
 	
 	def getControlSignal(self):
-		return self._program.getControlSignal().getValue()
+		return self._program.getControlSignal().get_value()
 
 	def setControlSignal(self, value):
 #		print(f'oat: {value}')
-		self._program.getControlSignal().setValue(value)
+		self._program.getControlSignal().set_value(value)
 
 	def computeSignal(self):
 		pi = 3.14

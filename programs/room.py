@@ -49,7 +49,7 @@ class Room(Program):
 
 	def get_temperature(self): return self.get_input_channel('roomTemperature')
 
-	def set_temperature(self, value): self.get_temperature().setValue(value)
+	def set_temperature(self, value): self.get_temperature().set_value(value)
 
 	def getRoomTemperatureSourceList(self):
 		preset = self.get_preset()
@@ -60,7 +60,7 @@ class Room(Program):
 		for setting in settings:
 			if setting.get_program_type() == 'ROOM_DEVICE':
 				parameterIdCode = setting.get_parameter_id_code()
-				parameterValue  = setting.getValue()
+				parameterValue  = setting.get_value()
 				if   parameterIdCode == 'RESPONSIBLE_CIRCUIT_1': circuitList[0] = parameterValue
 				elif parameterIdCode == 'RESPONSIBLE_CIRCUIT_2': circuitList[1] = parameterValue
 				elif parameterIdCode == 'RESPONSIBLE_CIRCUIT_3': circuitList[2] = parameterValue

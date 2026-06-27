@@ -38,7 +38,7 @@ class GuiParameter(object):
 		if self._value is None:
 			self._value = self._min
 		
-	def getValue  (self):
+	def get_value  (self):
 		if self._needUpdateGuiValue:
 			self.setGuiValue(self._value)
 			
@@ -47,7 +47,7 @@ class GuiParameter(object):
 	def getUnits  (self): return self._units
 	def getOptions(self): return self._options
 	
-	def setValue  (self, value, manual = False):
+	def set_value  (self, value, manual = False):
 		self._value = value
 		self.setGuiValue(value)
 		
@@ -65,15 +65,15 @@ class GuiParameter(object):
 		
 	def onSpin(self, event):
 		event.Skip()
-		self.setValue(self._gui._spinner.GetValue(), True)
+		self.set_value(self._gui._spinner.GetValue(), True)
 		
 	def onSpinText(self, event):
 		event.Skip()
-		self.setValue(int(float(self._gui._spinner.GetTextValue())), True)
+		self.set_value(int(float(self._gui._spinner.GetTextValue())), True)
 		
 	def onScroll(self, event):
 		event.Skip()
-		self.setValue(self._gui._slider .GetValue(), True)
+		self.set_value(self._gui._slider .GetValue(), True)
 	
 	def setGuiValue(self, value):
 		if self._gui:

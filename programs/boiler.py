@@ -42,11 +42,11 @@ class Boiler(Program):
 	def get_gui_color (self): return 'yellow'
 
 	def get_temperature(self):
-		return self.get_input_channel('temperature').getValue()
+		return self.get_input_channel('temperature').get_value()
 
 	def set_temperature(self, value):
 #		print(f'boiler: {value}')
-		self.get_input_channel('temperature').setValue(value)
+		self.get_input_channel('temperature').set_value(value)
 
 	def get_stage_1(self):
 		return self.get_output_channel('burner1')

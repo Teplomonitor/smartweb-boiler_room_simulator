@@ -2,8 +2,8 @@
 @author: admin
 '''
 
-from consoleLog import printLog   as printLog
-from consoleLog import printError as printError
+from consoleLog import print_log   as print_log
+from consoleLog import print_error as print_error
 from scenario.scenario import Scenario   as Parent
 
 class Scenario(Parent):
@@ -29,7 +29,7 @@ class Scenario(Parent):
 	def get_default_preset(self): return 'swimmingPool'
 
 	def readRequiredPoolTemperatureValue(self): return self._pool.read_parameter_value('currentRequiredPoolTemperature')
-	def getLoadingPumpState(self): return self._pool.getLoadingPumpState().getValue()
+	def getLoadingPumpState(self): return self._pool.getLoadingPumpState().get_value()
 	
 	def loadingPumpIsOn (self): return self.getLoadingPumpState() != self.RELAY_OFF
 	def loadingPumpIsOff(self): return not self.loadingPumpIsOn()
@@ -40,45 +40,45 @@ class Scenario(Parent):
 	
 	
 	def run(self):
-		printLog('читаем требуемую температуру бассейна')
+		print_log('читаем требуемую температуру бассейна')
 		poolSetpoint = self.readRequiredPoolTemperatureValue()
 		
 		if poolSetpoint is None:
 			self._status = 'FAIL'
-			printError('Проблема! не удалось получить уставку бассейна')
+			print_error('Проблема! не удалось получить уставку бассейна')
 			return
 		
 		self.wait(1)
 		
 		poolHysteresis = 1
 		
-		printLog('делаем подходящую для бассейна температуру')
+		print_log('делаем подходящую для бассейна температуру')
 		self.setPoolTemperature(poolSetpoint + poolHysteresis + 0.5)
 		self.wait(1)
 
-		printLog('Ждём, что насос загрузки выключится')
+		print_log('Ждём, что насос загрузки выключится')
 		pumpSwitchOffTimeout = 60
 		if self.wait_event(self.loadingPumpIsOff, pumpSwitchOffTimeout):
-			printLog('Хорошо, насос выключен')
+			print_log('Хорошо, насос выключен')
 		else:
 			self._status = 'FAIL'
-			printError('Плохо, насос не выключается')
+			print_error('Плохо, насос не выключается')
 			return
 		self.wait(1)
 		
-		printLog('делаем в бассейне холодную температуру')
+		print_log('делаем в бассейне холодную температуру')
 		self.setPoolTemperature(poolSetpoint - poolHysteresis - 0.5)
 		self.wait(1)
 		
-		printLog(f'ждём когда насос загрузки включится')
+		print_log(f'ждём когда насос загрузки включится')
 		self.wait(1)
 		
 		pumpSwitchOnTimeout = 60
 		if self.wait_event(self.loadingPumpIsOn, pumpSwitchOnTimeout):
-			printLog('Хорошо! Бассейн видит температуру воды, и реагирует на неё')
+			print_log('Хорошо! Бассейн видит температуру воды, и реагирует на неё')
 			self._status = 'OK'
 		else:
-			printError('Плохо, не включается')
+			print_error('Плохо, не включается')
 			self._status = 'FAIL'
 		
 

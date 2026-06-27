@@ -4,8 +4,8 @@
 
 import time
 
-from consoleLog import printLog   as printLog
-from consoleLog import printError as printError
+from consoleLog import print_log   as print_log
+from consoleLog import print_error as print_error
 from scenario.scenario import Scenario   as Parent
 import functions.trigger as ft
 
@@ -41,8 +41,8 @@ class Scenario(Parent):
 	def writeCirculationPumpWorkPeriodOn (self, value): return self._pool.write_parameter_value('circulationPumpWorkPeriodOn' , value)
 	def writeCirculationPumpWorkPeriodOff(self, value): return self._pool.write_parameter_value('circulationPumpWorkPeriodOff', value)
 	
-	def getLoadingPumpState    (self): return self._pool.getLoadingPumpState().getValue()
-	def getCirculationPumpState(self): return self._pool.getCirculationPumpState().getValue()
+	def getLoadingPumpState    (self): return self._pool.getLoadingPumpState().get_value()
+	def getCirculationPumpState(self): return self._pool.getCirculationPumpState().get_value()
 	
 	def loadingPumpIsOn (self): return self.getLoadingPumpState() != self.RELAY_OFF
 	def loadingPumpIsOff(self): return self.getLoadingPumpState() == self.RELAY_OFF
@@ -55,27 +55,27 @@ class Scenario(Parent):
 		self.set_sensor_value(t, value)
 	
 	def setCirculationPumpWorkMode(self, mode):
-		printLog(f'делаем режим насоса {mode}')
+		print_log(f'делаем режим насоса {mode}')
 		result = self._pool.setCirculationPumpWorkMode(mode)
 		if result == None:
-			printError('Плохо, не удалось задать режим работы насоса циркуляции')
+			print_error('Плохо, не удалось задать режим работы насоса циркуляции')
 			self._status = 'FAIL'
 			return False
 		
 		return True
 	
 	def checkCirculationPumpWorkDuringHeatingPeriod(self):
-		printLog('читаем требуемую температуру бассейна')
+		print_log('читаем требуемую температуру бассейна')
 		poolSetpoint = self.readRequiredPoolTemperatureValue()
 		
 		if poolSetpoint is None:
 			self._status = 'FAIL'
-			printError('Проблема! не удалось получить уставку бассейна')
+			print_error('Проблема! не удалось получить уставку бассейна')
 			return False
 
 		self.wait(1)
 		
-		printLog('пока насос загрузки работает, насос циркуляции должен работать постоянно')
+		print_log('пока насос загрузки работает, насос циркуляции должен работать постоянно')
 		# но насос загрузки не включится, если насос циркуляции выключен, т.к.
 		# нельзя греть воду без циркуляции
 		
@@ -83,11 +83,11 @@ class Scenario(Parent):
 		
 		poolHysteresis = 1
 				
-		printLog('делаем в бассейне холодную температуру')
+		print_log('делаем в бассейне холодную температуру')
 		self.setPoolTemperature(poolSetpoint - poolHysteresis - 0.5)
 		self.wait(1)
 		
-		printLog(f'проверяем работу насоса циркуляции при разных режимах')
+		print_log(f'проверяем работу насоса циркуляции при разных режимах')
 		self.wait(1)
 
 		circulationPumpWorkCheckDuration = 5*60
@@ -107,23 +107,23 @@ class Scenario(Parent):
 				return False
 				
 			if not self.wait_state_permanence(self.circulationPumpIsOn, circulationPumpWorkCheckDuration, circulationPumpWorkCheckTimeout):
-				printError('Плохо, насос циркуляции не работает')
+				print_error('Плохо, насос циркуляции не работает')
 				self._status = 'FAIL'
 				return False
 				
 		
-		printLog('Хорошо, во всех режимах насос циркуляции работает, пока идёт нагрев')
+		print_log('Хорошо, во всех режимах насос циркуляции работает, пока идёт нагрев')
 		self.wait(1)
 		
 		return True
 
 	def checkCirculationOnWorkMode(self):
-		printLog('Проверяем, что насос циркуляции включен на постоянку')
+		print_log('Проверяем, что насос циркуляции включен на постоянку')
 		self.wait(1)
 		
 		mode = 'CIRCULATION_ON'
 		if self.setCirculationPumpWorkMode(mode) == False:
-			printError('Плохо, не удалось задать режим работы')
+			print_error('Плохо, не удалось задать режим работы')
 			self._status = 'FAIL'
 			return False
 			
@@ -131,23 +131,23 @@ class Scenario(Parent):
 		circulationPumpWorkCheckTimeout  = 30
 		
 		if not self.wait_state_permanence(self.circulationPumpIsOn, circulationPumpWorkCheckDuration, circulationPumpWorkCheckTimeout):
-			printError('Плохо, насос циркуляции выключается')
+			print_error('Плохо, насос циркуляции выключается')
 			self._status = 'FAIL'
 			return False
 			
 		
-		printLog('Хорошо, насос циркуляции работает продолжительное время')
+		print_log('Хорошо, насос циркуляции работает продолжительное время')
 		self._status = 'OK'
 		
 		return True
 	
 	def checkCirculationOffWorkMode(self):
-		printLog('Проверяем, что насос циркуляции постоянно выключен')
+		print_log('Проверяем, что насос циркуляции постоянно выключен')
 		self.wait(1)
 		
 		mode = 'CIRCULATION_OFF'
 		if self.setCirculationPumpWorkMode(mode) == False:
-			printError('Плохо, не удалось задать режим работы')
+			print_error('Плохо, не удалось задать режим работы')
 			self._status = 'FAIL'
 			return False
 			
@@ -155,11 +155,11 @@ class Scenario(Parent):
 		circulationPumpWorkCheckTimeout  = 30
 		
 		if not self.wait_state_permanence(self.circulationPumpIsOff, circulationPumpWorkCheckDuration, circulationPumpWorkCheckTimeout):
-			printError('Плохо, насос циркуляции включился')
+			print_error('Плохо, насос циркуляции включился')
 			self._status = 'FAIL'
 			return False
 		
-		printLog('Хорошо, насос циркуляции не работает')
+		print_log('Хорошо, насос циркуляции не работает')
 		self._status = 'OK'
 		
 		return True
@@ -177,12 +177,12 @@ class Scenario(Parent):
 		return True
 		
 	def checkCirculationPeriodicWorkMode(self):
-		printLog('Проверяем, что насос циркуляции работает импульсами заданной длины')
+		print_log('Проверяем, что насос циркуляции работает импульсами заданной длины')
 		self.wait(1)
 		
 		mode = 'CIRCULATION_PERIOD'
 		if self.setCirculationPumpWorkMode(mode) == False:
-			printError('Плохо, не удалось задать режим работы')
+			print_error('Плохо, не удалось задать режим работы')
 			self._status = 'FAIL'
 			return False
 		
@@ -193,16 +193,16 @@ class Scenario(Parent):
 		periodOff = 3*60
 		
 		if self.writeCirculationPumpWorkPeriodOn (periodOn ) == None:
-			printError('Плохо, не удалось задать длительность включения')
+			print_error('Плохо, не удалось задать длительность включения')
 			self._status = 'FAIL'
 			return False
 			
 		if self.writeCirculationPumpWorkPeriodOff(periodOff) == None:
-			printError('Плохо, не удалось задать длительность выключения')
+			print_error('Плохо, не удалось задать длительность выключения')
 			self._status = 'FAIL'
 			return False
 			
-		printLog(f'Период работы {periodOn}/{periodOff}')
+		print_log(f'Период работы {periodOn}/{periodOff}')
 		
 		repeatTestCount = 5
 		testDuration = (periodOn + periodOff) * repeatTestCount
@@ -231,12 +231,12 @@ class Scenario(Parent):
 			pump = self.circulationPumpIsOn()
 			
 			if onDelay.get(pump, periodOn + periodOnHyst):
-				printError('Плохо, насос циркуляции работает слишком долго')
+				print_error('Плохо, насос циркуляции работает слишком долго')
 				self._status = 'FAIL'
 				return False
 			
 			if offDelay.get(not pump, periodOff + periodOffHyst):
-				printError('Плохо, насос циркуляции выключен слишком долго')
+				print_error('Плохо, насос циркуляции выключен слишком долго')
 				self._status = 'FAIL'
 				return False
 			
@@ -245,9 +245,9 @@ class Scenario(Parent):
 				if offTime:
 					dt = onTime - offTime
 					if approx_Equal(dt, periodOff):
-						printLog('Хорошо, насос циркуляции включился на заданное время')
+						print_log('Хорошо, насос циркуляции включился на заданное время')
 					else:
-						printError(f'Плохо, период выключения насоса циркуляции неверный ({dt} != {periodOff})')
+						print_error(f'Плохо, период выключения насоса циркуляции неверный ({dt} != {periodOff})')
 						self._status = 'FAIL'
 						return False
 						
@@ -256,43 +256,43 @@ class Scenario(Parent):
 				if onTime:
 					dt = offTime - onTime
 					if approx_Equal(dt, periodOn):
-						printLog('Хорошо, насос циркуляции выключился на заданное время')
+						print_log('Хорошо, насос циркуляции выключился на заданное время')
 					else:
-						printError(f'Плохо, период включения насоса циркуляции неверный ({dt} != {periodOn})')
+						print_error(f'Плохо, период включения насоса циркуляции неверный ({dt} != {periodOn})')
 						self._status = 'FAIL'
 						return False
 				
 		return True
 		
 	def checkCirculationPumpWorkDuringIdlePeriod(self):
-		printLog('читаем требуемую температуру бассейна')
+		print_log('читаем требуемую температуру бассейна')
 		poolSetpoint = self.readRequiredPoolTemperatureValue()
 		
 		if poolSetpoint is None:
 			self._status = 'FAIL'
-			printError('Проблема! не удалось получить уставку бассейна')
+			print_error('Проблема! не удалось получить уставку бассейна')
 			return False
 
 		self.wait(1)
 		
-		printLog('пока бассейн нагрет, насос циркуляции должен работать согласно своему режиму')
+		print_log('пока бассейн нагрет, насос циркуляции должен работать согласно своему режиму')
 		self.wait(1)
 		
 		poolHysteresis = 1
 				
-		printLog('делаем подходящую для бассейна температуру')
+		print_log('делаем подходящую для бассейна температуру')
 		self.setPoolTemperature(poolSetpoint + poolHysteresis + 0.5)
 		self.wait(1)
 
-		printLog('Ждём, что насос загрузки выключится')
+		print_log('Ждём, что насос загрузки выключится')
 		pumpSwitchOffTimeout = 60
 		pumpSwitchOffDuration = 5*60
 		
 		if self.wait_state_permanence(self.loadingPumpIsOff, pumpSwitchOffDuration, pumpSwitchOffTimeout):
-			printLog('Хорошо, насос выключен')
+			print_log('Хорошо, насос выключен')
 		else:
 			self._status = 'FAIL'
-			printError('Плохо, насос не выключается')
+			print_error('Плохо, насос не выключается')
 			return False
 		
 		if self.checkCirculationPeriodicWorkMode() == False: return False

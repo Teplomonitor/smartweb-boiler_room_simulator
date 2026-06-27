@@ -10,7 +10,7 @@ def initGui(guiThread):
 	global gui
 	gui = guiThread
 
-def printLog(log_str):
+def print_log(log_str):
 	dt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 	
 	log_str_with_dt = f'{dt}   {log_str}'
@@ -21,7 +21,7 @@ def printLog(log_str):
 #		gui.setTextColor('GREEN')
 		gui.printConsoleText(log_str_with_dt)
 
-def printError(log_str):
+def print_error(log_str):
 	dt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 	
 	log_str_with_dt = f'{dt}   {log_str}'

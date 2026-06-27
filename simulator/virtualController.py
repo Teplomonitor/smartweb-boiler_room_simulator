@@ -18,7 +18,7 @@ class Simulator(object):
 		return time.time() - self._time_start
 	
 	def getSensor(self, index):
-		return self._program.getSensor(index).getValue()
+		return self._program.getSensor(index).get_value()
 
 	def getControlOption(self, index):
 		return self._program.getSensorControlOption(index)

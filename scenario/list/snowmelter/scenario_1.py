@@ -3,8 +3,8 @@
 '''
 
 
-from consoleLog import printLog   as printLog
-from consoleLog import printError as printError
+from consoleLog import print_log   as print_log
+from consoleLog import print_error as print_error
 from scenario.scenario import Scenario   as Parent
 
 
@@ -56,7 +56,7 @@ class Scenario(Parent):
 		return True
 
 	def getCirculationPumpState(self):
-		return self._snowmelter.getSecondaryPumpState().getValue()
+		return self._snowmelter.getSecondaryPumpState().get_value()
 	
 	def circulationPumpIsOn (self): return self.getCirculationPumpState() != self.RELAY_OFF
 	def circulationPumpIsOff(self): return self.getCirculationPumpState() == self.RELAY_OFF
@@ -70,54 +70,54 @@ class Scenario(Parent):
 		
 		if plateSetpoint is None:
 			self._status = 'FAIL'
-			printError('Проблема! не удалось получить уставку плиты')
+			print_error('Проблема! не удалось получить уставку плиты')
 			return
 		
 		tFrostProtect = self.readFrostProtectionTemperatureValue()
 		
 		if tFrostProtect is None:
 			self._status = 'FAIL'
-			printError('Test fail! Can\'t get frost protect temp')
+			print_error('Test fail! Can\'t get frost protect temp')
 			return
 		
-		printLog('делаем подходящую для снеготайки уличную температуру')
+		print_log('делаем подходящую для снеготайки уличную температуру')
 		if self.setMediumOutdoorTemperature() == False:
-			printError('Проблема! Не удалось задать уличную температуру')
+			print_error('Проблема! Не удалось задать уличную температуру')
 			self._status = 'FAIL'
 			return
 		
 		self.wait(3)
 		
-		printLog('делаем плиту холодной')
+		print_log('делаем плиту холодной')
 		self.setPlateTemperature(plateSetpoint - 2)
 		self.wait(3)
 		
-		printLog('Warm up')
+		print_log('Warm up')
 		self.wait(30)
 		
-		printLog('Waiting for circulation pump to switch on')
+		print_log('Waiting for circulation pump to switch on')
 		if self.wait_event(self.circulationPumpIsOn, 60):
-			printLog('ok, cirulation pump is working')
+			print_log('ok, cirulation pump is working')
 		else:
 			self._status = 'FAIL'
-			printError('Test fail! Pump don\'t work')
+			print_error('Test fail! Pump don\'t work')
 			return
 			
 		self.wait(2)
 		
-		printLog('making "cold" backward flow temperature')
+		print_log('making "cold" backward flow temperature')
 		self.setBacwardFlowTemperature(tFrostProtect - 1)
 		
 		pumpSwitchOffDuration = 5*60
 		pumpSwitchOffTimeout  = 2*60
 		
-		printLog(f'Waiting for circulation pump to switch off for at least {pumpSwitchOffDuration} seconds')
+		print_log(f'Waiting for circulation pump to switch off for at least {pumpSwitchOffDuration} seconds')
 		
 		if self.wait_state_permanence(self.circulationPumpIsOff, pumpSwitchOffDuration, pumpSwitchOffTimeout):
-			printLog('Test Ok!')
+			print_log('Test Ok!')
 			self._status = 'OK'
 		else:
-			printError('Test fail! Pump don\'t switch off')
+			print_error('Test fail! Pump don\'t switch off')
 			self._status = 'FAIL'
 		
 

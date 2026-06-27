@@ -2,8 +2,8 @@
 @author: admin
 '''
 
-from consoleLog import printLog   as printLog
-from consoleLog import printError as printError
+from consoleLog import print_log   as print_log
+from consoleLog import print_error as print_error
 from scenario.scenario import Scenario as Parent
 
 class Scenario(Parent):
@@ -42,13 +42,13 @@ class Scenario(Parent):
 	def readSnowmelterOutdoorTemperature(self) : return self._snowmelter.read_parameter_value('outdoorTemp')
 	def readRequiredFlowTemperature(self)      : return self._snowmelter.read_parameter_value('reqFlowTemp')
 	
-	def getDirectFlowTemperature(self): return self._snowmelter.getDirectFlowTemperature().getValue()
+	def getDirectFlowTemperature(self): return self._snowmelter.getDirectFlowTemperature().get_value()
 	
 	def getCirculationPumpState(self):
-		return self._snowmelter.getSecondaryPumpState().getValue()
+		return self._snowmelter.getSecondaryPumpState().get_value()
 	
 	def getLoadingPumpState(self):
-		return self._snowmelter.getPrimaryPumpState().getValue()
+		return self._snowmelter.getPrimaryPumpState().get_value()
 	
 	def setPlateTemperature(self, value):
 		t = self._snowmelter.getPlateTemperature()
@@ -100,27 +100,27 @@ class Scenario(Parent):
 		plateSetpoint = self.readRequiredPlateTemperatureValue()
 		
 		if plateSetpoint is None:
-			printError('Проблема! не удалось получить уставку плиты')
+			print_error('Проблема! не удалось получить уставку плиты')
 			self._status = 'FAIL'
 			return
 		
-		printLog('делаем подходящую для снеготайки уличную температуру')
+		print_log('делаем подходящую для снеготайки уличную температуру')
 		if self.setMediumOutdoorTemperature() == False:
-			printError('Проблема! Не удалось задать уличную температуру')
+			print_error('Проблема! Не удалось задать уличную температуру')
 			self._status = 'FAIL'
 			return
 		
 		self.wait(3)
 		
-		printLog('делаем плиту холодной')
+		print_log('делаем плиту холодной')
 		self.setPlateTemperature(plateSetpoint - 2)
 		self.wait(3)
 		
-		printLog('ждём, пока система устаканится')
+		print_log('ждём, пока система устаканится')
 		self.wait(30)
 		
 		
-		printLog('проверяем, что температура держится в пределах заданного значения')
+		print_log('проверяем, что температура держится в пределах заданного значения')
 		result = self.checkFlowTemperatureControl()
 		
 		if result:

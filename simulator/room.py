@@ -20,7 +20,7 @@ class Simulator(object):
 		return oat.get_temperature()
 
 	def get_temperature(self):
-		return self._program.get_temperature().getValue()
+		return self._program.get_temperature().get_value()
 
 	def set_temperature(self, value):
 		self._program.set_temperature(value)

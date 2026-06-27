@@ -57,13 +57,13 @@ class Snowmelter(Program):
 	def getSecondaryPumpState(self): return self.get_output_channel('secondaryPump'          )
 	def getAnalogPumpSignal  (self): return self.get_output_channel('primaryPumpAnalogSignal')
 
-	def setDirectFlowTemperature  (self, value): self.getDirectFlowTemperature  ().setValue(value)
-	def setBackwardFlowTemperature(self, value): self.getBackwardFlowTemperature().setValue(value)
-	def setPlateTemperature       (self, value): self.getPlateTemperature       ().setValue(value)
-	def setSnowSensor             (self, value): self.getSnowSensor             ().setValue(value)
+	def setDirectFlowTemperature  (self, value): self.getDirectFlowTemperature  ().set_value(value)
+	def setBackwardFlowTemperature(self, value): self.getBackwardFlowTemperature().set_value(value)
+	def setPlateTemperature       (self, value): self.getPlateTemperature       ().set_value(value)
+	def setSnowSensor             (self, value): self.getSnowSensor             ().set_value(value)
 
-	def get_max_flow_rate1(self): return self._parameters['max_flow_rate1'].getValue()
-	def get_max_flow_rate2(self): return self._parameters['max_flow_rate2'].getValue()
+	def get_max_flow_rate1(self): return self._parameters['max_flow_rate1'].get_value()
+	def get_max_flow_rate2(self): return self._parameters['max_flow_rate2'].get_value()
 	
 	def get_parameter_info(self, parameter):
 		return self._remoteControlParameters[parameter]

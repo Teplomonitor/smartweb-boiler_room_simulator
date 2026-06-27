@@ -45,13 +45,13 @@ class Simulator(object):
 
 
 	def getDirectFlowTemperature(self):
-		return self._program.getDirectFlowTemperature().getValue()
+		return self._program.getDirectFlowTemperature().get_value()
 
 	def setDirectFlowTemperature(self, value):
 		self._program.setDirectFlowTemperature(value)
 
 	def getBackwardFlowTemperature(self):
-		return self._program.getBackwardFlowTemperature().getValue()
+		return self._program.getBackwardFlowTemperature().get_value()
 	
 	def getBackwardTemperature(self):
 		return self.getBackwardFlowTemperature()
@@ -60,13 +60,13 @@ class Simulator(object):
 		self._program.setBackwardFlowTemperature(value)
 
 	def getPlateTemperature(self):
-		return self._program.getPlateTemperature().getValue()
+		return self._program.getPlateTemperature().get_value()
 
 	def setPlateTemperature(self, value):
 		self._program.setPlateTemperature(value)
 
 	def getSnowSensor(self):
-		return self._program.getSnowSensor().getValue()
+		return self._program.getSnowSensor().get_value()
 
 	def setSnowSensor(self, value):
 		self._program.setSnowSensor(value)
@@ -76,7 +76,7 @@ class Simulator(object):
 		if pump.getMapping() is None:
 			return 1
 
-		if pump.getValue():
+		if pump.get_value():
 			return 1
 
 		return 0
@@ -86,7 +86,7 @@ class Simulator(object):
 		if pump.getMapping() is None:
 			return 1
 
-		if pump.getValue():
+		if pump.get_value():
 			return 1
 
 		return 0
@@ -96,7 +96,7 @@ class Simulator(object):
 		if pump.getMapping() is None:
 			return self.getPrimaryPumpState()
 
-		value = pump.getValue()
+		value = pump.get_value()
 		if value is None:
 			return 0
 		

@@ -5,7 +5,7 @@ import sys
 import config
 
 import presets.preset
-from consoleLog import printError as printError
+from consoleLog import print_error as print_error
 import controllers.search      as ctrlSearch
 
 import smartnet.message as sm
@@ -73,7 +73,7 @@ class MainThread(threading.Thread):
 		self._taskStopEvent = threading.Event()
 		
 		if self._programPresetList is None:
-			printError('wrong preset. Exit')
+			print_error('wrong preset. Exit')
 			sys.exit(1)
 		
 		if args.gui:
@@ -116,7 +116,7 @@ class MainThread(threading.Thread):
 		controllerId = ctrlSearch.findOnlineController(self._controllerId)
 		
 		if controllerId is None:
-			printError('controller not found. Exit')
+			print_error('controller not found. Exit')
 			self.taskStop()
 			return
 		

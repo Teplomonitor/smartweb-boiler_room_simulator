@@ -2,8 +2,8 @@
 @author: admin
 '''
 
-from consoleLog import printLog   as printLog
-from consoleLog import printError as printError
+from consoleLog import print_log   as print_log
+from consoleLog import print_error as print_error
 from scenario.scenario import Scenario   as Parent
 
 class Scenario(Parent):
@@ -38,7 +38,7 @@ class Scenario(Parent):
 	def readMaxOutdoorTemperature(self)        : return self._snowmelter.read_parameter_value('maxOutdoorTemp')
 	
 	def getCirculationPumpState(self):
-		return self._snowmelter.getSecondaryPumpState().getValue()
+		return self._snowmelter.getSecondaryPumpState().get_value()
 	
 	def circulationPumpIsOn (self): return self.getCirculationPumpState() != self.RELAY_OFF
 	def circulationPumpIsOff(self): return self.getCirculationPumpState() == self.RELAY_OFF
@@ -72,48 +72,48 @@ class Scenario(Parent):
 		
 		if plateSetpoint is None:
 			self._status = 'FAIL'
-			printError('Проблема! не удалось получить уставку плиты')
+			print_error('Проблема! не удалось получить уставку плиты')
 			return
 		
-		printLog('делаем подходящую для снеготайки уличную температуру')
+		print_log('делаем подходящую для снеготайки уличную температуру')
 		if self.setMediumOutdoorTemperature() == False:
-			printError('Проблема! Не удалось задать уличную температуру')
+			print_error('Проблема! Не удалось задать уличную температуру')
 			self._status = 'FAIL'
 			return
 		
 		self.wait(3)
 		
-		printLog('делаем плиту холодной')
+		print_log('делаем плиту холодной')
 		self.setPlateTemperature(plateSetpoint - 2)
 		self.wait(3)
 		
-		printLog('ждём, пока система устаканится')
+		print_log('ждём, пока система устаканится')
 		if self.wait(30) == False:
 			return
 		
-		printLog('ждём, когда насос циркуляции включится')
+		print_log('ждём, когда насос циркуляции включится')
 		if self.wait_event(self.circulationPumpIsOn, 60):
-			printLog('Хорошо, включился')
+			print_log('Хорошо, включился')
 		else:
 			self._status = 'FAIL'
-			printError('Плохо. Не включился!')
+			print_error('Плохо. Не включился!')
 			return
 			
 		self.wait(2)
 		
-		printLog('делаем плиту горячей')
+		print_log('делаем плиту горячей')
 		self.setPlateTemperature(plateSetpoint + 2.1)
 		
 		pumpSwitchOffDuration = 5*60
 		pumpSwitchOffTimeout  = 2*60
 		
-		printLog(f'Ждём, пока насос циркуляции не выключится хотя бы на {pumpSwitchOffDuration} секунд')
+		print_log(f'Ждём, пока насос циркуляции не выключится хотя бы на {pumpSwitchOffDuration} секунд')
 		
 		if self.wait_state_permanence(self.circulationPumpIsOff, pumpSwitchOffDuration, pumpSwitchOffTimeout):
-			printLog('Хорошо!')
+			print_log('Хорошо!')
 			self._status = 'OK'
 		else:
-			printError('Плохо. Насос не выключается!')
+			print_error('Плохо. Насос не выключается!')
 			self._status = 'FAIL'
 		
 

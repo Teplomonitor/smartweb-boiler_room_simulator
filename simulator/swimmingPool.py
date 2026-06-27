@@ -12,7 +12,7 @@ class Simulator(object):
 		self.set_temperature(15)
 		self.setBackwardTemperature(15)
 
-	def get_temperature        (self): return self._program.get_temperature().getValue()
+	def get_temperature        (self): return self._program.get_temperature().get_value()
 	def getBackwardTemperature(self): return self._backwardTemperature
 	
 	def set_temperature        (self, value): self._program.set_temperature(value)
@@ -23,7 +23,7 @@ class Simulator(object):
 		if pump.getMapping() is None:
 			return 1
 
-		if pump.getValue():
+		if pump.get_value():
 			return 1
 
 		return 0
@@ -33,7 +33,7 @@ class Simulator(object):
 		if pump.getMapping() is None:
 			return 1
 
-		if pump.getValue():
+		if pump.get_value():
 			return 1
 
 		return 0

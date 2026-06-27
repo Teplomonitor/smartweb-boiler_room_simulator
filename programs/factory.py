@@ -38,7 +38,7 @@ def createProgram(preset):
 	if programType in programCreator:
 		prg = programCreator[programType](preset)
 	else:
-		consoleLog.printError(f'Wrong program type {programType}')
+		consoleLog.print_error(f'Wrong program type {programType}')
 		prg = None
 		
 	return prg

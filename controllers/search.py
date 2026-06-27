@@ -8,8 +8,8 @@ import smartnet.message as snm
 import smartnet.constants as snc
 import functions.timeOnDelay as delay
 
-from consoleLog import printLog   as printLog
-from consoleLog import printError as printError
+from consoleLog import print_log   as print_log
+from consoleLog import print_error as print_error
 
 def messageIsImHere():
 	return snm.Message(
@@ -20,9 +20,9 @@ def messageIsImHere():
 
 def findOnlineController(searchingControllerId):
 	if searchingControllerId:
-		printLog(f'Searching controller {searchingControllerId}')
+		print_log(f'Searching controller {searchingControllerId}')
 	else:
-		printLog(f'Searching controller')
+		print_log(f'Searching controller')
 	
 	msg = snm.Message()
 	timeout = delay.TimeOnDelay()
@@ -35,22 +35,22 @@ def findOnlineController(searchingControllerId):
 			
 			if searchingControllerId != 0:
 				if controllerId != searchingControllerId:
-					printLog(f'skip controller {controllerId}')
+					print_log(f'skip controller {controllerId}')
 					continue
 			
-			printLog('Controller %d found' %(controllerId))
+			print_log('Controller %d found' %(controllerId))
 			
 			if controllerType == snc.ControllerType['SWK_1']:
-				printLog('skip extension block')
+				print_log('skip extension block')
 				continue
 			
 			if controllerType == snc.ControllerType['VIRTUAL']:
-				printLog('skip virtual controller')
+				print_log('skip virtual controller')
 				continue
 			
 			return controllerId
 		else:
 			return None
 	
-	printError('Searching controller timeout')
+	print_error('Searching controller timeout')
 	return None	

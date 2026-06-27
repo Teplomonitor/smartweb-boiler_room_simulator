@@ -43,7 +43,7 @@ class DistrictHeating(Program):
 		
 	
 	def get_max_flow_rate1(self):
-		return self._parameters['max_flow_rate1'].getValue()
+		return self._parameters['max_flow_rate1'].get_value()
 	
 	def get_max_flow_rate2(self):
-		return self._parameters['max_flow_rate2'].getValue()
+		return self._parameters['max_flow_rate2'].get_value()

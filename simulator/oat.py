@@ -14,11 +14,11 @@ class Simulator(object):
 		return time.time() - self._time_start
 	
 	def get_temperature(self):
-		return self._program.getOutdoorTemperature().getValue()
+		return self._program.getOutdoorTemperature().get_value()
 
 	def set_temperature(self, value):
 #		print(f'oat: {value}')
-		self._program.getOutdoorTemperature().setValue(value)
+		self._program.getOutdoorTemperature().set_value(value)
 
 	def computeTemperature(self):
 		temp  = self.get_temperature()

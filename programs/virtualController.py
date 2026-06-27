@@ -83,10 +83,10 @@ class VirtualController(Program):
 		return self._parameters[f'gui_sensor_value{index}']
 	
 	def getSensorValue(self, index):
-		return self.getSensor(index).getValue()
+		return self.getSensor(index).get_value()
 	
 	def set_sensor_value(self, index, value):
-		return self.getSensor(index).setValue(value)
+		return self.getSensor(index).set_value(value)
 	
 	def reportSensorValue(self, index, value):
 		#no confirm because we change value pretty often and it cause thread slowdown

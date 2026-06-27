@@ -16,8 +16,8 @@ import mainThread
 from functions.limit import limit
 from functions.timeOnDelay  import TimeOnDelay
 from functions.periodicTrigger import PeriodicTrigger
-from consoleLog import printLog   as printLog
-from consoleLog import printError as printError
+from consoleLog import print_log   as print_log
+from consoleLog import print_error as print_error
 
 
 class Scenario(object):
@@ -33,8 +33,8 @@ class Scenario(object):
 		self._startTime = time.time()
 		self._EventStop = ScenarioThread().getStopScenarioEvent()
 				
-		printLog(f'starting {self.get_scenario_title()}')
-		printLog(f'description: {self.get_scenario_description()}')
+		print_log(f'starting {self.get_scenario_title()}')
+		print_log(f'description: {self.get_scenario_description()}')
 		
 		self._manualSensorsList = []
 	
@@ -170,23 +170,23 @@ class Scenario(object):
 			
 			
 			if checkTrigger.get(checkPeriod):
-				printLog(f'Среднее расхождение {dtAvr:.1f} ({dtAvrMax:.1f})')
+				print_log(f'Среднее расхождение {dtAvr:.1f} ({dtAvrMax:.1f})')
 				
 			if flowControlTimer.get(abs(dtAvr) < dtAvrMax, duration):
 				return True
 			
 			if bigDtDelay.get(abs(dt) > dtMax, dtTimeout):
-				printError(f'Проблема! Слишком большое расхождение ({dt} > {dtMax})')
+				print_error(f'Проблема! Слишком большое расхождение ({dt} > {dtMax})')
 				return False
 			
 			if flowControlTimeout.get(True, timeout):
-				printError(f'Проблема! Программа не смогла удержать параметр в допустимых пределах ({dtAvrMax})')
+				print_error(f'Проблема! Программа не смогла удержать параметр в допустимых пределах ({dtAvrMax})')
 				return False
 	
 	
 	def set_sensor_value(self, sensor, value):
 		self.set_manual(sensor, True)
-		sensor.setValue(value, True)
+		sensor.set_value(value, True)
 		
 	def done(self):
 		return self._status != 'IN_PROGRESS'
@@ -213,9 +213,9 @@ class Scenario(object):
 			self.wait(2)
 			
 			if not self.init_program_list(self.get_required_programs()):
-				printError('fail to init program list!')
+				print_error('fail to init program list!')
 			else:
-				printLog('init ok!')
+				print_log('init ok!')
 				ok = True
 				
 		if ok:
@@ -237,7 +237,7 @@ class Scenario(object):
 		for prgKey in requiredProgramTypesList:
 			prg = self.get_unbinded_program(requiredProgramTypesList[prgKey])
 			if prg is None:
-				printError(f'{prgKey} not in program list!')
+				print_error(f'{prgKey} not in program list!')
 				self._programList = {}
 				return False
 			else:
@@ -355,7 +355,7 @@ class ScenarioThread(threading.Thread):
 			if self._stopScenarioEvent.is_set():
 				self._stopScenarioEvent.clear()
 				if self._currentScenario:
-					printError(f'Сцераний прерван по внешнему запросу')
+					print_error(f'Сцераний прерван по внешнему запросу')
 					self._currentScenario.clear()
 					self._currentScenario = None
 					self.print_scenario_run_result()
@@ -374,8 +374,8 @@ class ScenarioThread(threading.Thread):
 		dt = time.time() - self._scenarioStartTime
 		dtStr = time.strftime('%H:%M:%S', time.gmtime(dt))
 
-		printLog('All scenario finished!')
-		printLog(f'Time: {dtStr}')
+		print_log('All scenario finished!')
+		print_log(f'Time: {dtStr}')
 		
 		for result in self._scenarioResultList:
 			checklistId = result['checklistId']
@@ -383,9 +383,9 @@ class ScenarioThread(threading.Thread):
 			duration    = result['duration']
 			durationStr = time.strftime('%H:%M:%S', time.gmtime(duration))
 			if value == 'OK':
-				printFunc = printLog
+				printFunc = print_log
 			else:
-				printFunc = printError
+				printFunc = print_error
 			
 			printFunc(f'{checklistId}: {value} ({durationStr})')
 				
@@ -407,7 +407,7 @@ class ScenarioThread(threading.Thread):
 			self._scenarioIndex   = len(__all__)
 			self._currentScenario = self.get_scenario_object(scenario)
 		else:
-			printError(f'{scenario} not in scenario list!')
+			print_error(f'{scenario} not in scenario list!')
 			
 	
 	def get_scenario_object(self, scenarioId):

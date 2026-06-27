@@ -23,10 +23,10 @@ class Simulator(object):
 		return self._roomTemp
 
 	def get_temperature(self):
-		return self._program.get_input_channel('temperature').getValue()
+		return self._program.get_input_channel('temperature').get_value()
 
 	def set_temperature(self, value):
-		self._program.get_input_channel('temperature').setValue(value)
+		self._program.get_input_channel('temperature').set_value(value)
 
 	def getBackwardTemperature(self):
 		return self._supplyBackwardTemperature
@@ -35,10 +35,10 @@ class Simulator(object):
 		self._supplyBackwardTemperature = value
 
 	def getBackwardTemperature2(self):
-		return self._program.get_input_channel('backwardTemperature').getValue()
+		return self._program.get_input_channel('backwardTemperature').get_value()
 
 	def setBackwardTemperature2(self, value):
-		self._program.get_input_channel('backwardTemperature').setValue(value)
+		self._program.get_input_channel('backwardTemperature').set_value(value)
 
 	def get_max_flow_rate(self):
 		return self._program.get_max_flow_rate()
@@ -48,7 +48,7 @@ class Simulator(object):
 		if pump.getMapping() is None:
 			return 1
 
-		if pump.getValue():
+		if pump.get_value():
 			return 1
 
 		return 0
@@ -58,7 +58,7 @@ class Simulator(object):
 		if valve.getMapping() is None:
 			return 1
 
-		valve = valve.getValue()
+		valve = valve.get_value()
 		if valve is None:
 			return 1
 		return valve / 254

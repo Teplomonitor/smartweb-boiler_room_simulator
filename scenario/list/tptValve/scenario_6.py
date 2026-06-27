@@ -2,8 +2,8 @@
 @author: admin
 '''
 
-from consoleLog import printLog   as printLog
-from consoleLog import printError as printError
+from consoleLog import print_log   as print_log
+from consoleLog import print_error as print_error
 from scenario.scenario import Scenario   as Parent
 
 from functions.timeOnDelay  import TimeOnDelay  as TimeOnDelay
@@ -38,15 +38,15 @@ class Scenario(Parent):
 		t = self._tptValve.getControlSignal()
 		self.set_sensor_value(t, value)
 
-	def getValveOpenState (self): return self._tptValve.getValveOpenOutput ().getValue()
-	def getValveCloseState(self): return self._tptValve.getValveCloseOutput().getValue()
+	def getValveOpenState (self): return self._tptValve.getValveOpenOutput ().get_value()
+	def getValveCloseState(self): return self._tptValve.getValveCloseOutput().get_value()
 	
 	def getValveState(self):
 		valveOpen  = self.getValveOpenState()
 		valveClose = self.getValveCloseState()
 		
 		if valveOpen and valveClose:
-			printError('Проблема! Подаётся сигнал сразу на оба направления')
+			print_error('Проблема! Подаётся сигнал сразу на оба направления')
 			return 'error'
 		
 		if valveOpen : return 'opening'
@@ -96,10 +96,10 @@ class Scenario(Parent):
 			if valveTestStopDelay.get(True, 120):
 				ds = signal - valvePos
 				if abs(ds) < 20:
-					printLog(f'Ok! {signal} -> {valvePos:.1f}')
+					print_log(f'Ok! {signal} -> {valvePos:.1f}')
 					return True
 				else:
-					printError(f'Слишком большой рассинхрон! {signal} -> {valvePos:.1f} ')
+					print_error(f'Слишком большой рассинхрон! {signal} -> {valvePos:.1f} ')
 					return False
 			
 			signal -= signalStep
@@ -123,10 +123,10 @@ class Scenario(Parent):
 			if valveTestStopDelay.get(True, 120):
 				ds = signal - valvePos
 				if abs(ds) < 20:
-					printLog(f'Ok! {signal} -> {valvePos:.1f}')
+					print_log(f'Ok! {signal} -> {valvePos:.1f}')
 					return True
 				else:
-					printError(f'Слишком большой рассинхрон! {signal} -> {valvePos:.1f} ')
+					print_error(f'Слишком большой рассинхрон! {signal} -> {valvePos:.1f} ')
 					return False
 			
 			signal += signalStep
@@ -148,47 +148,47 @@ class Scenario(Parent):
 		valvePos = self.computeValvePos()
 		
 		if result:
-			printLog(f'Ok! {targetPos} -> {valvePos:.1f}')
+			print_log(f'Ok! {targetPos} -> {valvePos:.1f}')
 			return True
 		else:
-			printError(f'Слишком большой рассинхрон! {targetPos} -> {valvePos:.1f} ')
+			print_error(f'Слишком большой рассинхрон! {targetPos} -> {valvePos:.1f} ')
 			return False
 			
 			
 	def run(self):
-		printLog('Подаём сигнал на полное закрытие смесителя')
+		print_log('Подаём сигнал на полное закрытие смесителя')
 		self.setControlSignal(0)
 		if self.wait_state_permanence(self.valveIsClose, 60, 100) == False:
-			printError('Проблема! Кран не закрывается полностью!')
+			print_error('Проблема! Кран не закрывается полностью!')
 			self._status = 'FAIL'
 			return
 			
-		printLog('Подаём сигнал на открытие смесителя наполовину')
+		print_log('Подаём сигнал на открытие смесителя наполовину')
 		if self.valveSlowOpening(self._valvePos + 50) == False:
-			printError('Проблема! Кран открыт не наполовину!')
+			print_error('Проблема! Кран открыт не наполовину!')
 			self._status = 'FAIL'
 			return
 		
-		printLog('Подаём сигнал на полное открытие смесителя')
+		print_log('Подаём сигнал на полное открытие смесителя')
 		self.setControlSignal(100)
 		if self.wait_state_permanence(self.valveIsOpen, 60, 100) == False:
-			printError('Проблема! Кран не открывается полностью!')
+			print_error('Проблема! Кран не открывается полностью!')
 			self._status = 'FAIL'
 			return
 			
-		printLog('Подаём сигнал на закрытие смесителя наполовину')
+		print_log('Подаём сигнал на закрытие смесителя наполовину')
 		if self.valveSlowClosing(self._valvePos - 50) == False:
-			printError('Проблема! Кран закрыт не наполовину!')
+			print_error('Проблема! Кран закрыт не наполовину!')
 			self._status = 'FAIL'
 			return
 		
-		printLog('Не меняем сигнал')
+		print_log('Не меняем сигнал')
 		if self.valveHalt(50) == False:
-			printError('Проблема! Кран двигается!')
+			print_error('Проблема! Кран двигается!')
 			self._status = 'FAIL'
 			return
 		
-		printLog('Test Ok!')
+		print_log('Test Ok!')
 		self._status = 'OK'
 		
 

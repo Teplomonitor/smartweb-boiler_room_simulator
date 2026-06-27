@@ -116,13 +116,13 @@ class ControllerIO(object):
 		self._outputs[channelId].setMapping(mapping)
 	
 	def set_output_value(self, channelId, value):
-		self._outputs[channelId].setValue(value)
+		self._outputs[channelId].set_value(value)
 	
 	def getOutputMapping(self, channelId):
 		return self._outputs[channelId].getMapping()
 	
 	def getOutputValue(self, channelId):
-		return self._outputs[channelId].getValue()
+		return self._outputs[channelId].get_value()
 	
 	def reportOutputMapping(self, channelId):
 		mapping = self.getOutputMapping(channelId)

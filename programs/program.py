@@ -14,8 +14,8 @@ import smartnet.message        as sm
 from smartnet.channelMapping import InputChannel     as InputChannel
 from smartnet.channelMapping import OutputChannel    as OutputChannel
 
-from consoleLog import printLog   as printLog
-from consoleLog import printError as printError
+from consoleLog import print_log   as print_log
+from consoleLog import print_error as print_error
 
 def input_info (channelId,
 			title,
@@ -121,12 +121,12 @@ class Program(object):
 	
 	def get_max_power(self):
 		if 'max_power' in self._parameters:
-			return self._parameters['max_power'].getValue()
+			return self._parameters['max_power'].get_value()
 		return 0
 	
 	def get_max_flow_rate(self):
 		if 'max_flow_rate' in self._parameters:
-			return self._parameters['max_flow_rate'].getValue()
+			return self._parameters['max_flow_rate'].get_value()
 		return 0
 
 	def clear(self):
@@ -165,7 +165,7 @@ class Program(object):
 				
 				for out in self._outputs.values():
 					if out.get_id() == outputId:
-						out.setValue(outputValue)
+						out.set_value(outputValue)
 						break
 		
 	def get_inputs (self): return self._inputs
@@ -174,7 +174,7 @@ class Program(object):
 	def get_input_channel (self, channel): return self._inputs [channel]
 	def get_output_channel(self, channel): return self._outputs[channel]
 	
-	def set_output_value   (self, channel, value): self.get_output_channel(channel).setValue(value)
+	def set_output_value   (self, channel, value): self.get_output_channel(channel).set_value(value)
 	
 	def get_parameters(self): return self._parameters
 	
@@ -197,7 +197,7 @@ class Program(object):
 			prgInput.enable_gui_control()
 		
 	def bind_input(self, channel_id, mapping):
-		printLog(f'bind program input {channel_id}')
+		print_log(f'bind program input {channel_id}')
 		def generate_request():
 			request = sm.Message(
 			snc.ProgramType['REMOTE_CONTROL'],
@@ -220,17 +220,17 @@ class Program(object):
 
 		def handle_response():
 			if response is None:
-				printError('bind input timeout')
+				print_error('bind input timeout')
 				return False
 			else:
 				data = response.get_data()
 				resultPos = len(data) - 1
 				result = data[resultPos]
 				if result == snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK']:
-					printLog('bind ok!')
+					print_log('bind ok!')
 					return True
 				else:
-					printError('bind error %d' %(result))
+					print_error('bind error %d' %(result))
 					return False
 				
 		
@@ -243,13 +243,13 @@ class Program(object):
 			result = handle_response()
 			if result:
 				break
-			printLog('retry')
+			print_log('retry')
 			i = i + 1
 			
 		return result
 
 	def bind_output(self, channel_id, mapping):
-		printLog(f'bind program output {channel_id}')
+		print_log(f'bind program output {channel_id}')
 		def generate_request():
 			request = sm.Message(
 			snc.ProgramType['REMOTE_CONTROL'],
@@ -272,17 +272,17 @@ class Program(object):
 
 		def handle_response():
 			if response is None:
-				printError('bind output timeout')
+				print_error('bind output timeout')
 				return False
 			else:
 				data = response.get_data()
 				resultPos = len(data) - 1
 				result = data[resultPos]
 				if result == snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK']:
-					printLog('bind ok!')
+					print_log('bind ok!')
 					return True
 				else:
-					printError('bind error %d' %(result))
+					print_error('bind error %d' %(result))
 					return False
 				
 		
@@ -295,7 +295,7 @@ class Program(object):
 			result = handle_response()
 			if result:
 				break
-			printLog('retry')
+			print_log('retry')
 			i = i + 1
 			
 		return result
@@ -308,8 +308,8 @@ class Program(object):
 		
 		value = None
 		if param.read():
-			value = param.getValue()
-			channel.setValue(value)
+			value = param.get_value()
+			channel.set_value(value)
 			
 		return value
 	
@@ -323,7 +323,7 @@ class Program(object):
 		remoteParam = sr.RemoteControlParameter(parameterInfo = p, programId = self.get_id() )
 		remoteParam.read()
 		
-		return remoteParam.getValue()
+		return remoteParam.get_value()
 	
 	def write_parameter_value(self, parameter, value, index = None, confirm = True):
 		p = self.get_parameter_info(parameter)
@@ -339,7 +339,7 @@ class Program(object):
 		
 		remoteParam.write(confirm)
 		
-		return remoteParam.getValue()
+		return remoteParam.get_value()
 	
 	def save_log(self, logDir = None):
 		titleCommon = self.get_title() + '_' + str(self.get_id())
@@ -361,7 +361,7 @@ class Program(object):
 		settings = preset.getSettings().get()
 		for setting in settings:
 			if setting.get_program_type() == 'CONSUMER' and setting.get_parameter_id_code() == 'GENERATOR_ID':
-				return setting.getValue()
+				return setting.get_value()
 		return 0
 	
 	def get_temperature_source_list(self):
