@@ -10,8 +10,8 @@ class PeriodicTrigger(object):
 		now = time.time()
 		dt  = now - self._previousStateSetup
 		
-		if (dt > period):
-			self._previousStateSetup = now;
+		if dt > period:
+			self._previousStateSetup = now
 			return True
 		
 		return False
