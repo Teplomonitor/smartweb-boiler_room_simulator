@@ -4,10 +4,10 @@ from functions.limit import limit
 class Simulator(object):
 	def __init__(self, program, control):
 		self._program    = program
-		self._preset     = self._program.getPreset()
+		self._preset     = self._program.get_preset()
 		self._control    = control
 
-		self.setTemperature(20)
+		self.set_temperature(20)
 		
 		self._roomSourceList = self._program.getRoomTemperatureSourceList()
 
@@ -17,36 +17,36 @@ class Simulator(object):
 		if oat is None:
 			return 0
 			
-		return oat.getTemperature()
+		return oat.get_temperature()
 
-	def getTemperature(self):
-		return self._program.getTemperature().getValue()
+	def get_temperature(self):
+		return self._program.get_temperature().getValue()
 
-	def setTemperature(self, value):
-		self._program.setTemperature(value)
+	def set_temperature(self, value):
+		self._program.set_temperature(value)
 
-	def getMaxPower(self):
-		return self._program.getMaxPower()
+	def get_max_power(self):
+		return self._program.get_max_power()
 	
 	def getSourceTemperature(self, sourceId):
 		sourceList       = self._control.getHeatingCircuitList()
 		
 #		print(f'source list {roomSourceList}')
 		for source in sourceList:
-			programId = source._program.getId()
+			programId = source._program.get_id()
 #			print(f'source id = {programId}')
 			if programId == self._roomSourceList[sourceId]:
 #				print(f'source {sourceId} found')
 				if source.getPower():
-					return source.getTemperature()
+					return source.get_temperature()
 
-		return self.getTemperature()
+		return self.get_temperature()
 	
 	def getSourcePower(self, sourceId):
 		sourceList       = self._control.getHeatingCircuitList()
 		
 		for source in sourceList:
-			if source._program.getId() == self._roomSourceList[sourceId]:
+			if source._program.get_id() == self._roomSourceList[sourceId]:
 				return source.getPower()
 
 		return 0
@@ -75,7 +75,7 @@ class Simulator(object):
 		wallTemp     = self.getAdditionalSourceTemperature()
 		
 		
-		temp  = self.getTemperature()
+		temp  = self.get_temperature()
 		
 #		print(f'floor={floorTemp} rad={radiatorTemp} wall={wallTemp} self={temp}')
 		
@@ -86,7 +86,7 @@ class Simulator(object):
 		return dTfloor*0.15 + dTrad*0.1 + dTwall*0.1
 
 	def getCooling(self):
-		temp  = self.getTemperature()
+		temp  = self.get_temperature()
 		oat   = self.getOat()
 		
 		dT = oat - temp
@@ -95,11 +95,11 @@ class Simulator(object):
 		
 
 	def computeTemperature(self):
-		temp = self.getTemperature()
+		temp = self.get_temperature()
 		temp = temp + (self.getHeating() + self.getCooling())*0.0005
 		temp = limit(-10, temp, 50)
 
 		return temp
 
 	def run(self):
-		self.setTemperature(self.computeTemperature())
+		self.set_temperature(self.computeTemperature())

@@ -77,7 +77,7 @@ class Message(object):
 	def __copy__(self):
 		return type(self)(self._programType, self._programId, self._functionId, self._requestFlag, self._data)
 	
-	def getProgramType(self): return self._programType
+	def get_program_type(self): return self._programType
 	def getProgramId  (self): return self._programId
 	def getFunctionId (self): return self._functionId
 	def getRequestFlag(self): return self._requestFlag
@@ -134,8 +134,8 @@ class Message(object):
 		val = responseFilter.getRequestFlag()
 		if (val is not None) and (val is not self.getRequestFlag()): return False
 
-		val = responseFilter.getProgramType()
-		if (val is not None) and (val is not self.getProgramType()): return False
+		val = responseFilter.get_program_type()
+		if (val is not None) and (val is not self.get_program_type()): return False
 
 		val = responseFilter.getProgramId()
 		if (val is not None) and (val is not self.getProgramId()  ): return False
@@ -159,7 +159,7 @@ class Message(object):
 
 		return True
 	
-	def OnCanMessageReceived(self, msg):
+	def on_can_message_received(self, msg):
 		if msg.compare(self._responseFilter):
 			self._responseMessage = msg
 			
@@ -295,7 +295,7 @@ class CanListener(can.Listener):
 
 		CanListener._lockSubscribe = 1
 		for listener in CanListener._listeners:
-			listener.OnCanMessageReceived(msg)
+			listener.on_can_message_received(msg)
 		CanListener._lockSubscribe = 0
 		
 

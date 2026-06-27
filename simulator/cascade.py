@@ -10,25 +10,25 @@ from functions.limit import limit
 class Simulator(object):
 	def __init__(self, program, control):
 		self._program    = program
-		self._preset     = self._program.getPreset()
+		self._preset     = self._program.get_preset()
 		self._time_start    = time.time()
 		self._control    = control
 		self._sourceList = self._program.getCascadeManagerSourceList()
 		
-		self.setTemperature(30)
+		self.set_temperature(30)
 
-	def getTemperature(self):
-		return self._program.getInputChannel('temperature').getValue()
+	def get_temperature(self):
+		return self._program.get_input_channel('temperature').getValue()
 
-	def setTemperature(self, value):
+	def set_temperature(self, value):
 #		print(f'cascade: {value}')
-		self._program.getInputChannel('temperature').setValue(value)
+		self._program.get_input_channel('temperature').setValue(value)
 
 	def getElapsedTime(self):
 		return time.time() - self._time_start
 
 	def getConsumersPower(self):
-		consumersPower = self._control.getConsumersPower(self._program.getId())
+		consumersPower = self._control.getConsumersPower(self._program.get_id())
 		return consumersPower
 
 	def getPower(self):
@@ -36,7 +36,7 @@ class Simulator(object):
 
 		power = 0
 		for source in sourceList:
-			if source._program.getId() in self._sourceList:
+			if source._program.get_id() in self._sourceList:
 				power = power + source.getPower()
 
 		return power
@@ -58,14 +58,14 @@ class Simulator(object):
 		return 0
 		
 #		sourceList     = self._control.getSourceList()
-#		selfSourceList = self._program.getPreset().getSettings().getSourceList()
+#		selfSourceList = self._program.get_preset().getSettings().getSourceList()
 
 #		flow = 0
 #		for source in sourceList:
-#			if source._program.getId() in selfSourceList:
+#			if source._program.get_id() in selfSourceList:
 #				flow = flow + source.getFlow()
 
 #		return flow
 	
 	def run(self):
-		self.setTemperature(self.computeTemperature())
+		self.set_temperature(self.computeTemperature())

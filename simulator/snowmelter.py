@@ -26,7 +26,7 @@ def computeNCooling(Tplate, Toat):
 class Simulator(object):
 	def __init__(self, program, control):
 		self._program    = program
-		self._preset     = self._program.getPreset()
+		self._preset     = self._program.get_preset()
 		self._control    = control
 		self._snowTime   = PeriodPulse()
 		
@@ -41,7 +41,7 @@ class Simulator(object):
 		if oat is None:
 			oat = 0
 			
-		return oat.getTemperature()
+		return oat.get_temperature()
 
 
 	def getDirectFlowTemperature(self):
@@ -102,20 +102,20 @@ class Simulator(object):
 		
 		return value / 254
 
-	def getMaxPower(self):
-		return self._program.getMaxPower()
+	def get_max_power(self):
+		return self._program.get_max_power()
 
 	def getPower(self):
 		if self.getSecondaryPumpState() == 0:
 			return 0
 		
-		return self.getMaxPower()*self.getAnalogPumpSignal()
+		return self.get_max_power()*self.getAnalogPumpSignal()
 
-	def getMaxFlowRate(self):
-		return self._program.getMaxFlowRate1()
+	def get_max_flow_rate(self):
+		return self._program.get_max_flow_rate1()
 	
 	def getFlow(self):
-		return self.getAnalogPumpSignal() * self.getMaxFlowRate() / 1000 #cube per hour
+		return self.getAnalogPumpSignal() * self.get_max_flow_rate() / 1000 #cube per hour
 	
 	def getSourceTemperature(self):
 		return self._control._collector.getDirectTemperature()

@@ -193,7 +193,7 @@ class Scenario(object):
 	
 	def clear(self):
 		for prg in self._programList.values():
-			prg.enableGuiControl()
+			prg.enable_gui_control()
 			
 		for sensor in self._manualSensorsList:
 			sensor.setManual(False)
@@ -220,7 +220,7 @@ class Scenario(object):
 				
 		if ok:
 			for prg in self._programList.values():
-				prg.disableGuiControl()
+				prg.disable_gui_control()
 				
 		self._startTime = time.time()
 
@@ -253,7 +253,7 @@ class Scenario(object):
 	def getUnbindedProgram(self, programType):
 		programsList = self.getProgramList()
 		for program in programsList:
-			if program.getType() == programType:
+			if program.get_type() == programType:
 				# in case we need to different programs of the same type
 				if self.findProgramInList(program):
 					#this one already in list

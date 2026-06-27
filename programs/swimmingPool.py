@@ -14,7 +14,7 @@ class SwimmingPool(Program):
 	'''
 
 	@staticmethod
-	def getType(): return 'POOL'
+	def get_type(): return 'POOL'
 
 	_remoteControlParameters = {
 		'requiredPoolTemperatureComfort' : PI('POOL', 'REQUIRED_POOL_TEMPERATURE'        ),
@@ -34,18 +34,18 @@ class SwimmingPool(Program):
 	
 	def getParameterInfo(self, parameter): return self._remoteControlParameters[parameter]
 	
-	def initInputs(self):
+	def init_inputs(self):
 		self._inputs['poolTemperature'] = InputInfo(0, 'Т воды'        , -10, 50)
 		self._inputs['outsideRequest' ] = InputInfo(1, 'Внешний запрос')
 		self._inputs['waterLevel'     ] = InputInfo(2, 'Уровень воды'  )
 		self._inputs['flow'           ] = InputInfo(3, 'Проток'        )
 		
-	def initOutputs(self):
+	def init_outputs(self):
 		self._outputs['circulationPump'  ] = OutputInfo(0, 'Цирк. насос'         )
 		self._outputs['loadingPump'      ] = OutputInfo(1, 'Насос загрузки'      )
 		self._outputs['waterLevelControl'] = OutputInfo(2, 'Контроль уровня воды')
 	
-	def initGuiParameters(self):
+	def init_gui_parameters(self):
 		self._parameters['max_flow_rate'] = GuiParameter(1000, 'Расход', 0, 3000, 1, 'кг/ч')
 		self._parameters['max_power'    ] = GuiParameter(1, 'Мощность', 0, 10, 1, 'кВт')
 		
@@ -55,13 +55,13 @@ class SwimmingPool(Program):
 		'''
 		super().__init__(params)
 		
-	def getGuiColor (self): return 'blue'
+	def get_gui_color (self): return 'blue'
 	
-	def getTemperature         (self): return self.getInputChannel ('poolTemperature')
-	def getCirculationPumpState(self): return self.getOutputChannel('circulationPump')
-	def getLoadingPumpState    (self): return self.getOutputChannel('loadingPump')
+	def get_temperature         (self): return self.get_input_channel ('poolTemperature')
+	def getCirculationPumpState(self): return self.get_output_channel('circulationPump')
+	def getLoadingPumpState    (self): return self.get_output_channel('loadingPump')
 	
-	def setTemperature  (self, value): self.getTemperature().setValue(value)
+	def set_temperature  (self, value): self.get_temperature().setValue(value)
 	
 	def setCirculationPumpWorkMode(self, value):
 		workMode = {

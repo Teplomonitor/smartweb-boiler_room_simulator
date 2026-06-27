@@ -31,13 +31,13 @@ except:
 	guiFrameThread = mock_missing('guiFrameThread')
 
 def loadPresetNow(preset):
-	programList, controllerIoList = presets.preset.getPresetsList(preset)
+	programList, controllerIoList = presets.preset.get_presetsList(preset)
 
 	ioSimulator    = ss.Simulator()
 	controllerHost = cc.Controller()
 	
-	ioSimulator.Clear()
-	controllerHost.Clear()
+	ioSimulator.clear()
+	controllerHost.clear()
 	
 	controllerHost.initController(True, programList)
 	ctrlIo = ccio.initVirtualControllers(controllerIoList)
@@ -69,7 +69,7 @@ class MainThread(threading.Thread):
 		
 		preset = self.getCurrentPreset()
 		
-		self._programPresetList, self._controllerIoList = presets.preset.getPresetsList(preset)
+		self._programPresetList, self._controllerIoList = presets.preset.get_presetsList(preset)
 		self._taskStopEvent = threading.Event()
 		
 		if self._programPresetList is None:
@@ -165,15 +165,15 @@ class MainThread(threading.Thread):
 				self.taskStop()
 				
 			
-		self.Clear()
+		self.clear()
 
-	def Clear(self):
+	def clear(self):
 		time.sleep(1)
 		
 		if self._debug_thread:
 			self._debug_thread.stop()
 			
-		cc.Controller().Clear()
+		cc.Controller().clear()
 		sm.CanListener().stop()
 		
 		if self._guiThread:

@@ -12,12 +12,12 @@ class FillingLoop(Program):
 	'''
 
 	@staticmethod
-	def getType(): return 'FILLING_LOOP'
+	def get_type(): return 'FILLING_LOOP'
 
-	def initInputs(self):
+	def init_inputs(self):
 		self._inputs['pressureSensor'      ] = InputInfo(0, 'Давление', 0, 10, 0.1, 'бар')
 		
-	def initOutputs(self):
+	def init_outputs(self):
 		self._outputs['filling_loop_output'] = OutputInfo(0, 'Подпитка'   )
 		self._outputs['alarm_output'       ] = OutputInfo(1, 'Авария'     )
 
@@ -28,6 +28,6 @@ class FillingLoop(Program):
 		super().__init__(params)
 		
 	def getPressure(self):
-		return self.getInputChannel('pressureSensor')
+		return self.get_input_channel('pressureSensor')
 	
-	def getGuiColor (self): return 'blue'
+	def get_gui_color (self): return 'blue'

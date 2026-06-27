@@ -344,7 +344,7 @@ class udp_listen_thread(threading.Thread):
 				update_ip_list(data, addr)
 				continue
 			
-def getPresetsList(presetId):
+def get_presetsList(presetId):
 	regex = join(dirname(__file__), 'presets','list', "*.py")
 	moduleId = 'presets.list.%s' % presetId
 	print(regex)
@@ -357,7 +357,7 @@ def getPresetsList(presetId):
 	if presetId in __all__:
 		preset_module = __import__(moduleId, fromlist=["presets.list"])
 
-		return preset_module.getPresetsList()
+		return preset_module.get_presetsList()
 	print('shit')
 	return None
 
@@ -420,7 +420,7 @@ def main():
 #	
 	return
 	
-	getPresetsList('default')
+	get_presetsList('default')
 	
 	return
 	

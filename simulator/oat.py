@@ -8,20 +8,20 @@ class Simulator(object):
 		self._program    = program
 		self._time_start = time.time()
 
-		self.setTemperature(-10)
+		self.set_temperature(-10)
 
 	def getElapsedTime(self):
 		return time.time() - self._time_start
 	
-	def getTemperature(self):
+	def get_temperature(self):
 		return self._program.getOutdoorTemperature().getValue()
 
-	def setTemperature(self, value):
+	def set_temperature(self, value):
 #		print(f'oat: {value}')
 		self._program.getOutdoorTemperature().setValue(value)
 
 	def computeTemperature(self):
-		temp  = self.getTemperature()
+		temp  = self.get_temperature()
 
 		pi = 3.14
 		oat = math.cos(self.getElapsedTime()/1000.0 + pi/2)
@@ -31,4 +31,4 @@ class Simulator(object):
 		return temp
 
 	def run(self):
-		self.setTemperature(self.computeTemperature())
+		self.set_temperature(self.computeTemperature())

@@ -56,7 +56,7 @@ programOutputs = {
 	'TPT_VALVE': [outputMapping(0, hostId['HOST_1']), outputMapping(1, hostId['HOST_1'])],
 }
 
-def getPresetsList() :
+def get_presetsList() :
 	programPresetList = []
 	for prg in programList:
 		programPresetList.append(presets.preset.ProgramPreset(

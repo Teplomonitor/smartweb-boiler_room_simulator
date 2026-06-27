@@ -13,9 +13,9 @@ class Room(Program):
 	'''
 
 	@staticmethod
-	def getType(): return 'ROOM_DEVICE'
+	def get_type(): return 'ROOM_DEVICE'
 	
-	def initInputs(self):
+	def init_inputs(self):
 		self._inputs.update({
 			'roomTemperature' : InputInfo(0, 'Т помещения', -10,   50),
 			'mode_deprecated' : InputInfo(1, 'Режим'                 ),
@@ -26,7 +26,7 @@ class Room(Program):
 			'motion'          : InputInfo(6, 'Движение'              ),
 		})
 		
-	def initOutputs(self):
+	def init_outputs(self):
 		self._outputs.update({
 			'valve1'      : OutputInfo(0, 'Клапан ТП' ),
 			'valve2'      : OutputInfo(1, 'Клапан РО' ),
@@ -37,7 +37,7 @@ class Room(Program):
 			'ventilation' : OutputInfo(6, 'Вентиляция'),
 		})
 
-	def initGuiParameters(self):
+	def init_gui_parameters(self):
 		self._parameters['max_power']= GuiParameter(1, 'Мощность', 0, 10, 1, 'кВт')
 	
 	def __init__(self, params):
@@ -47,19 +47,19 @@ class Room(Program):
 		super().__init__(params)
 		
 
-	def getTemperature(self): return self.getInputChannel('roomTemperature')
+	def get_temperature(self): return self.get_input_channel('roomTemperature')
 
-	def setTemperature(self, value): self.getTemperature().setValue(value)
+	def set_temperature(self, value): self.get_temperature().setValue(value)
 
 	def getRoomTemperatureSourceList(self):
-		preset = self.getPreset()
+		preset = self.get_preset()
 		settings = preset.getSettings().get()
 		
 		circuitList = [0, 0, 0]
 		
 		for setting in settings:
-			if setting.getProgramType() == 'ROOM_DEVICE':
-				parameterIdCode = setting.getParameterIdCode()
+			if setting.get_program_type() == 'ROOM_DEVICE':
+				parameterIdCode = setting.get_parameter_idCode()
 				parameterValue  = setting.getValue()
 				if   parameterIdCode == 'RESPONSIBLE_CIRCUIT_1': circuitList[0] = parameterValue
 				elif parameterIdCode == 'RESPONSIBLE_CIRCUIT_2': circuitList[1] = parameterValue

@@ -18,7 +18,7 @@ class Simulator(object):
 		sourceList   = self._control.getSourceList()
 		
 		for source in sourceList:
-			if source._program.getType() == 'CASCADE_MANAGER':
+			if source._program.get_type() == 'CASCADE_MANAGER':
 				#cascade do not produce temperature itself, exclude it
 				pass
 			else:
@@ -58,7 +58,7 @@ class Simulator(object):
 		
 		for generator in self._generatorList:
 			if generator.getFlow() != 0:
-				sumTemp = sumTemp + generator.getTemperature()
+				sumTemp = sumTemp + generator.get_temperature()
 				i = i + 1
 		
 		if i > 0:

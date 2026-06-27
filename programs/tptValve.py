@@ -12,12 +12,12 @@ class TptValve(Program):
 	'''
 
 	@staticmethod
-	def getType(): return 'TPT_VALVE_ADAPTER'
+	def get_type(): return 'TPT_VALVE_ADAPTER'
 
-	def initInputs(self):
+	def init_inputs(self):
 		self._inputs['signal'] = InputInfo(0, 'Управляющий сигнал')
 		
-	def initOutputs(self):
+	def init_outputs(self):
 		self._outputs['valveOpen' ] = OutputInfo(0, 'Смес. откр.')
 		self._outputs['valveClose'] = OutputInfo(1, 'Смес. закр.')
 
@@ -28,8 +28,8 @@ class TptValve(Program):
 		super().__init__(params)
 
 		
-	def getControlSignal   (self): return self.getInputChannel ('signal'    )
-	def getValveOpenOutput (self): return self.getOutputChannel('valveOpen' )
-	def getValveCloseOutput(self): return self.getOutputChannel('valveClose')
+	def getControlSignal   (self): return self.get_input_channel ('signal'    )
+	def getValveOpenOutput (self): return self.get_output_channel('valveOpen' )
+	def getValveCloseOutput(self): return self.get_output_channel('valveClose')
 	
-	def getGuiColor (self): return 'yellow'
+	def get_gui_color (self): return 'yellow'

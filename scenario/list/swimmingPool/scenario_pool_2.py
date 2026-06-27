@@ -51,7 +51,7 @@ class Scenario(Parent):
 	def circulationPumpIsOff(self): return self.getCirculationPumpState() == self.RELAY_OFF
 	
 	def setPoolTemperature(self, value):
-		t = self._pool.getTemperature()
+		t = self._pool.get_temperature()
 		self.setSensorValue(t, value)
 	
 	def setCirculationPumpWorkMode(self, mode):

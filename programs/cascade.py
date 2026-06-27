@@ -11,9 +11,9 @@ class Cascade(Program):
 	'''
 
 	@staticmethod
-	def getType(): return 'CASCADE_MANAGER'
+	def get_type(): return 'CASCADE_MANAGER'
 	
-	def initInputs(self):
+	def init_inputs(self):
 		self._inputs['temperature'   ] = InputInfo(0, 'Коллектор'     )
 		self._inputs['outsideRequest'] = InputInfo(1, 'Внешний запрос')
 		
@@ -24,13 +24,13 @@ class Cascade(Program):
 		super().__init__(preset)
 	
 	def getCascadeManagerSourceList(self):
-		preset = self.getPreset()
+		preset = self.get_preset()
 		settings = preset.getSettings().get()
 		
 		sourceList = [0, 0, 0, 0, 0, 0, 0, 0]
 		for setting in settings:
-			if setting.getProgramType() == 'CASCADE_MANAGER':
-				if setting.getParameterIdCode() == 'PARAM_TEMPERATURE_SOURCE_ID':
+			if setting.get_program_type() == 'CASCADE_MANAGER':
+				if setting.get_parameter_idCode() == 'PARAM_TEMPERATURE_SOURCE_ID':
 					sourceList[setting.getParameterIndex()] = setting.getValue()
 		
 		return sourceList

@@ -43,7 +43,7 @@ class GuiParameter(object):
 			self.setGuiValue(self._value)
 			
 		return self._value
-	def getTitle  (self): return self._title
+	def get_title  (self): return self._title
 	def getUnits  (self): return self._units
 	def getOptions(self): return self._options
 	
@@ -51,7 +51,7 @@ class GuiParameter(object):
 		self._value = value
 		self.setGuiValue(value)
 		
-	def setTitle  (self, title)  : self._title   = title
+	def set_title  (self, title)  : self._title   = title
 	def setUnits  (self, units)  : self._units   = units
 	def setOptions(self, options):
 		self._options = options

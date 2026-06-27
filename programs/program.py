@@ -47,8 +47,8 @@ class ParameterInfo(object):
 		self._programType = programType
 		self._parameterId = parameterId
 	
-	def getProgramType(self): return self._programType
-	def getParameterId(self): return self._parameterId
+	def get_program_type(self): return self._programType
+	def get_parameter_id(self): return self._parameterId
 
 class Program(object):
 	'''
@@ -56,34 +56,34 @@ class Program(object):
 	'''
 
 	@staticmethod
-	def getType(): return 'PROGRAM'
+	def get_type(): return 'PROGRAM'
 	
-	def getInputsNum (self): return len(self._inputs )
-	def getOutputsNum(self): return len(self._outputs)
+	def get_inputs_num (self): return len(self._inputs )
+	def get_outputs_num(self): return len(self._outputs)
 	
-	def initInputMappings(self, mappings):
+	def init_input_mappings(self, mappings):
 		for i in range(len(mappings)):
 			for channel in self._inputs.values():
-				if channel.getId() == i:
+				if channel.get_id() == i:
 					channel.setMapping(mappings[i])
 					break
 			
-	def initOutputMappings(self, mappings):
+	def init_output_mappings(self, mappings):
 		for i in range(len(mappings)):
 			for channel in self._outputs.values():
-				if channel.getId() == i:
+				if channel.get_id() == i:
 					channel.setMapping(mappings[i])
 					if channel.isMapped():
 						self.readOutput(channel)
 					break
 	
-	def initInputs(self):
+	def init_inputs(self):
 		pass
 	
-	def initOutputs(self):
+	def init_outputs(self):
 		pass
 	
-	def initGuiParameters(self):
+	def init_gui_parameters(self):
 		pass
 	
 	def __init__(self, preset):
@@ -95,61 +95,61 @@ class Program(object):
 		self._outputs = {}
 		self._parameters = {}
 		
-		self.initInputs ()
-		self.initOutputs()
-		self.initGuiParameters()
+		self.init_inputs ()
+		self.init_outputs()
+		self.init_gui_parameters()
 		
 		self._preset = preset
 		
 		if preset:
-			self.setScheme(preset.getScheme())
-			self.setId    (preset.getId()    )
-			self.setTitle (preset.getTitle() )
+			self.set_scheme(preset.get_scheme())
+			self.set_id    (preset.get_id()    )
+			self.set_title (preset.get_title() )
 			
-			self.initInputMappings (preset.getInputs ())
-			self.initOutputMappings(preset.getOutputs())
+			self.init_input_mappings (preset.get_inputs ())
+			self.init_output_mappings(preset.get_outputs())
 		else:
-			self.setScheme('DEFAULT')
-			self.setId    (1)
-			self.setTitle ('Program')
+			self.set_scheme('DEFAULT')
+			self.set_id    (1)
+			self.set_title ('Program')
 			
 			
-		self.CanSubscribe()
+		self.can_subscribe()
 	
-	def getPreset(self):
+	def get_preset(self):
 		return self._preset
 	
-	def getMaxPower(self):
+	def get_max_power(self):
 		if 'max_power' in self._parameters:
 			return self._parameters['max_power'].getValue()
 		return 0
 	
-	def getMaxFlowRate(self):
+	def get_max_flow_rate(self):
 		if 'max_flow_rate' in self._parameters:
 			return self._parameters['max_flow_rate'].getValue()
 		return 0
 
-	def Clear(self):
-		self.CanUnSubscribe()
+	def clear(self):
+		self.can_unsubscribe()
 		self._inputs  = {}
 		self._outputs = {}
 		self._parameters = {}
 		
 	
-	def CanSubscribe(self):
+	def can_subscribe(self):
 		sm.CanListener.subscribe(self)
 		
-	def CanUnSubscribe(self):
+	def can_unsubscribe(self):
 		sm.CanListener.unsubscribe(self)
 		
 	def __del__(self):
-		self.CanUnSubscribe()
-		print(f'kill {self.getTitle()}')
+		self.can_unsubscribe()
+		print(f'kill {self.get_title()}')
 		
-	def OnCanMessageReceived(self, msg):
+	def on_can_message_received(self, msg):
 		headerOk = (
-					(msg.getProgramId  () == self.getId()) and
-					(msg.getProgramType() == snc.ProgramType['REMOTE_CONTROL']) and
+					(msg.getProgramId  () == self.get_id()) and
+					(msg.get_program_type() == snc.ProgramType['REMOTE_CONTROL']) and
 					(msg.getFunctionId () == snc.RemoteControlFunction['GET_PARAMETER_VALUE']) and
 					(msg.getRequestFlag() == snc.requestFlag['RESPONSE']))
 
@@ -164,44 +164,44 @@ class Program(object):
 				outputValue = data[3]
 				
 				for out in self._outputs.values():
-					if out.getId() == outputId:
+					if out.get_id() == outputId:
 						out.setValue(outputValue)
 						break
 		
-	def getInputs (self): return self._inputs
-	def getOutputs(self): return self._outputs
+	def get_inputs (self): return self._inputs
+	def get_outputs(self): return self._outputs
 	
-	def getInputChannel (self, channel): return self._inputs [channel]
-	def getOutputChannel(self, channel): return self._outputs[channel]
+	def get_input_channel (self, channel): return self._inputs [channel]
+	def get_output_channel(self, channel): return self._outputs[channel]
 	
-	def setOutputValue   (self, channel, value): self.getOutputChannel(channel).setValue(value)
+	def set_output_value   (self, channel, value): self.get_output_channel(channel).setValue(value)
 	
-	def getParameters(self): return self._parameters
+	def get_parameters(self): return self._parameters
 	
-	def getScheme   (self): return self._scheme
-	def getId       (self): return self._id
-	def getTitle    (self): return self._title
+	def get_scheme   (self): return self._scheme
+	def get_id       (self): return self._id
+	def get_title    (self): return self._title
 	
-	def setScheme(self, scheme   ): self._scheme = scheme
-	def setId    (self, programId): self._id     = programId
-	def setTitle (self, title    ): self._title  = title
+	def set_scheme(self, scheme   ): self._scheme = scheme
+	def set_id    (self, programId): self._id     = programId
+	def set_title (self, title    ): self._title  = title
 	
-	def getGuiColor (self): return 'default'
+	def get_gui_color (self): return 'default'
 
-	def disableGuiControl(self):
+	def disable_gui_control(self):
 		for prgInput in self._inputs.values():
-			prgInput.disableGuiControl()
+			prgInput.disable_gui_control()
 			
-	def enableGuiControl(self):
+	def enable_gui_control(self):
 		for prgInput in self._inputs.values():
-			prgInput.enableGuiControl()
+			prgInput.enable_gui_control()
 		
-	def bindInput(self, channel_id, mapping):
+	def bind_input(self, channel_id, mapping):
 		printLog(f'bind program input {channel_id}')
 		def generateRequest():
 			request = sm.Message(
 			snc.ProgramType['REMOTE_CONTROL'],
-			self.getId(),
+			self.get_id(),
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
 			snc.requestFlag['REQUEST'],
 			[
@@ -242,18 +242,18 @@ class Program(object):
 			response = request.send(responseFilter, 10)
 			result = handleResponse()
 			if result:
-				break;
+				break
 			printLog('retry')
 			i = i + 1
 			
 		return result
 
-	def bindOutput(self, channel_id, mapping):
+	def bind_output(self, channel_id, mapping):
 		printLog(f'bind program output {channel_id}')
 		def generateRequest():
 			request = sm.Message(
 			snc.ProgramType['REMOTE_CONTROL'],
-			self.getId(),
+			self.get_id(),
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
 			snc.requestFlag['REQUEST'],
 			[
@@ -294,7 +294,7 @@ class Program(object):
 			response = request.send(responseFilter, 10)
 			result = handleResponse()
 			if result:
-				break;
+				break
 			printLog('retry')
 			i = i + 1
 			
@@ -303,8 +303,8 @@ class Program(object):
 	def readOutput(self, channel):
 		param = sr.RemoteControlParameter(
 			'PROGRAM', 'OUTPUT',
-			parameterIndex = channel.getId(),
-			programId = self.getId())
+			parameterIndex = channel.get_id(),
+			programId = self.get_id())
 		
 		value = None
 		if param.read():
@@ -320,7 +320,7 @@ class Program(object):
 		p = self.getParameterInfo(parameter)
 		if p is None:
 			return None
-		remoteParam = sr.RemoteControlParameter(parameterInfo = p, programId = self.getId() )
+		remoteParam = sr.RemoteControlParameter(parameterInfo = p, programId = self.get_id() )
 		remoteParam.read()
 		
 		return remoteParam.getValue()
@@ -332,7 +332,7 @@ class Program(object):
 		
 		remoteParam = sr.RemoteControlParameter(
 			parameterInfo = p,
-			programId = self.getId(),
+			programId = self.get_id(),
 			parameterValue = value,
 			parameterIndex = index
 		)
@@ -342,7 +342,7 @@ class Program(object):
 		return remoteParam.getValue()
 	
 	def saveLog(self, logDir = None):
-		titleCommon = self.getTitle() + '_' + str(self.getId())
+		titleCommon = self.get_title() + '_' + str(self.get_id())
 		
 		if logDir:
 			titleCommon = os.path.join(logDir, titleCommon)
@@ -356,15 +356,15 @@ class Program(object):
 			programOutput.saveLog(logDirOutputs)
 	
 	# TODO: move to derived consumer class
-	def getTemperatureSource(self):
-		preset = self.getPreset()
+	def get_temperatureSource(self):
+		preset = self.get_preset()
 		settings = preset.getSettings().get()
 		for setting in settings:
-			if setting.getProgramType() == 'CONSUMER' and setting.getParameterIdCode() == 'GENERATOR_ID':
+			if setting.get_program_type() == 'CONSUMER' and setting.get_parameter_idCode() == 'GENERATOR_ID':
 				return setting.getValue()
 		return 0
 	
-	def getTemperatureSourceList(self):
-		return [self.getTemperatureSource()]
+	def get_temperatureSourceList(self):
+		return [self.get_temperatureSource()]
 	
 	

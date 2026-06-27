@@ -7,33 +7,33 @@ from functions.limit import limit
 class Simulator(object):
 	def __init__(self, program, control):
 		self._program    = program
-		self._preset     = self._program.getPreset()
+		self._preset     = self._program.get_preset()
 		self._time_start    = time.time()
 		self._control    = control
 		self._washTime   = PeriodPulse()
 		
-		self.setTemperature(20)
+		self.set_temperature(20)
 
 
-	def getTemperature(self):
-		return self._program.getInputChannel('temperature').getValue()
+	def get_temperature(self):
+		return self._program.get_input_channel('temperature').getValue()
 
-	def setTemperature(self, value):
+	def set_temperature(self, value):
 #		print(f'dhw: {value}')
-		self._program.getInputChannel('temperature').setValue(value)
+		self._program.get_input_channel('temperature').setValue(value)
 
 	def getBackwardTemperature(self):
-		return self._program.getInputChannel('backwardTemperature').getValue()
+		return self._program.get_input_channel('backwardTemperature').getValue()
 
 	def setBackwardTemperature(self, value):
 #		print(f'dhw: {value}')
-		self._program.getInputChannel('backwardTemperature').setValue(value)
+		self._program.get_input_channel('backwardTemperature').setValue(value)
 
 	def getElapsedTime(self):
 		return time.time() - self._time_start
 
 	def getPumpState(self):
-		pump = self._program.getOutputChannel('supplyPump')
+		pump = self._program.get_output_channel('supplyPump')
 		if pump.getMapping() is None:
 			return 1
 
@@ -42,21 +42,21 @@ class Simulator(object):
 
 		return 0
 
-	def getMaxPower(self):
-		return self._program.getMaxPower()
+	def get_max_power(self):
+		return self._program.get_max_power()
 	
 
 	def getPower(self):
 		if self.getPumpState() == 0:
 			return 0
 
-		return self.getMaxPower()
+		return self.get_max_power()
 	
-	def getMaxFlowRate(self):
-		return self._program.getMaxFlowRate()
+	def get_max_flow_rate(self):
+		return self._program.get_max_flow_rate()
 	
 	def getFlow(self):
-		return self.getPumpState() * self.getMaxFlowRate() / 1000 # cube per hour
+		return self.getPumpState() * self.get_max_flow_rate() / 1000 # cube per hour
 	
 	def getSourceTemperature(self):
 		return self._control._collector.getDirectTemperature()
@@ -65,7 +65,7 @@ class Simulator(object):
 		sourceTemp = self.getSourceTemperature()
 		sourceTemp = sourceTemp - 5 # we loose some temp coming from source
 
-		temp  = self.getTemperature()
+		temp  = self.get_temperature()
 
 		dT = sourceTemp - temp
 		return dT * 0.003 * self.getPumpState()
@@ -77,7 +77,7 @@ class Simulator(object):
 		return -0.01 # should depend on shower time and so on
 
 	def computeTemperature(self):
-		temp  = self.getTemperature()
+		temp  = self.get_temperature()
 
 		temp = temp + self.getHeating() + self.getCooling()
 
@@ -90,7 +90,7 @@ class Simulator(object):
 			collectorBackwardTemp = self._control._collector.getBackwardTemperature()
 			return collectorBackwardTemp
 		
-		temp = self.getTemperature()
+		temp = self.get_temperature()
 		sourceTemp = self.getSourceTemperature()
 		
 		temp = (temp + sourceTemp)/2
@@ -100,5 +100,5 @@ class Simulator(object):
 		return temp
 
 	def run(self):
-		self.setTemperature        (self.computeTemperature())
+		self.set_temperature        (self.computeTemperature())
 		self.setBackwardTemperature(self.computeBackwardTemperature())

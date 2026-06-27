@@ -12,7 +12,7 @@ class HeatingCircuit(Program):
 	classdocs
 	'''
 	@staticmethod
-	def getType(): return 'HEATING_CIRCUIT'
+	def get_type(): return 'HEATING_CIRCUIT'
 	
 	def getOutputTitles(self):
 		return [
@@ -25,14 +25,14 @@ class HeatingCircuit(Program):
 			'А. насос'   ,
 			]
 	
-	def initInputs(self):
+	def init_inputs(self):
 		self._inputs['temperature'        ] = InputInfo(0, 'Т подачи'          )
 		self._inputs['thermostat'         ] = InputInfo(1, 'Термостат'         )
 		self._inputs['outsideRequest'     ] = InputInfo(2, 'Внешний запрос'    )
 		self._inputs['pumpControl'        ] = InputInfo(3, 'Управление насосом')
 		self._inputs['backwardTemperature'] = InputInfo(4, 'Т обратки'         )
 		
-	def initOutputs(self):
+	def init_outputs(self):
 		self._outputs['analogValve'   ] = OutputInfo(0, 'А.смеситель')
 		self._outputs['tptValveOpen'  ] = OutputInfo(1, 'Смес. откр' )
 		self._outputs['tptValveClose' ] = OutputInfo(2, 'Смес. закр' )
@@ -41,7 +41,7 @@ class HeatingCircuit(Program):
 		self._outputs['heatchangePump'] = OutputInfo(5, 'Насос ТО'   )
 		self._outputs['analogPump'    ] = OutputInfo(6, 'А. насос'   )
 
-	def initGuiParameters(self):
+	def init_gui_parameters(self):
 		self._parameters['max_flow_rate'] = GuiParameter(1000, 'Расход', 0, 3000, 1, 'кг/ч')
 		self._parameters['max_power'    ] = GuiParameter(3, 'Мощность', 0, 10, 1, 'кВт')
 		
@@ -51,5 +51,5 @@ class HeatingCircuit(Program):
 		'''
 		super().__init__(preset)
 		
-	def getGuiColor (self): return 'green'
+	def get_gui_color (self): return 'green'
 

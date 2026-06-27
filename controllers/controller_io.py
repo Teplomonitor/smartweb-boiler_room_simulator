@@ -51,7 +51,7 @@ class ControllerIO(object):
 		self._reportImHereTrigger        = PeriodicTrigger()
 		self._reportOutputMappingTrigger = PeriodicTrigger()
 		
-		self.CanSubscribe()
+		self.can_subscribe()
 		
 		inputs_num  = self.getInputNumber ()
 		outputs_num = self.getOutputNumber()
@@ -59,27 +59,27 @@ class ControllerIO(object):
 		self._inputs  = [scm.Channel(None, None) for _ in range(inputs_num )]
 		self._outputs = [scm.Channel(None, None) for _ in range(outputs_num)]
 		
-		sendImHere(self.getId(), self.getType())
+		sendImHere(self.get_id(), self.get_type())
 		self.reportChannelNumber()
 	
-	def Clear(self):
-		self.CanUnSubscribe()
+	def clear(self):
+		self.can_unsubscribe()
 		self._inputs  = []
 		self._outputs = []
 		
-	def CanSubscribe(self):
+	def can_subscribe(self):
 		sm.CanListener.subscribe(self)
 		
-	def CanUnSubscribe(self):
+	def can_unsubscribe(self):
 		sm.CanListener.unsubscribe(self)
 		
 	def __del__(self):
 		print('kill ctrlIO')
-		self.CanUnSubscribe()
+		self.can_unsubscribe()
 		
-	def getType     (self): return self._type
-	def getId       (self): return self._id
-	def getTitle    (self): return self._title
+	def get_type     (self): return self._type
+	def get_id       (self): return self._id
+	def get_title    (self): return self._title
 	
 	
 #	switch (type)
@@ -102,12 +102,12 @@ class ControllerIO(object):
 #		default: break;
 #	}
 	def getInputNumber(self):
-		if self.getType() == 'SWK_1':
+		if self.get_type() == 'SWK_1':
 			return 6
 		return 10
 	
 	def getOutputNumber(self):
-		if self.getType() == 'SWK_1':
+		if self.get_type() == 'SWK_1':
 			return 8
 		return 10
 	
@@ -115,7 +115,7 @@ class ControllerIO(object):
 	def setOutputMapping(self, channelId, mapping):
 		self._outputs[channelId].setMapping(mapping)
 	
-	def setOutputValue(self, channelId, value):
+	def set_output_value(self, channelId, value):
 		self._outputs[channelId].setValue(value)
 	
 	def getOutputMapping(self, channelId):
@@ -126,34 +126,34 @@ class ControllerIO(object):
 	
 	def reportOutputMapping(self, channelId):
 		mapping = self.getOutputMapping(channelId)
-		reportOutputMapping(self.getId(), channelId, mapping)
+		reportOutputMapping(self.get_id(), channelId, mapping)
 		
 	def reportChannelNumber(self):
 		msg = sm.Message(
 		snc.ProgramType['CONTROLLER'],
-		self.getId(),
+		self.get_id(),
 		snc.ControllerFunction['GET_CHANNEL_NUMBER'],
 		snc.requestFlag['RESPONSE'],
 		[self.getInputNumber(), self.getOutputNumber()])
 		msg.send()
 		
-	def OnCanMessageReceived(self, msg):
+	def on_can_message_received(self, msg):
 		if msg is None:
 			return
 		
 		def controllerOutputMappingRequestFilter():
-			headerOk = ((msg.getProgramType() == snc.ProgramType['CONTROLLER']) and
+			headerOk = ((msg.get_program_type() == snc.ProgramType['CONTROLLER']) and
 					(msg.getFunctionId () == snc.ControllerFunction['GET_RELAY_MAPPING']) and
 					(msg.getRequestFlag() == snc.requestFlag['REQUEST']) and
-					(msg.getProgramId() == self.getId()))
+					(msg.getProgramId() == self.get_id()))
 
 			return headerOk
 
 		def controllerChannelNumberRequestFilter():
-			headerOk = ((msg.getProgramType() == snc.ProgramType['CONTROLLER']) and
+			headerOk = ((msg.get_program_type() == snc.ProgramType['CONTROLLER']) and
 					(msg.getFunctionId () == snc.ControllerFunction['GET_CHANNEL_NUMBER']) and
 					(msg.getRequestFlag() == snc.requestFlag['REQUEST']) and
-					(msg.getProgramId() == self.getId()))
+					(msg.getProgramId() == self.get_id()))
 
 			return headerOk
 
@@ -167,7 +167,7 @@ class ControllerIO(object):
 		
 	def run(self):
 		if self._reportImHereTrigger.get(10):
-			sendImHere(self.getId(), self.getType())
+			sendImHere(self.get_id(), self.get_type())
 			
 		if self._reportOutputMappingTrigger.get(5*60):
 			num = self.getOutputNumber()
@@ -181,5 +181,5 @@ def initVirtualControllers(controllerIoList):
 	ctrlIo = []
 	if controllerIoList:
 		for ctrl in controllerIoList:
-			ctrlIo.append(ControllerIO(ctrl.getId(), ctrl.getType(), ctrl.getTitle()))
+			ctrlIo.append(ControllerIO(ctrl.get_id(), ctrl.get_type(), ctrl.get_title()))
 	return ctrlIo

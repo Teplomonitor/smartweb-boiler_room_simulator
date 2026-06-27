@@ -15,7 +15,7 @@ from gui.parameter import GuiParameterApi  as GuiParameterApi
 from gui.parameter import GuiInputChannel  as GuiInputChannel
 from gui.parameter import GuiOutputChannel as GuiOutputChannel
 
-from presets.preset import getPresetFilesList   as getPresetFilesList
+from presets.preset import get_presetFilesList   as get_presetFilesList
 
 import scenario.scenario as sc
 
@@ -65,7 +65,7 @@ class MainFrame ( wx.Frame ):
 	def addPresetsMenu(self):
 		loadPresetSubmenu = wx.Menu()
 		
-		presetList = getPresetFilesList()
+		presetList = get_presetFilesList()
 		
 		for preset in presetList:
 			presetItem = PresetItem(preset)
@@ -164,7 +164,7 @@ class MainFrame ( wx.Frame ):
 	def doClose( self, event ):
 		event.Skip()
 		main.MainStop()
-		guiThread().Clear()
+		guiThread().clear()
 		exit(0)
 	
 	def OnLogSaveButtonPress( self, event ):
@@ -179,7 +179,7 @@ class MainFrame ( wx.Frame ):
 		self._guithread = guithread
 		
 	def addInput(self, ProgramInputsBox, programInput):
-		inputTitle = programInput.getTitle()
+		inputTitle = programInput.get_title()
 		inputUnits = programInput.getUnits()
 		
 		ProgramInputBoxSizer = wx.StaticBoxSizer( wx.StaticBox( ProgramInputsBox.GetStaticBox(), wx.ID_ANY, _(f'{inputTitle} ({inputUnits})') ), wx.HORIZONTAL )
@@ -225,7 +225,7 @@ class MainFrame ( wx.Frame ):
 		programInput.setGui(guiChannel)
 
 	def addOutput(self, ProgramOutputsBox, programOutput):
-		outputTitle = programOutput.getTitle()
+		outputTitle = programOutput.get_title()
 		OutputBoxSizer = wx.BoxSizer( wx.HORIZONTAL )
 		
 		self.OutputTitle = wx.StaticText( ProgramOutputsBox.GetStaticBox(), wx.ID_ANY, _(outputTitle), wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -247,7 +247,7 @@ class MainFrame ( wx.Frame ):
 		programOutput.setGui(guiChannel)
 	
 	def addParameter(self, ProgramParametersBox, programParameter):
-		parameterTitle   = programParameter.getTitle()
+		parameterTitle   = programParameter.get_title()
 		parameterUnits   = programParameter.getUnits()
 		parameterOptions = programParameter.getOptions()
 		
@@ -287,7 +287,7 @@ class MainFrame ( wx.Frame ):
 	def addInputs(self, box, boxSizer, programInfo):
 		ProgramInputsBox = wx.StaticBoxSizer( wx.StaticBox( box, wx.ID_ANY, _(u"Inputs") ), wx.VERTICAL )
 		
-		programInputs = programInfo.getInputs()
+		programInputs = programInfo.get_inputs()
 		inputFound = False
 		for programInput in programInputs.values():
 			if programInput.isMapped():
@@ -300,7 +300,7 @@ class MainFrame ( wx.Frame ):
 	def addOutputs(self, box, boxSizer, programInfo):
 		ProgramOutputsBox = wx.StaticBoxSizer( wx.StaticBox( box, wx.ID_ANY, _(u"Outputs") ), wx.VERTICAL )
 		
-		programOutputs = programInfo.getOutputs()
+		programOutputs = programInfo.get_outputs()
 		outputFound = False
 		for programOutput in programOutputs.values():
 			if programOutput.isMapped():
@@ -313,7 +313,7 @@ class MainFrame ( wx.Frame ):
 	def addParameters(self, box, boxSizer, programInfo):
 		ProgramParametersBox = wx.StaticBoxSizer( wx.StaticBox( box, wx.ID_ANY, _(u"Parameters") ), wx.VERTICAL )
 		
-		programParameters = programInfo.getParameters()
+		programParameters = programInfo.get_parameters()
 		parameterFound = False
 		for programParameter in programParameters:
 			self.addParameter(ProgramParametersBox, programParameters[programParameter])
@@ -341,10 +341,10 @@ class MainFrame ( wx.Frame ):
 	
 	def addProgramNow(self, programInfo):
 		ProgramPanel = wx.Panel( self.mainScrollableWindow, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
-		color = self.programColorToSysColor(programInfo.getGuiColor())
+		color = self.programColorToSysColor(programInfo.get_gui_color())
 		ProgramPanel.SetBackgroundColour( color )
 
-		ProgramBoxSizer = wx.StaticBoxSizer( wx.StaticBox( ProgramPanel, wx.ID_ANY, _(programInfo.getTitle()) ), wx.VERTICAL )
+		ProgramBoxSizer = wx.StaticBoxSizer( wx.StaticBox( ProgramPanel, wx.ID_ANY, _(programInfo.get_title()) ), wx.VERTICAL )
 		
 		ProgramIOBoxSizer = wx.FlexGridSizer( 0, 1, 10, 0 )
 		ProgramIOBoxSizer.SetFlexibleDirection( wx.BOTH )
@@ -396,7 +396,7 @@ class ConsoleFrame ( wx.Frame ):
 	def doClose( self, event ):
 		event.Skip()
 		main.MainStop()
-		guiThread().Clear()
+		guiThread().clear()
 		exit(0)
 	
 	def printText(self, text):
@@ -431,7 +431,7 @@ class guiThread():
 		
 		self._initDone = True
 		
-	def Clear(self):
+	def clear(self):
 		wx.CallAfter(self.ClearNow)
 	
 	def stopNow(self):

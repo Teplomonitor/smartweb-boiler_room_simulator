@@ -35,7 +35,7 @@ class Scenario(Parent):
 	def loadingPumpIsOff(self): return not self.loadingPumpIsOn()
 	
 	def setPoolTemperature(self, value):
-		t = self._pool.getTemperature()
+		t = self._pool.get_temperature()
 		self.setSensorValue(t, value)
 	
 	

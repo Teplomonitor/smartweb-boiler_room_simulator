@@ -26,7 +26,7 @@ class ParameterLog(object):
 		self._saveType = 'ON_CHANGE'
 		
 	def setType (self, parameterType ): self._parameterType  = parameterType
-	def setTitle(self, parameterTitle): self._parameterTitle = parameterTitle
+	def set_title(self, parameterTitle): self._parameterTitle = parameterTitle
 	def setSaveType(self, saveType   ): self._saveType       = saveType
 	def getTimestamp(self, index):
 		#return self._valueLog[index].getTimestamp()

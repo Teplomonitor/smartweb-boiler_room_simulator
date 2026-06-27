@@ -53,7 +53,7 @@ class MainFrame ( MainFrameBase ):
         if filepath != "":
             with open(filepath, "r", encoding="utf-8") as file:
                 text =file.read()
-                self.m_textCtrl2.Clear()
+                self.m_textCtrl2.clear()
                 self.m_textCtrl2.SetValue(text)
                 
     # сохраняем текст из текстового поля в файл

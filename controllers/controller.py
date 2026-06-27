@@ -37,24 +37,24 @@ class Controller(object):
 		
 		self._initDone = True
 	
-	def Clear(self):
+	def clear(self):
 		for prg in self._programList:
-			prg.Clear()
+			prg.clear()
 			
 		self._activeProgramsList = []
 		self._programList = []
 		
 		if self._gui:
-			self._gui.Clear()
+			self._gui.clear()
 			
 	def initController(self, resetConfig, programPresetList):
-		self.Clear()
+		self.clear()
 			
 		if resetConfig:
 			self.resetConfig()
 			for program in programPresetList:
 				if self.makeNewProgram(program) == False:
-					printError(f'Preset: program {program.getType()}_{program.getId()} make fail!')
+					printError(f'Preset: program {program.get_type()}_{program.get_id()} make fail!')
 					
 				time.sleep(1)
 		else:
@@ -63,9 +63,9 @@ class Controller(object):
 			while i < 3:
 				activeProgramList.extend(self.readControllerProgramList())
 				for program in programPresetList:
-					programFound = self.searchProgramInActiveProgramList(program.getId(), program.getType(), activeProgramList)
+					programFound = self.searchProgramInActiveProgramList(program.get_id(), program.get_type(), activeProgramList)
 					if not programFound:
-						printError(f'program {program.getId()}.{program.getType()} not found')
+						printError(f'program {program.get_id()}.{program.get_type()} not found')
 						i += 1
 						break
 					
@@ -197,7 +197,7 @@ class Controller(object):
 
 	def getProgramList(self): return self._programList
 	
-	def OnCanMessageReceived(self, msg):
+	def on_can_message_received(self, msg):
 		def generateResponse():
 			response = sm.Message(
 			snc.ProgramType['CONTROLLER'],
@@ -250,14 +250,14 @@ class Controller(object):
 		printLog('add prg to list')
 		self._programList.append(program)
 		
-		prg = {'id': program.getId(), 'type': snc.ProgramType[program.getType()]}
+		prg = {'id': program.get_id(), 'type': snc.ProgramType[program.get_type()]}
 		
 		self._activeProgramsList.append(prg)
 		if self._gui:
 			self._gui.addProgram(program)
 	
-	def getOutputsNum(self):
+	def get_outputs_num(self):
 		return 0
 	
-	def getInputsNum(self):
+	def get_inputs_num(self):
 		return 0

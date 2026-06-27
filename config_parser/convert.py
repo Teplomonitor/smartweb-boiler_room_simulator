@@ -108,7 +108,7 @@ import presets.settings as ps
 def getFootter():
 	return '''
 
-def getPresetsList() :
+def get_presetsList() :
 	programPresetList = []
 	for prg in programList:
 		programPresetList.append(presets.preset.ProgramPreset(
@@ -185,7 +185,7 @@ def getProgramDeclaration(programs):
 	output_string += '}\n\n'
 	return output_string
 	
-def getProgramType(programs):
+def get_program_type(programs):
 	output_string = 'programType = {\n'
 	for prg in programs:
 		output_string += f"'{getProgramId(prg)}' : '{prg['type']}',\n"
@@ -309,7 +309,7 @@ getProgramOutputs.counter = 0
 def getProgramString(programs):
 	output_string = ''
 	output_string += getProgramDeclaration(programs)
-	output_string += getProgramType       (programs)
+	output_string += get_program_type       (programs)
 	output_string += getProgramScheme     (programs)
 	output_string += getProgramTitle      (programs)
 	output_string += getProgramIdArray    (programs)

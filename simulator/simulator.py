@@ -66,11 +66,11 @@ class sensor_report_thread(threading.Thread):
 		selfIdList = []
 		
 		for ctr in ctrlIO:
-			selfIdList.append(ctr.getId())
+			selfIdList.append(ctr.get_id())
 		
 		for sim in self._simulator._simList:
 			program = sim._program
-			for programInput in program.getInputs().values():
+			for programInput in program.get_inputs().values():
 				if programInput.isMapped() and programInput.getMapping().getHostId() in selfIdList:
 					if ssr.reportSensorValue(programInput):
 						time.sleep(0.1)
@@ -97,7 +97,7 @@ class Simulator(threading.Thread):
 		if hasattr(self, '_initDone'):
 			return
 		
-		self.Clear()
+		self.clear()
 		
 		threading.Thread.__init__(self, name = thread_name)
 		self.thread_name = thread_name
@@ -111,7 +111,7 @@ class Simulator(threading.Thread):
 		self.deamon = True
 		self.start()
 	
-	def Clear(self):
+	def clear(self):
 		self._simulator_ready = False
 		self._controllerHost = None
 		self._controllerIo   = []
@@ -127,7 +127,7 @@ class Simulator(threading.Thread):
 #		time.sleep(2)
 		
 	def reloadConfig(self, controllerHost, controllerIo):
-		self.Clear()
+		self.clear()
 		
 		self._controllerHost = controllerHost
 		self._controllerIo   = controllerIo
@@ -135,13 +135,13 @@ class Simulator(threading.Thread):
 		programsList = self._controllerHost.getProgramList()
 		
 		for program in programsList:
-			programId = program.getId()
+			programId = program.get_id()
 			i = 0
-			for output in program.getOutputs().values():
+			for output in program.get_outputs().values():
 				mapping = output.getMapping()
 				if mapping:
 					for ctrlIo in self._controllerIo:
-						if (ctrlIo.getId() == mapping.getHostId()) and (mapping.getChannelType() == 'CHANNEL_RELAY'):
+						if (ctrlIo.get_id() == mapping.getHostId()) and (mapping.getChannelType() == 'CHANNEL_RELAY'):
 							ctrlOutputMapping = ChannelMapping(i, 'CHANNEL_OUTPUT', programId)
 							ctrlIo.setOutputMapping(mapping.getChannelId(), ctrlOutputMapping)
 							ctrlIo.reportOutputMapping(mapping.getChannelId())
@@ -150,7 +150,7 @@ class Simulator(threading.Thread):
 				i = i + 1
 				
 		for program in programsList:
-			programType = program.getType()
+			programType = program.get_type()
 			if programType in simulatorType:
 				sim = simulatorType[programType](program, self)
 				self._simList.append(sim)
@@ -158,12 +158,12 @@ class Simulator(threading.Thread):
 		for sim in self._simList:
 			program = sim._program
 			
-			if program.getType() in consumerTypesList: self._consumersList.append(sim)
-			if program.getType() in sourceTypesList  : self._generatorsList.append(sim)
-			if program.getType() == 'OUTDOOR_SENSOR' : self._oat = sim
-			if program.getType() == 'ROOM_DEVICE'    : self._roomList.append(sim)
-			if program.getType() == 'HEATING_CIRCUIT': self._heatingCircuitList.append(sim)
-			if program.getType() == 'CASCADE_MANAGER': self._cascadeList.append(sim)
+			if program.get_type() in consumerTypesList: self._consumersList.append(sim)
+			if program.get_type() in sourceTypesList  : self._generatorsList.append(sim)
+			if program.get_type() == 'OUTDOOR_SENSOR' : self._oat = sim
+			if program.get_type() == 'ROOM_DEVICE'    : self._roomList.append(sim)
+			if program.get_type() == 'HEATING_CIRCUIT': self._heatingCircuitList.append(sim)
+			if program.get_type() == 'CASCADE_MANAGER': self._cascadeList.append(sim)
 
 		self._collector = simulator.collector.Simulator(self)
 		self._simulator_ready = True
@@ -180,7 +180,7 @@ class Simulator(threading.Thread):
 		programList = self.getConsumerList()
 		consumerList = []
 		for program in programList:
-			sourceList = program._program.getTemperatureSourceList()
+			sourceList = program._program.get_temperatureSourceList()
 			if ((sourceId in sourceList) or
 				(BROADCAST_ID in sourceList) ):
 				consumerList.append(program)
@@ -230,7 +230,7 @@ class Simulator(threading.Thread):
 				print('Oh shi! Sensor report is dead')
 				break
 
-		self.Clear()
+		self.clear()
 
 def initIoSimulator():
 	simulatorThread = Simulator("simulator thread", 789)

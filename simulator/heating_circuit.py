@@ -4,11 +4,11 @@ from functions.limit import limit
 class Simulator(object):
 	def __init__(self, program, control):
 		self._program    = program
-		self._preset     = self._program.getPreset()
+		self._preset     = self._program.get_preset()
 		self._control    = control
 		
 		self._roomTemp = 24
-		self.setTemperature(20)
+		self.set_temperature(20)
 		self.setBackwardTemperature(20)
 		self.setBackwardTemperature2(20)
 
@@ -17,16 +17,16 @@ class Simulator(object):
 		if oat is None:
 			return 0
 			
-		return oat.getTemperature()
+		return oat.get_temperature()
 	
 	def getRoomTemp(self):
 		return self._roomTemp
 
-	def getTemperature(self):
-		return self._program.getInputChannel('temperature').getValue()
+	def get_temperature(self):
+		return self._program.get_input_channel('temperature').getValue()
 
-	def setTemperature(self, value):
-		self._program.getInputChannel('temperature').setValue(value)
+	def set_temperature(self, value):
+		self._program.get_input_channel('temperature').setValue(value)
 
 	def getBackwardTemperature(self):
 		return self._supplyBackwardTemperature
@@ -35,16 +35,16 @@ class Simulator(object):
 		self._supplyBackwardTemperature = value
 
 	def getBackwardTemperature2(self):
-		return self._program.getInputChannel('backwardTemperature').getValue()
+		return self._program.get_input_channel('backwardTemperature').getValue()
 
 	def setBackwardTemperature2(self, value):
-		self._program.getInputChannel('backwardTemperature').setValue(value)
+		self._program.get_input_channel('backwardTemperature').setValue(value)
 
-	def getMaxFlowRate(self):
-		return self._program.getMaxFlowRate()
+	def get_max_flow_rate(self):
+		return self._program.get_max_flow_rate()
 	
 	def getPumpState(self):
-		pump = self._program.getOutputChannel('pump')
+		pump = self._program.get_output_channel('pump')
 		if pump.getMapping() is None:
 			return 1
 
@@ -54,7 +54,7 @@ class Simulator(object):
 		return 0
 
 	def getValveState(self):
-		valve = self._program.getOutputChannel('analogValve')
+		valve = self._program.get_output_channel('analogValve')
 		if valve.getMapping() is None:
 			return 1
 
@@ -63,17 +63,17 @@ class Simulator(object):
 			return 1
 		return valve / 254
 
-	def getMaxPower(self):
-		return self._program.getMaxPower()
+	def get_max_power(self):
+		return self._program.get_max_power()
 
 	def getPower(self):
 		if self.getPumpState() == 0:
 			return 0
 
-		return self.getValveState()*self.getMaxPower()
+		return self.getValveState()*self.get_max_power()
 
 	def getFlow(self):
-		rate = self.getMaxFlowRate() / 1000 # cube per hour
+		rate = self.get_max_flow_rate() / 1000 # cube per hour
 		return self.getPumpState() * self.getValveState() * rate
 	
 	def getSourceTemperature(self):
@@ -81,7 +81,7 @@ class Simulator(object):
 
 	def computeTemperature(self):
 		tempBackward = self.getBackwardTemperature2()
-		temp        = self.getTemperature()
+		temp        = self.get_temperature()
 		roomTemp    = self.getRoomTemp()
 
 		if self.getPumpState() == 0:
@@ -111,10 +111,10 @@ class Simulator(object):
 			beta  = 1 - alpha
 			return temp*beta + avrRoomTemp*alpha
 		
-		tempDirect = self.getTemperature()
+		tempDirect = self.get_temperature()
 		
 		cw = 4200 # теплоемкость воды
-		qhouse = self.getMaxFlowRate() / 3600 # расход кг/сек в доме постоянный.
+		qhouse = self.get_max_flow_rate() / 3600 # расход кг/сек в доме постоянный.
 		cwq = qhouse*cw # так короче
 		btermo=1200 # теплоотдача батарей НЕ трогать
 		troom = roomTemp
@@ -135,6 +135,6 @@ class Simulator(object):
 		return temp
 
 	def run(self):
-		self.setTemperature         (self.computeTemperature())
+		self.set_temperature         (self.computeTemperature())
 		self.setBackwardTemperature2(self.computeBackwardTemperature2())
 		self.setBackwardTemperature (self.computeBackwardTemperature ())

@@ -17,14 +17,14 @@ class ProgramPreset(object):
 		self._inputs    = programInputs
 		self._outputs   = programOutputs
 
-	def getType     (self): return self._type
-	def getScheme   (self): return self._scheme
-	def getId       (self): return self._id
-	def getTitle    (self): return self._title
+	def get_type     (self): return self._type
+	def get_scheme   (self): return self._scheme
+	def get_id       (self): return self._id
+	def get_title    (self): return self._title
 	def getSettings (self): return self._settings
-	def getInputs   (self   ): return self._inputs
+	def get_inputs   (self   ): return self._inputs
 	def getInput    (self, i): return self._inputs[i]
-	def getOutputs  (self   ): return self._outputs
+	def get_outputs  (self   ): return self._outputs
 	def getOutput   (self, i): return self._outputs[i]
 
 	def addProgramToControllerHost(self, controller):
@@ -46,20 +46,20 @@ class ProgramPreset(object):
 					continue
 		return False
 
-	def bindInputs(self, prg):
+	def bind_inputs(self, prg):
 		if self._inputs:
 			i = 0
 			for value in self._inputs:
 				if value:
-					prg.bindInput(i, value)
+					prg.bind_input(i, value)
 				i = i + 1
 
-	def bindOutputs(self, prg):
+	def bind_outputs(self, prg):
 		if self._outputs:
 			i = 0
 			for value in self._outputs:
 				if value:
-					prg.bindOutput(i, value)
+					prg.bind_output(i, value)
 				i = i + 1
 
 	def loadSettings(self):
@@ -77,8 +77,8 @@ class ProgramPreset(object):
 		
 		prg = controller.addProgramFromPreset(self)
 
-		self.bindInputs (prg)
-		self.bindOutputs(prg)
+		self.bind_inputs (prg)
+		self.bind_outputs(prg)
 		self.loadSettings()
 
 class ControllerPreset(object):
@@ -92,26 +92,26 @@ class ControllerPreset(object):
 		self._id        = controllerId
 		self._title     = controllerTitle
 
-	def getType     (self): return self._type
-	def getId       (self): return self._id
-	def getTitle    (self): return self._title
+	def get_type     (self): return self._type
+	def get_id       (self): return self._id
+	def get_title    (self): return self._title
 
-def getPresetFilesList():
+def get_presetFilesList():
 	regex = join(dirname(__file__),'list', "*.py")
 	
 	modules = glob.glob(regex)
 	__all__ = [ basename(f)[:-3] for f in modules if isfile(f) and not f.endswith('__init__.py')]
 	return __all__
 
-def getPresetsList(presetId):
+def get_presetsList(presetId):
 	moduleId = 'presets.list.%s' % presetId
 	
-	__all__ = getPresetFilesList()
+	__all__ = get_presetFilesList()
 	
 	if presetId in __all__:
 		preset_module = __import__(moduleId, fromlist=["presets.list"])
 
-		return preset_module.getPresetsList()
+		return preset_module.get_presetsList()
 	
 	print(f'wrong preset {presetId}')
 	return None

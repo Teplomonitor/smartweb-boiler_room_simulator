@@ -70,7 +70,7 @@ class Channel(GuiParameter):
 		self._mapping = mapping
 		self._log     = ChannelLog('SENSOR', title)
 
-	def getId     (self): return self._id
+	def get_id     (self): return self._id
 	def getMapping(self): return self._mapping
 	
 	def isMapped(self):
@@ -84,9 +84,9 @@ class Channel(GuiParameter):
 		super().setValue(value, manual)
 		self._log.append(value)
 		
-	def setTitle  (self, title  ):
-		super().setTitle(title)
-		self._log.setTitle(title)
+	def set_title  (self, title  ):
+		super().set_title(title)
+		self._log.set_title(title)
 		
 	def setLogType(self, logType): self._log.setSaveType(logType)
 	
@@ -206,7 +206,7 @@ class InputChannel(Channel):
 			self._gui._slider .Enable( True )
 			self._gui._spinner.Enable( True )
 	
-	def enableGuiControl(self):
+	def enable_gui_control(self):
 		if self._gui:
 			self._gui._openCheckbox .Enable( True )
 			self._gui._shortCheckbox.Enable( True )
@@ -216,7 +216,7 @@ class InputChannel(Channel):
 				self._gui._slider .Enable( True )
 				self._gui._spinner.Enable( True )
 		
-	def disableGuiControl(self):
+	def disable_gui_control(self):
 		if self._gui:
 			self._gui._openCheckbox .Enable( False )
 			self._gui._shortCheckbox.Enable( False )
@@ -245,7 +245,7 @@ class OutputChannel(Channel):
 		self._lastUpdateTime = None
 		
 	def setValue(self, value, manual = False):
-#		print(f'{self.getTitle()} = {value}')
+#		print(f'{self.get_title()} = {value}')
 		super().setValue(value, manual)
 		self._lastUpdateTime = time.time()
 		

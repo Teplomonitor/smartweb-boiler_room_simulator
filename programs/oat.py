@@ -11,9 +11,9 @@ class Oat(Program):
 	'''
 
 	@staticmethod
-	def getType(): return 'OUTDOOR_SENSOR'
+	def get_type(): return 'OUTDOOR_SENSOR'
 	
-	def initInputs(self):
+	def init_inputs(self):
 		self._inputs['outdoorTemperature'] = InputInfo(0, 'Улица', -40, 40)
 		
 	def __init__(self, params):
@@ -22,6 +22,6 @@ class Oat(Program):
 		'''
 		super().__init__(params)
 		
-	def getOutdoorTemperature(self): return self.getInputChannel('outdoorTemperature')
+	def getOutdoorTemperature(self): return self.get_input_channel('outdoorTemperature')
 	
-	def getGuiColor (self): return 'blue'
+	def get_gui_color (self): return 'blue'

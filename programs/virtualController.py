@@ -15,7 +15,7 @@ class VirtualController(Program):
 	'''
 
 	@staticmethod
-	def getType(): return 'VIRTUAL_CONTROLLER'
+	def get_type(): return 'VIRTUAL_CONTROLLER'
 	
 	_remoteControlParameters = {
 		'controllerId'  : PI('VIRTUAL_CONTROLLER', 'CONTROLLERID'),
@@ -56,7 +56,7 @@ class VirtualController(Program):
 		'sensorValue16',
 		]
 
-	def initGuiParameters(self):
+	def init_gui_parameters(self):
 		for i in range(0,PARAMETER_NUM):
 			param = GuiParameter(30, f'Датчик {i+1}', -30, 120, 0.1, 'у.е.')
 			param.setOptions(['none'])

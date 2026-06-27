@@ -86,7 +86,7 @@ programOutputs = {
 	'FILLING_LOOP'  : [outputMapping(0, hostId['HOST_2']), outputMapping(1, hostId['HOST_2'])],
 }
 
-def getPresetsList() :
+def get_presetsList() :
 	programPresetList = []
 	for prg in programList:
 		programPresetList.append(presets.preset.ProgramPreset(

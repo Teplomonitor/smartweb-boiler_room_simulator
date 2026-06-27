@@ -8,7 +8,7 @@ BROADCAST_ID = 0
 class Simulator(object):
 	def __init__(self, program, control):
 		self._program    = program
-		self._preset     = self._program.getPreset()
+		self._preset     = self._program.get_preset()
 		self._time_start    = time.time()
 		self._control    = control
 		self._currentPower = 0
@@ -18,27 +18,27 @@ class Simulator(object):
 
 		self._tMax = 75
 		self._tMin = 20
-		self.setTemperature(30)
+		self.set_temperature(30)
 
 	def getSupplyBackwardTemperature(self):
 		return self._control._collector.getSupplyBackwardTemperature()
 	
-	def getTemperature(self):
-		return self._program.getTemperature()
+	def get_temperature(self):
+		return self._program.get_temperature()
 
-	def setTemperature(self, value):
+	def set_temperature(self, value):
 #		print(f'boiler: {value}')
-		self._program.setTemperature(value)
+		self._program.set_temperature(value)
 
 	def getElapsedTime(self):
 		return time.time() - self._time_start
 
 	def getConsumersPower(self):
-		consumersPower = self._control.getConsumersPower(self._program.getId())
+		consumersPower = self._control.getConsumersPower(self._program.get_id())
 		return consumersPower
 
 	def getStageState(self):
-		stage = self._program.getStage1()
+		stage = self._program.get_stage_1()
 		if stage.isMapped() is False:
 			return 1
 
@@ -48,7 +48,7 @@ class Simulator(object):
 		return 0
 	
 	def getPumpState(self):
-		pumpState = self._program.getPump()
+		pumpState = self._program.get_pump()
 		if pumpState.isMapped() is False:
 			return 1
 
@@ -58,13 +58,13 @@ class Simulator(object):
 		return 0
 		
 	
-	def getMaxPower(self):
-		return self._program.getMaxPower()
+	def get_max_power(self):
+		return self._program.get_max_power()
 	
 	def computePower(self):	
 		if self.getStageState():
 			offset = 20
-			temp = self.getTemperature()
+			temp = self.get_temperature()
 
 			overheatOnDelay  = 30
 			overheatOffDelay = 30
@@ -72,7 +72,7 @@ class Simulator(object):
 			if self._boilerOverheatDelay.get(temp > self._tMax, overheatOnDelay, overheatOffDelay):
 				Pmax = 0
 			else:
-				Pmax = self.getMaxPower()
+				Pmax = self.get_max_power()
 				
 			Pmin = 0.6 * Pmax
 			
@@ -97,16 +97,16 @@ class Simulator(object):
 	def getPower(self):
 		return self._currentPower
 
-	def getMaxFlowRate(self):
-		return self._program.getMaxFlowRate()
+	def get_max_flow_rate(self):
+		return self._program.get_max_flow_rate()
 	
 	def getFlow(self):
 		if self.getPumpState():
-			return self.getMaxFlowRate() / 1000 # cube per hour
+			return self.get_max_flow_rate() / 1000 # cube per hour
 		return 0
 		
 	def getCoolDownPower(self):
-		dt = self.getTemperature() - self._tMin
+		dt = self.get_temperature() - self._tMin
 		return dt/self._tMax
 
 	def getTotalPower(self):
@@ -114,7 +114,7 @@ class Simulator(object):
 
 	def computeTemperature(self):
 		flow = self.getFlow()
-		direct_temp = self.getTemperature()
+		direct_temp = self.get_temperature()
 		if flow:
 			temp = self.getSupplyBackwardTemperature()
 		else:
@@ -131,11 +131,11 @@ class Simulator(object):
 		
 		temp = limit(self._tMin, temp, self._tMax + 10)
 
-#		print(f'b{self._program.getId()} t = {temp}')
+#		print(f'b{self._program.get_id()} t = {temp}')
 		
 		return temp
 
 	def run(self):
-		self.setTemperature(self.computeTemperature())
+		self.set_temperature(self.computeTemperature())
 		self.computePower()
 

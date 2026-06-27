@@ -110,8 +110,8 @@ class RemoteControlParameter(object):
 		parameterInfo  = None
 		):
 		if parameterInfo:
-			self._programType   = parameterInfo.getProgramType()
-			self._parameterId   = parameterInfo.getParameterId()
+			self._programType   = parameterInfo.get_program_type()
+			self._parameterId   = parameterInfo.get_parameter_id()
 		else:
 			self._programType    = programType
 			self._parameterId    = parameterId
@@ -123,10 +123,10 @@ class RemoteControlParameter(object):
 	def setProgramId(self, programId): self._programId = programId
 	
 	def getValue         (self): return self._parameterValue
-	def getProgramType   (self): return self._programType
+	def get_program_type   (self): return self._programType
 	def getParameterIndex(self): return self._parameterIndex
 	
-	def getParameterIdCode(self): return snc.ParameterDict[self._programType][self._parameterId]['id']
+	def get_parameter_idCode(self): return snc.ParameterDict[self._programType][self._parameterId]['id']
 	def getParameterType  (self): return snc.ParameterDict[self._programType][self._parameterId]['type']
 	
 	def getParameterArraySize(self):
@@ -158,7 +158,7 @@ class RemoteControlParameter(object):
 #		print(actionStr)
 		
 		def generateRequest():
-			parameterIdCode = self.getParameterIdCode()
+			parameterIdCode = self.get_parameter_idCode()
 			
 			parameterValue = self.valueToData(self._parameterValue)
 			
@@ -226,7 +226,7 @@ class RemoteControlParameter(object):
 			actionStr = f'prg {self._programId} read parameter {self._programType}.{self._parameterId}.{self._parameterIndex}'
 
 		def generateRequest():
-			parameterIdCode = self.getParameterIdCode()
+			parameterIdCode = self.get_parameter_idCode()
 			
 			if self._parameterIndex is None:
 				data = [snc.ProgramType[self._programType], parameterIdCode]

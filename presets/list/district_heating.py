@@ -133,7 +133,7 @@ programOutputs = {
 		outputMapping(6, hostId['HOST_2'])],
 }
 
-def getPresetsList() :
+def get_presetsList() :
 	programPresetList = []
 	for prg in programList:
 		programPresetList.append(presets.preset.ProgramPreset(

@@ -84,7 +84,7 @@ def gss_solver(tintown, pdiss, qtown, qhouse, ato, correction = 1):
 class Simulator(object):
 	def __init__(self, program_config, control):
 		self._program    = program_config
-		self._preset     = self._program.getPreset()
+		self._preset     = self._program.get_preset()
 		self._control    = control
 		
 		self._district_heating_scenario = 'default'
@@ -111,56 +111,56 @@ class Simulator(object):
 		self._pdiss = 100*1000
 
 	def getSupplyDirectTemperature(self):
-		return self._program.getInputChannel('supply_direct_temp').getValue()
+		return self._program.get_input_channel('supply_direct_temp').getValue()
 
 	def setSupplyDirectTemperature(self, value):
-		self._program.getInputChannel('supply_direct_temp').setValue(value)
+		self._program.get_input_channel('supply_direct_temp').setValue(value)
 
 	def getSupplyBackwardTemperature(self):
-		return self._program.getInputChannel('supply_backward_temp').getValue()
+		return self._program.get_input_channel('supply_backward_temp').getValue()
 
 	def setSupplyBackwardTemperature(self, value):
-		self._program.getInputChannel('supply_backward_temp').setValue(value)
+		self._program.get_input_channel('supply_backward_temp').setValue(value)
 
 	def getDirectTemperature(self):
-		return self._program.getInputChannel('direct_temp').getValue()
+		return self._program.get_input_channel('direct_temp').getValue()
 
 	def setDirectTemperature(self, value):
-		self._program.getInputChannel('direct_temp').setValue(value)
+		self._program.get_input_channel('direct_temp').setValue(value)
 
 	def getBackwardTemperature(self):
-		return self._program.getInputChannel('backward_temp').getValue()
+		return self._program.get_input_channel('backward_temp').getValue()
 
 	def setBackwardTemperature(self, value):
-		self._program.getInputChannel('backward_temp').setValue(value)
+		self._program.get_input_channel('backward_temp').setValue(value)
 
 	def getThermalOutputSensor(self):
-		return self._program.getInputChannel('thermal_output').getValue()
+		return self._program.get_input_channel('thermal_output').getValue()
 
 	def setThermalOutputSensor(self, value):
-		self._program.getInputChannel('thermal_output').setValue(value)
+		self._program.get_input_channel('thermal_output').setValue(value)
 
 	def getVolumeFlowSensor(self):
-		return self._program.getInputChannel('volume_flow').getValue()
+		return self._program.get_input_channel('volume_flow').getValue()
 
 	def setVolumeFlowSensor(self, value):
-		self._program.getInputChannel('volume_flow').setValue(value)
+		self._program.get_input_channel('volume_flow').setValue(value)
 
 	def getOutsideRequestSensor(self):
-		return self._program.getInputChannel('outside_request').getValue()
+		return self._program.get_input_channel('outside_request').getValue()
 
 	def setOutsideRequestSensor(self, value):
-		self._program.getInputChannel('outside_request').setValue(value)
+		self._program.get_input_channel('outside_request').setValue(value)
 
-	def getTemperature(self):
+	def get_temperature(self):
 		return self.getDirectTemperature()
 
 	def getConsumersPower(self):
-		return self._control.getConsumersPower(self._program.getId())
+		return self._control.getConsumersPower(self._program.get_id())
 
 
 	def getPumpState(self, pumpId):
-		pump = self._program.getOutputChannel(self._outputId[pumpId])
+		pump = self._program.get_output_channel(self._outputId[pumpId])
 		if pump.getMapping() is None:
 			return 1
 
@@ -173,8 +173,8 @@ class Simulator(object):
 		return self.getPumpState('supply_pump')
 	
 	def getValveState(self):
-		valve        = self._program.getOutputChannel(self._outputId['valve'])
-		analog_valve = self._program.getOutputChannel(self._outputId['analog_valve'])
+		valve        = self._program.get_output_channel(self._outputId['valve'])
+		analog_valve = self._program.get_output_channel(self._outputId['analog_valve'])
 		
 		if (valve.getMapping() is None) and (analog_valve.getMapping() is None ):
 			return 1
@@ -188,8 +188,8 @@ class Simulator(object):
 	def getCirculationPumpState(self):
 		return self.getPumpState('circulation_pump')
 
-	def getMaxPower(self):
-		return self._program.getMaxPower()
+	def get_max_power(self):
+		return self._program.get_max_power()
 
 	def getPower(self):
 		if self.supplyFlowIsStopped():
@@ -200,7 +200,7 @@ class Simulator(object):
 			tintown    = self.getSupplyDirectTemperature()
 			ugolserv   = valve
 		
-			qtown_max = self.getMaxFlowRateTown()
+			qtown_max = self.get_max_flow_rateTown()
 			qtown = qtown_max * ugolserv # расход из города при данном угле сервака
 			power = qtown*cw*(tintown-t_rettown) # подсчет текущей мощности теплопередачи ватт
 			
@@ -261,15 +261,15 @@ class Simulator(object):
 			ddt = (d_tmax + d_tmin)/2 
 		return ddt, d_ratio
 	
-	def getMaxFlowRateHouse(self):
-		return self._program.getMaxFlowRate1() / 3600 # расход кг/сек в доме постоянный.
+	def get_max_flow_rateHouse(self):
+		return self._program.get_max_flow_rate1() / 3600 # расход кг/сек в доме постоянный.
 	
-	def getMaxFlowRateTown(self):
-		return self._program.getMaxFlowRate2() / 3600 # расход кг/сек в городе постоянный.
+	def get_max_flow_rateTown(self):
+		return self._program.get_max_flow_rate2() / 3600 # расход кг/сек в городе постоянный.
 
 	def computeQHouse(self):
 		if self.getCirculationPumpState():
-			qhouse = self.getMaxFlowRateHouse()
+			qhouse = self.get_max_flow_rateHouse()
 		else:
 			qhouse = 0
 		
@@ -315,7 +315,7 @@ class Simulator(object):
 			self.tinhouse  = self.tintown + (self.t_rethouse - self.tintown) * ugolserv
 			self.t_rettown = self.tintown*ugolserv+self.tinhouse*(1-ugolserv)
 		
-		qtown_max = self.getMaxFlowRateTown()
+		qtown_max = self.get_max_flow_rateTown()
 		
 		qtown = qtown_max * ugolserv * self.getSupplyPumpState()# расход из города при данном угле сервака
 
@@ -346,7 +346,7 @@ class Simulator(object):
 	
 	def getFlow(self):
 		if self.getCirculationPumpState():
-			return self.getMaxFlowRateHouse() / 1000 * 3600# cube per hour
+			return self.get_max_flow_rateHouse() / 1000 * 3600# cube per hour
 		return 0
 	
 	def run(self):

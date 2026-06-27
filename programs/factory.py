@@ -33,7 +33,7 @@ programCreator = {
 }
 
 def createProgram(preset):
-	programType = preset.getType()
+	programType = preset.get_type()
 	
 	if programType in programCreator:
 		prg = programCreator[programType](preset)
