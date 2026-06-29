@@ -227,7 +227,7 @@ def get_host_declaration(host_num: int) -> str:
 	lines = ['hostList = [']
 	for host_idx in range(host_num):
 		lines.append(f"'{HOST_COMMON_TITLE}{host_idx}',")
-	lines.append(']\n')
+	lines.append(']\n\n')
 	return '\n'.join(lines)
 
 
@@ -244,7 +244,7 @@ def get_host_id_dict(host_num: int) -> str:
 	lines = ['hostId = {']
 	for host_idx in range(host_num):
 		lines.append(f"'{HOST_COMMON_TITLE}{host_idx}': {HOST_COMMON_ID + host_idx},")
-	lines.append('}\n')
+	lines.append('}\n\n')
 	return '\n'.join(lines)
 
 
@@ -261,7 +261,7 @@ def get_host_type_dict(host_num: int) -> str:
 	lines = ['hostType = {']
 	for host_idx in range(host_num):
 		lines.append(f"'{HOST_COMMON_TITLE}{host_idx}': '{HOST_COMMON_TYPE}',")
-	lines.append('}\n')
+	lines.append('}\n\n')
 	return '\n'.join(lines)
 
 
@@ -278,7 +278,7 @@ def get_host_title_dict(host_num: int) -> str:
 	lines = ['hostTitle = {']
 	for host_idx in range(host_num):
 		lines.append(f"'{HOST_COMMON_TITLE}{host_idx}': 'SWK_{HOST_COMMON_ID + host_idx}',")
-	lines.append('}\n')
+	lines.append('}\n\n')
 	return '\n'.join(lines)
 
 
@@ -325,7 +325,7 @@ def get_program_declaration(programs: List[Dict[str, Any]]) -> str:
 	for program in programs:
 		prog_id = get_program_id(program)
 		lines.append(f"'{prog_id}',\t# {program['title']}")
-	lines.append('}\n')
+	lines.append('}\n\n')
 	return '\n'.join(lines)
 
 
@@ -343,7 +343,7 @@ def get_program_type_dict(programs: List[Dict[str, Any]]) -> str:
 	for program in programs:
 		prog_id = get_program_id(program)
 		lines.append(f"'{prog_id}': '{program['type']}',")
-	lines.append('}\n')
+	lines.append('}\n\n')
 	return '\n'.join(lines)
 
 
@@ -377,7 +377,7 @@ def get_program_scheme_dict(programs: List[Dict[str, Any]]) -> str:
 	for program in programs:
 		prog_id = get_program_id(program)
 		lines.append(f"'{prog_id}': '{convert_program_scheme(program)}',")
-	lines.append('}\n')
+	lines.append('}\n\n')
 	return '\n'.join(lines)
 
 
@@ -395,7 +395,7 @@ def get_program_title_dict(programs: List[Dict[str, Any]]) -> str:
 	for program in programs:
 		prog_id = get_program_id(program)
 		lines.append(f"'{prog_id}': '{program['title']} {prog_id}',")
-	lines.append('}\n')
+	lines.append('}\n\n')
 	return '\n'.join(lines)
 
 
@@ -413,7 +413,7 @@ def get_program_id_dict(programs: List[Dict[str, Any]]) -> str:
 	for program in programs:
 		prog_id = get_program_id(program)
 		lines.append(f"'{prog_id}': {prog_id},")
-	lines.append('}\n')
+	lines.append('}\n\n')
 	return '\n'.join(lines)
 
 def param_is_string(param: Dict[str, Any]) -> bool:
@@ -504,8 +504,8 @@ def get_program_settings_dict(programs: List[Dict[str, Any]]) -> str:
 					lines.append(get_parameter_setting_string(param, value).rstrip('\n'))
 		
 		lines.append(']),')
-	lines.append('}\n')
-	return ''.join(lines)
+	lines.append('}\n\n')
+	return '\n'.join(lines)
 
 class ChannelCounter:
 	"""Helper class to manage channel allocation across controllers."""
@@ -568,7 +568,7 @@ def get_program_inputs_dict(programs: List[Dict[str, Any]]) -> str:
 		
 		lines.append('],')
 	
-	lines.append('}\n')
+	lines.append('}\n\n')
 	return '\n'.join(lines)
 
 
@@ -602,7 +602,7 @@ def get_program_outputs_dict(programs: List[Dict[str, Any]]) -> str:
 		
 		lines.append('],')
 	
-	lines.append('}\n')
+	lines.append('}\n\n')
 	return '\n'.join(lines)
 
 def get_program_string(programs: List[Dict[str, Any]]) -> str:
