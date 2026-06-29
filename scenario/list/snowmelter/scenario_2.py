@@ -4,68 +4,17 @@
 
 from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
-from scenario.scenario import Scenario   as Parent
+from scenario.base.snowmelter import SnowmelterScenario   as Parent
 
 class Scenario(Parent):
-	def __init__(self, controllerHost, sim):
-		super().__init__(controllerHost, sim)
-		
-		self._snowmelter = self._programList['snowmelter']
-		self._outdoor    = self._programList['oat']
-
 	def get_scenario_title(self):
 		return 'scenario 2'
-	
+
 	def get_scenario_description(self):
 		return 'проверить, что насос циркуляции выключается, если температура плиты выше требуемой больше, чем на 2 градуса'
-	
+
 	def get_checklist_id(self):
 		return '3.9.2'
-	
-	def get_required_programs(self):
-		requiredProgramTypesList = {
-			'snowmelter': 'SNOWMELT',
-			'oat'       : 'OUTDOOR_SENSOR',
-		}
-		return requiredProgramTypesList
-	
-	def get_default_preset(self):
-		return 'snowmelter'
-		
-		
-	def readRequiredPlateTemperatureValue(self): return self._snowmelter.read_parameter_value('reqPlateTemp')
-	def readMinOutdoorTemperature(self)        : return self._snowmelter.read_parameter_value('minOutdoorTemp')
-	def readMaxOutdoorTemperature(self)        : return self._snowmelter.read_parameter_value('maxOutdoorTemp')
-	
-	def getCirculationPumpState(self):
-		return self._snowmelter.getSecondaryPumpState().get_value()
-	
-	def circulationPumpIsOn (self): return self.getCirculationPumpState() != self.RELAY_OFF
-	def circulationPumpIsOff(self): return self.getCirculationPumpState() == self.RELAY_OFF
-	
-	def setBacwardFlowTemperature(self, value):
-		t = self._snowmelter.getBackwardFlowTemperature()
-		self.set_sensor_value(t, value)
-		
-	def setPlateTemperature(self, value):
-		t = self._snowmelter.getPlateTemperature()
-		self.set_sensor_value(t, value)
-		
-	def setOutdoorTemperature(self, value):
-		t = self._outdoor.getOutdoorTemperature()
-		self.set_sensor_value(t, value)
-		
-	
-	def setMediumOutdoorTemperature(self):
-		minTemp = self.readMinOutdoorTemperature()
-		maxTemp = self.readMaxOutdoorTemperature()
-		
-		if (minTemp == None) or (maxTemp == None):
-			return False
-		
-		midTemp = (minTemp + maxTemp)/2
-		self.setOutdoorTemperature(midTemp)
-		return True
 
 	def run(self):
 		plateSetpoint = self.readRequiredPlateTemperatureValue()

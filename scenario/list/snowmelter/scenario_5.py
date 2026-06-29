@@ -6,17 +6,15 @@ import time
 
 from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
-from scenario.scenario import Scenario   as Parent
+from scenario.base.snowmelter import SnowmelterScenario   as Parent
 
 from functions.timeOnDelay  import TimeOnDelay  as TimeOnDelay
 
 class Scenario(Parent):
 	def __init__(self, controllerHost, sim):
 		super().__init__(controllerHost, sim)
-		
-		self._snowmelter = self._programList['snowmelter']
-		self._outdoor    = self._programList['oat']
-		self._pressure   = self._programList['pressure']
+		# additional program required by this scenario
+		self._pressure = self._programList['pressure']
 
 	def get_scenario_title(self):
 		return 'scenario 5'
@@ -38,48 +36,6 @@ class Scenario(Parent):
 	def get_default_preset(self):
 		return 'snowmelterWithPressureControl'
 		
-		
-	def readRequiredPlateTemperatureValue(self): return self._snowmelter.read_parameter_value('reqPlateTemp')
-	def readMinOutdoorTemperature(self)        : return self._snowmelter.read_parameter_value('minOutdoorTemp')
-	def readMaxOutdoorTemperature(self)        : return self._snowmelter.read_parameter_value('maxOutdoorTemp')
-	def readSnowmelterOutdoorTemperature(self) : return self._snowmelter.read_parameter_value('outdoorTemp')
-	def readRequiredFlowTemperature(self)      : return self._snowmelter.read_parameter_value('reqFlowTemp')
-	
-	def getDirectFlowTemperature(self): return self._snowmelter.getDirectFlowTemperature().get_value()
-	
-	def getCirculationPumpState(self):
-		return self._snowmelter.getSecondaryPumpState().get_value()
-	
-	def circulationPumpIsOn (self): return self.getCirculationPumpState() != self.RELAY_OFF
-	def circulationPumpIsOff(self): return self.getCirculationPumpState() == self.RELAY_OFF
-	
-	def getLoadingPumpState(self):
-		return self._snowmelter.getPrimaryPumpState().get_value()
-	
-	def loadingPumpIsOn (self): return self.getLoadingPumpState() != self.RELAY_OFF
-	def loadingPumpIsOff(self): return not self.loadingPumpIsOn()
-	
-	def pumpsAreOff(self): return self.loadingPumpIsOff() and self.circulationPumpIsOff()
-	
-	def setPlateTemperature(self, value):
-		t = self._snowmelter.getPlateTemperature()
-		self.set_sensor_value(t, value)
-		
-	def setOutdoorTemperature(self, value):
-		t = self._outdoor.getOutdoorTemperature()
-		self.set_sensor_value(t, value)
-		
-		
-	def setMediumOutdoorTemperature(self):
-		minTemp = self.readMinOutdoorTemperature()
-		maxTemp = self.readMaxOutdoorTemperature()
-		
-		if (minTemp == None) or (maxTemp == None):
-			return False
-		
-		midTemp = (minTemp + maxTemp)/2
-		self.setOutdoorTemperature(midTemp)
-		return True
 		
 	def setAlarmSignal(self, value):
 		t = self._pressure.getPressure()

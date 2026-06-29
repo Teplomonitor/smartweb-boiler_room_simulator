@@ -4,15 +4,9 @@
 
 from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
-from scenario.scenario import Scenario as Parent
+from scenario.base.snowmelter import SnowmelterScenario as Parent
 
 class Scenario(Parent):
-	def __init__(self, controllerHost, sim):
-		super().__init__(controllerHost, sim)
-		
-		self._snowmelter = self._programList['snowmelter']
-		self._outdoor    = self._programList['oat']
-		
 	def get_scenario_title(self):
 		return 'scenario 4'
 	
@@ -22,57 +16,8 @@ class Scenario(Parent):
 	def get_checklist_id(self):
 		return '3.9.4'
 	
-	def get_required_programs(self):
-		requiredProgramTypesList = {
-			'snowmelter': 'SNOWMELT',
-			'oat'       : 'OUTDOOR_SENSOR',
-		}
-		return requiredProgramTypesList
-	
-	def get_default_preset(self):
-		return 'snowmelter'
-		
 	def getSourceTemperature(self):
 		return self._sim._collector.get_direct_temperature()
-
-		
-	def readRequiredPlateTemperatureValue(self): return self._snowmelter.read_parameter_value('reqPlateTemp')
-	def readMinOutdoorTemperature(self)        : return self._snowmelter.read_parameter_value('minOutdoorTemp')
-	def readMaxOutdoorTemperature(self)        : return self._snowmelter.read_parameter_value('maxOutdoorTemp')
-	def readSnowmelterOutdoorTemperature(self) : return self._snowmelter.read_parameter_value('outdoorTemp')
-	def readRequiredFlowTemperature(self)      : return self._snowmelter.read_parameter_value('reqFlowTemp')
-	
-	def getDirectFlowTemperature(self): return self._snowmelter.getDirectFlowTemperature().get_value()
-	
-	def getCirculationPumpState(self):
-		return self._snowmelter.getSecondaryPumpState().get_value()
-	
-	def getLoadingPumpState(self):
-		return self._snowmelter.getPrimaryPumpState().get_value()
-	
-	def setPlateTemperature(self, value):
-		t = self._snowmelter.getPlateTemperature()
-		self.set_sensor_value(t, value)
-		
-	def setOutdoorTemperature(self, value):
-		t = self._outdoor.getOutdoorTemperature()
-		self.set_sensor_value(t, value)
-		
-	def setMediumOutdoorTemperature(self):
-		minTemp = self.readMinOutdoorTemperature()
-		maxTemp = self.readMaxOutdoorTemperature()
-		
-		if (minTemp == None) or (maxTemp == None):
-			return False
-		
-		midTemp = (minTemp + maxTemp)/2
-		self.setOutdoorTemperature(midTemp)
-		
-		def outdoorTemperatureIsOk():
-			oat = self.readSnowmelterOutdoorTemperature()
-			return oat > minTemp and oat < maxTemp
-		
-		return self.wait_event(self.outdoorTemperatureIsOk, 5*60, eventCheckPeriod = 5)
 
 	def getAverageValue(self, array, period):
 		pass
@@ -95,7 +40,24 @@ class Scenario(Parent):
 			)
 		
 		return result
-	
+
+	def setMediumOutdoorTemperature(self):
+		# override parent to wait until outdoor sensor reads inside the allowed bounds
+		minTemp = self.readMinOutdoorTemperature()
+		maxTemp = self.readMaxOutdoorTemperature()
+
+		if (minTemp is None) or (maxTemp is None):
+			return False
+
+		midTemp = (minTemp + maxTemp)/2
+		self.setOutdoorTemperature(midTemp)
+
+		def outdoorTemperatureIsOk():
+			oat = self.readSnowmelterOutdoorTemperature()
+			return oat > minTemp and oat < maxTemp
+
+		return self.wait_event(outdoorTemperatureIsOk, 5*60, eventCheckPeriod = 5)
+
 	def run(self):
 		plateSetpoint = self.readRequiredPlateTemperatureValue()
 		
