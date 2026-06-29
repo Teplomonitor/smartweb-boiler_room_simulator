@@ -2,13 +2,9 @@
 @author: admin
 '''
 
-import time
-
 from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
 from scenario.base.snowmelter import SnowmelterScenario   as Parent
-
-from functions.timeOnDelay  import TimeOnDelay  as TimeOnDelay
 
 class Scenario(Parent):
 	def __init__(self, controllerHost, sim):
