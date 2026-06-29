@@ -69,7 +69,15 @@ class MainThread(threading.Thread):
 		
 		preset = self.getCurrentPreset()
 		
-		self._programPresetList, self._controllerIoList = presets.preset.get_presets_list(preset)
+		result = presets.preset.get_presets_list(preset)
+		
+		if result is None:
+			print_error('wrong preset')
+			self._programPresetList = []
+			self._controllerIoList  = []
+		else:
+			self._programPresetList, self._controllerIoList = result
+		
 		self._taskStopEvent = threading.Event()
 		
 		if self._programPresetList is None:
