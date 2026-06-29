@@ -31,7 +31,7 @@ except:
 	guiFrameThread = mock_missing('guiFrameThread')
 
 def loadPresetNow(preset):
-	programList, controllerIoList = presets.preset.get_presetsList(preset)
+	programList, controllerIoList = presets.preset.get_presets_list(preset)
 
 	ioSimulator    = ss.Simulator()
 	controllerHost = cc.Controller()
@@ -69,7 +69,7 @@ class MainThread(threading.Thread):
 		
 		preset = self.getCurrentPreset()
 		
-		self._programPresetList, self._controllerIoList = presets.preset.get_presetsList(preset)
+		self._programPresetList, self._controllerIoList = presets.preset.get_presets_list(preset)
 		self._taskStopEvent = threading.Event()
 		
 		if self._programPresetList is None:

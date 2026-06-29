@@ -141,7 +141,7 @@ programOutputs = {
 	'SNOW_MELTER'       : [None, outputMapping(4, hostId['HOST_2']), outputMapping(6, hostId['HOST_2'])],
 }
 
-def get_presetsList() :
+def get_presets_list() :
 	programPresetList = []
 	for prg in programList:
 		programPresetList.append(presets.preset.ProgramPreset(

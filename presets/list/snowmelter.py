@@ -76,7 +76,7 @@ programOutputs = {
 	'OUTDOOR_SENSOR': [],
 }
 
-def get_presetsList() :
+def get_presets_list() :
 	programPresetList = []
 	for prg in programList:
 		programPresetList.append(presets.preset.ProgramPreset(

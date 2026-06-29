@@ -35,7 +35,7 @@ class Simulator(object):
 	def get_supply_backward_temperature(self):
 		return self._supply_backward_temperature
 	
-	def get_supply_backward_temperature(self, temp):
+	def set_supply_backward_temperature(self, temp):
 		self._supply_backward_temperature = temp
 	
 	# temperature given to consumers
@@ -137,9 +137,9 @@ class Simulator(object):
 	
 	def run(self):
 		self.set_supply_direct_temperature  (self.compute_supply_direct_temperature  ())
-		self.set_direct_temperature        (self.compute_direct_temperature  ())
-		self.set_backward_temperature      (self.compute_backward_temperature())
-		self.get_supply_backward_temperature(self.compute_supply_backward_temperature())
+		self.set_direct_temperature         (self.compute_direct_temperature  ())
+		self.set_backward_temperature       (self.compute_backward_temperature())
+		self.set_supply_backward_temperature(self.compute_supply_backward_temperature())
 		
 		t1 = self.get_supply_direct_temperature()
 		t2 = self.get_supply_backward_temperature()

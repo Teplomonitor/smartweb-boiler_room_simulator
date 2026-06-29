@@ -104,7 +104,7 @@ def get_presetFilesList():
 	__all__ = [ basename(f)[:-3] for f in modules if isfile(f) and not f.endswith('__init__.py')]
 	return __all__
 
-def get_presetsList(presetId):
+def get_presets_list(presetId):
 	moduleId = 'presets.list.%s' % presetId
 	
 	__all__ = get_presetFilesList()
@@ -112,7 +112,7 @@ def get_presetsList(presetId):
 	if presetId in __all__:
 		preset_module = __import__(moduleId, fromlist=["presets.list"])
 
-		return preset_module.get_presetsList()
+		return preset_module.get_presets_list()
 	
 	print(f'wrong preset {presetId}')
 	return None

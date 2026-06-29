@@ -95,7 +95,7 @@ class Simulator(object):
 		self._init = True
 		
 		self.set_supply_direct_temperature(60)
-		self.get_supply_backward_temperature(50)
+		self.set_supply_backward_temperature(50)
 		self.set_direct_temperature(30)
 		self.set_backward_temperature(30)
 		self.setThermalOutputSensor(0)
@@ -119,7 +119,7 @@ class Simulator(object):
 	def get_supply_backward_temperature(self):
 		return self._program.get_input_channel('supply_backward_temp').get_value()
 
-	def get_supply_backward_temperature(self, value):
+	def set_supply_backward_temperature(self, value):
 		self._program.get_input_channel('supply_backward_temp').set_value(value)
 
 	def get_direct_temperature(self):
@@ -356,7 +356,7 @@ class Simulator(object):
 		self.computeTemp()
 		
 		self.set_supply_direct_temperature  (self.tintown   )
-		self.set_backward_temperature      (self.t_rethouse)
-		self.set_direct_temperature        (self.tinhouse  )
-		self.get_supply_backward_temperature(self.t_rettown )
+		self.set_backward_temperature       (self.t_rethouse)
+		self.set_direct_temperature         (self.tinhouse  )
+		self.set_supply_backward_temperature(self.t_rettown )
 
