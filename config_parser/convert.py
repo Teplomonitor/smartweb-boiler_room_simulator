@@ -1,96 +1,170 @@
+"""
+Configuration parser for converting JSON config to Python preset format.
+
+This module provides utilities to parse and transform controller configurations
+from JSON format into Python preset definitions.
+"""
 
 import json
+from typing import Any, Dict, List, Optional, Union
 
 from smartnet.channelMapping import ChannelMapping as Mapping
 from smartnet.constants      import ProgramType    as ProgramTypes
 from smartnet.constants      import ParameterDict  as ParameterDict
 
-typeDict = {
-	0: 'CHANNEL_SENSOR_LOCAL' ,
-	1: 'CHANNEL_RELAY_LOCAL'  ,
-	2: 'CHANNEL_SENSOR'       ,
-	3: 'CHANNEL_RELAY'        ,
-	4: 'CHANNEL_INPUT'        ,
-	5: 'CHANNEL_OUTPUT'       ,
-	6: 'CHANNEL_RESERVED'     ,
-	7: 'CHANNEL_UNDEFINED'    ,
+# Channel type mappings
+CHANNEL_TYPE_MAP = {
+	0: 'CHANNEL_SENSOR_LOCAL',
+	1: 'CHANNEL_RELAY_LOCAL',
+	2: 'CHANNEL_SENSOR',
+	3: 'CHANNEL_RELAY',
+	4: 'CHANNEL_INPUT',
+	5: 'CHANNEL_OUTPUT',
+	6: 'CHANNEL_RESERVED',
+	7: 'CHANNEL_UNDEFINED',
 }
+
+# Controller constraints
+HOST_CONTROLLER_MAX_INPUTS = 6
+HOST_CONTROLLER_MAX_OUTPUTS = 7
+
+# Controller naming and identification
+HOST_COMMON_TITLE = 'HOST_'
+HOST_COMMON_ID = 123
+HOST_COMMON_TYPE = 'SWK_1'
+
+# Channel type constants for sensor and relay filtering
+SENSOR_CHANNEL_TYPES = {'CHANNEL_SENSOR_LOCAL', 'CHANNEL_SENSOR'}
+RELAY_CHANNEL_TYPES = {'CHANNEL_RELAY_LOCAL', 'CHANNEL_RELAY'}
+
+def parse_mapping_value(value: List[int]) -> Mapping:
+	"""
+	Parse a mapping value into a Mapping object.
 	
-host_controller_max_inputs  = 6
-host_controller_max_outputs = 7
-
-hostCommonTitle = 'HOST_'
-hostCommonId    = 123
-hostCommonType = 'SWK_1'
-
-def parseMappingValue(value):
+	Args:
+		value: List containing [host, channelIdAndType]
+	
+	Returns:
+		Mapping object with decoded channel info
+	"""
 	host = value[0]
+	channel_id_and_type = value[1]
 	
-	channelIdAndType = value[1]
+	channel_id = channel_id_and_type & 0x1F
+	channel_type = channel_id_and_type >> 5
 	
-	channelId = channelIdAndType & 0x1F
-	channelType = channelIdAndType >> 5
-	
-	return Mapping(channelId, typeDict[channelType], host)
+	return Mapping(channel_id, CHANNEL_TYPE_MAP[channel_type], host)
 
-def parseParameterCode(code, parameterValue):
+
+def parse_parameter_code(code: int, parameter_value: Union[str, int]) -> Dict[str, Any]:
+	"""
+	Parse parameter code and value into structured parameter dictionary.
+	
+	Args:
+		code: Parameter code as integer
+		parameter_value: Parameter value (string or numeric)
+	
+	Returns:
+		Dictionary with programType, parameterId, and parsed value
+	"""
 	bytes_val = code.to_bytes(2, byteorder='big')
-	programType = bytes_val[0]
-	parameterId = bytes_val[1]
+	program_type_byte = bytes_val[0]
+	parameter_id_byte = bytes_val[1]
 	
-	programTypeKey = None
-	parameterIdKey = None
+	program_type_key = None
+	parameter_id_key = None
 	
+	# Find program type key
 	for key, value in ProgramTypes.items():
-		if programType == value:
-			programTypeKey = key
+		if program_type_byte == value:
+			program_type_key = key
 			break
-		
-	if programTypeKey in ParameterDict:
-		params = ParameterDict[programTypeKey]
+	
+	# Find parameter ID key
+	if program_type_key in ParameterDict:
+		params = ParameterDict[program_type_key]
 		for key, value in params.items():
-			if parameterId == value['id']:
-				parameterIdKey = key
+			if parameter_id_byte == value['id']:
+				parameter_id_key = key
 				break
+	
+	# Try to parse value as JSON, fall back to raw value
 	try:
-		value = json.loads(parameterValue)  
-	except ValueError:
-		value = parameterValue
+		parsed_value = json.loads(parameter_value)
+	except (ValueError, TypeError):
+		parsed_value = parameter_value
 	
-	return {'programType':programTypeKey, 'parameterId':parameterIdKey, 'value':value}
-	
-	
-def strToMapping(mappingValue):
-	num = int(mappingValue)  
-	bytes_val = num.to_bytes(2, byteorder='little')  
-	
-	return parseMappingValue(bytes_val)
+	return {
+		'programType': program_type_key,
+		'parameterId': parameter_id_key,
+		'value': parsed_value
+	}
 
-def roundUp(value, maxValue):
-	return int((value + maxValue - 1)/maxValue)
 
-def computeControllersNum(parsed_programs):
-	total_inputs  = 0
+def str_to_mapping(mapping_value: str) -> Mapping:
+	"""
+	Convert string representation of mapping to Mapping object.
+	
+	Args:
+		mapping_value: String representation of mapping value
+	
+	Returns:
+		Mapping object
+	"""
+	num = int(mapping_value)
+	bytes_val = num.to_bytes(2, byteorder='little')
+	return parse_mapping_value(bytes_val)
+
+
+def round_up(value: int, max_value: int) -> int:
+	"""
+	Round up value to nearest multiple of max_value.
+	
+	Args:
+		value: Value to round up
+		max_value: Divisor for rounding
+	
+	Returns:
+		Rounded up value
+	"""
+	return int((value + max_value - 1) / max_value)
+
+def compute_controllers_num(parsed_programs: List[Dict[str, Any]]) -> int:
+	"""
+	Compute the number of controllers needed based on I/O counts.
+	
+	Args:
+		parsed_programs: List of parsed program dictionaries
+	
+	Returns:
+		Number of controllers required
+	"""
+	total_inputs = 0
 	total_outputs = 0
-	for prg in parsed_programs:
-		for programInput in prg['inputs']:
-			if programInput.get_channel_type() in ['CHANNEL_SENSOR_LOCAL', 'CHANNEL_SENSOR']:
+	
+	for program in parsed_programs:
+		for program_input in program['inputs']:
+			if program_input.get_channel_type() in SENSOR_CHANNEL_TYPES:
 				total_inputs += 1
-				
-		for programOutput in prg['outputs']:
-			if programOutput.get_channel_type() in ['CHANNEL_RELAY_LOCAL', 'CHANNEL_RELAY']:
+		
+		for program_output in program['outputs']:
+			if program_output.get_channel_type() in RELAY_CHANNEL_TYPES:
 				total_outputs += 1
-				
 	
-	controller_required_num_1 = roundUp(total_inputs , host_controller_max_inputs)
-	controller_required_num_2 = roundUp(total_outputs, host_controller_max_outputs)
+	controllers_for_inputs = round_up(total_inputs, HOST_CONTROLLER_MAX_INPUTS)
+	controllers_for_outputs = round_up(total_outputs, HOST_CONTROLLER_MAX_OUTPUTS)
 	
-	return max(controller_required_num_1, controller_required_num_2)
+	return max(controllers_for_inputs, controllers_for_outputs)
 	
 
-def getHeader():
-	return '''
-# -*- coding: utf-8 -*-
+def get_header() -> str:
+	"""
+	Generate the header for the generated preset file.
+	
+	Returns:
+		Python code header as string
+	"""
+	return '''# -*- coding: utf-8 -*-
 
 ###########################################################################
 ## Python code generated with main_config_parser.py
@@ -105,13 +179,21 @@ import presets.preset
 import presets.settings as ps
 
 '''
-def getFootter():
-	return '''
 
-def get_presetsList() :
-	programPresetList = []
+
+def get_footer() -> str:
+	"""
+	Generate the footer for the generated preset file.
+	
+	Returns:
+		Python code footer as string
+	"""
+	return '''
+def get_presets_list():
+	"""Generate and return presets lists for programs and controllers."""
+	program_preset_list = []
 	for prg in programList:
-		programPresetList.append(presets.preset.ProgramPreset(
+		program_preset_list.append(presets.preset.ProgramPreset(
 			programType    [prg],
 			programScheme  [prg],
 			programId      [prg],
@@ -119,263 +201,510 @@ def get_presetsList() :
 			programSettings[prg],
 			programInputs  [prg],
 			programOutputs [prg],
-			)
-		)
+		))
 
-	controllerPresetList = []
+	controller_preset_list = []
 	for ctrl in hostList:
-		controllerPresetList.append(presets.preset.ControllerPreset(
-			hostType    [ctrl],
-			hostId      [ctrl],
-			hostTitle   [ctrl],
-			)
-		)
+		controller_preset_list.append(presets.preset.ControllerPreset(
+			hostType [ctrl],
+			hostId   [ctrl],
+			hostTitle[ctrl],
+		))
 
-	return programPresetList, controllerPresetList
+	return program_preset_list, controller_preset_list
 
 '''
+def get_host_declaration(host_num: int) -> str:
+	"""
+	Generate host list declaration.
 	
+	Args:
+		host_num: Number of hosts to generate
 	
-roomMandatoryParameter = 0
+	Returns:
+		Python code for hostList
+	"""
+	lines = ['hostList = [']
+	for host_idx in range(host_num):
+		lines.append(f"'{HOST_COMMON_TITLE}{host_idx}',")
+	lines.append(']\n')
+	return '\n'.join(lines)
 
 
-def getHostDeclaration(hostNum):
-	output_string = 'hostList = [\n'
-	for ctr in range(0, hostNum):
-		output_string += f"'{hostCommonTitle}{ctr}',\n"
-	output_string += ']\n\n'
-	return output_string
+def get_host_id_dict(host_num: int) -> str:
+	"""
+	Generate host ID dictionary.
 	
-def get_host_id(hostNum):
-	output_string = 'hostId = {\n'
-	for ctr in range(0, hostNum):
-		output_string += f"'{hostCommonTitle}{ctr}' : {hostCommonId+ctr},\n"
-	output_string += '}\n\n'
-	return output_string
+	Args:
+		host_num: Number of hosts
 	
-def getHostType(hostNum):
-	output_string = 'hostType = {\n'
-	for ctr in range(0, hostNum):
-		output_string += f"'{hostCommonTitle}{ctr}' : '{hostCommonType}',\n"
-	output_string += '}\n\n'
-	return output_string
+	Returns:
+		Python code for hostId dictionary
+	"""
+	lines = ['hostId = {']
+	for host_idx in range(host_num):
+		lines.append(f"'{HOST_COMMON_TITLE}{host_idx}': {HOST_COMMON_ID + host_idx},")
+	lines.append('}\n')
+	return '\n'.join(lines)
 
-def getHostTitle(hostNum):
-	output_string = 'hostTitle = {\n'
-	for ctr in range(0, hostNum):
-		output_string += f"'{hostCommonTitle}{ctr}' : 'SWK_{hostCommonId+ctr}',\n"
-	output_string += '}\n\n'
-	return output_string
 
-def getHostString(hostNum):
-	output_string = ''
-	output_string += getHostDeclaration(hostNum)
-	output_string += get_host_id         (hostNum)
-	output_string += getHostType       (hostNum)
-	output_string += getHostTitle      (hostNum)
-	return output_string
+def get_host_type_dict(host_num: int) -> str:
+	"""
+	Generate host type dictionary.
 	
-def getProgramId(prg):
-	return prg['id']
-
-def getProgramDeclaration(programs):
-	output_string = 'programList = {\n'
-	for prg in programs:
-		output_string += f"'{getProgramId(prg)}',\t# {prg['title']}\n"
-	output_string += '}\n\n'
-	return output_string
+	Args:
+		host_num: Number of hosts
 	
-def get_program_type(programs):
-	output_string = 'programType = {\n'
-	for prg in programs:
-		output_string += f"'{getProgramId(prg)}' : '{prg['type']}',\n"
-	output_string += '}\n\n'
-	return output_string
+	Returns:
+		Python code for hostType dictionary
+	"""
+	lines = ['hostType = {']
+	for host_idx in range(host_num):
+		lines.append(f"'{HOST_COMMON_TITLE}{host_idx}': '{HOST_COMMON_TYPE}',")
+	lines.append('}\n')
+	return '\n'.join(lines)
 
-def convertProgramScheme(prg):
-	if 'scheme' in prg:
-		scheme_id = prg['scheme']
+
+def get_host_title_dict(host_num: int) -> str:
+	"""
+	Generate host title dictionary.
+	
+	Args:
+		host_num: Number of hosts
+	
+	Returns:
+		Python code for hostTitle dictionary
+	"""
+	lines = ['hostTitle = {']
+	for host_idx in range(host_num):
+		lines.append(f"'{HOST_COMMON_TITLE}{host_idx}': 'SWK_{HOST_COMMON_ID + host_idx}',")
+	lines.append('}\n')
+	return '\n'.join(lines)
+
+
+def get_host_string(host_num: int) -> str:
+	"""
+	Generate complete host configuration.
+	
+	Args:
+		host_num: Number of hosts
+	
+	Returns:
+		Complete Python code for all host definitions
+	"""
+	return (
+		get_host_declaration(host_num) +
+		get_host_id_dict(host_num) +
+		get_host_type_dict(host_num) +
+		get_host_title_dict(host_num)
+	)
+def get_program_id(program: Dict[str, Any]) -> Union[str, int]:
+	"""
+	Extract program ID from program dictionary.
+	
+	Args:
+		program: Program dictionary
+	
+	Returns:
+		Program ID
+	"""
+	return program['id']
+
+
+def get_program_declaration(programs: List[Dict[str, Any]]) -> str:
+	"""
+	Generate program list declaration.
+	
+	Args:
+		programs: List of program dictionaries
+	
+	Returns:
+		Python code for programList
+	"""
+	lines = ['programList = {']
+	for program in programs:
+		prog_id = get_program_id(program)
+		lines.append(f"'{prog_id}',\t# {program['title']}")
+	lines.append('}\n')
+	return '\n'.join(lines)
+
+
+def get_program_type_dict(programs: List[Dict[str, Any]]) -> str:
+	"""
+	Generate program type dictionary.
+	
+	Args:
+		programs: List of programs
+	
+	Returns:
+		Python code for programType dictionary
+	"""
+	lines = ['programType = {']
+	for program in programs:
+		prog_id = get_program_id(program)
+		lines.append(f"'{prog_id}': '{program['type']}',")
+	lines.append('}\n')
+	return '\n'.join(lines)
+
+
+def convert_program_scheme(program: Dict[str, Any]) -> str:
+	"""
+	Convert program scheme to scheme identifier.
+	
+	Args:
+		program: Program dictionary
+	
+	Returns:
+		Scheme identifier string
+	"""
+	if 'scheme' in program:
+		scheme_id = program['scheme']
 		return f'PROGRAM_SCHEME_{scheme_id}'
 	return 'DEFAULT'
 
-def getProgramScheme(programs):
-	output_string = 'programScheme = {\n'
-	for prg in programs:
-		output_string += f"'{getProgramId(prg)}' : '{convertProgramScheme(prg)}',\n"
-	output_string += '}\n\n'
-	return output_string
 
-def getProgramTitle(programs):
-	output_string = 'programTitle = {\n'
-	for prg in programs:
-		programId = getProgramId(prg)
-		output_string += f"'{programId}' : '{prg['title']} {programId}',\n"
-	output_string += '}\n\n'
-	return output_string
+def get_program_scheme_dict(programs: List[Dict[str, Any]]) -> str:
+	"""
+	Generate program scheme dictionary.
+	
+	Args:
+		programs: List of programs
+	
+	Returns:
+		Python code for programScheme dictionary
+	"""
+	lines = ['programScheme = {']
+	for program in programs:
+		prog_id = get_program_id(program)
+		lines.append(f"'{prog_id}': '{convert_program_scheme(program)}',")
+	lines.append('}\n')
+	return '\n'.join(lines)
 
-def getProgramIdArray(programs):
-	output_string = 'programId = {\n'
-	for prg in programs:
-		programId = getProgramId(prg)
-		output_string += f"'{programId}' : {programId},\n"
-	output_string += '}\n\n'
-	return output_string
 
-def paramIsString(param):
-	param = ParameterDict[param['programType']][param['parameterId']]
-	return param['type'] == 'STRING'
+def get_program_title_dict(programs: List[Dict[str, Any]]) -> str:
+	"""
+	Generate program title dictionary.
+	
+	Args:
+		programs: List of programs
+	
+	Returns:
+		Python code for programTitle dictionary
+	"""
+	lines = ['programTitle = {']
+	for program in programs:
+		prog_id = get_program_id(program)
+		lines.append(f"'{prog_id}': '{program['title']} {prog_id}',")
+	lines.append('}\n')
+	return '\n'.join(lines)
 
-def paramIsArray(param):
-	param = ParameterDict[param['programType']][param['parameterId']]
-	if 'array_size' in param and param['array_size'] > 1:
-		return True
-	return False
 
-def getParameterSettingString(param, value):
-	if paramIsString(param):
+def get_program_id_dict(programs: List[Dict[str, Any]]) -> str:
+	"""
+	Generate program ID dictionary.
+	
+	Args:
+		programs: List of programs
+	
+	Returns:
+		Python code for programId dictionary
+	"""
+	lines = ['programId = {']
+	for program in programs:
+		prog_id = get_program_id(program)
+		lines.append(f"'{prog_id}': {prog_id},")
+	lines.append('}\n')
+	return '\n'.join(lines)
+
+def param_is_string(param: Dict[str, Any]) -> bool:
+	"""
+	Check if parameter is a string type.
+	
+	Args:
+		param: Parameter dictionary
+	
+	Returns:
+		True if parameter is string type
+	"""
+	param_def = ParameterDict[param['programType']][param['parameterId']]
+	return param_def.get('type') == 'STRING'
+
+
+def param_is_array(param: Dict[str, Any]) -> bool:
+	"""
+	Check if parameter is an array type.
+	
+	Args:
+		param: Parameter dictionary
+	
+	Returns:
+		True if parameter is array type with size > 1
+	"""
+	param_def = ParameterDict[param['programType']][param['parameterId']]
+	array_size = param_def.get('array_size', 1)
+	return array_size > 1
+
+
+def get_parameter_setting_string(param: Dict[str, Any], value: Any) -> str:
+	"""
+	Generate parameter setting string for single parameter.
+	
+	Args:
+		param: Parameter dictionary
+		value: Parameter value
+	
+	Returns:
+		Formatted parameter setting string
+	"""
+	if param_is_string(param):
 		value = f"'{value}'"
 	return f"\trc.RemoteControlParameter('{param['programType']}', '{param['parameterId']}', {value}),\n"
 
-def getParameterArraySettingString(param, value, i):
-	if paramIsString(param):
-		value = f"'{value}'"
-	return f"\trc.RemoteControlParameter('{param['programType']}', '{param['parameterId']}', {value}, {i}),\n"
 
-def getProgramSettings(programs):
-	output_string = 'programSettings = {\n'
-	for prg in programs:
-		output_string += f"'{getProgramId(prg)}' : ps.DefaultSettings([\n"
-		for param in prg['parameters']:
-			if (param['programType'] != None) and (param['parameterId'] != None):
+def get_parameter_array_setting_string(param: Dict[str, Any], value: Any, index: int) -> str:
+	"""
+	Generate parameter setting string for array parameter.
+	
+	Args:
+		param: Parameter dictionary
+		value: Array element value
+		index: Array index
+	
+	Returns:
+		Formatted parameter setting string with index
+	"""
+	if param_is_string(param):
+		value = f"'{value}'"
+	return f"\trc.RemoteControlParameter('{param['programType']}', '{param['parameterId']}', {value}, {index}),\n"
+
+
+def get_program_settings_dict(programs: List[Dict[str, Any]]) -> str:
+	"""
+	Generate program settings dictionary.
+	
+	Args:
+		programs: List of programs
+	
+	Returns:
+		Python code for programSettings dictionary
+	"""
+	lines = ['programSettings = {']
+	for program in programs:
+		prog_id = get_program_id(program)
+		lines.append(f"'{prog_id}': ps.DefaultSettings([")
+		
+		for param in program.get('parameters', []):
+			if param['programType'] is not None and param['parameterId'] is not None:
 				value = param['value']
 				
-				if paramIsArray(param):
-					i = 0
-					for v in value:
-						output_string += getParameterArraySettingString(param, v, i)
-						i += 1
+				if param_is_array(param):
+					for idx, v in enumerate(value):
+						lines.append(get_parameter_array_setting_string(param, v, idx).rstrip('\n'))
 				else:
-					output_string += getParameterSettingString(param, value)
+					lines.append(get_parameter_setting_string(param, value).rstrip('\n'))
+		
+		lines.append(']),')
+	lines.append('}\n')
+	return ''.join(lines)
 
-		output_string += ']),\n'
-	output_string += '}\n\n'
-	return output_string
-
-def getProgramInputs(programs):
-	output_string = 'programInputs = {\n'
-	for prg in programs:
-		output_string += f"'{getProgramId(prg)}' : [\n"
-		for programChannel in prg['inputs']:
-			channelType = programChannel.get_channel_type()
-			channelId   = programChannel.get_channel_id()
-			hostId      = programChannel.get_host_id()
-			
-			if channelType in ['CHANNEL_SENSOR_LOCAL', 'CHANNEL_SENSOR']:
-				channelType = 'CHANNEL_SENSOR' # make it remote
-				channelId   = getProgramInputs.counter % host_controller_max_inputs
-				hostId      = hostCommonId + int(getProgramInputs.counter/host_controller_max_inputs)
-				getProgramInputs.counter += 1
-			
-			output_string += f"\tMapping({channelId}, '{channelType}', {hostId}),\n"
-		output_string += '],\n'
-	output_string += '}\n\n'
-	return output_string
-
-getProgramInputs.counter = 0
-
-
-
-def getProgramOutputs(programs):
-	output_string = 'programOutputs = {\n'
-	for prg in programs:
-		output_string += f"'{getProgramId(prg)}' : [\n"
-		for programChannel in prg['outputs']:
-			channelType = programChannel.get_channel_type()
-			channelId   = programChannel.get_channel_id()
-			hostId      = programChannel.get_host_id()
-			
-			if channelType in ['CHANNEL_RELAY_LOCAL', 'CHANNEL_RELAY']:
-				channelType = 'CHANNEL_RELAY' # make it remote
-				channelId   = getProgramOutputs.counter % host_controller_max_outputs
-				hostId      = hostCommonId + int(getProgramOutputs.counter/host_controller_max_outputs)
-				getProgramOutputs.counter += 1
-			
-			output_string += f"\tMapping({channelId}, '{channelType}', {hostId}),\n"
-		output_string += '],\n'
-	output_string += '}\n\n'
-	return output_string
-getProgramOutputs.counter = 0
-
-def getProgramString(programs):
-	output_string = ''
-	output_string += getProgramDeclaration(programs)
-	output_string += get_program_type       (programs)
-	output_string += getProgramScheme     (programs)
-	output_string += getProgramTitle      (programs)
-	output_string += getProgramIdArray    (programs)
-	output_string += getProgramSettings   (programs)
-	output_string += getProgramInputs     (programs)
-	output_string += getProgramOutputs    (programs)
-#	output_string += getHostType       (hostNum)
-#	output_string += getHostTitle      (hostNum)
-	return output_string
+class ChannelCounter:
+	"""Helper class to manage channel allocation across controllers."""
 	
-def convertConfigToPreset(json_string ):
+	def __init__(self, max_channels: int):
+		"""
+		Initialize channel counter.
+		
+		Args:
+			max_channels: Maximum channels per controller
+		"""
+		self.counter = 0
+		self.max_channels = max_channels
 	
-	# Парсинг JSON в словарь Python
+	def allocate_channel(self) -> tuple[int, int]:
+		"""
+		Allocate next channel and return (channel_id, controller_id).
+		
+		Returns:
+			Tuple of (channel_id, host_id)
+		"""
+		channel_id = self.counter % self.max_channels
+		controller_offset = self.counter // self.max_channels
+		host_id = HOST_COMMON_ID + controller_offset
+		self.counter += 1
+		return channel_id, host_id
+	
+	def reset(self):
+		"""Reset counter to 0."""
+		self.counter = 0
+
+
+def get_program_inputs_dict(programs: List[Dict[str, Any]]) -> str:
+	"""
+	Generate program inputs dictionary.
+	
+	Args:
+		programs: List of programs
+	
+	Returns:
+		Python code for programInputs dictionary
+	"""
+	lines = ['programInputs = {']
+	input_counter = ChannelCounter(HOST_CONTROLLER_MAX_INPUTS)
+	
+	for program in programs:
+		prog_id = get_program_id(program)
+		lines.append(f"'{prog_id}': [")
+		
+		for program_channel in program.get('inputs', []):
+			channel_type = program_channel.get_channel_type()
+			channel_id = program_channel.get_channel_id()
+			host_id = program_channel.get_host_id()
+			
+			if channel_type in SENSOR_CHANNEL_TYPES:
+				channel_type = 'CHANNEL_SENSOR'  # Make it remote
+				channel_id, host_id = input_counter.allocate_channel()
+			
+			lines.append(f"\tMapping({channel_id}, '{channel_type}', {host_id}),")
+		
+		lines.append('],')
+	
+	lines.append('}\n')
+	return '\n'.join(lines)
+
+
+def get_program_outputs_dict(programs: List[Dict[str, Any]]) -> str:
+	"""
+	Generate program outputs dictionary.
+	
+	Args:
+		programs: List of programs
+	
+	Returns:
+		Python code for programOutputs dictionary
+	"""
+	lines = ['programOutputs = {']
+	output_counter = ChannelCounter(HOST_CONTROLLER_MAX_OUTPUTS)
+	
+	for program in programs:
+		prog_id = get_program_id(program)
+		lines.append(f"'{prog_id}': [")
+		
+		for program_channel in program.get('outputs', []):
+			channel_type = program_channel.get_channel_type()
+			channel_id = program_channel.get_channel_id()
+			host_id = program_channel.get_host_id()
+			
+			if channel_type in RELAY_CHANNEL_TYPES:
+				channel_type = 'CHANNEL_RELAY'  # Make it remote
+				channel_id, host_id = output_counter.allocate_channel()
+			
+			lines.append(f"\tMapping({channel_id}, '{channel_type}', {host_id}),")
+		
+		lines.append('],')
+	
+	lines.append('}\n')
+	return '\n'.join(lines)
+
+def get_program_string(programs: List[Dict[str, Any]]) -> str:
+	"""
+	Generate complete program configuration.
+	
+	Args:
+		programs: List of program dictionaries
+	
+	Returns:
+		Complete Python code for all program definitions
+	"""
+	return (
+		get_program_declaration(programs) +
+		get_program_type_dict(programs) +
+		get_program_scheme_dict(programs) +
+		get_program_title_dict(programs) +
+		get_program_id_dict(programs) +
+		get_program_settings_dict(programs) +
+		get_program_inputs_dict(programs) +
+		get_program_outputs_dict(programs)
+	)
+def convert_config_to_preset(json_string: str) -> str:
+	"""
+	Convert JSON configuration to Python preset format.
+	
+	Args:
+		json_string: JSON configuration as string
+	
+	Returns:
+		Python code containing preset definitions
+	"""
+	# Parse JSON into Python dictionary
 	try:
 		data = json.loads(json_string)
-	except ValueError:
-		print('wrong config!')
+	except (ValueError, json.JSONDecodeError) as e:
+		print(f'Error: Invalid JSON configuration - {e}')
 		return ''
 	
-	programs = data['programs']
-	
+	programs = data.get('programs', [])
 	parsed_programs = []
 	
-	for p in programs:
-		for key, value in ProgramTypes.items():
-			if int(p['type']) == value:
-				new_program = {
-					'type' : key, 
-					'id'   : p['id'], 
-					'title': p['title']
-				}
-
-				if new_program['title'] == '':
-					new_program['title'] = new_program['type'] + '_' + str(new_program['id'])
-				
-				new_program['inputs' ] = []
-				new_program['outputs'] = []
-				new_program['parameters'] = []
-				if 'parameters' in p:
-					for param in p['parameters']:
-						new_program['parameters'].append(parseParameterCode(param['code'], param['value']))
-						
-				for param in new_program['parameters']:
-					if param['programType'] == 'PROGRAM' and param['parameterId'] == 'SCHEME':
-						new_program['scheme' ] = param['value']
-						break
-				
-				for inputMapping in p['input_mappings']:
-					new_program['inputs'].append(strToMapping(inputMapping))
-					
-				for outputMapping in p['output_mappings']:
-					new_program['outputs'].append(strToMapping(outputMapping))
-				
-				parsed_programs.append(new_program)
-				continue
+	# Parse each program configuration
+	for program_config in programs:
+		program_type_code = int(program_config['type'])
+		
+		# Find the program type key
+		program_type_key = None
+		for key, type_value in ProgramTypes.items():
+			if program_type_code == type_value:
+				program_type_key = key
+				break
+		
+		if program_type_key is None:
+			continue
+		
+		# Initialize program structure
+		program = {
+			'type': program_type_key,
+			'id': program_config['id'],
+			'title': program_config['title'],
+			'inputs': [],
+			'outputs': [],
+			'parameters': [],
+		}
+		
+		# Generate title if empty
+		if not program['title']:
+			program['title'] = f"{program['type']}_{program['id']}"
+		
+		# Parse parameters
+		for param_config in program_config.get('parameters', []):
+			parsed_param = parse_parameter_code(
+				param_config['code'],
+				param_config['value']
+			)
+			program['parameters'].append(parsed_param)
+		
+		# Extract scheme from parameters if present
+		for param in program['parameters']:
+			if (param['programType'] == 'PROGRAM' and
+				param['parameterId'] == 'SCHEME'):
+				program['scheme'] = param['value']
+				break
+		
+		# Parse input and output mappings
+		for input_mapping in program_config.get('input_mappings', []):
+			program['inputs'].append(str_to_mapping(input_mapping))
+		
+		for output_mapping in program_config.get('output_mappings', []):
+			program['outputs'].append(str_to_mapping(output_mapping))
+		
+		parsed_programs.append(program)
 	
+	# Compute required number of controllers
+	controller_required_num = compute_controllers_num(parsed_programs)
 	
-	controller_required_num = computeControllersNum(parsed_programs)
+	# Generate complete preset code
+	output = ''
+	output += get_header()
+	output += get_host_string(controller_required_num)
+	output += get_program_string(parsed_programs)
+	output += get_footer()
 	
-	output_string = ''
-	output_string += getHeader()
-	output_string += getHostString(controller_required_num)
-	output_string += getProgramString(parsed_programs)
-	output_string += getFootter()
-
-	
-	
-	
-	return output_string 
+	return output 
