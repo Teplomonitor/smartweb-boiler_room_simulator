@@ -38,7 +38,7 @@ class MainFrame ( MainFrameBase ):
     def OnConvert( self, event ):
         event.Skip()
         inputText  = self.m_textCtrl2.GetValue()
-        outputText = config_parser.convert.convertConfigToPreset(inputText)
+        outputText = config_parser.convert.convert_config_to_preset(inputText)
         
         self.m_textCtrl3.SetValue(outputText)
         
