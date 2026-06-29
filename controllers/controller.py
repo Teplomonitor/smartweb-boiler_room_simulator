@@ -58,6 +58,12 @@ class Controller(object):
 					
 				time.sleep(1)
 		else:
+			if not programPresetList:
+				return
+			
+			if len(programPresetList) == 0:
+				return
+			
 			activeProgramList = []
 			i = 0
 			while i < 3:
