@@ -70,6 +70,7 @@ def initArgParser(program_license):
 	parser.add_argument(      '--id'      , nargs='?'                 , default=0        , help='select specific controller ID address to control')
 	parser.add_argument('-s', '--scenario', nargs='?', const='all'    , default='none'   , help='enable automatic scenarion run')
 	parser.add_argument('-c', '--can'     , nargs='?', const='default', default='none'   , help='select CANBus config')
+	parser.add_argument(      '--preset'  , nargs='?'                 , default=None     , help='load specific preset on controller startup')
 	
 	return parser.parse_args()
 
