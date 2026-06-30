@@ -78,6 +78,7 @@ class MainThread(threading.Thread):
 		if args.preset:
 			self._newPreset = args.preset
 		else:
+			self._newPreset = None
 			preset = self.getCurrentPreset()
 		
 			result = presets.preset.get_presets_list(preset)
