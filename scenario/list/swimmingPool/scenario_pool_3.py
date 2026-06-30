@@ -26,8 +26,11 @@ class Scenario(Parent):
 		}
 		return requiredProgramTypesList
 	
-	def get_default_preset(self): return 'swimmingPool'
+	def get_default_preset(self): return 'swimmingPool_with_level'
 
+	def force_preset_load(self):
+		return True
+	
 	def getWaterLevelControlState(self): return self._pool.get_output_channel('waterLevelControl').get_value()
 	
 	def waterLevelControlIsOn (self): return self.getWaterLevelControlState() != self.RELAY_OFF
@@ -41,22 +44,22 @@ class Scenario(Parent):
 		print_log('Убедимся, что программа бассейна активна')
 		self.wait(1)
 		
-		# Устанавливаем нормальный уровень воды (SENSOR_SHORT_VALUE = 'short')
+		# Устанавливаем нормальный уровень воды (WATER_LEVEL_HI = 'short')
 		# В этом состоянии выход подпитки должен быть отключен
-		SENSOR_SHORT_VALUE = 'short'
-		print_log(f'устанавливаем нормальный уровень воды (значение {SENSOR_SHORT_VALUE})')
-		self.setWaterLevel(SENSOR_SHORT_VALUE)
+		WATER_LEVEL_HI = 'short'
+		print_log(f'устанавливаем нормальный уровень воды (значение {WATER_LEVEL_HI})')
+		self.setWaterLevel(WATER_LEVEL_HI)
 		self.wait(2)
 		
 		print_log('проверяем, что выход "Подпитка" выключен при нормальном уровне воды')
-		if not self.waterLevelControlIsOff():
+		if not self.wait_state_permanence(self.waterLevelControlIsOff(), 20, 30):
 			self._status = 'FAIL'
 			print_error('Плохо! Выход "Подпитка" должен быть выключен при нормальном уровне воды')
 			return
 		
 		self.wait(1)
 		
-		# Устанавливаем низкий уровень воды (любое значение кроме SENSOR_SHORT_VALUE)
+		# Устанавливаем низкий уровень воды (любое значение кроме WATER_LEVEL_HI)
 		WATER_LEVEL_LOW = 'open'
 		print_log(f'устанавливаем низкий уровень воды (значение {WATER_LEVEL_LOW})')
 		self.setWaterLevel(WATER_LEVEL_LOW)
@@ -75,7 +78,7 @@ class Scenario(Parent):
 		
 		# Восстанавливаем нормальный уровень воды
 		print_log('восстанавливаем нормальный уровень воды')
-		self.setWaterLevel(SENSOR_SHORT_VALUE)
+		self.setWaterLevel(WATER_LEVEL_HI)
 		self.wait(1)
 		
 		print_log('ждём, что выход "Подпитка" выключится при восстановленном уровне воды')
