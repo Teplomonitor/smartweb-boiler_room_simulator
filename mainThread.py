@@ -67,32 +67,32 @@ class MainThread(threading.Thread):
 		self._debug_thread                = None
 		self._controllerId                = int(args.id)
 		
-		if args.preset:
-			preset = args.preset
-		else:
-			preset = self.getCurrentPreset()
-		
-		result = presets.preset.get_presets_list(preset)
-		
-		if result is None:
-			print_error('wrong preset')
-			self._programPresetList = []
-			self._controllerIoList  = []
-		else:
-			self._programPresetList, self._controllerIoList = result
-		
-		self._taskStopEvent = threading.Event()
-		
-		if self._programPresetList is None:
-			print_error('wrong preset. Exit')
-			sys.exit(1)
-		
 		if args.gui:
 			self._guiThread = guiFrameThread.guiThread()
 		else:
 			self._guiThread = None
+
+		self._programPresetList = []
+		self._controllerIoList  = []
+		
+		if args.preset:
+			self._newPreset = args.preset
+		else:
+			preset = self.getCurrentPreset()
+		
+			result = presets.preset.get_presets_list(preset)
 			
-		self._newPreset = None
+			if result is None:
+				print_error('wrong preset')
+			else:
+				self._programPresetList, self._controllerIoList = result
+			
+			if self._programPresetList is None:
+				print_error('wrong preset. Exit')
+				sys.exit(1)
+		
+		self._taskStopEvent = threading.Event()
+		
 		self._saveProgramPlots = threading.Event()
 
 		self._initDone = True
