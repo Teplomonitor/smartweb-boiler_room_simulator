@@ -97,7 +97,7 @@ class MainThread(threading.Thread):
 
 		self._initDone = True
 		
-		self.deamon = True
+		self.daemon = True
 		self.start()
 	
 	def getCANBusConfig(self): return self._canConfig

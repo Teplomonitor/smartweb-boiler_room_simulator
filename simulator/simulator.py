@@ -57,7 +57,7 @@ class sensor_report_thread(threading.Thread):
 		threading.Thread.__init__(self, name = 'report_sensors')
 		
 		self._simulator = simulator
-		self.deamon = True
+		self.daemon = True
 		self.start()
 	
 	def reportSensorsValues(self):
@@ -108,7 +108,7 @@ class Simulator(threading.Thread):
 		
 		self._initDone = True
 		
-		self.deamon = True
+		self.daemon = True
 		self.start()
 	
 	def clear(self):
