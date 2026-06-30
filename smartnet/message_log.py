@@ -12,6 +12,9 @@ Based on MessageLogCan.cc protocol:
 import struct
 import time
 from smartnet.message import Message
+from smartnet.constants import ProgramType
+from smartnet.constants import ControllerFunction
+
 
 
 # Operation codes (stored in bits 0-2 of first byte)
@@ -168,12 +171,12 @@ class MessageLogReader:
     """Reads and parses error log messages from the controller"""
     
     # Default program IDs for message log communication
-    PROGRAM_TYPE = 0x00        # Controller
-    FUNCTION_ID = 0x00         # JOURNAL function (typically 0x00)
-    REQUEST_FLAG = 0x00        # Request (0x00) vs Response (0x01)
+    PROGRAM_TYPE  = ProgramType['CONTROLLER']        # Controller
+    FUNCTION_ID   = ControllerFunction['JOURNAL']    # JOURNAL function
+    REQUEST_FLAG  = 0x00        # Request (0x00) vs Response (0x01)
     RESPONSE_FLAG = 0x01
     
-    def __init__(self, program_id=0, function_id=0, timeout=10):
+    def __init__(self, program_id=0, timeout=10):
         """
         Initialize the message log reader
         
@@ -183,26 +186,22 @@ class MessageLogReader:
             timeout: Timeout in seconds for reading entries
         """
         self.program_id = program_id
-        self.function_id = function_id
         self.timeout = timeout
         self.entries = []
         self._last_entry = None
     
-    def request_log(self, program_id=None, function_id=None):
+    def request_log(self, program_id=None):
         """
         Send a request to read the message log from the controller
         
         Args:
             program_id: Controller program ID (uses default if None)
-            function_id: Journal function ID (uses default if None)
             
         Returns:
             True if request sent successfully, False otherwise
         """
         if program_id is None:
             program_id = self.program_id
-        if function_id is None:
-            function_id = self.function_id
         
         # Create status request message
         if self._last_entry:
@@ -220,7 +219,7 @@ class MessageLogReader:
         msg = Message(
             programType=self.PROGRAM_TYPE,
             programId=program_id,
-            functionId=function_id,
+            functionId=self.FUNCTION_ID,
             request=self.REQUEST_FLAG,
             data=request_data
         )
@@ -229,7 +228,7 @@ class MessageLogReader:
         response_filter = Message(
             programType=self.PROGRAM_TYPE,
             programId=program_id,
-            functionId=function_id,
+            functionId=self.FUNCTION_ID,
             request=self.RESPONSE_FLAG
         )
         
@@ -272,7 +271,7 @@ class MessageLogReader:
         
         return self.entries
     
-    def _read_entry_sequence(self, program_id, function_id):
+    def _read_entry_sequence(self, program_id):
         """
         Read a single entry (MESSAGE1/MESSAGE2/MESSAGE3 sequence)
         
@@ -288,7 +287,7 @@ class MessageLogReader:
             response_filter = Message(
                 programType=self.PROGRAM_TYPE,
                 programId=program_id,
-                functionId=function_id,
+                functionId=self.FUNCTION_ID,
                 request=self.RESPONSE_FLAG
             )
             
@@ -296,7 +295,7 @@ class MessageLogReader:
             dummy_msg = Message(
                 programType=self.PROGRAM_TYPE,
                 programId=program_id,
-                functionId=function_id,
+                functionId=self.FUNCTION_ID,
                 request=self.REQUEST_FLAG
             )
             
