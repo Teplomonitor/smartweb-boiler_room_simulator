@@ -6,6 +6,7 @@ Tests CRC16 calculation, message packing/unpacking, and entry creation
 
 import unittest
 import struct
+from smartnet.constants import ControllerFunction
 from smartnet.message_log import (
     CRC16, MLCDataParser, LogEntry, MessageLogReader,
     OP_STATUS, OP_MESSAGE1, OP_MESSAGE2, OP_MESSAGE3
@@ -203,12 +204,12 @@ class TestMessageLogReader(unittest.TestCase):
     
     def setUp(self):
         """Set up test reader"""
-        self.reader = MessageLogReader(program_id=1, function_id=0)
+        self.reader = MessageLogReader(program_id=1)
     
     def test_reader_initialization(self):
         """Test reader initialization"""
         self.assertEqual(self.reader.program_id, 1)
-        self.assertEqual(self.reader.function_id, 0)
+        self.assertEqual(self.reader.FUNCTION_ID, ControllerFunction['JOURNAL'])
         self.assertEqual(self.reader.timeout, 10)
         self.assertEqual(len(self.reader.entries), 0)
     

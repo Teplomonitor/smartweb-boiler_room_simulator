@@ -182,7 +182,6 @@ class MessageLogReader:
         
         Args:
             program_id: Controller program ID
-            function_id: Journal function ID
             timeout: Timeout in seconds for reading entries
         """
         self.program_id = program_id
@@ -235,13 +234,12 @@ class MessageLogReader:
         response = msg.send(responseFilter=response_filter, timeout=self.timeout)
         return response is not None
     
-    def read_entries(self, program_id=None, function_id=None, max_entries=100):
+    def read_entries(self, program_id=None, max_entries=100):
         """
         Read all available log entries from the controller
         
         Args:
             program_id: Controller program ID (uses default if None)
-            function_id: Journal function ID (uses default if None)
             max_entries: Maximum number of entries to read
             
         Returns:
@@ -249,19 +247,20 @@ class MessageLogReader:
         """
         if program_id is None:
             program_id = self.program_id
-        if function_id is None:
-            function_id = self.function_id
+        
+        # Use the fixed class-level FUNCTION_ID for journal function
+        function_id = self.FUNCTION_ID
         
         self.entries = []
         entries_read = 0
         
         while entries_read < max_entries:
-            # Send request
-            if not self.request_log(program_id, function_id):
+            # Send request (request_log uses program_id and class FUNCTION_ID)
+            if not self.request_log(program_id):
                 break
             
             # Try to read MESSAGE1/2/3 sequence
-            entry = self._read_entry_sequence(program_id, function_id)
+            entry = self._read_entry_sequence(program_id)
             if entry is None:
                 break
             
