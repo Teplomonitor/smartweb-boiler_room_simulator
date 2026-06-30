@@ -67,7 +67,10 @@ class MainThread(threading.Thread):
 		self._debug_thread                = None
 		self._controllerId                = int(args.id)
 		
-		preset = self.getCurrentPreset()
+		if args.preset:
+			preset = args.preset
+		else:
+			preset = self.getCurrentPreset()
 		
 		result = presets.preset.get_presets_list(preset)
 		
