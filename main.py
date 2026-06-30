@@ -143,7 +143,7 @@ def main(argv=None): # IGNORE:C0111
 		if guiThread:
 			guiThread.run()
 		else:
-			while True:
+			while mainThread.taskEnable():
 				time.sleep(1)
 				
 		MainStop()
