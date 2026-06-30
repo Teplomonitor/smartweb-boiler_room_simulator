@@ -67,6 +67,8 @@ class MainThread(threading.Thread):
 		self._debug_thread                = None
 		self._controllerId                = int(args.id)
 		
+		self._lastPreset                    = None
+		
 		if args.gui:
 			self._guiThread = guiFrameThread.guiThread()
 		else:
@@ -165,6 +167,7 @@ class MainThread(threading.Thread):
 			if self._newPreset:
 				try:
 					loadPresetNow(self._newPreset)
+					self._lastPreset = self._newPreset
 				except:
 					print('Wrong preset!!!')
 				self._newPreset = None
@@ -192,6 +195,9 @@ class MainThread(threading.Thread):
 			self._guiThread.stop()
 			
 	def loadPreset(self, newPreset):
+		if newPreset == self._lastPreset:
+			print('Preset is already loaded')
+			return
 		self._newPreset = newPreset
 	
 	def loadPresetDone(self):
