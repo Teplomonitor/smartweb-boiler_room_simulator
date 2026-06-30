@@ -202,9 +202,12 @@ class Scenario(object):
 		return self._status
 	
 	def init_scenario(self):
-		ok = self.init_program_list(self.get_required_programs())
-				
-		if not ok:
+		if self.force_preset_load():
+			controller_is_configured = False
+		else:
+			controller_is_configured = self.init_program_list(self.get_required_programs())
+			
+		if not controller_is_configured:
 			main.loadPreset(self.get_default_preset())
 			
 			while main.loadPresetDone() == False:
@@ -216,9 +219,9 @@ class Scenario(object):
 				print_error('fail to init program list!')
 			else:
 				print_log('init ok!')
-				ok = True
+				controller_is_configured = True
 				
-		if ok:
+		if controller_is_configured:
 			for prg in self._programList.values():
 				prg.disable_gui_control()
 				
@@ -231,6 +234,9 @@ class Scenario(object):
 		
 	def get_default_preset(self):
 		return 'default'
+	
+	def force_preset_load(self):
+		return False
 	
 	def init_program_list(self, requiredProgramTypesList):
 		self._programList = {}
