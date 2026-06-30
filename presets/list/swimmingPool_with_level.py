@@ -56,12 +56,14 @@ def outputMapping(channel_id, host_id): return Mapping(channel_id, 'CHANNEL_RELA
 
 
 programInputs = {
-	# Provide full mapping for pool inputs so waterLevel (index 2) is bound
+	# Provide mapping for pool inputs so waterLevel (index 2) is bound
 	'SWIMMING_POOL' : [
 		inputMapping(0, hostId['HOST_1']),  # poolTemperature
-		inputMapping(1, hostId['HOST_1']),  # outsideRequest
+		None,
+#		inputMapping(1, hostId['HOST_1']),  # outsideRequest
 		inputMapping(2, hostId['HOST_1']),  # waterLevel (needed by scenario)
-		inputMapping(3, hostId['HOST_1']),  # flow
+		None,
+#		inputMapping(3, hostId['HOST_1']),  # flow
 	],
 	'BOILER'        : [inputMapping(4, hostId['HOST_1'])],
 }
