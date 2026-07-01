@@ -68,7 +68,7 @@ def tdpFloatToData(value, littleEndian = False):
 	return int(value * 100)
 	
 def timeToData(value, littleEndian = False):
-	return value*1000
+	return int(value*1000)
 
 def schedulePeriodToData(value, littleEndian = False):
 	start = int(value[0] / 60)
