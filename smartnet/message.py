@@ -188,7 +188,10 @@ class Message(object):
 					return None
 
 				time.sleep(1)
-
+		
+		if responseFilter is None:
+			return None
+		
 		return self.recv(responseFilter, timeout)
 
 	def recv(self, responseFilter, timeout = 60):
