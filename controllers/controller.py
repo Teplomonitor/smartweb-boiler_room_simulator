@@ -10,6 +10,8 @@ import smartnet.message as sm
 import smartnet.constants as snc
 import programs.factory   as pf
 
+from smartnet.message_log import MessageLogReader
+
 from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
 
@@ -142,6 +144,11 @@ class Controller(object):
 		sm.CanListener.unsubscribe(self)
 		
 		return self._activeProgramsList
+	
+	def read_message_log(self):
+		reader = MessageLogReader(program_id=self._controllerId)
+		entries = reader.read_entries(max_entries=10)
+		return entries
 	
 	def searchProgramInActiveProgramList(self, programId, programType, activeProgramList = None):
 		if activeProgramList is None:
