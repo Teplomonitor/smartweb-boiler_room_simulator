@@ -5,7 +5,6 @@
 from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
 from scenario.scenario import Scenario   as Parent
-from smartnet.message_log import MessageLogReader
 
 class Scenario(Parent):
 	
@@ -68,7 +67,7 @@ class Scenario(Parent):
 		self.wait(2)
 		
 		print_log('проверяем, что выход "Подпитка" выключен при нормальном уровне воды')
-		if not self.wait_state_permanence(self.waterLevelControlIsOff(), 20, 30):
+		if not self.wait_state_permanence(self.waterLevelControlIsOff, 20, 30):
 			self._status = 'FAIL'
 			print_error('Плохо! Выход "Подпитка" должен быть выключен при нормальном уровне воды')
 			return
@@ -141,8 +140,7 @@ class Scenario(Parent):
 			
 			# Проверим, что в журнал записано сообщение о низком уровне воды
 			try:
-				reader = MessageLogReader(program_id=self._pool.get_id())
-				entries = reader.read_entries(max_entries=10)
+				entries = self._controllerHost.read_message_log()
 				if entries and len(entries) > 0:
 					print_log(f'Журнал содержит {len(entries)} записей (ожидается сообщение о низком уровне воды)')
 					self._status = 'OK'
