@@ -80,8 +80,7 @@ class Scenario(object):
 	
 	# don't do anything for "delay" seconds
 	def wait(self, delay):
-		if delay < 3: return self.simple_wait(delay)
-		else        : return self.delay_with_break_check(delay)
+		self.delay_with_break_check(delay)
 	
 	# wait for event() to become True
 	def wait_event(self, event, timeout, arg = None, eventCheckPeriod = 1):
