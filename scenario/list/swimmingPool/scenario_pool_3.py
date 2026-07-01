@@ -52,7 +52,7 @@ class Scenario(Parent):
 		self.wait(2)
 		
 		print_log('проверяем, что выход "Подпитка" выключен при нормальном уровне воды')
-		if not self.wait_state_permanence(self.waterLevelControlIsOff(), 20, 30):
+		if not self.wait_state_permanence(self.waterLevelControlIsOff, 20, 30):
 			self._status = 'FAIL'
 			print_error('Плохо! Выход "Подпитка" должен быть выключен при нормальном уровне воды')
 			return
