@@ -11,7 +11,11 @@ Based on MessageLogCan.cc protocol:
 
 import struct
 import time
+import threading
+from collections import deque
 from smartnet.message import Message
+from smartnet.message import CanListener
+from smartnet.constants import requestFlag
 from smartnet.constants import ProgramType
 from smartnet.constants import ControllerFunction
 
@@ -105,13 +109,17 @@ class MLCDataParser:
     @staticmethod
     def parse_operation(byte0):
         """Extract operation code from first byte"""
-        return byte0 & 0x07
+        return (byte0 >> 5) & 0x07
+    
+    @staticmethod
+    def pack_operation_byte(status, bytes_num = 0):
+        return (status << 5) & bytes_num
     
     @staticmethod
     def pack_status(timestamp, crc16_value):
         """Pack a STATUS message"""
         data = bytearray(8)
-        data[0] = OP_STATUS
+        data[0] = MLCDataParser.pack_operation_byte(OP_STATUS)
         data[1:3] = struct.pack('<H', crc16_value)
         data[3:7] = struct.pack('<I', timestamp)
         return bytes(data)
@@ -121,7 +129,7 @@ class MLCDataParser:
         """Unpack a STATUS message"""
         if len(data) < 7:
             return None, None
-        op = data[0] & 0x07
+        op = MLCDataParser.parse_operation(data[0])
         if op != OP_STATUS:
             return None, None
         crc16_value = struct.unpack_from('<H', data, 1)[0]
@@ -133,10 +141,12 @@ class MLCDataParser:
         """Unpack a MESSAGE1 message"""
         if len(data) < 7:
             return None, None, None
-        op = data[0] & 0x07
+        op = MLCDataParser.parse_operation(data[0])
         if op != OP_MESSAGE1:
             return None, None, None
-        severity = data[1]
+           
+        MESSAGE_SEVERITY_EXCLUDE_IGNORE_MASK = 0x7F
+        severity = data[1] & MESSAGE_SEVERITY_EXCLUDE_IGNORE_MASK
         crc16_value = struct.unpack_from('<H', data, 2)[0]
         timestamp = struct.unpack_from('<I', data, 4)[0]
         return timestamp, severity, crc16_value
@@ -146,13 +156,13 @@ class MLCDataParser:
         """Unpack a MESSAGE2 message"""
         if len(data) < 8:
             return None, None, None, None
-        op = data[0] & 0x07
+        op = MLCDataParser.parse_operation(data[0])
         if op != OP_MESSAGE2:
             return None, None, None, None
-        code = struct.unpack_from('<H', data, 1)[0]
-        param_ex0 = data[3]
-        param_ex1 = data[4]
-        param = struct.unpack_from('<I', data, 5)[0]
+        code = data[1]
+        param_ex0 = data[2]
+        param_ex1 = data[3]
+        param = struct.unpack_from('<I', data, 4)[0]
         return code, param, (param_ex0, param_ex1)
     
     @staticmethod
@@ -160,7 +170,7 @@ class MLCDataParser:
         """Unpack a MESSAGE3 message"""
         if len(data) < 7:
             return None
-        op = data[0] & 0x07
+        op = MLCDataParser.parse_operation(data[0])
         if op != OP_MESSAGE3:
             return None
         param_ex = data[1:7]
@@ -173,10 +183,10 @@ class MessageLogReader:
     # Default program IDs for message log communication
     PROGRAM_TYPE  = ProgramType['CONTROLLER']        # Controller
     FUNCTION_ID   = ControllerFunction['JOURNAL']    # JOURNAL function
-    REQUEST_FLAG  = 0x00        # Request (0x00) vs Response (0x01)
-    RESPONSE_FLAG = 0x01
+    REQUEST_FLAG  = requestFlag['REQUEST']        # Request (0x00) vs Response (0x10)
+    RESPONSE_FLAG = requestFlag['RESPONSE']
     
-    def __init__(self, program_id=0, timeout=10):
+    def __init__(self, program_id=0, timeout=100):
         """
         Initialize the message log reader
         
@@ -188,7 +198,58 @@ class MessageLogReader:
         self.timeout = timeout
         self.entries = []
         self._last_entry = None
+        self._response_filter = None
+        self._captured_messages = deque()
+        self._capture_lock = threading.Lock()
+        CanListener.subscribe(self)
     
+    def __del__(self):
+        CanListener.unsubscribe(self)
+        
+    def on_can_message_received(self, msg):
+        if msg is None:
+            return
+
+        with self._capture_lock:
+            response_filter = self._response_filter
+
+        if response_filter is None:
+            return
+
+        if not msg.compare(response_filter):
+            return
+
+        with self._capture_lock:
+            # Append only while the same capture session is active.
+            if self._response_filter is response_filter:
+                self._captured_messages.append(msg)
+
+    def _build_response_filter(self, program_id):
+        return Message(
+            programType=self.PROGRAM_TYPE,
+            programId=program_id,
+            functionId=self.FUNCTION_ID,
+            request=self.RESPONSE_FLAG
+        )
+
+    def _start_capture(self, program_id):
+        with self._capture_lock:
+            self._response_filter = self._build_response_filter(program_id)
+            self._captured_messages.clear()
+
+    def _stop_capture(self):
+        with self._capture_lock:
+            self._response_filter = None
+            self._captured_messages.clear()
+
+    def _pop_captured_message(self, deadline):
+        while time.time() < deadline:
+            with self._capture_lock:
+                if self._captured_messages:
+                    return self._captured_messages.popleft()
+            time.sleep(0.01)
+        return None
+            
     def request_log(self, program_id=None):
         """
         Send a request to read the message log from the controller
@@ -223,16 +284,7 @@ class MessageLogReader:
             data=request_data
         )
         
-        # Send request and wait for response
-        response_filter = Message(
-            programType=self.PROGRAM_TYPE,
-            programId=program_id,
-            functionId=self.FUNCTION_ID,
-            request=self.RESPONSE_FLAG
-        )
-        
-        response = msg.send(responseFilter=response_filter, timeout=self.timeout)
-        return response is not None
+        msg.send()
     
     def read_entries(self, program_id=None, max_entries=100):
         """
@@ -248,29 +300,29 @@ class MessageLogReader:
         if program_id is None:
             program_id = self.program_id
         
-        # Use the fixed class-level FUNCTION_ID for journal function
-        function_id = self.FUNCTION_ID
-        
         self.entries = []
         entries_read = 0
-        
-        while entries_read < max_entries:
-            # Send request (request_log uses program_id and class FUNCTION_ID)
-            if not self.request_log(program_id):
-                break
-            
-            # Try to read MESSAGE1/2/3 sequence
-            entry = self._read_entry_sequence(program_id)
-            if entry is None:
-                break
-            
-            self.entries.append(entry)
-            self._last_entry = entry
-            entries_read += 1
+
+        self._start_capture(program_id)
+        try:
+            while entries_read < max_entries:
+                # Capture is already active here, so fast responses are not lost.
+                self.request_log(program_id)
+
+                # Try to read MESSAGE1/2/3 sequence
+                entry = self._read_entry_sequence()
+                if entry is None:
+                    break
+
+                self.entries.append(entry)
+                self._last_entry = entry
+                entries_read += 1
+        finally:
+            self._stop_capture()
         
         return self.entries
     
-    def _read_entry_sequence(self, program_id):
+    def _read_entry_sequence(self):
         """
         Read a single entry (MESSAGE1/MESSAGE2/MESSAGE3 sequence)
         
@@ -278,54 +330,51 @@ class MessageLogReader:
             LogEntry if successful, None if failed or no new entries
         """
         entry = LogEntry()
-        start_time = time.time()
+        deadline = time.time() + self.timeout
         messages = {}  # Store messages by operation type
-        
+
         # Collect up to 3 messages (MESSAGE1, MESSAGE2, MESSAGE3)
-        while len(messages) < 3 and (time.time() - start_time) < self.timeout:
-            response_filter = Message(
-                programType=self.PROGRAM_TYPE,
-                programId=program_id,
-                functionId=self.FUNCTION_ID,
-                request=self.RESPONSE_FLAG
-            )
-            
-            # Create dummy message to use recv method
-            dummy_msg = Message(
-                programType=self.PROGRAM_TYPE,
-                programId=program_id,
-                functionId=self.FUNCTION_ID,
-                request=self.REQUEST_FLAG
-            )
-            
-            response = dummy_msg.recv(responseFilter=response_filter, timeout=2)
-            
+        while len(messages) < 3 and time.time() < deadline:
+            response = self._pop_captured_message(deadline)
+
             if response is None:
                 break
-            
+
             # Parse the response
-            op = MLCDataParser.parse_operation(response.get_data()[0])
+            data = response.get_data()
+            if not data:
+                continue
+            
+            print(f"found: {response.generateHeader():08X} - {' '.join(format(x, '02x') for x in response._data)}")
+            
+            op = MLCDataParser.parse_operation(data[0])
             
             if op == OP_STATUS:
-                # Got status instead of message data - no new entries
-                return None
+                timestamp, crc16_value = MLCDataParser.unpack_status(data)
+                if timestamp is not None:
+                    entry.timestamp = timestamp
+                    entry.crc16 = crc16_value
+                    # STATUS without message chunks means journal has no newer entries.
+#                    if not messages:
+#                        return None
             elif op == OP_MESSAGE1:
-                timestamp, severity, crc16_value = MLCDataParser.unpack_message1(response.get_data())
+                timestamp, severity, crc16_value = MLCDataParser.unpack_message1(data)
                 if timestamp is not None:
                     entry.timestamp = timestamp
                     entry.severity = severity
                     entry.crc16 = crc16_value
                     messages[OP_MESSAGE1] = True
             elif op == OP_MESSAGE2:
-                code, param, (param_ex0, param_ex1) = MLCDataParser.unpack_message2(response.get_data())
+                code, param, param_ex = MLCDataParser.unpack_message2(data)
                 if code is not None:
+                    param_ex0, param_ex1 = param_ex
                     entry.code = code
                     entry.param = param
                     entry.param_ex[0] = param_ex0
                     entry.param_ex[1] = param_ex1
                     messages[OP_MESSAGE2] = True
             elif op == OP_MESSAGE3:
-                param_ex = MLCDataParser.unpack_message3(response.get_data())
+                param_ex = MLCDataParser.unpack_message3(data)
                 if param_ex is not None:
                     entry.param_ex[2:8] = param_ex
                     messages[OP_MESSAGE3] = True
@@ -354,10 +403,8 @@ class MessageLogReader:
         # Add severity (1 byte)
         crc.add_byte(entry.severity)
         
-        # Add code (2 bytes, little-endian)
-        code_bytes = struct.pack('<H', entry.code)
-        for byte in code_bytes:
-            crc.add_byte(byte)
+        # Add code (1 byte)
+        crc.add_byte(entry.code)
         
         # Add param (4 bytes, little-endian)
         param_bytes = struct.pack('<I', entry.param)
