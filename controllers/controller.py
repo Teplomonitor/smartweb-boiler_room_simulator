@@ -36,6 +36,7 @@ class Controller(object):
 		self._programList = []
 		self._controllerId = controllerId
 		self._gui = gui
+		self._last_entry = None
 		
 		self._initDone = True
 	
@@ -146,8 +147,11 @@ class Controller(object):
 		return self._activeProgramsList
 	
 	def read_message_log(self):
-		reader = MessageLogReader(program_id=self._controllerId)
-		entries = reader.read_entries(max_entries=10)
+		reader = MessageLogReader(controller_id=self._controllerId)
+		entries = reader.read_entries(max_entries=20, last_entry = self._last_entry)
+		if len(entries):
+			self._last_entry = entries[-1]
+			
 		return entries
 	
 	def searchProgramInActiveProgramList(self, programId, programType, activeProgramList = None):
