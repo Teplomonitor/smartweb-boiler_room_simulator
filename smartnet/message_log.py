@@ -120,8 +120,8 @@ class MLCDataParser:
         """Pack a STATUS message"""
         data = bytearray(8)
         data[0] = MLCDataParser.pack_operation_byte(OP_STATUS)
-        data[1:3] = struct.pack('<H', crc16_value)
-        data[3:7] = struct.pack('<I', timestamp)
+        data[2:4] = struct.pack('<H', crc16_value)
+        data[4:8] = struct.pack('<I', timestamp)
         return bytes(data)
     
     @staticmethod
@@ -186,15 +186,15 @@ class MessageLogReader:
     REQUEST_FLAG  = requestFlag['REQUEST']        # Request (0x00) vs Response (0x10)
     RESPONSE_FLAG = requestFlag['RESPONSE']
     
-    def __init__(self, program_id=0, timeout=100):
+    def __init__(self, controller_id=0, timeout=100):
         """
         Initialize the message log reader
         
         Args:
-            program_id: Controller program ID
+            controller_id: Controller program ID
             timeout: Timeout in seconds for reading entries
         """
-        self.program_id = program_id
+        self.controller_id = controller_id
         self.timeout = timeout
         self.entries = []
         self._last_entry = None
@@ -224,17 +224,17 @@ class MessageLogReader:
             if self._response_filter is response_filter:
                 self._captured_messages.append(msg)
 
-    def _build_response_filter(self, program_id):
+    def _build_response_filter(self, controller_id):
         return Message(
             programType=self.PROGRAM_TYPE,
-            programId=program_id,
+            programId=controller_id,
             functionId=self.FUNCTION_ID,
             request=self.RESPONSE_FLAG
         )
 
-    def _start_capture(self, program_id):
+    def _start_capture(self, controller_id):
         with self._capture_lock:
-            self._response_filter = self._build_response_filter(program_id)
+            self._response_filter = self._build_response_filter(controller_id)
             self._captured_messages.clear()
 
     def _stop_capture(self):
@@ -250,18 +250,18 @@ class MessageLogReader:
             time.sleep(0.01)
         return None
             
-    def request_log(self, program_id=None):
+    def request_log(self, controller_id=None):
         """
         Send a request to read the message log from the controller
         
         Args:
-            program_id: Controller program ID (uses default if None)
+            controller_id: Controller program ID (uses default if None)
             
         Returns:
             True if request sent successfully, False otherwise
         """
-        if program_id is None:
-            program_id = self.program_id
+        if controller_id is None:
+            controller_id = self.controller_id
         
         # Create status request message
         if self._last_entry:
@@ -278,7 +278,7 @@ class MessageLogReader:
         # Create and send CAN message
         msg = Message(
             programType=self.PROGRAM_TYPE,
-            programId=program_id,
+            controller_id=controller_id,
             functionId=self.FUNCTION_ID,
             request=self.REQUEST_FLAG,
             data=request_data
@@ -286,28 +286,31 @@ class MessageLogReader:
         
         msg.send()
     
-    def read_entries(self, program_id=None, max_entries=100):
+    def read_entries(self, controller_id=None, max_entries=100, last_entry = None):
         """
         Read all available log entries from the controller
         
         Args:
-            program_id: Controller program ID (uses default if None)
+            controller_id: Controller program ID (uses default if None)
             max_entries: Maximum number of entries to read
             
         Returns:
             List of LogEntry objects
         """
-        if program_id is None:
-            program_id = self.program_id
+        if controller_id is None:
+            controller_id = self.controller_id
         
         self.entries = []
         entries_read = 0
-
-        self._start_capture(program_id)
+        
+        if last_entry:
+            self._last_entry = last_entry
+        
+        self._start_capture(controller_id)
         try:
             while entries_read < max_entries:
                 # Capture is already active here, so fast responses are not lost.
-                self.request_log(program_id)
+                self.request_log(controller_id)
 
                 # Try to read MESSAGE1/2/3 sequence
                 entry = self._read_entry_sequence()
