@@ -278,7 +278,7 @@ class MessageLogReader:
         # Create and send CAN message
         msg = Message(
             programType=self.PROGRAM_TYPE,
-            controller_id=controller_id,
+            programId=controller_id,
             functionId=self.FUNCTION_ID,
             request=self.REQUEST_FLAG,
             data=request_data
