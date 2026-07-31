@@ -181,7 +181,7 @@ class MessageLogReader:
     """Reads and parses error log messages from the controller"""
     
     # Default program IDs for message log communication
-    PROGRAM_TYPE  = ProgramType['CONTROLLER']        # Controller
+    PROGRAM_TYPE  = ProgramType.CONTROLLER             # Controller
     FUNCTION_ID   = ControllerFunction['JOURNAL']    # JOURNAL function
     REQUEST_FLAG  = requestFlag['REQUEST']        # Request (0x00) vs Response (0x10)
     RESPONSE_FLAG = requestFlag['RESPONSE']

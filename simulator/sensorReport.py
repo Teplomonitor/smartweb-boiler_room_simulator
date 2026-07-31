@@ -31,7 +31,7 @@ def reportSensorValue(sensor, bus = None):
 		(sensorValue >> 8) &0xFF,
 		]
 	msg = sm.Message(
-			snc.ProgramType['CONTROLLER'],
+			snc.ProgramType.CONTROLLER,
 			hostId,
 			snc.ControllerFunction['GET_OUTPUT_VALUE'],
 			snc.requestFlag['RESPONSE'],

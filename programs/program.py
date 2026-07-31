@@ -149,14 +149,14 @@ class Program(object):
 	def on_can_message_received(self, msg):
 		headerOk = (
 					(msg.getProgramId  () == self.get_id()) and
-					(msg.get_program_type() == snc.ProgramType['REMOTE_CONTROL']) and
+					(msg.get_program_type() == snc.ProgramType.REMOTE_CONTROL) and
 					(msg.getFunctionId () == snc.RemoteControlFunction['GET_PARAMETER_VALUE']) and
 					(msg.getRequestFlag() == snc.requestFlag['RESPONSE']))
 
 		if headerOk:
 			data   = msg.get_data()
 			dataOk = (
-				(data[0] == snc.ProgramType['PROGRAM']) and
+				(data[0] == snc.ProgramType.PROGRAM) and
 				(data[1] == snc.ProgramParameter['OUTPUT']['id']))
 			
 			if dataOk:
@@ -200,12 +200,12 @@ class Program(object):
 		print_log(f'bind program input {channel_id}')
 		def generate_request():
 			request = sm.Message(
-			snc.ProgramType['REMOTE_CONTROL'],
+			snc.ProgramType.REMOTE_CONTROL,
 			self.get_id(),
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
 			snc.requestFlag['REQUEST'],
 			[
-				snc.ProgramType['PROGRAM'],
+				snc.ProgramType.PROGRAM,
 				snc.ProgramParameter['INPUT_MAPPING']['id'],
 				channel_id,
 				mapping.get_raw(0),
@@ -252,12 +252,12 @@ class Program(object):
 		print_log(f'bind program output {channel_id}')
 		def generate_request():
 			request = sm.Message(
-			snc.ProgramType['REMOTE_CONTROL'],
+			snc.ProgramType.REMOTE_CONTROL,
 			self.get_id(),
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
 			snc.requestFlag['REQUEST'],
 			[
-				snc.ProgramType['PROGRAM'],
+				snc.ProgramType.PROGRAM,
 				snc.ProgramParameter['OUTPUT_MAPPING']['id'],
 				channel_id,
 				mapping.get_raw(0),

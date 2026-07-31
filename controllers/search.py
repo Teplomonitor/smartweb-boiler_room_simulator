@@ -13,7 +13,7 @@ from consoleLog import print_error as print_error
 
 def messageIsImHere():
 	return snm.Message(
-		snc.ProgramType['CONTROLLER'], None, 
+		snc.ProgramType.CONTROLLER, None,
 		snc.ControllerFunction['I_AM_HERE'], 
 		snc.requestFlag['RESPONSE'])
 

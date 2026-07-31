@@ -170,7 +170,7 @@ class RemoteControlParameter(object):
 			data.extend(parameterValue)
 			
 			request = sm.Message(
-			snc.ProgramType['REMOTE_CONTROL'],
+			snc.ProgramType.REMOTE_CONTROL,
 			self._programId,
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
 			snc.requestFlag['REQUEST'],
@@ -234,7 +234,7 @@ class RemoteControlParameter(object):
 				data = [snc.ProgramType[self._programType], parameterIdCode, self._parameterIndex]
 
 			request = sm.Message(
-				snc.ProgramType['REMOTE_CONTROL'],
+				snc.ProgramType.REMOTE_CONTROL,
 				self._programId,
 				snc.RemoteControlFunction['GET_PARAMETER_VALUE'],
 				snc.requestFlag['REQUEST'],

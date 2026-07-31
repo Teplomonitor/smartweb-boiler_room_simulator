@@ -21,7 +21,7 @@ class i_am_here_thread(threading.Thread):
 		
 	def sendImHere(self):
 		msg = sm.Message(
-			snc.ProgramType['CONTROLLER'],
+			snc.ProgramType.CONTROLLER,
 			self._controllerId,
 			snc.ControllerFunction['I_AM_HERE'],
 			snc.requestFlag['RESPONSE'],
@@ -35,22 +35,22 @@ class i_am_here_thread(threading.Thread):
 			time.sleep(10)
 
 def programsResetFilter(msg):
-	return ((msg.get_program_type() == snc.ProgramType['CONTROLLER']) and
+	return ((msg.get_program_type() == snc.ProgramType.CONTROLLER) and
 			(msg.getFunctionId () == snc.ControllerFunction['RESET_PROGRAMS']) and
 			(msg.getRequestFlag() == snc.requestFlag['REQUEST']))
 
 def programAddFilter(msg):
-	return ((msg.get_program_type() == snc.ProgramType['CONTROLLER']) and
+	return ((msg.get_program_type() == snc.ProgramType.CONTROLLER) and
 			(msg.getFunctionId () == snc.ControllerFunction['ADD_NEW_PROGRAM']) and
 			(msg.getRequestFlag() == snc.requestFlag['REQUEST']))
 
 def remoteControlSetRequest(msg):
-	return ((msg.get_program_type() == snc.ProgramType['REMOTE_CONTROL']) and
+	return ((msg.get_program_type() == snc.ProgramType.REMOTE_CONTROL) and
 			(msg.getFunctionId () == snc.RemoteControlFunction['SET_PARAMETER_VALUE']) and
 			(msg.getRequestFlag() == snc.requestFlag['REQUEST']))
 
 def remoteControlGetRequest(msg):
-	return ((msg.get_program_type() == snc.ProgramType['REMOTE_CONTROL']) and
+	return ((msg.get_program_type() == snc.ProgramType.REMOTE_CONTROL) and
 			(msg.getFunctionId () == snc.RemoteControlFunction['GET_PARAMETER_VALUE']) and
 			(msg.getRequestFlag() == snc.requestFlag['REQUEST']))
 
@@ -59,7 +59,7 @@ def programInputMappingFilter(msg):
 		return False
 
 	data = msg.get_data()
-	return ((data[0] == snc.ProgramType['PROGRAM']) and
+	return ((data[0] == snc.ProgramType.PROGRAM) and
 			(data[1] == snc.ProgramParameter['INPUT_MAPPING']['id']))
 
 def programOutputMappingFilter(msg):
@@ -67,7 +67,7 @@ def programOutputMappingFilter(msg):
 		return False
 
 	data = msg.get_data()
-	return ((data[0] == snc.ProgramType['PROGRAM']) and
+	return ((data[0] == snc.ProgramType.PROGRAM) and
 			(data[1] == snc.ProgramParameter['OUTPUT_MAPPING']['id']))
 
 class debug_thread(can.Listener):

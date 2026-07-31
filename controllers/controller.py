@@ -130,7 +130,7 @@ class Controller(object):
 		
 		def generate_request():
 			request = sm.Message(
-			snc.ProgramType['CONTROLLER'],
+			snc.ProgramType.CONTROLLER,
 			self._controllerId,
 			snc.ControllerFunction['GET_ACTIVE_PROGRAMS_LIST'],
 			snc.requestFlag['REQUEST'])
@@ -166,7 +166,7 @@ class Controller(object):
 		print_log('Send program add request')
 		def generate_request():
 			request = sm.Message(
-			snc.ProgramType['CONTROLLER'],
+			snc.ProgramType.CONTROLLER,
 			self._controllerId,
 			snc.ControllerFunction['ADD_NEW_PROGRAM'],
 			snc.requestFlag['REQUEST'],
@@ -217,7 +217,7 @@ class Controller(object):
 	def on_can_message_received(self, msg):
 		def generateResponse():
 			response = sm.Message(
-			snc.ProgramType['CONTROLLER'],
+			snc.ProgramType.CONTROLLER,
 			self._controllerId,
 			snc.ControllerFunction['GET_ACTIVE_PROGRAMS_LIST'],
 			snc.requestFlag['RESPONSE'])
@@ -230,7 +230,7 @@ class Controller(object):
 		print_log('send Controller reset request')
 		def generate_request():
 			request = sm.Message(
-			snc.ProgramType['CONTROLLER'],
+			snc.ProgramType.CONTROLLER,
 			self._controllerId,
 			snc.ControllerFunction['RESET_PROGRAMS'],
 			snc.requestFlag['REQUEST'])
