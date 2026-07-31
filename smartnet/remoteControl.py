@@ -11,6 +11,7 @@ from consoleLog import print_error as print_error
 
 ParameterSize =  {
 	'UINT8_T'    : 1,
+	'UINT16_T'   : 2,
 	'TEMPERATURE': 2,
 	'TIME_MS'    : 4,
 	'SCHEDULE'   : 4,
@@ -293,6 +294,7 @@ class RemoteControlParameter(object):
 	def dataToValue(self, data):
 		parameterType = self.getParameterType()
 		if   parameterType == 'UINT8_T'    : return data[0]
+		elif parameterType == 'UINT16_T'   : return bytesToInt(data)
 		elif parameterType == 'TEMPERATURE': return bytesToTemp(data)
 		elif parameterType == 'TIME_MS'    : return bytesToTime(data)
 		elif parameterType == 'SCHEDULE'   : return bytesToSchedulePeriod(data)
@@ -304,6 +306,7 @@ class RemoteControlParameter(object):
 		data = value
 		signedValue = False
 		if   parameterType == 'UINT8_T'    : data = int(value)
+		elif parameterType == 'UINT16_T'   : data = int(value)
 		elif parameterType == 'TEMPERATURE': data = tempToData(value); signedValue = True
 		elif parameterType == 'TIME_MS'    : data = timeToData(value)
 		elif parameterType == 'SCHEDULE'   : data = schedulePeriodToData(value)
