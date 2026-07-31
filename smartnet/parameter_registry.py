@@ -76,7 +76,7 @@ class ParameterRegistry:
 	def get_parameter(
 		self,
 		program_type: int,
-		parameter_id: str
+		parameter_id: int
 	) -> Optional[ParameterDefinition]:
 		"""
 		Get parameter definition by program type and parameter ID.
@@ -85,11 +85,15 @@ class ParameterRegistry:
 		
 		Args:
 			program_type: The program type (e.g., ProgramType.ROOM_DEVICE)
-			parameter_id: The parameter ID string (e.g., 'ROOM_COMFORT_TEMPERATURE')
+			parameter_id: The parameter ID code (int or IntEnum member)
 		
 		Returns:
 			ParameterDefinition if found, None if not found (with warning log)
 		"""
+		# Convert IntEnum to int if needed
+		if hasattr(parameter_id, 'value'):
+			parameter_id = int(parameter_id)
+		
 		cache_key = (program_type, parameter_id)
 		
 		# Return cached result if available
@@ -104,17 +108,17 @@ class ParameterRegistry:
 			self._cache[cache_key] = None
 			return None
 		
-		program_params = snc.ParameterDict[program_type]
+		param_info_dict = snc.ParameterDict[program_type]
 		
-		if parameter_id not in program_params:
+		if parameter_id not in param_info_dict:
 			logger.warning(
-				f'Parameter {parameter_id} not found for program type {program_type}'
+				f'Parameter ID {parameter_id} not found for program type {program_type}'
 			)
 			self._cache[cache_key] = None
 			return None
 		
 		# Create and cache the definition
-		metadata = program_params[parameter_id]
+		metadata = param_info_dict[parameter_id]
 		param_def = ParameterDefinition(metadata)
 		self._cache[cache_key] = param_def
 		
@@ -159,14 +163,14 @@ _registry_instance = ParameterRegistry()
 
 def get_parameter(
 	program_type: int,
-	parameter_id: str
+	parameter_id: int
 ) -> Optional[ParameterDefinition]:
 	"""
 	Module-level convenience function to get parameter definition.
 	
 	Args:
 		program_type: The program type
-		parameter_id: The parameter ID string
+		parameter_id: The parameter ID code (int or IntEnum member)
 	
 	Returns:
 		ParameterDefinition if found, None otherwise

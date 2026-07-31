@@ -97,274 +97,244 @@ class ProgramType(IntEnum):
 
 SCHEDULE_ARRAY_SIZE = 7*3*2
 
-ProgramParameter = {
-	'ID'                 : {'id': 0, 'type': 'UINT8_T'},
-	'INPUT'              : {'id': 1, 'type': 'TEMPERATURE', 'array_size': 10},
-	'OUTPUT'             : {'id': 2, 'type': 'UINT8_T', 'array_size': 10},
-	'TITLE'              : {'id': 3, 'type': 'STRING'},
-	'INPUT_MAPPING'      : {'id': 4, 'type': 0},
-	'OUTPUT_MAPPING'     : {'id': 5, 'type': 0},
-	'SCHEME'             : {'id': 6, 'type': 'UINT8_T'},
-	'TRAINING_ENABLED'   : {'id': 7, 'type': 'UINT8_T'},
-	'MANUAL_MODE_ENABLED': {'id': 8, 'type': 'UINT8_T'},
-	'OUTPUT_MANUAL_STATE': {'id': 9, 'type': 0},
-}
-
-ProgramScheme = {
-	'DEFAULT' : 0,
-
-	'CIRCUIT_MIXED'         : 0,
-	'CIRCUIT_HEAT_EXCHANGE' : 1,
-	'CIRCUIT_DIRECT'        : 2,
-	'CIRCUIT_HEATING_LINE'  : 3,
-	
-	
-	'PROGRAM_SCHEME_0': 0,
-	'PROGRAM_SCHEME_1': 1,
-	'PROGRAM_SCHEME_2': 2,
-	'PROGRAM_SCHEME_3': 3,
-	'PROGRAM_SCHEME_4': 4,
-	'PROGRAM_SCHEME_5': 5,
-}
-
-RoomDeviceParameter = {
-	'ROOM_COMFORT_TEMPERATURE'          : {'id':  1, 'type': 'TEMPERATURE'},
-	'ROOM_REDUCED_TEMPERATURE'          : {'id':  2, 'type': 'TEMPERATURE'},
-	'ROOM_HYSTERESIS'                   : {'id':  3, 'type': 'TEMPERATURE'},
-	'RELAY_PERIOD'                      : {'id':  4, 'type': 'TIME_MS'},
-	'RESPONSIBLE_CIRCUIT_1'             : {'id':  5, 'type': 'UINT8_T'},
-	'RESPONSIBLE_CIRCUIT_2'             : {'id':  6, 'type': 'UINT8_T'},
-	'RESPONSIBLE_CIRCUIT_3'             : {'id':  7, 'type': 'UINT8_T'},
-	'WORK_MODE'                         : {'id':  8, 'type': 'UINT8_T'},
-	'ROOM_DEVICE_VALVE_STATE'           : {'id':  9, 'type': 'UINT8_T'},
-	'MINIMUM_FLOOR_TEMPERATURE'         : {'id': 10, 'type': 'TEMPERATURE'},
-	'MAXIMUM_FLOOR_TEMPERATURE'         : {'id': 11, 'type': 'TEMPERATURE'},
-	'RADIATOR_MINIMUM_SIGNAL'           : {'id': 12, 'type': 'UINT8_T'},
-	'ROOM_DESIRED_TEMPERATURE'          : {'id': 13, 'type': 'TEMPERATURE'},
-	'RELAY_PERCENTAGE_PRIMARY'          : {'id': 14, 'type': 'UINT8_T'},
-	'RELAY_PERCENTAGE_SECONDARY'        : {'id': 15, 'type': 'UINT8_T'},
-	'OUTDOOR_TEMPERATURE'               : {'id': 16, 'type': 'TEMPERATURE'},
-	'RELAY_PERCENTAGE_ADDITIONAL'       : {'id': 17, 'type': 'UINT8_T'},
-	'CIRCUIT_1_SHIFT'                   : {'id': 18, 'type': 'TEMPERATURE'},
-	'CIRCUIT_2_SHIFT'                   : {'id': 19, 'type': 'TEMPERATURE'},
-	'CIRCUIT_3_SHIFT'                   : {'id': 20, 'type': 'TEMPERATURE'},
-	'ROOM_OFF_TEMPERATURE'              : {'id': 21, 'type': 'TEMPERATURE'},
-	'SCHEDULE'                          : {'id': 22, 'type': 'SCHEDULE', 'array_size':SCHEDULE_ARRAY_SIZE},
-	'FLOOR_REQUIRED_TEMPERATURE'        : {'id': 23, 'type': 'TEMPERATURE'},
-	'CURRENT_FLOOR_REQUIRED_TEMPERATURE': {'id': 24, 'type': 'TEMPERATURE'},
-	'WALL_REQUIRED_TEMPERATURE'         : {'id': 25, 'type': 'TEMPERATURE'},
-	'CURRENT_WALL_REQUIRED_TEMPERATURE' : {'id': 26, 'type': 'TEMPERATURE'},
-	'HEAT_EXTRICATION'                  : {'id': 27, 'type': 'UINT8_T'},
-	'FLOOR_REDUCED_TEMPERATURE'         : {'id': 28, 'type': 'TEMPERATURE'},
-	'WALL_REDUCED_TEMPERATURE'          : {'id': 29, 'type': 'TEMPERATURE'},
-	'CURRENT_WORK_MODE_STATUS'          : {'id': 30, 'type': 'UINT8_T'},
-	'VENTILATION_CIRCUIT'               : {'id': 31, 'type': 'UINT8_T'},
-	'REQUIRED_HUMIDITY'                 : {'id': 32, 'type': 'TEMPERATURE'},
-	'POOL_CIRCUIT'                      : {'id': 33, 'type': 'UINT8_T'},
-	'POOL_TEMPERATURE_OFFSET'           : {'id': 34, 'type': 'TEMPERATURE'},
-
-	'SCHEDULE_2_0': {'id': 35, 'type': 'UINT8_T'},
-	'LOCATION'    : {'id': 36, 'type': 'UINT8_T'},
-}
-
-ControllerParameter = {
-	'SENSOR'                       : {'id':  1, 'type': 0},
-	'OUTPUT'                       : {'id':  2, 'type': 0},
-	'USED_SENSORS_MASK'            : {'id':  3, 'type': 0},
-	'USED_RELAYS_MASK'             : {'id':  4, 'type': 0},
-	'TITLE'                        : {'id':  5, 'type': 0},
-	'CONTROLLER_TYPE'              : {'id':  6, 'type': 0},
-	'REVISION'                     : {'id':  7, 'type': 0},
-	'INPUTS_MASK'                  : {'id':  8, 'type': 0},
-	'OUTPUTS_MASK'                 : {'id':  9, 'type': 0},
-	'ANALOG_INPUT_SIGNAL_TYPE'     : {'id': 10, 'type': 0},
-	'ANALOG_INPUT_SENSOR_TYPE'     : {'id': 11, 'type': 0},
-	'ANALOG_INPUT_POINT_X1'        : {'id': 12, 'type': 0},
-	'ANALOG_INPUT_POINT_Y1'        : {'id': 13, 'type': 0},
-	'ANALOG_INPUT_POINT_X2'        : {'id': 14, 'type': 0},
-	'ANALOG_INPUT_POINT_Y2'        : {'id': 15, 'type': 0},
-	'ANALOG_OUTPUT_PROFIL'         : {'id': 16, 'type': 0},
-	'ANALOG_OUTPUT_SIGNAL_FORM'    : {'id': 17, 'type': 0},
-	'ANALOG_OUTPUT_SIGNAL_AUS'     : {'id': 18, 'type': 0},
-	'ANALOG_OUTPUT_SIGNAL_EIN'     : {'id': 19, 'type': 0},
-	'ANALOG_OUTPUT_SIGNAL_MAX'     : {'id': 20, 'type': 0},
-	'ANALOG_OUTPUT_DREHZAH_BEI_EIN': {'id': 21, 'type': 0},
-	'ANALOG_OUTPUT_TYP'            : {'id': 22, 'type': 0},
-	'NETWORK_INPUT_CONFIG'         : {'id': 23, 'type': 0},
-	'NETWORK_VAR_INPUT_CONFIG'     : {'id': 24, 'type': 0},
-	'NETWORK_OUTPUT_CONFIG'        : {'id': 25, 'type': 0},
-	'VARIABLE_TYPE'                : {'id': 26, 'type': 0},
-	'OUTPUT_TO_VARIABLE_MAPPING'   : {'id': 27, 'type': 0},
-	'DATE'                         : {'id': 28, 'type': 0},
-	'TIME'                         : {'id': 29, 'type': 0},
-	'SENSOR_CALIBRATION'           : {'id': 30, 'type': 0},
-	'DISCRETTE_OUTPUT_SIGNAL_FORM' : {'id': 31, 'type': 0},
-	'ANALOG_OUTPUT_MAX_Y'          : {'id': 32, 'type': 0},
-	
-	'SENSOR_TYPE'                  : {'id': 33, 'type': 0},
-	'SENSOR_INFO'                  : {'id': 34, 'type': 0},
-
-	'SUMMER_TIME_SWITCH'           : {'id': 35, 'type': 0}, 
-	'TIME_MASTER'                  : {'id': 36, 'type': 0},
-	'ADAPTER_TYPE'                 : {'id': 37, 'type': 0}, 
-	'ADAPTER_SPEED'                : {'id': 38, 'type': 0}, 
-	'ADAPTER_PARITY'               : {'id': 39, 'type': 0}, 
-
-	'CONTROLLER_ID'                : {'id': 40, 'type': 0}, 
-
-	'ADAPTER_STOP_BIT_NUM'         : {'id': 41, 'type': 0}, 
-
-	'RELAY_TEST_ENABLE'            : {'id': 42, 'type': 0}, 
-
-	'OUTPUT_MANUAL_VALUE'          : {'id': 43, 'type': 0}, 
-}
+class ProgramParameterId(IntEnum):
+	ID = 0
+	INPUT = 1
+	OUTPUT = 2
+	TITLE = 3
+	INPUT_MAPPING = 4
+	OUTPUT_MAPPING = 5
+	SCHEME = 6
+	TRAINING_ENABLED = 7
+	MANUAL_MODE_ENABLED = 8
+	OUTPUT_MANUAL_STATE = 9
 
 
-HeatingCircuitParameter = {
-	'FROST_PROTECTION_TEMPERATURE'  : {'id':  1, 'type': 'TEMPERATURE'},
-	'VALVE_RUNING_TIME'             : {'id':  2, 'type': 'TIME_MS'},
-	'VALVE_OPEN_PROPORTIONAL_BAND'  : {'id':  3, 'type': 'TEMPERATURE'},
-	'VALVE_CLOSE_PROPORTIONAL_BAND' : {'id':  4, 'type': 'TEMPERATURE'},
-	'VALVE_BLOCK'                   : {'id':  5, 'type': 'UINT8_T'},
-	'PUMP_MODE'                     : {'id':  6, 'type': 'UINT8_T'},
-	'PUMP_OFF_OUTDOOR_TEMPERATURE'  : {'id':  7, 'type': 'TEMPERATURE'},
-	'ANALOG_CICRULATION_PUMP_STATE' : {'id':  8, 'type': 'UINT8_T'},
-	'ANALOG_HEATCHANGE_PUMP_STATE'  : {'id':  9, 'type': 'UINT8_T'},
-	'VALVE_POSITION'                : {'id': 10, 'type': 'UINT8_T'},
-}                       
+class RoomDeviceParameterId(IntEnum):
+	ROOM_COMFORT_TEMPERATURE = 1
+	ROOM_REDUCED_TEMPERATURE = 2
+	ROOM_HYSTERESIS = 3
+	RELAY_PERIOD = 4
+	RESPONSIBLE_CIRCUIT_1 = 5
+	RESPONSIBLE_CIRCUIT_2 = 6
+	RESPONSIBLE_CIRCUIT_3 = 7
+	WORK_MODE = 8
+	ROOM_DEVICE_VALVE_STATE = 9
+	MINIMUM_FLOOR_TEMPERATURE = 10
+	MAXIMUM_FLOOR_TEMPERATURE = 11
+	RADIATOR_MINIMUM_SIGNAL = 12
+	ROOM_DESIRED_TEMPERATURE = 13
+	RELAY_PERCENTAGE_PRIMARY = 14
+	RELAY_PERCENTAGE_SECONDARY = 15
+	OUTDOOR_TEMPERATURE = 16
+	RELAY_PERCENTAGE_ADDITIONAL = 17
+	CIRCUIT_1_SHIFT = 18
+	CIRCUIT_2_SHIFT = 19
+	CIRCUIT_3_SHIFT = 20
+	ROOM_OFF_TEMPERATURE = 21
+	SCHEDULE = 22
+	FLOOR_REQUIRED_TEMPERATURE = 23
+	CURRENT_FLOOR_REQUIRED_TEMPERATURE = 24
+	WALL_REQUIRED_TEMPERATURE = 25
+	CURRENT_WALL_REQUIRED_TEMPERATURE = 26
+	HEAT_EXTRICATION = 27
+	FLOOR_REDUCED_TEMPERATURE = 28
+	WALL_REDUCED_TEMPERATURE = 29
+	CURRENT_WORK_MODE_STATUS = 30
+	VENTILATION_CIRCUIT = 31
+	REQUIRED_HUMIDITY = 32
+	POOL_CIRCUIT = 33
+	POOL_TEMPERATURE_OFFSET = 34
+	SCHEDULE_2_0 = 35
+	LOCATION = 36
 
-CircuitParameter = {
-		'REQUIRED_CONSTANT_FLOW_TEMPERATURE'                 : {'id':  1, 'type': 'TEMPERATURE'},
-		'HEAT_CALCULATION_MODE'                              : {'id':  2, 'type': 'UINT8_T'},
-		'HEATING_SLOPE'                                      : {'id':  3, 'type': 'TDP_FLOAT'},
-		'ROOM_SENSOR_INFLUENCE'                              : {'id':  4, 'type': 'UINT8_T'},
-		'OUTDOOR_TEMPERATURE'                                : {'id':  5, 'type': 'TEMPERATURE'},
-		'ANALOG_PUMP_CONTORL_MODE'                           : {'id':  6, 'type': 'UINT8_T'},
-		'ANALOG_PUMP_MINIMUM_SPEED'                          : {'id':  7, 'type': 'UINT8_T'},
-		'ANALOG_PUMP_CONSTANT_SPEED'                         : {'id':  8, 'type': 'UINT8_T'},
-		'ROOM_SENSOR_INFLUENCE_MIN'                          : {'id':  9, 'type': 'TEMPERATURE'},
-		'ROOM_SENSOR_INFLUENCE_MAX'                          : {'id': 10, 'type': 'TEMPERATURE'},
-		'CURRENT_SUPPORTED_ROOM_DEVICE_TEMPERATURE'          : {'id': 11, 'type': 'TEMPERATURE'},
-		'CURRENT_SUPPORTED_ROOM_DEVICE_REQUIRED_TEMPERATURE' : {'id': 12, 'type': 'TEMPERATURE'},
-		'CURRENT_SUPPORTED_ROOM_DEVICE_ID'                   : {'id': 13, 'type': 'UINT8_T'},
-		'OUTSIDE_TEMPERATURE_REQUEST_VALUE'                  : {'id': 14, 'type': 'TEMPERATURE'},
-		'MINIMUM_FLOW_TEMPERATURE'                           : {'id': 15, 'type': 'TEMPERATURE'},
-		'MAXIMUM_FLOW_TEMPERATURE'                           : {'id': 16, 'type': 'TEMPERATURE'},
-		'ANALOG_PUMP_MAXIMUM_SPEED'                          : {'id': 17, 'type': 'UINT8_T'},
-		'FLOW_CIRCULATION_IS_ACTIVE'                         : {'id': 18, 'type': 'UINT8_T'},
-}
+# Placeholder - will be populated from parameter_info
+# ... existing code ...
 
-ConsumerParameter = {
-	'PRIORITY'                  : {'id': 1, 'type': 'UINT8_T'}, 
-	'GENERATOR_ID'              : {'id': 2, 'type': 'UINT8_T'}, 
-	'DUMMY1'                    : {'id': 3, 'type': 'UINT8_T'}, 
-	'DUMMY2'                    : {'id': 4, 'type': 'UINT8_T'}, 
-	'TEMPERATURE_COMPENSATION'  : {'id': 5, 'type': 'TEMPERATURE'}, 
-	'REQUIRED_TEMPERATURE'      : {'id': 6, 'type': 'TEMPERATURE'}, 
-	'GENERATOR_TEMPERATURE'     : {'id': 7, 'type': 'TEMPERATURE'}, 
-	'HEAT_EXTRICATION_ENABLED'  : {'id': 8, 'type': 'UINT8_T'}, 
-	'ALARM_PROGRAM_ID'          : {'id': 9, 'type': 'UINT8_T'}, 
-}
+class ControllerParameterId(IntEnum):
+	SENSOR = 1
+	OUTPUT = 2
+	USED_SENSORS_MASK = 3
+	USED_RELAYS_MASK = 4
+	TITLE = 5
+	CONTROLLER_TYPE = 6
+	REVISION = 7
+	INPUTS_MASK = 8
+	OUTPUTS_MASK = 9
+	ANALOG_INPUT_SIGNAL_TYPE = 10
+	ANALOG_INPUT_SENSOR_TYPE = 11
+	ANALOG_INPUT_POINT_X1 = 12
+	ANALOG_INPUT_POINT_Y1 = 13
+	ANALOG_INPUT_POINT_X2 = 14
+	ANALOG_INPUT_POINT_Y2 = 15
+	ANALOG_OUTPUT_PROFIL = 16
+	ANALOG_OUTPUT_SIGNAL_FORM = 17
+	ANALOG_OUTPUT_SIGNAL_AUS = 18
+	ANALOG_OUTPUT_SIGNAL_EIN = 19
+	ANALOG_OUTPUT_SIGNAL_MAX = 20
+	ANALOG_OUTPUT_DREHZAH_BEI_EIN = 21
+	ANALOG_OUTPUT_TYP = 22
+	NETWORK_INPUT_CONFIG = 23
+	NETWORK_VAR_INPUT_CONFIG = 24
+	NETWORK_OUTPUT_CONFIG = 25
+	VARIABLE_TYPE = 26
+	OUTPUT_TO_VARIABLE_MAPPING = 27
+	DATE = 28
+	TIME = 29
+	SENSOR_CALIBRATION = 30
+	DISCRETTE_OUTPUT_SIGNAL_FORM = 31
+	ANALOG_OUTPUT_MAX_Y = 32
+	SENSOR_TYPE = 33
+	SENSOR_INFO = 34
+	SUMMER_TIME_SWITCH = 35
+	TIME_MASTER = 36
+	ADAPTER_TYPE = 37
+	ADAPTER_SPEED = 38
+	ADAPTER_PARITY = 39
+	CONTROLLER_ID = 40
+	ADAPTER_STOP_BIT_NUM = 41
+	RELAY_TEST_ENABLE = 42
+	OUTPUT_MANUAL_VALUE = 43
 
-SnowMelterParameter = {
-	'WORK_MODE'                                               : {'id':  1, 'type': 'UINT8_T'},
-	'MINIMUM_OUTDOOR_TEMPERATURE'                             : {'id':  2, 'type': 'TEMPERATURE'},
-	'MAXIMUM_OUTDOOR_TEMPERATURE'                             : {'id':  3, 'type': 'TEMPERATURE'},
-	'REQUIRED_CONSTANT_FLOW_TEMPERATURE_OF_SECONDARY_CIRCUIT' : {'id':  4, 'type': 'TEMPERATURE'},
-	'OUTDOOR_TEMPERATURE'                                     : {'id':  5, 'type': 'TEMPERATURE'},
-	'PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE'                  : {'id':  6, 'type': 'TEMPERATURE'},
-	'REQUIRED_PLATE_TEMPERATURE'                              : {'id':  7, 'type': 'TEMPERATURE'},
-}
+class HeatingCircuitParameterId(IntEnum):
+	FROST_PROTECTION_TEMPERATURE = 1
+	VALVE_RUNING_TIME = 2
+	VALVE_OPEN_PROPORTIONAL_BAND = 3
+	VALVE_CLOSE_PROPORTIONAL_BAND = 4
+	VALVE_BLOCK = 5
+	PUMP_MODE = 6
+	PUMP_OFF_OUTDOOR_TEMPERATURE = 7
+	ANALOG_CICRULATION_PUMP_STATE = 8
+	ANALOG_HEATCHANGE_PUMP_STATE = 9
+	VALVE_POSITION = 10
 
-CASCADE_SOURCES_MAX_NUM = 8
+class CircuitParameterId(IntEnum):
+	REQUIRED_CONSTANT_FLOW_TEMPERATURE = 1
+	HEAT_CALCULATION_MODE = 2
+	HEATING_SLOPE = 3
+	ROOM_SENSOR_INFLUENCE = 4
+	OUTDOOR_TEMPERATURE = 5
+	ANALOG_PUMP_CONTORL_MODE = 6
+	ANALOG_PUMP_MINIMUM_SPEED = 7
+	ANALOG_PUMP_CONSTANT_SPEED = 8
+	ROOM_SENSOR_INFLUENCE_MIN = 9
+	ROOM_SENSOR_INFLUENCE_MAX = 10
+	CURRENT_SUPPORTED_ROOM_DEVICE_TEMPERATURE = 11
+	CURRENT_SUPPORTED_ROOM_DEVICE_REQUIRED_TEMPERATURE = 12
+	CURRENT_SUPPORTED_ROOM_DEVICE_ID = 13
+	OUTSIDE_TEMPERATURE_REQUEST_VALUE = 14
+	MINIMUM_FLOW_TEMPERATURE = 15
+	MAXIMUM_FLOW_TEMPERATURE = 16
+	ANALOG_PUMP_MAXIMUM_SPEED = 17
+	FLOW_CIRCULATION_IS_ACTIVE = 18
 
-CascadeManagerParameter = {
-	'PARAM_ROTATION_PERIOD'                        : {'id':  1, 'type': 'UINT8_T'},
-	'PARAM_TEMPERATURE_SOURCE_ID'                  : {'id':  2, 'type': 'UINT8_T', 'array_size':CASCADE_SOURCES_MAX_NUM},
-	'PARAM_TEMPERATURE_SOURCE_TYPE'                : {'id':  3, 'type': 'UINT8_T', 'array_size':CASCADE_SOURCES_MAX_NUM},
-	'PARAM_TEMPERATURE_SOURCE_POWER'               : {'id':  4, 'type': 'UINT8_T', 'array_size':CASCADE_SOURCES_MAX_NUM},
-	'PARAM_TEMPERATURE_SOURCE_WORKTIME'            : {'id':  5, 'type': 'UINT8_T', 'array_size':CASCADE_SOURCES_MAX_NUM},
-	'PARAM_TEMPERATURE_SOURCE_PRIORITY'            : {'id':  6, 'type': 'UINT8_T', 'array_size':CASCADE_SOURCES_MAX_NUM},
-	'PARAM_P_FACTOR'                               : {'id':  7, 'type': 'UINT8_T'},
-	'PARAM_I_FACTOR'                               : {'id':  8, 'type': 'UINT8_T'},
-	'PARAM_D_FACTOR'                               : {'id':  9, 'type': 'UINT8_T'},
-	'SCHEDULE'                                     : {'id': 10, 'type': 'SCHEDULE', 'array_size':SCHEDULE_ARRAY_SIZE},
-	'REQUIRED_POWER'                               : {'id': 11, 'type': 'UINT8_T'},
-	'NEXT_TEMPERATURE_SRC_ON_DELAY'                : {'id': 12, 'type': 'UINT8_T'},
-	'ROTATION_TYPE'                                : {'id': 13, 'type': 'UINT8_T'},
-	'TEMPERATURE_OFFSET'                           : {'id': 14, 'type': 'TEMPERATURE'},
-	'MINIMUM_REQUIRED_TEMPERATURE'                 : {'id': 15, 'type': 'TEMPERATURE'},
-	'MAXIMUM_REQUIRED_TEMPERATURE'                 : {'id': 16, 'type': 'TEMPERATURE'},
-	'WORK_FUNCTION'                                : {'id': 17, 'type': 'UINT8_T'},
-	'TEMPERATURE_SOURCE_OFF_DELAY_BY_TEMPERATURE'  : {'id': 18, 'type': 'UINT8_T'},
-}
+class ConsumerParameterId(IntEnum):
+	PRIORITY = 1
+	GENERATOR_ID = 2
+	DUMMY1 = 3
+	DUMMY2 = 4
+	TEMPERATURE_COMPENSATION = 5
+	REQUIRED_TEMPERATURE = 6
+	GENERATOR_TEMPERATURE = 7
+	HEAT_EXTRICATION_ENABLED = 8
+	ALARM_PROGRAM_ID = 9
 
-DistrictHeatingParameter = {
-	'PARAM_VALVE_MIN'                              : {'id':  1, 'type': 'UINT8_T'},
-	'PARAM_VALVE_RUNNING_TIME'                     : {'id':  2, 'type': 'TIME_MS'},
-	'PARAM_P_FACTOR'                               : {'id':  3, 'type': 'UINT8_T'},
-	'PARAM_I_FACTOR'                               : {'id':  4, 'type': 'UINT8_T'},
-	'PARAM_D_FACTOR'                               : {'id':  5, 'type': 'UINT8_T'},
-	'PARAM_BACKWARD_CONTROL_TYPE'                  : {'id':  6, 'type': 'UINT8_T'},
-	'PARAM_SUPPLY_PUMP_CONTROL_TYPE'               : {'id':  7, 'type': 'UINT8_T'},
-	'PARAM_MAXIMUM_BACKWARD_TEMPERATURE'           : {'id':  8, 'type': 'TEMPERATURE'},
-	'PARAM_MAXIMUM_BACKWARD_TEMPERATURE_II'        : {'id':  9, 'type': 'TEMPERATURE'},
-	'PARAM_OUTDOOR_TEMPERATURE_II'                 : {'id': 10, 'type': 'TEMPERATURE'},
-	'PARAM_THERMAL_OUTPUT_CALIBRATION'             : {'id': 11, 'type': 'UINT8_T'},
-	'PARAM_VOLUME_FLOW_CALIBRATION'                : {'id': 12, 'type': 'UINT8_T'},
-	'PARAM_MAXIMUM_THERMAL_OUTPUT'                 : {'id': 13, 'type': 'UINT8_T'},
-	'PARAM_MAXIMUM_VOLUME_FLOW'                    : {'id': 14, 'type': 'TEMPERATURE'},
-	'PARAM_TEMPERATURE_SOURCE_POWER_REQUEST_DELAY' : {'id': 15, 'type': 'TIME_MS'},
-	'PARAM_TEMPERATURE_SOURCE_ID'                  : {'id': 16, 'type': 'UINT8_T'},
-	'PARAM_CURRENT_MAXIMUM_BACKWARD_TEMPERATURE'   : {'id': 17, 'type': 'TEMPERATURE'},
-}
+class SnowMelterParameterId(IntEnum):
+	WORK_MODE = 1
+	MINIMUM_OUTDOOR_TEMPERATURE = 2
+	MAXIMUM_OUTDOOR_TEMPERATURE = 3
+	REQUIRED_CONSTANT_FLOW_TEMPERATURE_OF_SECONDARY_CIRCUIT = 4
+	OUTDOOR_TEMPERATURE = 5
+	PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE = 6
+	REQUIRED_PLATE_TEMPERATURE = 7
 
-SwimmingPoolParameter = {
-	'REQUIRED_POOL_TEMPERATURE'         : {'id':  1, 'type': 'TEMPERATURE'},
-	'CURRENT_REQUIRED_POOL_TEMPERATURE' : {'id':  2, 'type': 'TEMPERATURE'},
-	'WORK_MODE'                         : {'id':  3, 'type': 'UINT8_T'},
-	'SCHEDULE'                          : {'id':  4, 'type': 'SCHEDULE', 'array_size':SCHEDULE_ARRAY_SIZE},
-	'CIRCULATION_PUMP_WORK_MODE'        : {'id':  5, 'type': 'UINT8_T'},
-	'CIRCULATION_PUMP_WORK_PERIOD_ON'   : {'id':  6, 'type': 'TIME_MS'},
-	'CIRCULATION_PUMP_WORK_PERIOD_OFF'  : {'id':  7, 'type': 'TIME_MS'},
-	'REQUIRED_POOL_TEMPERATURE_ECONOM'  : {'id':  8, 'type': 'TEMPERATURE'},
-	'FILLING_DURATION'                  : {'id':  9, 'type': 'TIME_MS'},
-	'LOW_WATER_LEVEL_ALARM_RESET'       : {'id': 10, 'type': 'UINT8_T'},
-	'CURRENT_WORK_MODE_STATUS'          : {'id': 11, 'type': 'UINT8_T'},
-}
+class CascadeManagerParameterId(IntEnum):
+	PARAM_ROTATION_PERIOD = 1
+	PARAM_TEMPERATURE_SOURCE_ID = 2
+	PARAM_TEMPERATURE_SOURCE_TYPE = 3
+	PARAM_TEMPERATURE_SOURCE_POWER = 4
+	PARAM_TEMPERATURE_SOURCE_WORKTIME = 5
+	PARAM_TEMPERATURE_SOURCE_PRIORITY = 6
+	PARAM_P_FACTOR = 7
+	PARAM_I_FACTOR = 8
+	PARAM_D_FACTOR = 9
+	SCHEDULE = 10
+	REQUIRED_POWER = 11
+	NEXT_TEMPERATURE_SRC_ON_DELAY = 12
+	ROTATION_TYPE = 13
+	TEMPERATURE_OFFSET = 14
+	MINIMUM_REQUIRED_TEMPERATURE = 15
+	MAXIMUM_REQUIRED_TEMPERATURE = 16
+	WORK_FUNCTION = 17
+	TEMPERATURE_SOURCE_OFF_DELAY_BY_TEMPERATURE = 18
 
-VirtualControllerParameter = {
-	'CONTROLLERID' : {'id':  1, 'type': 'UINT8_T'    },
-	'SENSOR01'     : {'id':  2, 'type': 'TEMPERATURE'},
-	'SENSOR02'     : {'id':  3, 'type': 'TEMPERATURE'},
-	'SENSOR03'     : {'id':  4, 'type': 'TEMPERATURE'},
-	'SENSOR04'     : {'id':  5, 'type': 'TEMPERATURE'},
-	'SENSOR05'     : {'id':  6, 'type': 'TEMPERATURE'},
-	'SENSOR06'     : {'id':  7, 'type': 'TEMPERATURE'},
-	'SENSOR07'     : {'id':  8, 'type': 'TEMPERATURE'},
-	'SENSOR08'     : {'id':  9, 'type': 'TEMPERATURE'},
-	'SENSOR09'     : {'id': 10, 'type': 'TEMPERATURE'},
-	'SENSOR10'     : {'id': 11, 'type': 'TEMPERATURE'},
-	'SENSOR11'     : {'id': 12, 'type': 'TEMPERATURE'},
-	'SENSOR12'     : {'id': 13, 'type': 'TEMPERATURE'},
-	'SENSOR13'     : {'id': 14, 'type': 'TEMPERATURE'},
-	'SENSOR14'     : {'id': 15, 'type': 'TEMPERATURE'},
-	'SENSOR15'     : {'id': 16, 'type': 'TEMPERATURE'},
-	'SENSOR16'     : {'id': 17, 'type': 'TEMPERATURE'},
-}
+class DistrictHeatingParameterId(IntEnum):
+	PARAM_VALVE_MIN = 1
+	PARAM_VALVE_RUNNING_TIME = 2
+	PARAM_P_FACTOR = 3
+	PARAM_I_FACTOR = 4
+	PARAM_D_FACTOR = 5
+	PARAM_BACKWARD_CONTROL_TYPE = 6
+	PARAM_SUPPLY_PUMP_CONTROL_TYPE = 7
+	PARAM_MAXIMUM_BACKWARD_TEMPERATURE = 8
+	PARAM_MAXIMUM_BACKWARD_TEMPERATURE_II = 9
+	PARAM_OUTDOOR_TEMPERATURE_II = 10
+	PARAM_THERMAL_OUTPUT_CALIBRATION = 11
+	PARAM_VOLUME_FLOW_CALIBRATION = 12
+	PARAM_MAXIMUM_THERMAL_OUTPUT = 13
+	PARAM_MAXIMUM_VOLUME_FLOW = 14
+	PARAM_TEMPERATURE_SOURCE_POWER_REQUEST_DELAY = 15
+	PARAM_TEMPERATURE_SOURCE_ID = 16
+	PARAM_CURRENT_MAXIMUM_BACKWARD_TEMPERATURE = 17
 
+class SwimmingPoolParameterId(IntEnum):
+	REQUIRED_POOL_TEMPERATURE = 1
+	CURRENT_REQUIRED_POOL_TEMPERATURE = 2
+	WORK_MODE = 3
+	SCHEDULE = 4
+	CIRCULATION_PUMP_WORK_MODE = 5
+	CIRCULATION_PUMP_WORK_PERIOD_ON = 6
+	CIRCULATION_PUMP_WORK_PERIOD_OFF = 7
+	REQUIRED_POOL_TEMPERATURE_ECONOM = 8
+	FILLING_DURATION = 9
+	LOW_WATER_LEVEL_ALARM_RESET = 10
+	CURRENT_WORK_MODE_STATUS = 11
+
+class VirtualControllerParameterId(IntEnum):
+	CONTROLLERID = 1
+	SENSOR01 = 2
+	SENSOR02 = 3
+	SENSOR03 = 4
+	SENSOR04 = 5
+	SENSOR05 = 6
+	SENSOR06 = 7
+	SENSOR07 = 8
+	SENSOR08 = 9
+	SENSOR09 = 10
+	SENSOR10 = 11
+	SENSOR11 = 12
+	SENSOR12 = 13
+	SENSOR13 = 14
+	SENSOR14 = 15
+	SENSOR15 = 16
+	SENSOR16 = 17
+
+# Import metadata from parameter_info module
+from smartnet import parameter_info as pinfo
+
+# Map ProgramType to parameter metadata (with IntEnum members as keys)
 ParameterDict = {
-	ProgramType.PROGRAM         : ProgramParameter,
-	ProgramType.ROOM_DEVICE     : RoomDeviceParameter,
-	ProgramType.CONTROLLER      : ControllerParameter,
-	ProgramType.HEATING_CIRCUIT : HeatingCircuitParameter,
-	ProgramType.CONSUMER        : ConsumerParameter,
-	ProgramType.CASCADE_MANAGER : CascadeManagerParameter,
-	ProgramType.DISTRICT_HEATING: DistrictHeatingParameter,
-	ProgramType.SNOWMELT        : SnowMelterParameter,
-	ProgramType.CIRCUIT         : CircuitParameter,
-	ProgramType.POOL            : SwimmingPoolParameter,
-	ProgramType.VIRTUAL_CONTROLLER: VirtualControllerParameter,
+	ProgramType.PROGRAM: pinfo.PROGRAM_PARAMETER_INFO,
+	ProgramType.ROOM_DEVICE: pinfo.ROOM_DEVICE_PARAMETER_INFO,
+	ProgramType.CONTROLLER: pinfo.CONTROLLER_PARAMETER_INFO,
+	ProgramType.HEATING_CIRCUIT: pinfo.HEATING_CIRCUIT_PARAMETER_INFO,
+	ProgramType.CONSUMER: pinfo.CONSUMER_PARAMETER_INFO,
+	ProgramType.CASCADE_MANAGER: pinfo.CASCADE_MANAGER_PARAMETER_INFO,
+	ProgramType.DISTRICT_HEATING: pinfo.DISTRICT_HEATING_PARAMETER_INFO,
+	ProgramType.SNOWMELT: pinfo.SNOWMELTER_PARAMETER_INFO,
+	ProgramType.CIRCUIT: pinfo.CIRCUIT_PARAMETER_INFO,
+	ProgramType.POOL: pinfo.SWIMMING_POOL_PARAMETER_INFO,
+	ProgramType.VIRTUAL_CONTROLLER: pinfo.VIRTUAL_CONTROLLER_PARAMETER_INFO,
 }
 
 
