@@ -23,8 +23,8 @@ class HeatingCircuitSettings(object):
 
 	def get(self):
 		return [
-			RemoteControlParameter(snc.ProgramType.CONSUMER, 'GENERATOR_ID', self._source),
-			RemoteControlParameter(snc.ProgramType.CIRCUIT , 'HEATING_SLOPE', self._heatingSlope),
+			RemoteControlParameter(snc.ProgramType.CONSUMER, snc.ConsumerParameterId.GENERATOR_ID, self._source),
+			RemoteControlParameter(snc.ProgramType.CIRCUIT , snc.CircuitParameterId.HEATING_SLOPE, self._heatingSlope),
 		]
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]
@@ -37,7 +37,7 @@ class DhwSettings(object):
 
 	def get(self):
 		return [
-			RemoteControlParameter(snc.ProgramType.CONSUMER, 'GENERATOR_ID', self._source),
+			RemoteControlParameter(snc.ProgramType.CONSUMER, snc.ConsumerParameterId.GENERATOR_ID, self._source),
 		]
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]
@@ -52,8 +52,8 @@ class SnowMelterSettings(object):
 
 	def get(self):
 		return [
-			RemoteControlParameter(snc.ProgramType.CONSUMER, 'GENERATOR_ID'    , self._source),
-			RemoteControlParameter(snc.ProgramType.CONSUMER, 'ALARM_PROGRAM_ID', self._alarmProgram),
+			RemoteControlParameter(snc.ProgramType.CONSUMER, snc.ConsumerParameterId.GENERATOR_ID    , self._source),
+			RemoteControlParameter(snc.ProgramType.CONSUMER, snc.ConsumerParameterId.ALARM_PROGRAM_ID, self._alarmProgram),
 		]
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]
@@ -87,7 +87,7 @@ class CascadeSettings(object):
 		for source in self._sourceList:
 			if source:
 				result.append(
-					RemoteControlParameter(snc.ProgramType.CASCADE_MANAGER, 'PARAM_TEMPERATURE_SOURCE_ID', source, i)
+					RemoteControlParameter(snc.ProgramType.CASCADE_MANAGER, snc.CascadeManagerParameterId.PARAM_TEMPERATURE_SOURCE_ID, source, i)
 				)
 			i = i + 1
 
@@ -112,9 +112,9 @@ class RoomSettings(object):
 
 	def get(self):
 		return [
-				RemoteControlParameter(snc.ProgramType.ROOM_DEVICE, 'RESPONSIBLE_CIRCUIT_1', self._sourceList[0]),
-				RemoteControlParameter(snc.ProgramType.ROOM_DEVICE, 'RESPONSIBLE_CIRCUIT_2', self._sourceList[1]),
-				RemoteControlParameter(snc.ProgramType.ROOM_DEVICE, 'RESPONSIBLE_CIRCUIT_3', self._sourceList[2]),
+				RemoteControlParameter(snc.ProgramType.ROOM_DEVICE, snc.RoomDeviceParameterId.RESPONSIBLE_CIRCUIT_1, self._sourceList[0]),
+				RemoteControlParameter(snc.ProgramType.ROOM_DEVICE, snc.RoomDeviceParameterId.RESPONSIBLE_CIRCUIT_2, self._sourceList[1]),
+				RemoteControlParameter(snc.ProgramType.ROOM_DEVICE, snc.RoomDeviceParameterId.RESPONSIBLE_CIRCUIT_3, self._sourceList[2]),
 			]
 		
 	def getSourceList(self):
@@ -129,7 +129,7 @@ class DistrictHeatingSettings(object):
 
 	def get(self):
 		return [
-			RemoteControlParameter(snc.ProgramType.DISTRICT_HEATING, 'PARAM_TEMPERATURE_SOURCE_ID', self._source),
+			RemoteControlParameter(snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_TEMPERATURE_SOURCE_ID, self._source),
 		]
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]
@@ -142,7 +142,7 @@ class SwimmingPoolSettings(object):
 
 	def get(self):
 		return [
-			RemoteControlParameter(snc.ProgramType.CONSUMER, 'GENERATOR_ID', self._source),
+			RemoteControlParameter(snc.ProgramType.CONSUMER, snc.ConsumerParameterId.GENERATOR_ID, self._source),
 		]
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]

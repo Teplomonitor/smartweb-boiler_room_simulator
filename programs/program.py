@@ -157,7 +157,7 @@ class Program(object):
 			data   = msg.get_data()
 			dataOk = (
 				(data[0] == snc.ProgramType.PROGRAM) and
-				(data[1] == snc.ProgramParameter['OUTPUT']['id']))
+				(data[1] == snc.ProgramParameterId.OUTPUT))
 			
 			if dataOk:
 				outputId    = data[2]
@@ -206,7 +206,7 @@ class Program(object):
 			snc.RequestFlag.REQUEST,
 			[
 				snc.ProgramType.PROGRAM,
-				snc.ProgramParameter['INPUT_MAPPING']['id'],
+				snc.ProgramParameterId.INPUT_MAPPING,
 				channel_id,
 				mapping.get_raw(0),
 				mapping.get_raw(1)
@@ -258,7 +258,7 @@ class Program(object):
 			snc.RequestFlag.REQUEST,
 			[
 				snc.ProgramType.PROGRAM,
-				snc.ProgramParameter['OUTPUT_MAPPING']['id'],
+				snc.ProgramParameterId.OUTPUT_MAPPING,
 				channel_id,
 				mapping.get_raw(0),
 				mapping.get_raw(1)
@@ -302,7 +302,7 @@ class Program(object):
 	
 	def read_output(self, channel):
 		param = sr.RemoteControlParameter(
-			snc.ProgramType.PROGRAM, 'OUTPUT',
+			snc.ProgramType.PROGRAM, snc.ProgramParameterId.OUTPUT,
 			parameterIndex = channel.get_id(),
 			programId = self.get_id())
 		
