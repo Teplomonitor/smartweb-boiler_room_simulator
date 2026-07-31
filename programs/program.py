@@ -202,7 +202,7 @@ class Program(object):
 			request = sm.Message(
 			snc.ProgramType.REMOTE_CONTROL,
 			self.get_id(),
-			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
+			snc.RemoteControlFunction.SET_PARAMETER_VALUE,
 			snc.RequestFlag.REQUEST,
 			[
 				snc.ProgramType.PROGRAM,
@@ -254,7 +254,7 @@ class Program(object):
 			request = sm.Message(
 			snc.ProgramType.REMOTE_CONTROL,
 			self.get_id(),
-			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
+			snc.RemoteControlFunction.SET_PARAMETER_VALUE,
 			snc.RequestFlag.REQUEST,
 			[
 				snc.ProgramType.PROGRAM,
