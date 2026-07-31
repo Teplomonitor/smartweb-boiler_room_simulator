@@ -1,5 +1,6 @@
 
 from smartnet.channelMapping import ChannelMapping as Mapping
+import smartnet.constants as snc
 
 from presets.settings import HeatingCircuitSettings as hcSettings
 from presets.settings import DhwSettings            as dhwSettings
@@ -43,15 +44,15 @@ programList = [
 ]
 
 programType = {
-	'HEATING_CIRCUIT_1' : 'HEATING_CIRCUIT',
-	'HEATING_CIRCUIT_2' : 'HEATING_CIRCUIT',
-	'ROOM_DEVICE_1'     : 'ROOM_DEVICE'    ,
-	'ROOM_DEVICE_2'     : 'ROOM_DEVICE'    ,
-	'DHW'               : 'DHW'            ,
-	'BOILER_1'          : 'BOILER'         ,
-	'BOILER_2'          : 'BOILER'         ,
-	'CASCADE_MANAGER'   : 'CASCADE_MANAGER',
-	'OUTDOOR_SENSOR'    : 'OUTDOOR_SENSOR' ,
+	'HEATING_CIRCUIT_1' : snc.ProgramType.HEATING_CIRCUIT,
+	'HEATING_CIRCUIT_2' : snc.ProgramType.HEATING_CIRCUIT,
+	'ROOM_DEVICE_1'     : snc.ProgramType.ROOM_DEVICE    ,
+	'ROOM_DEVICE_2'     : snc.ProgramType.ROOM_DEVICE    ,
+	'DHW'               : snc.ProgramType.DHW            ,
+	'BOILER_1'          : snc.ProgramType.BOILER         ,
+	'BOILER_2'          : snc.ProgramType.BOILER         ,
+	'CASCADE_MANAGER'   : snc.ProgramType.CASCADE_MANAGER,
+	'OUTDOOR_SENSOR'    : snc.ProgramType.OUTDOOR_SENSOR ,
 }
 
 programScheme = {

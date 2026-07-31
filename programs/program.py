@@ -56,7 +56,7 @@ class Program(object):
 	'''
 
 	@staticmethod
-	def get_type(): return 'PROGRAM'
+	def get_type(): return snc.ProgramType.PROGRAM
 	
 	def get_inputs_num (self): return len(self._inputs )
 	def get_outputs_num(self): return len(self._outputs)
@@ -302,7 +302,7 @@ class Program(object):
 	
 	def read_output(self, channel):
 		param = sr.RemoteControlParameter(
-			'PROGRAM', 'OUTPUT',
+			snc.ProgramType.PROGRAM, 'OUTPUT',
 			parameterIndex = channel.get_id(),
 			programId = self.get_id())
 		
@@ -360,7 +360,7 @@ class Program(object):
 		preset = self.get_preset()
 		settings = preset.getSettings().get()
 		for setting in settings:
-			if setting.get_program_type() == 'CONSUMER' and setting.get_parameter_id_code() == 'GENERATOR_ID':
+			if setting.get_program_type() == snc.ProgramType.CONSUMER and setting.get_parameter_id_code() == 'GENERATOR_ID':
 				return setting.get_value()
 		return 0
 	

@@ -1,5 +1,6 @@
 
 from smartnet.channelMapping import ChannelMapping as Mapping
+import smartnet.constants as snc
 
 import presets.preset
 
@@ -25,7 +26,7 @@ programList = [
 ]
 
 programType = {
-	'TPT_VALVE': 'TPT_VALVE_ADAPTER',
+	'TPT_VALVE': snc.ProgramType.TPT_VALVE_ADAPTER,
 }
 
 programScheme = {

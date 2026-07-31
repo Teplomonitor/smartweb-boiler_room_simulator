@@ -1,4 +1,5 @@
 from smartnet.channelMapping import ChannelMapping as Mapping
+import smartnet.constants as snc
 
 from presets.settings import SwimmingPoolSettings as spSettings
 
@@ -27,8 +28,8 @@ programList = [
 ]
 
 programType = {
-	'SWIMMING_POOL': 'POOL',
-	'BOILER'       : 'BOILER',
+	'SWIMMING_POOL': snc.ProgramType.POOL,
+	'BOILER'       : snc.ProgramType.BOILER,
 }
 
 programScheme = {

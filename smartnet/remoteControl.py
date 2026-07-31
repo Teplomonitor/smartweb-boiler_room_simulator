@@ -163,9 +163,9 @@ class RemoteControlParameter(object):
 			parameterValue = self.valueToData(self._parameterValue)
 			
 			if self._parameterIndex is None:
-				data = [snc.ProgramType[self._programType], parameterIdCode]
+				data = [self._programType, parameterIdCode]
 			else:
-				data = [snc.ProgramType[self._programType], parameterIdCode, self._parameterIndex]
+				data = [self._programType, parameterIdCode, self._parameterIndex]
 			
 			data.extend(parameterValue)
 			
@@ -229,9 +229,9 @@ class RemoteControlParameter(object):
 			parameterIdCode = self.get_parameter_id_code()
 			
 			if self._parameterIndex is None:
-				data = [snc.ProgramType[self._programType], parameterIdCode]
+				data = [self._programType, parameterIdCode]
 			else:
-				data = [snc.ProgramType[self._programType], parameterIdCode, self._parameterIndex]
+				data = [self._programType, parameterIdCode, self._parameterIndex]
 
 			request = sm.Message(
 				snc.ProgramType.REMOTE_CONTROL,

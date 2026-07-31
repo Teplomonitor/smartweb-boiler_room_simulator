@@ -4,6 +4,7 @@
 
 from .program import Program
 from .program import input_info
+import smartnet.constants as snc
 
 class Cascade(Program):
 	'''
@@ -11,7 +12,7 @@ class Cascade(Program):
 	'''
 
 	@staticmethod
-	def get_type(): return 'CASCADE_MANAGER'
+	def get_type(): return snc.ProgramType.CASCADE_MANAGER
 	
 	def init_inputs(self):
 		self._inputs['temperature'   ] = input_info(0, 'Коллектор'     )
@@ -29,7 +30,7 @@ class Cascade(Program):
 		
 		sourceList = [0, 0, 0, 0, 0, 0, 0, 0]
 		for setting in settings:
-			if setting.get_program_type() == 'CASCADE_MANAGER':
+			if setting.get_program_type() == snc.ProgramType.CASCADE_MANAGER:
 				if setting.get_parameter_id_code() == 'PARAM_TEMPERATURE_SOURCE_ID':
 					sourceList[setting.getParameterIndex()] = setting.get_value()
 		

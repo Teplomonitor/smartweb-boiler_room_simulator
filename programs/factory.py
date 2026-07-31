@@ -17,19 +17,21 @@ from programs.tptValve        import TptValve        as ProgramTptValve
 from programs.swimmingPool    import SwimmingPool    as ProgramSwimmingPool
 from programs.virtualController import VirtualController as ProgramVirtualController
 
+import smartnet.constants as snc
+
 programCreator = {
-		'OUTDOOR_SENSOR'   : ProgramOat            ,
-		'BOILER'           : ProgramBoiler         ,
-		'CASCADE_MANAGER'  : ProgramCascade        ,
-		'ROOM_DEVICE'      : ProgramRoom           ,
-		'HEATING_CIRCUIT'  : ProgramHeatingCircuit ,
-		'SNOWMELT'         : ProgramSnowmelter     ,
-		'DHW'              : ProgramDhw            ,
-		'DISTRICT_HEATING' : ProgramDistrictHeating,
-		'FILLING_LOOP'     : ProgramFillingLoop    ,
-		'TPT_VALVE_ADAPTER': ProgramTptValve       ,
-		'POOL'             : ProgramSwimmingPool   ,
-		'VIRTUAL_CONTROLLER' : ProgramVirtualController,
+		snc.ProgramType.OUTDOOR_SENSOR     : ProgramOat            ,
+		snc.ProgramType.BOILER             : ProgramBoiler         ,
+		snc.ProgramType.CASCADE_MANAGER    : ProgramCascade        ,
+		snc.ProgramType.ROOM_DEVICE        : ProgramRoom           ,
+		snc.ProgramType.HEATING_CIRCUIT    : ProgramHeatingCircuit ,
+		snc.ProgramType.SNOWMELT           : ProgramSnowmelter     ,
+		snc.ProgramType.DHW                : ProgramDhw            ,
+		snc.ProgramType.DISTRICT_HEATING   : ProgramDistrictHeating,
+		snc.ProgramType.FILLING_LOOP       : ProgramFillingLoop    ,
+		snc.ProgramType.TPT_VALVE_ADAPTER  : ProgramTptValve       ,
+		snc.ProgramType.POOL               : ProgramSwimmingPool   ,
+		snc.ProgramType.VIRTUAL_CONTROLLER : ProgramVirtualController,
 }
 
 def createProgram(preset):

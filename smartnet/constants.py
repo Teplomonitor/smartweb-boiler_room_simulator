@@ -356,17 +356,17 @@ VirtualControllerParameter = {
 }
 
 ParameterDict = {
-	'PROGRAM'         : ProgramParameter,
-	'ROOM_DEVICE'     : RoomDeviceParameter,
-	'CONTROLLER'      : ControllerParameter,
-	'HEATING_CIRCUIT' : HeatingCircuitParameter,
-	'CONSUMER'        : ConsumerParameter,
-	'CASCADE_MANAGER' : CascadeManagerParameter,
-	'DISTRICT_HEATING': DistrictHeatingParameter,
-	'SNOWMELT'        : SnowMelterParameter,
-	'CIRCUIT'         : CircuitParameter,
-	'POOL'            : SwimmingPoolParameter,
-	'VIRTUAL_CONTROLLER': VirtualControllerParameter,
+	ProgramType.PROGRAM         : ProgramParameter,
+	ProgramType.ROOM_DEVICE     : RoomDeviceParameter,
+	ProgramType.CONTROLLER      : ControllerParameter,
+	ProgramType.HEATING_CIRCUIT : HeatingCircuitParameter,
+	ProgramType.CONSUMER        : ConsumerParameter,
+	ProgramType.CASCADE_MANAGER : CascadeManagerParameter,
+	ProgramType.DISTRICT_HEATING: DistrictHeatingParameter,
+	ProgramType.SNOWMELT        : SnowMelterParameter,
+	ProgramType.CIRCUIT         : CircuitParameter,
+	ProgramType.POOL            : SwimmingPoolParameter,
+	ProgramType.VIRTUAL_CONTROLLER: VirtualControllerParameter,
 }
 
 
@@ -631,14 +631,14 @@ RoomSyncConfigFunction = {
 }
 
 Function = {
-	'PROGRAM'            : ProgramFunction,
-	'CONSUMER'           : ConsumerFunction,
-	'TEMPERATURE_SOURCE' : TemperatureSourceFunction,
-	'CONTROLLER'         : ControllerFunction,
-	'REMOTE_CONTROL'     : RemoteControlFunction,
-	'HCC'                : HccFunction,
-	'CIRCUIT'            : CircuitFunction,
+	ProgramType.PROGRAM            : ProgramFunction,
+	ProgramType.CONSUMER           : ConsumerFunction,
+	ProgramType.TEMPERATURE_SOURCE : TemperatureSourceFunction,
+	ProgramType.CONTROLLER         : ControllerFunction,
+	ProgramType.REMOTE_CONTROL     : RemoteControlFunction,
+	ProgramType.HCC                : HccFunction,
+	ProgramType.CIRCUIT            : CircuitFunction,
 	
-	'PARAMETERSYNCCONFIG': ParameterSyncConfigFunction,
-	'ROOMSYNC'           : RoomSyncConfigFunction,
+	ProgramType.PARAMETERSYNCCONFIG: ParameterSyncConfigFunction,
+	ProgramType.ROOMSYNC           : RoomSyncConfigFunction,
 }

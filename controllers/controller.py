@@ -170,7 +170,7 @@ class Controller(object):
 			self._controllerId,
 			snc.ControllerFunction['ADD_NEW_PROGRAM'],
 			snc.requestFlag['REQUEST'],
-			[	snc.ProgramType[programType],
+			[	programType,
 				programId,
 				snc.ProgramScheme[programScheme]
 			])
@@ -179,7 +179,7 @@ class Controller(object):
 		def generate_required_response():
 			response = copy(request)
 			response.setRequestFlag(snc.requestFlag['RESPONSE'])
-			response.setData([snc.ProgramType[programType], programId])
+			response.setData([programType, programId])
 			return response
 
 		def handle_response():
@@ -267,7 +267,7 @@ class Controller(object):
 		print_log('add prg to list')
 		self._programList.append(program)
 		
-		prg = {'id': program.get_id(), 'type': snc.ProgramType[program.get_type()]}
+		prg = {'id': program.get_id(), 'type': program.get_type()}
 		
 		self._activeProgramsList.append(prg)
 		if self._gui:

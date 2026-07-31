@@ -1,5 +1,6 @@
 
 from smartnet.channelMapping import ChannelMapping as Mapping
+import smartnet.constants as snc
 
 from presets.settings import SnowMelterSettings as smSettings
 
@@ -34,10 +35,10 @@ programList = [
 ]
 
 programType = {
-	'SNOW_MELTER'    : 'SNOWMELT',
-	'BOILER'         : 'BOILER'         ,
-	'OUTDOOR_SENSOR' : 'OUTDOOR_SENSOR' ,
-	'FILLING_LOOP'   : 'FILLING_LOOP' ,
+	'SNOW_MELTER'    : snc.ProgramType.SNOWMELT,
+	'BOILER'         : snc.ProgramType.BOILER         ,
+	'OUTDOOR_SENSOR' : snc.ProgramType.OUTDOOR_SENSOR ,
+	'FILLING_LOOP'   : snc.ProgramType.FILLING_LOOP   ,
 }
 
 programScheme = {

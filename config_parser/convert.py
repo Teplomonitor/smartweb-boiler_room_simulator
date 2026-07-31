@@ -71,6 +71,11 @@ def parse_parameter_code(code: int, parameter_value: Union[str, int]) -> Dict[st
 	program_type_byte = bytes_val[0]
 	parameter_id_byte = bytes_val[1]
 	
+	
+	program_type = int(program_type_byte)
+	parameter_id = int(parameter_id_byte)
+	
+	'''
 	program_type_key = None
 	parameter_id_key = None
 	
@@ -87,6 +92,7 @@ def parse_parameter_code(code: int, parameter_value: Union[str, int]) -> Dict[st
 			if parameter_id_byte == value['id']:
 				parameter_id_key = key
 				break
+	'''
 	
 	# Try to parse value as JSON, fall back to raw value
 	try:
@@ -95,8 +101,8 @@ def parse_parameter_code(code: int, parameter_value: Union[str, int]) -> Dict[st
 		parsed_value = parameter_value
 	
 	return {
-		'programType': program_type_key,
-		'parameterId': parameter_id_key,
+		'programType': program_type,
+		'parameterId': parameter_id,
 		'value': parsed_value
 	}
 
