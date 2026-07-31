@@ -75,9 +75,9 @@ def parse_parameter_code(code: int, parameter_value: Union[str, int]) -> Dict[st
 	
 	program_type = int(program_type_byte)
 	parameter_id = int(parameter_id_byte)
-	parameter_id_key = None
-	
 	'''
+	
+	parameter_id_key = None
 	program_type_key = None
 	
 	# Find program type key
@@ -85,7 +85,6 @@ def parse_parameter_code(code: int, parameter_value: Union[str, int]) -> Dict[st
 		if program_type_byte == value:
 			program_type_key = key
 			break
-	'''
 	
 	# Find parameter ID key
 	if program_type in ParameterDict:
@@ -94,6 +93,7 @@ def parse_parameter_code(code: int, parameter_value: Union[str, int]) -> Dict[st
 			if parameter_id_byte == value['id']:
 				parameter_id_key = key
 				break
+	'''
 	
 	
 	# Try to parse value as JSON, fall back to raw value
@@ -104,7 +104,7 @@ def parse_parameter_code(code: int, parameter_value: Union[str, int]) -> Dict[st
 	
 	return {
 		'programType': program_type,
-		'parameterId': parameter_id_key,
+		'parameterId': parameter_id,
 		'value': parsed_value
 	}
 
@@ -463,7 +463,7 @@ def get_parameter_setting_string(param: Dict[str, Any], value: Any) -> str:
 	"""
 	if param_is_string(param):
 		value = f"'{value}'"
-	return f"\trc.RemoteControlParameter({param['programType']}, '{param['parameterId']}', {value}),\n"
+	return f"\trc.RemoteControlParameter({param['programType']}, {param['parameterId']}, {value}),\n"
 
 
 def get_parameter_array_setting_string(param: Dict[str, Any], value: Any, index: int) -> str:
@@ -480,7 +480,7 @@ def get_parameter_array_setting_string(param: Dict[str, Any], value: Any, index:
 	"""
 	if param_is_string(param):
 		value = f"'{value}'"
-	return f"\trc.RemoteControlParameter({param['programType']}, '{param['parameterId']}', {value}, {index}),\n"
+	return f"\trc.RemoteControlParameter({param['programType']}, {param['parameterId']}, {value}, {index}),\n"
 
 
 def get_program_settings_dict(programs: List[Dict[str, Any]]) -> str:
