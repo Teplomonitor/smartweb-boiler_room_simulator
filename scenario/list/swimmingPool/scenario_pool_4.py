@@ -6,6 +6,8 @@ from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
 from scenario.scenario import Scenario   as Parent
 
+from smartnet.message_log_constants import MessageLogCode
+
 class Scenario(Parent):
 	
 	def __init__(self, controllerHost, sim):
@@ -91,6 +93,9 @@ class Scenario(Parent):
 		if not self.loadingPumpIsOn() or not self.circulationPumpIsOn():
 			print_log('Предупреждение: насосы не активны перед тестом — тест всё равно продолжится')
 		
+		print_log('Прочитаем старые сообщения в журнале, чтобы они не сбивали с толку. Будем ждать новые сообщения')
+		self._controllerHost.read_message_log()
+		
 		# Устанавливаем низкий уровень воды, должен включиться выход подпитки
 		WATER_LEVEL_LOW = 'open'
 		print_log(f'устанавливаем низкий уровень воды (значение {WATER_LEVEL_LOW})')
@@ -140,10 +145,34 @@ class Scenario(Parent):
 			
 			# Проверим, что в журнал записано сообщение о низком уровне воды
 			try:
+				print_log(f'Ищем сообщение о низком уровне воды')
 				entries = self._controllerHost.read_message_log()
 				if entries and len(entries) > 0:
 					print_log(f'Журнал содержит {len(entries)} записей (ожидается сообщение о низком уровне воды)')
-					self._status = 'OK'
+					
+					
+					matching_entry = next(
+						(
+							entry for entry in entries
+							if entry.code == MessageLogCode.MLC_LOW_POOL_WATER_LEVEL
+							and entry.param == self._pool.get_id()
+						),
+						None
+					)
+					
+					if matching_entry is not None:
+						print_log(
+							f'Хорошо! В журнале найдено сообщение о низком уровне воды '
+							f'для бассейна {matching_entry.param}'
+						)
+						self._status = 'OK'
+					else:
+						self._status = 'FAIL'
+						print_error(
+							'Плохо! В журнале не найдено новое сообщения о низком уровне воды '
+							f'для бассейна {self._pool.get_id()}'
+						)
+
 				else:
 					self._status = 'FAIL'
 					print_error('Плохо! В журнале не найдено записей о низком уровне воды')
