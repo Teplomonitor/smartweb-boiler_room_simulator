@@ -7,6 +7,7 @@
 - Run commands from the repository root: `C:\development\BoilerRoomSimulator`
 - Use PowerShell syntax for commands. When a command is shown with multiple operations, separate them with `;`.
 - Do not assume that the Python executable on `PATH` is the project interpreter; use the full path above when validating changes.
+- When inspecting project changes, always use `git --no-pager diff` rather than `git diff` so Git does not open an interactive pager.
 
 Example:
 
