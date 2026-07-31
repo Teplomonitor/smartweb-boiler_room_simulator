@@ -17,7 +17,7 @@ def reportOutputMapping(controllerId, outputId, mapping):
 			snc.ProgramType.CONTROLLER,
 			controllerId,
 			snc.ControllerFunction['GET_RELAY_MAPPING'],
-			snc.requestFlag['RESPONSE'],
+			snc.RequestFlag.RESPONSE,
 			[outputId, mapping.get_raw(0), mapping.get_raw(1)])
 	
 	msg.send()
@@ -28,7 +28,7 @@ def sendImHere(controllerId, controllerType):
 		snc.ProgramType.CONTROLLER,
 		controllerId,
 		snc.ControllerFunction['I_AM_HERE'],
-		snc.requestFlag['RESPONSE'],
+		snc.RequestFlag.RESPONSE,
 		[snc.ControllerType[controllerType],]
 		)
 	msg.send()
@@ -133,7 +133,7 @@ class ControllerIO(object):
 		snc.ProgramType.CONTROLLER,
 		self.get_id(),
 		snc.ControllerFunction['GET_CHANNEL_NUMBER'],
-		snc.requestFlag['RESPONSE'],
+		snc.RequestFlag.RESPONSE,
 		[self.getInputNumber(), self.getOutputNumber()])
 		msg.send()
 		
@@ -144,7 +144,7 @@ class ControllerIO(object):
 		def controllerOutputMappingRequestFilter():
 			headerOk = ((msg.get_program_type() == snc.ProgramType.CONTROLLER) and
 					(msg.getFunctionId () == snc.ControllerFunction['GET_RELAY_MAPPING']) and
-					(msg.getRequestFlag() == snc.requestFlag['REQUEST']) and
+					(msg.getRequestFlag() == snc.RequestFlag.REQUEST) and
 					(msg.getProgramId() == self.get_id()))
 
 			return headerOk
@@ -152,7 +152,7 @@ class ControllerIO(object):
 		def controllerChannelNumberRequestFilter():
 			headerOk = ((msg.get_program_type() == snc.ProgramType.CONTROLLER) and
 					(msg.getFunctionId () == snc.ControllerFunction['GET_CHANNEL_NUMBER']) and
-					(msg.getRequestFlag() == snc.requestFlag['REQUEST']) and
+					(msg.getRequestFlag() == snc.RequestFlag.REQUEST) and
 					(msg.getProgramId() == self.get_id()))
 
 			return headerOk

@@ -151,7 +151,7 @@ class Program(object):
 					(msg.getProgramId  () == self.get_id()) and
 					(msg.get_program_type() == snc.ProgramType.REMOTE_CONTROL) and
 					(msg.getFunctionId () == snc.RemoteControlFunction['GET_PARAMETER_VALUE']) and
-					(msg.getRequestFlag() == snc.requestFlag['RESPONSE']))
+					(msg.getRequestFlag() == snc.RequestFlag.RESPONSE))
 
 		if headerOk:
 			data   = msg.get_data()
@@ -203,7 +203,7 @@ class Program(object):
 			snc.ProgramType.REMOTE_CONTROL,
 			self.get_id(),
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
-			snc.requestFlag['REQUEST'],
+			snc.RequestFlag.REQUEST,
 			[
 				snc.ProgramType.PROGRAM,
 				snc.ProgramParameter['INPUT_MAPPING']['id'],
@@ -215,7 +215,7 @@ class Program(object):
 
 		def generate_required_response():
 			response = copy(request)
-			response.setRequestFlag(snc.requestFlag['RESPONSE'])
+			response.setRequestFlag(snc.RequestFlag.RESPONSE)
 			return response
 
 		def handle_response():
@@ -255,7 +255,7 @@ class Program(object):
 			snc.ProgramType.REMOTE_CONTROL,
 			self.get_id(),
 			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
-			snc.requestFlag['REQUEST'],
+			snc.RequestFlag.REQUEST,
 			[
 				snc.ProgramType.PROGRAM,
 				snc.ProgramParameter['OUTPUT_MAPPING']['id'],
@@ -267,7 +267,7 @@ class Program(object):
 
 		def generate_required_response():
 			response = copy(request)
-			response.setRequestFlag(snc.requestFlag['RESPONSE'])
+			response.setRequestFlag(snc.RequestFlag.RESPONSE)
 			return response
 
 		def handle_response():

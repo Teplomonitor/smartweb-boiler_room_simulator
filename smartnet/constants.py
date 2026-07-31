@@ -5,8 +5,6 @@ class RequestFlag(IntEnum):
     REQUEST = 0x00
     RESPONSE = 0x10
 
-requestFlag = RequestFlag
-
 class ControllerType(IntEnum):
     UNDEFINED = 0
     STDC = 1

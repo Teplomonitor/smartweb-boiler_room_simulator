@@ -15,7 +15,7 @@ import threading
 from collections import deque
 from smartnet.message import Message
 from smartnet.message import CanListener
-from smartnet.constants import requestFlag
+from smartnet.constants import RequestFlag
 from smartnet.constants import ProgramType
 from smartnet.constants import ControllerFunction
 
@@ -183,8 +183,8 @@ class MessageLogReader:
     # Default program IDs for message log communication
     PROGRAM_TYPE  = ProgramType.CONTROLLER             # Controller
     FUNCTION_ID   = ControllerFunction['JOURNAL']    # JOURNAL function
-    REQUEST_FLAG  = requestFlag['REQUEST']        # Request (0x00) vs Response (0x10)
-    RESPONSE_FLAG = requestFlag['RESPONSE']
+    REQUEST_FLAG  = RequestFlag['REQUEST']        # Request (0x00) vs Response (0x10)
+    RESPONSE_FLAG = RequestFlag['RESPONSE']
     
     def __init__(self, controller_id=0, timeout=100):
         """

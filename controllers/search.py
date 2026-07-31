@@ -15,7 +15,7 @@ def messageIsImHere():
 	return snm.Message(
 		snc.ProgramType.CONTROLLER, None,
 		snc.ControllerFunction['I_AM_HERE'], 
-		snc.requestFlag['RESPONSE'])
+		snc.RequestFlag.RESPONSE)
 
 
 def findOnlineController(searchingControllerId):

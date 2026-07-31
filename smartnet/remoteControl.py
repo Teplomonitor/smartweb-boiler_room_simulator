@@ -172,14 +172,14 @@ class RemoteControlParameter(object):
 			request = sm.Message(
 			snc.ProgramType.REMOTE_CONTROL,
 			self._programId,
-			snc.RemoteControlFunction['SET_PARAMETER_VALUE'],
-			snc.requestFlag['REQUEST'],
+			snc.RemoteControlFunction.SET_PARAMETER_VALUE,
+			snc.RequestFlag.REQUEST,
 			data)
 			return request
 
 		def generate_required_response():
 			response = copy(request)
-			response.setRequestFlag(snc.requestFlag['RESPONSE'])
+			response.setRequestFlag(snc.RequestFlag.RESPONSE)
 			return response
 
 		def handle_response():
@@ -236,14 +236,14 @@ class RemoteControlParameter(object):
 			request = sm.Message(
 				snc.ProgramType.REMOTE_CONTROL,
 				self._programId,
-				snc.RemoteControlFunction['GET_PARAMETER_VALUE'],
-				snc.requestFlag['REQUEST'],
+				snc.RemoteControlFunction.GET_PARAMETER_VALUE,
+				snc.RequestFlag.REQUEST,
 				data)
 			return request
 
 		def generate_required_response():
 			response = copy(request)
-			response.setRequestFlag(snc.requestFlag['RESPONSE'])
+			response.setRequestFlag(snc.RequestFlag.RESPONSE)
 			return response
 
 		def handle_response():

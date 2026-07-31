@@ -34,7 +34,7 @@ def reportSensorValue(sensor, bus = None):
 			snc.ProgramType.CONTROLLER,
 			hostId,
 			snc.ControllerFunction['GET_OUTPUT_VALUE'],
-			snc.requestFlag['RESPONSE'],
+			snc.RequestFlag.RESPONSE,
 			[sensorMapping.get_raw(0), sensorMapping.get_raw(1), value[1], value[0]])
 	msg.send(bus = bus)
 	return True

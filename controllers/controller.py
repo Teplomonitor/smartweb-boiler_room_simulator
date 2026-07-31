@@ -133,7 +133,7 @@ class Controller(object):
 			snc.ProgramType.CONTROLLER,
 			self._controllerId,
 			snc.ControllerFunction['GET_ACTIVE_PROGRAMS_LIST'],
-			snc.requestFlag['REQUEST'])
+			snc.RequestFlag.REQUEST)
 			return request
 		
 		request = generate_request()
@@ -169,7 +169,7 @@ class Controller(object):
 			snc.ProgramType.CONTROLLER,
 			self._controllerId,
 			snc.ControllerFunction['ADD_NEW_PROGRAM'],
-			snc.requestFlag['REQUEST'],
+			snc.RequestFlag.REQUEST,
 			[	programType,
 				programId,
 				snc.ProgramScheme[programScheme]
@@ -178,7 +178,7 @@ class Controller(object):
 
 		def generate_required_response():
 			response = copy(request)
-			response.setRequestFlag(snc.requestFlag['RESPONSE'])
+			response.setRequestFlag(snc.RequestFlag.RESPONSE)
 			response.setData([programType, programId])
 			return response
 
@@ -220,7 +220,7 @@ class Controller(object):
 			snc.ProgramType.CONTROLLER,
 			self._controllerId,
 			snc.ControllerFunction['GET_ACTIVE_PROGRAMS_LIST'],
-			snc.requestFlag['RESPONSE'])
+			snc.RequestFlag.RESPONSE)
 			return response
 		
 		if msg.compare(generateResponse()):
@@ -233,12 +233,12 @@ class Controller(object):
 			snc.ProgramType.CONTROLLER,
 			self._controllerId,
 			snc.ControllerFunction['RESET_PROGRAMS'],
-			snc.requestFlag['REQUEST'])
+			snc.RequestFlag.REQUEST)
 			return request
 
 		def generate_required_response():
 			response = copy(request)
-			response.setRequestFlag(snc.requestFlag['RESPONSE'])
+			response.setRequestFlag(snc.RequestFlag.RESPONSE)
 			return response
 
 		def handle_response():

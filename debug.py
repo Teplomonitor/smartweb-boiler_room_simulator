@@ -24,7 +24,7 @@ class i_am_here_thread(threading.Thread):
 			snc.ProgramType.CONTROLLER,
 			self._controllerId,
 			snc.ControllerFunction.I_AM_HERE,
-			snc.requestFlag.RESPONSE,
+			snc.RequestFlag.RESPONSE,
 			[snc.ControllerType['SWK'],]
 			)
 		msg.send(bus = self._canbus)
@@ -37,22 +37,22 @@ class i_am_here_thread(threading.Thread):
 def programsResetFilter(msg):
 	return ((msg.get_program_type() == snc.ProgramType.CONTROLLER) and
 			(msg.getFunctionId () == snc.ControllerFunction.RESET_PROGRAMS) and
-			(msg.getRequestFlag() == snc.requestFlag.REQUEST))
+			(msg.getRequestFlag() == snc.RequestFlag.REQUEST))
 
 def programAddFilter(msg):
 	return ((msg.get_program_type() == snc.ProgramType.CONTROLLER) and
 			(msg.getFunctionId () == snc.ControllerFunction.ADD_NEW_PROGRAM) and
-			(msg.getRequestFlag() == snc.requestFlag.REQUEST))
+			(msg.getRequestFlag() == snc.RequestFlag.REQUEST))
 
 def remoteControlSetRequest(msg):
 	return ((msg.get_program_type() == snc.ProgramType.REMOTE_CONTROL) and
 			(msg.getFunctionId () == snc.RemoteControlFunction.SET_PARAMETER_VALUE) and
-			(msg.getRequestFlag() == snc.requestFlag.REQUEST))
+			(msg.getRequestFlag() == snc.RequestFlag.REQUEST))
 
 def remoteControlGetRequest(msg):
 	return ((msg.get_program_type() == snc.ProgramType.REMOTE_CONTROL) and
 			(msg.getFunctionId () == snc.RemoteControlFunction.GET_PARAMETER_VALUE) and
-			(msg.getRequestFlag() == snc.requestFlag.REQUEST))
+			(msg.getRequestFlag() == snc.RequestFlag.REQUEST))
 
 def programInputMappingFilter(msg):
 	if not remoteControlSetRequest(msg):
@@ -92,7 +92,7 @@ class debug_thread(can.Listener):
 		msg.parse(message)
 
 		if programsResetFilter(msg):
-			msg.setRequestFlag(snc.requestFlag.RESPONSE)
+			msg.setRequestFlag(snc.RequestFlag.RESPONSE)
 			msg.send(bus = self._canbus)
 			return
 
@@ -103,21 +103,21 @@ class debug_thread(can.Listener):
 				'STATUS_ADD_PROGRAM_TOO_MANY_PROGRAMS'  : 2,
 				'STATUS_ADD_PROGRAM_UNDEFINED_ERROR'    : 3,
 			}
-			msg.setRequestFlag(snc.requestFlag.RESPONSE)
+			msg.setRequestFlag(snc.RequestFlag.RESPONSE)
 			data = msg.get_data()
 			data[2] = programAddStatus['STATUS_ADD_PROGRAM_OK']
 			msg.send(bus = self._canbus)
 			return
 
 		if remoteControlSetRequest(msg):
-			msg.setRequestFlag(snc.requestFlag.RESPONSE)
+			msg.setRequestFlag(snc.RequestFlag.RESPONSE)
 			data = msg.get_data()
 			data.append(snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK'])
 			msg.send(bus = self._canbus)
 			return
 		
 		if remoteControlGetRequest(msg):
-			msg.setRequestFlag(snc.requestFlag.RESPONSE)
+			msg.setRequestFlag(snc.RequestFlag.RESPONSE)
 			data = msg.get_data()
 			data.extend([0xFF, 0xFF, 0xFF])
 			msg.send(bus = self._canbus)
