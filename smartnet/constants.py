@@ -430,16 +430,16 @@ class ControllerFunction(IntEnum):
     GET_LOG_PART = 81
 
 
-RemoteControlFunction = {
-	'GET_PARAMETER_VALUE'          : 1,
-	'SET_PARAMETER_VALUE'          : 2,
-	'GET_PARAMETER_NAME'           : 3,
-	'GET_PARAMETER_DESCRIPTION'    : 4,
-	'GET_PARAMETER_MINIMUM_VALUE'  : 5,
-	'GET_PARAMETER_MAXIMUM_VALUE'  : 6,
-	'GET_PARAMETER_DEFAULT_VALUE'  : 7,
-	'GET_PARAMETER_UNIT'           : 8,
-}
+class RemoteControlFunction(IntEnum):
+    GET_PARAMETER_VALUE          = 1,
+    SET_PARAMETER_VALUE          = 2,
+    GET_PARAMETER_NAME           = 3,
+    GET_PARAMETER_DESCRIPTION    = 4,
+    GET_PARAMETER_MINIMUM_VALUE  = 5,
+    GET_PARAMETER_MAXIMUM_VALUE  = 6,
+    GET_PARAMETER_DEFAULT_VALUE  = 7,
+    GET_PARAMETER_UNIT           = 8,
+
 
 RemoteControlSetParameterResult = {
 	'SET_PARAMETER_STATUS_OK'    : 0,
@@ -608,7 +608,7 @@ RoomSyncConfigFunction = {
 	SorelExfuncFunction.EF_HC1_PUMP  : 'efid_hcPump'         ,  # settings for each heating circuit
 	SorelExfuncFunction.EF_HC2_PUMP  : 'efid_masterPump'     ,  
 	SorelExfuncFunction.EF_EXTRAPUMP : 'efid_extraPump'      ,  
-    
+
 	SorelExfuncFunction.EF_MIX1_UP           : 'efid_mixer'            , # base function used by heating circuit  # mixer variants (handled in module mixer)
 	SorelExfuncFunction.EF_MIX1_DOWN         : 'efid_mixerDown'        , # no function, optional relay for CAN
 	SorelExfuncFunction.EF_MIX2_UP           : 'efid_resMixer'         , # reserved
