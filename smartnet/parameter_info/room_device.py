@@ -1,0 +1,43 @@
+"""Metadata for ROOM_DEVICE parameters."""
+
+from smartnet.constants import RoomDeviceParameterId
+from .common import SCHEDULE_ARRAY_SIZE
+
+PARAMETER_INFO = {
+	RoomDeviceParameterId.ROOM_COMFORT_TEMPERATURE:           {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.ROOM_REDUCED_TEMPERATURE:           {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.ROOM_HYSTERESIS:                    {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.RELAY_PERIOD:                       {'type': 'TIME_MS'},
+	RoomDeviceParameterId.RESPONSIBLE_CIRCUIT_1:              {'type': 'UINT8_T'},
+	RoomDeviceParameterId.RESPONSIBLE_CIRCUIT_2:              {'type': 'UINT8_T'},
+	RoomDeviceParameterId.RESPONSIBLE_CIRCUIT_3:              {'type': 'UINT8_T'},
+	RoomDeviceParameterId.WORK_MODE:                          {'type': 'UINT8_T'},
+	RoomDeviceParameterId.ROOM_DEVICE_VALVE_STATE:            {'type': 'UINT8_T'},
+	RoomDeviceParameterId.MINIMUM_FLOOR_TEMPERATURE:          {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.MAXIMUM_FLOOR_TEMPERATURE:          {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.RADIATOR_MINIMUM_SIGNAL:            {'type': 'UINT8_T'},
+	RoomDeviceParameterId.ROOM_DESIRED_TEMPERATURE:           {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.RELAY_PERCENTAGE_PRIMARY:           {'type': 'UINT8_T'},
+	RoomDeviceParameterId.RELAY_PERCENTAGE_SECONDARY:         {'type': 'UINT8_T'},
+	RoomDeviceParameterId.OUTDOOR_TEMPERATURE:                {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.RELAY_PERCENTAGE_ADDITIONAL:        {'type': 'UINT8_T'},
+	RoomDeviceParameterId.CIRCUIT_1_SHIFT:                    {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.CIRCUIT_2_SHIFT:                    {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.CIRCUIT_3_SHIFT:                    {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.ROOM_OFF_TEMPERATURE:               {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.SCHEDULE:                           {'type': 'SCHEDULE', 'array_size': SCHEDULE_ARRAY_SIZE},
+	RoomDeviceParameterId.FLOOR_REQUIRED_TEMPERATURE:         {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.CURRENT_FLOOR_REQUIRED_TEMPERATURE: {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.WALL_REQUIRED_TEMPERATURE:          {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.CURRENT_WALL_REQUIRED_TEMPERATURE:  {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.HEAT_EXTRICATION:                   {'type': 'UINT8_T'},
+	RoomDeviceParameterId.FLOOR_REDUCED_TEMPERATURE:          {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.WALL_REDUCED_TEMPERATURE:           {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.CURRENT_WORK_MODE_STATUS:           {'type': 'UINT8_T'},
+	RoomDeviceParameterId.VENTILATION_CIRCUIT:                {'type': 'UINT8_T'},
+	RoomDeviceParameterId.REQUIRED_HUMIDITY:                  {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.POOL_CIRCUIT:                       {'type': 'UINT8_T'},
+	RoomDeviceParameterId.POOL_TEMPERATURE_OFFSET:            {'type': 'TEMPERATURE'},
+	RoomDeviceParameterId.SCHEDULE_2_0:                       {'type': 'UINT8_T'},
+	RoomDeviceParameterId.LOCATION:                           {'type': 'UINT8_T'},
+}
