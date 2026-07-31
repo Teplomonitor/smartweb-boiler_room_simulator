@@ -1,97 +1,101 @@
+from enum import IntEnum
 
-requestFlag = {
-	'REQUEST' :0x00, 
-	'RESPONSE':0x10, 
-}
 
-ControllerType = {
-	'UNDEFINED'     :  0,
-	'STDC'          :  1,
-	'LTDC'          :  2,
-	'XHCC'          :  3,
-	'SWN'           :  4,
-	'SWD'           :  5,
-	'CALEON'        :  6,
-	'XHCC_S62'      :  7,
-	'LTDC_S45'      :  8,
-	'VIRTUAL'       :  9,
-	'SWK'           : 10,
-	'SWK_1'         : 11,
-	'CWC_CAN'       : 12,
-	'CALEON_RC50'   : 13,
-	'EXT_CONTROLLER': 14,
-	'CALEONBOX'     : 15,
-}
+class RequestFlag(IntEnum):
+    REQUEST = 0x00
+    RESPONSE = 0x10
 
-ProgramType = {
-	'CAN_PROGRAM_TYPE_UNDEFINED' :  0,
-	'PROGRAM'                    :  1,
-	'OUTDOOR_SENSOR'             :  2,
-	'CONSUMER'                   :  3,
-	'CASCADE_MANAGER'            :  4,
-	'ROOM_DEVICE'                :  5,
-	'TEMPERATURE_SOURCE'         :  6,
-	'HEAT_ACCUMULATOR'           :  7,
-	'EXTENDED_CONTROLLER'        :  8,
-	'EXTENSION_CONTROLLER'       :  9,
-	'MONITORING_DEVICE'          : 10,
-	'CONTROLLER'                 : 11,
-	'CIRCUIT'                    : 12,
-	'SCHEDULE'                   : 13,
-	'HEATING_CIRCUIT'            : 14,
-	'DISTRICT_HEATING'           : 15,
-	'DHW'                        : 16,
-	'FLOW_THROUGH_DHW'           : 17,
-	'TEMPERATURE_GENERATOR'      : 18,
-	'POOL'                       : 19,
-	'THERMOSTAT'                 : 20,
-	'SNOWMELT'                   : 21,
-	'REMOTE_CONTROL'             : 22,
-	'BOILER'                     : 23,
-	'CHILLER'                    : 24,
-	'SOLAR_COLLECTOR'            : 25,
-	'VENTILATION'                : 26,
-	'GENERIC_RELAY'              : 27,
-	'ALARM'                      : 28,
-	'FILLING_LOOP'               : 29,
-	
-	'VIRTUAL_CONTROLLER'         : 30,
-	'DOUBLE_PUMP'                : 31,
-	'LIN_CONTROLLER'             : 32,
-	'LIN_PUMP'                   : 33,
-	'OPEN_THERM_BOILER'          : 34,
-	'MODBUS_TEMPERATURE_SOURCE'  : 35,
-	'MB_OT_ADAPTER'              : 36,
-	'MODBUS_SENSOR'              : 37,
-	'NAVIEN_CASCADE_MANAGER'     : 38,
-	'NAVIEN_NFB'                 : 39,
-	'WAREHOUSE_AREA'             : 40,
-	'CWC_LORA_ADAPTER'           : 32, #//TODO: change ID to 41
-	'TPT_VALVE_ADAPTER'          : 42,
-	
-	
-	'DATALOGGER_MONITOR'       : 0x80,  
-	'EVENT'                    : 0x81, 
-	'FWC_CASCADE'              : 0x82,  # freshwater controller cascading functions
-	'DATALOGGER_NAMEDSENSORS'  : 0x83,  # request sensor values by name eg. outdor room temperature/humidity rc switch or get changes
-	'HCC'                      : 0x84,  # heating circuit control program eg. heat request
-	'DL_CONFIGMENU_DATALOGGER' : 0x85,  # datalogger configuration receiver is datalogger                                                                          
-	'DL_CONFIGMENU_CONTROLLER' : 0x86,  # receiver is controller                                                                                                    
-	'CLOCKSYNC'                : 0x87,  # send/receive date and time                                                                                                
-	'REMOTERELAY'              : 0x88,  # set relay from external controller                                                                                        
-	'HOLIDAYRETURNDATE'        : 0x89,  # holiday return date                                                                                                       
-	'DAYSCHEDULE'              : 0x8A,  # day schedule function type is used to select day of the week 0 = monday 7 messages needed for week schedule            
-	'AVAILABLERESOURCES'       : 0x8B,  # sending available resources (relays sensors ...) on request ore at startup                                              
-	'PARAMETERSYNC'            : 0x8C,  # sending parameter values from one device to an other parameter list / functionId is defined in exfuncIDs.h (teFunctionId)
-	'RESOURCEDATA1WIRE'        : 0x8D,  # sending additional data of resource on request (1wire ROM data)                                                           
-	'FILETRANSFER'             : 0x8E,  # send multiple can packets                                                                                                 
-	'PARAMETERSYNCCONFIG'      : 0x8F,  # configuration for parameter sync factory reset ...                                                                      
-	'ROOMSYNC'                 : 0x90,  # special PARAMETERSYNC for vhcData (no destination check)                                                                  
-	'PANIC'                    : 0x91,  # tells other controllers to slow down CAN packet transfer frequency                                                        
-	'VHCDATA_UPDATE'           : 0x92,  # function:0 broadcast last manual mode change                                                                              
-	'MSGLOG'                   : 0x93,  # global message log: Function = message severity Data = [4 byte param1 2 byte param2 2 byte message code]
-	'CHARLIE'                  : 0xC0,
-}
+requestFlag = RequestFlag
+
+class ControllerType(IntEnum):
+    UNDEFINED = 0
+    STDC = 1
+    LTDC = 2
+    XHCC = 3
+    SWN = 4
+    SWD = 5
+    CALEON = 6
+    XHCC_S62 = 7
+    LTDC_S45 = 8
+    VIRTUAL = 9
+    SWK = 10
+    SWK_1 = 11
+    CWC_CAN = 12
+    CALEON_RC50 = 13
+    EXT_CONTROLLER = 14
+    CALEONBOX = 15
+
+class ProgramType(IntEnum):
+    CAN_PROGRAM_TYPE_UNDEFINED = 0
+    PROGRAM = 1
+    OUTDOOR_SENSOR = 2
+    CONSUMER = 3
+    CASCADE_MANAGER = 4
+    ROOM_DEVICE = 5
+    TEMPERATURE_SOURCE = 6
+    HEAT_ACCUMULATOR = 7
+    EXTENDED_CONTROLLER = 8
+    EXTENSION_CONTROLLER = 9
+    MONITORING_DEVICE = 10
+    CONTROLLER = 11
+    CIRCUIT = 12
+    SCHEDULE = 13
+    HEATING_CIRCUIT = 14
+    DISTRICT_HEATING = 15
+    DHW = 16
+    FLOW_THROUGH_DHW = 17
+    TEMPERATURE_GENERATOR = 18
+    POOL = 19
+    THERMOSTAT = 20
+    SNOWMELT = 21
+    REMOTE_CONTROL = 22
+    BOILER = 23
+    CHILLER = 24
+    SOLAR_COLLECTOR = 25
+    VENTILATION = 26
+    GENERIC_RELAY = 27
+    ALARM = 28
+    FILLING_LOOP = 29
+    VIRTUAL_CONTROLLER = 30
+    DOUBLE_PUMP = 31
+    LIN_CONTROLLER = 32
+    LIN_PUMP = 33
+    OPEN_THERM_BOILER = 34
+    MODBUS_TEMPERATURE_SOURCE = 35
+    MB_OT_ADAPTER = 36
+    MODBUS_SENSOR = 37
+    NAVIEN_CASCADE_MANAGER = 38
+    NAVIEN_NFB = 39
+    WAREHOUSE_AREA = 40
+
+    # Alias from the C++ enum.
+    CWC_LORA_ADAPTER = LIN_CONTROLLER
+
+    TPT_VALVE_ADAPTER = 42
+    MODBUS_ADAPTER = 43
+
+    DATALOGGER_MONITOR = 0x80
+    EVENT = 0x81
+    FWC_CASCADE = 0x82
+    DATALOGGER_NAMEDSENSORS = 0x83
+    REMOTESENSOR = DATALOGGER_NAMEDSENSORS
+    HCC = 0x84
+    DL_CONFIGMENU_DATALOGGER = 0x85
+    DL_CONFIGMENU_CONTROLLER = 0x86
+    CLOCKSYNC = 0x87
+    REMOTERELAY = 0x88
+    HOLIDAYRETURNDATE = 0x89
+    DAYSCHEDULE = 0x8A
+    AVAILABLERESOURCES = 0x8B
+    PARAMETERSYNC = 0x8C
+    RESOURCEDATA1WIRE = 0x8D
+    FILETRANSFER = 0x8E
+    PARAMETERSYNCCONFIG = 0x8F
+    ROOMSYNC = 0x90
+    PANIC = 0x91
+    VHCDATA_UPDATE = 0x92
+    MSGLOG = 0x93
+    CHARLIE = 0xC0
 
 SCHEDULE_ARRAY_SIZE = 7*3*2
 
@@ -380,49 +384,50 @@ ProgramFunction = {
 
 
 
-ControllerFunction = {
-	'HAS_ANYBODY_HERE'               :  0,
-	'I_AM_HERE'                      :  1,
-	'GET_CONTROLLER'                 :  2,
-	'GET_ACTIVE_PROGRAMS_LIST'       :  3,
-	'ADD_NEW_PROGRAM'                :  4,
-	'REMOVE_PROGRAM'                 :  5,
-	'GET_SYSTEM_DATE_TIME'           :  6,
-	'SET_SYSTEM_DATE_TIME'           :  7,
-	'GET_CONTROLLER_TYPE'            :  8,
-	'GET_PROGRAM_VERSION'            :  9,
-	'GET_CHANNEL_NUMBER'             : 10,
-	'GET_OUTPUT_TYPE'                : 11,
-	'GET_INPUT_TYPE'                 : 12,
-	'GET_CHANNEL_BINDING'            : 13,
-	'GET_INPUT_VALUE'                : 14,
-	'SET_OUTPUT_VALUE'               : 15,
-	'HAS_ERROR'                      : 16,
-	'GET_CONTROLLER_MASKS'           : 17,
-	'GET_CHANNELS_INFO'              : 18,
-	'GET_OUTPUT_VALUE'               : 19,
-	'TIME_MASTER_IS_ACTIVE'          : 20,
-	'JOURNAL'                        : 21,
-	'GET_VARIABLE'                   : 22,
-	'SET_VARIABLE'                   : 23,
-	'GET_RELAY_MAPPING'              : 24,
-	'SET_RELAY_MAPPING'              : 25,
-	'RESET_TO_DEFAULTS'              : 26,
-	'RESET_PROGRAMS'                 : 27,
-	'MARK_JOURNAL_MESSAGES_AS_READ'  : 28,
-	'I_AM_RESETED'                   : 40,
-	'DATALOGGER_TEST'                : 41,
-	'IS_ANYBODY_HERE_CAN2'           : 42, # IS_ANYBODY_HERE that comes over CAN2 or is routed CAN2 -> CAN1
-	'I_AM_HERE_CAN2'                 : 43, # I_AM_HERE that comes over CAN2 or is routed CAN2 -> CAN1
-	'I_AM_RESETED_CAN2'              : 44, # I_AM_RESETED that comes over CAN2 or is routed CAN2 -> CAN1
-	'GET_FW_VERSION'                 : 60,
-	'INSTALL_FW_UPDATE'              : 61,
-	'SYSTEM_SELFTEST'                : 62,
-	'GET_DEVICE_INFO'                : 63,
-	'GET_DEVICE_INFO2'               : 64,
-	'INIT_LOG_TRANSMIT'              : 80,
-	'GET_LOG_PART'                   : 81,
-}
+class ControllerFunction(IntEnum):
+    HAS_ANYBODY_HERE = 0
+    I_AM_HERE = 1
+    GET_CONTROLLER = 2
+    GET_ACTIVE_PROGRAMS_LIST = 3
+    ADD_NEW_PROGRAM = 4
+    REMOVE_PROGRAM = 5
+    GET_SYSTEM_DATE_TIME = 6
+    SET_SYSTEM_DATE_TIME = 7
+    GET_CONTROLLER_TYPE = 8
+    GET_PROGRAM_VERSION = 9
+    GET_CHANNEL_NUMBER = 10
+    GET_OUTPUT_TYPE = 11
+    GET_INPUT_TYPE = 12
+    GET_CHANNEL_BINDING = 13
+    GET_INPUT_VALUE = 14
+    SET_OUTPUT_VALUE = 15
+    HAS_ERROR = 16
+    GET_CONTROLLER_MASKS = 17
+    GET_CHANNELS_INFO = 18
+    GET_OUTPUT_VALUE = 19
+    TIME_MASTER_IS_ACTIVE = 20
+    JOURNAL = 21
+    GET_VARIABLE = 22
+    SET_VARIABLE = 23
+    GET_RELAY_MAPPING = 24
+    SET_RELAY_MAPPING = 25
+    RESET_TO_DEFAULTS = 26
+    RESET_PROGRAMS = 27
+    MARK_JOURNAL_MESSAGES_AS_READ = 28
+
+    I_AM_RESETED = 40
+    DATALOGGER_TEST = 41
+    IS_ANYBODY_HERE_CAN2 = 42
+    I_AM_HERE_CAN2 = 43
+    I_AM_RESETED_CAN2 = 44
+
+    GET_FW_VERSION = 60
+    INSTALL_FW_UPDATE = 61
+    SYSTEM_SELFTEST = 62
+    GET_DEVICE_INFO = 63
+    GET_DEVICE_INFO2 = 64
+    INIT_LOG_TRANSMIT = 80
+    GET_LOG_PART = 81
 
 
 RemoteControlFunction = {
