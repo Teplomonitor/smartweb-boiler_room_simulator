@@ -127,7 +127,7 @@ ProgramScheme = {
 	'PROGRAM_SCHEME_5': 5,
 }
 
-RoomDeviceParameter = {                             
+RoomDeviceParameter = {
 	'ROOM_COMFORT_TEMPERATURE'          : {'id':  1, 'type': 'TEMPERATURE'},
 	'ROOM_REDUCED_TEMPERATURE'          : {'id':  2, 'type': 'TEMPERATURE'},
 	'ROOM_HYSTERESIS'                   : {'id':  3, 'type': 'TEMPERATURE'},

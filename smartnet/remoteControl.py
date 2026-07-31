@@ -3,6 +3,7 @@ from copy import copy
 
 import smartnet.constants as snc
 import smartnet.message as sm
+import smartnet.parameter_registry as param_registry
 
 from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
@@ -126,14 +127,17 @@ class RemoteControlParameter(object):
 	def get_program_type   (self): return self._programType
 	def getParameterIndex(self): return self._parameterIndex
 	
-	def get_parameter_id_code(self): return snc.ParameterDict[self._programType][self._parameterId]['id']
-	def getParameterType  (self): return snc.ParameterDict[self._programType][self._parameterId]['type']
+	def get_parameter_id_code(self):
+		param_def = param_registry.get_parameter(self._programType, self._parameterId)
+		return param_def.id if param_def else None
+	
+	def getParameterType(self):
+		param_def = param_registry.get_parameter(self._programType, self._parameterId)
+		return param_def.type if param_def else None
 	
 	def getParameterArraySize(self):
-		param = snc.ParameterDict[self._programType][self._parameterId]
-		if 'array_size' in param:
-			return param['array_size']
-		return 1
+		param_def = param_registry.get_parameter(self._programType, self._parameterId)
+		return param_def.array_size if param_def else 1
 	
 	def write(self, confirm = True):
 		if self._programId is None:

@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, Union
 from smartnet.channelMapping import ChannelMapping as Mapping
 from smartnet.constants      import ProgramType    as ProgramTypes
 from smartnet.constants      import ParameterDict  as ParameterDict
+import smartnet.parameter_registry as param_registry
 
 # Channel type mappings
 CHANNEL_TYPE_MAP = {
@@ -433,8 +434,7 @@ def param_is_string(param: Dict[str, Any]) -> bool:
 	Returns:
 		True if parameter is string type
 	"""
-	param_def = ParameterDict[param['programType']][param['parameterId']]
-	return param_def.get('type') == 'STRING'
+	return param_registry.is_string(param['programType'], param['parameterId'])
 
 
 def param_is_array(param: Dict[str, Any]) -> bool:
@@ -447,9 +447,7 @@ def param_is_array(param: Dict[str, Any]) -> bool:
 	Returns:
 		True if parameter is array type with size > 1
 	"""
-	param_def = ParameterDict[param['programType']][param['parameterId']]
-	array_size = param_def.get('array_size', 1)
-	return array_size > 1
+	return param_registry.is_array(param['programType'], param['parameterId'])
 
 
 def get_parameter_setting_string(param: Dict[str, Any], value: Any) -> str:
