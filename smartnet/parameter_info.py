@@ -15,6 +15,7 @@ from smartnet.constants import (
 	DistrictHeatingParameterId,
 	SwimmingPoolParameterId,
 	VirtualControllerParameterId,
+	ProgramType,
 )
 
 SCHEDULE_ARRAY_SIZE = 7 * 3 * 2
@@ -259,4 +260,19 @@ VIRTUAL_CONTROLLER_PARAMETER_INFO = {
 	VirtualControllerParameterId.SENSOR14:      {'type': 'TEMPERATURE'},
 	VirtualControllerParameterId.SENSOR15:      {'type': 'TEMPERATURE'},
 	VirtualControllerParameterId.SENSOR16:      {'type': 'TEMPERATURE'},
+}
+
+# Map ProgramType to parameter metadata (with IntEnum members as keys)
+ParameterDict = {
+	ProgramType.PROGRAM           : PROGRAM_PARAMETER_INFO,
+	ProgramType.ROOM_DEVICE       : ROOM_DEVICE_PARAMETER_INFO,
+	ProgramType.CONTROLLER        : CONTROLLER_PARAMETER_INFO,
+	ProgramType.HEATING_CIRCUIT   : HEATING_CIRCUIT_PARAMETER_INFO,
+	ProgramType.CONSUMER          : CONSUMER_PARAMETER_INFO,
+	ProgramType.CASCADE_MANAGER   : CASCADE_MANAGER_PARAMETER_INFO,
+	ProgramType.DISTRICT_HEATING  : DISTRICT_HEATING_PARAMETER_INFO,
+	ProgramType.SNOWMELT          : SNOWMELTER_PARAMETER_INFO,
+	ProgramType.CIRCUIT           : CIRCUIT_PARAMETER_INFO,
+	ProgramType.POOL              : SWIMMING_POOL_PARAMETER_INFO,
+	ProgramType.VIRTUAL_CONTROLLER: VIRTUAL_CONTROLLER_PARAMETER_INFO,
 }

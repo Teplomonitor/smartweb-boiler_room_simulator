@@ -9,6 +9,7 @@ import logging
 from typing import Optional, Dict, Tuple, Any
 
 import smartnet.constants as snc
+import smartnet.parameter_info as snpi
 
 # Configure logger for this module
 logger = logging.getLogger(__name__)
@@ -101,14 +102,14 @@ class ParameterRegistry:
 			return self._cache[cache_key]
 		
 		# Look up in ParameterDict
-		if program_type not in snc.ParameterDict:
+		if program_type not in snpi.ParameterDict:
 			logger.warning(
 				f'Program type {program_type} not found in ParameterDict'
 			)
 			self._cache[cache_key] = None
 			return None
 		
-		param_info_dict = snc.ParameterDict[program_type]
+		param_info_dict = snpi.ParameterDict[program_type]
 		
 		if parameter_id not in param_info_dict:
 			logger.warning(

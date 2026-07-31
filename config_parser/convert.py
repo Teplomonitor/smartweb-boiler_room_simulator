@@ -9,8 +9,6 @@ import json
 from typing import Any, Dict, List, Optional, Union
 
 from smartnet.channelMapping import ChannelMapping as Mapping
-from smartnet.constants      import ProgramType    as ProgramTypes
-from smartnet.constants      import ParameterDict  as ParameterDict
 import smartnet.parameter_registry as param_registry
 
 # Channel type mappings
@@ -75,26 +73,6 @@ def parse_parameter_code(code: int, parameter_value: Union[str, int]) -> Dict[st
 	
 	program_type = int(program_type_byte)
 	parameter_id = int(parameter_id_byte)
-	'''
-	
-	parameter_id_key = None
-	program_type_key = None
-	
-	# Find program type key
-	for key, value in ProgramTypes.items():
-		if program_type_byte == value:
-			program_type_key = key
-			break
-	
-	# Find parameter ID key
-	if program_type in ParameterDict:
-		params = ParameterDict[program_type]
-		for key, value in params.items():
-			if parameter_id_byte == value['id']:
-				parameter_id_key = key
-				break
-	'''
-	
 	
 	# Try to parse value as JSON, fall back to raw value
 	try:

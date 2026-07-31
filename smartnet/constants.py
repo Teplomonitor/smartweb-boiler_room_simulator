@@ -337,25 +337,6 @@ class VirtualControllerParameterId(IntEnum):
 	SENSOR15 = 16
 	SENSOR16 = 17
 
-# Import metadata from parameter_info module
-from smartnet import parameter_info as pinfo
-
-# Map ProgramType to parameter metadata (with IntEnum members as keys)
-ParameterDict = {
-	ProgramType.PROGRAM           : pinfo.PROGRAM_PARAMETER_INFO,
-	ProgramType.ROOM_DEVICE       : pinfo.ROOM_DEVICE_PARAMETER_INFO,
-	ProgramType.CONTROLLER        : pinfo.CONTROLLER_PARAMETER_INFO,
-	ProgramType.HEATING_CIRCUIT   : pinfo.HEATING_CIRCUIT_PARAMETER_INFO,
-	ProgramType.CONSUMER          : pinfo.CONSUMER_PARAMETER_INFO,
-	ProgramType.CASCADE_MANAGER   : pinfo.CASCADE_MANAGER_PARAMETER_INFO,
-	ProgramType.DISTRICT_HEATING  : pinfo.DISTRICT_HEATING_PARAMETER_INFO,
-	ProgramType.SNOWMELT          : pinfo.SNOWMELTER_PARAMETER_INFO,
-	ProgramType.CIRCUIT           : pinfo.CIRCUIT_PARAMETER_INFO,
-	ProgramType.POOL              : pinfo.SWIMMING_POOL_PARAMETER_INFO,
-	ProgramType.VIRTUAL_CONTROLLER: pinfo.VIRTUAL_CONTROLLER_PARAMETER_INFO,
-}
-
-
 ProgramFunction = {
 	 'IS_ID_OCCUPIED'                 : 1,
 	 'IS_TYPE_SUPPORTED'              : 2,
