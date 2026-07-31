@@ -132,16 +132,17 @@ class Message(object):
 			return False
 		
 		val = responseFilter.getRequestFlag()
-		if (val is not None) and (val is not self.getRequestFlag()): return False
+		
+		if (val is not None) and (val != self.getRequestFlag()): return False
 
 		val = responseFilter.get_program_type()
-		if (val is not None) and (val is not self.get_program_type()): return False
+		if (val is not None) and (val != self.get_program_type()): return False
 
 		val = responseFilter.getProgramId()
-		if (val is not None) and (val is not self.getProgramId()  ): return False
+		if (val is not None) and (val != self.getProgramId()  ): return False
 
 		val = responseFilter.getFunctionId()
-		if (val is not None) and (val is not self.getFunctionId() ): return False
+		if (val is not None) and (val != self.getFunctionId() ): return False
 
 		val = responseFilter.get_data()
 		if val is not None:
