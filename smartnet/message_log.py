@@ -113,7 +113,7 @@ class MLCDataParser:
     
     @staticmethod
     def pack_operation_byte(status, bytes_num = 0):
-        return (status << 5) & bytes_num
+        return (status << 5) | (bytes_num & 0x1F)
     
     @staticmethod
     def pack_status(timestamp, crc16_value):
