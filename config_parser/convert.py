@@ -74,25 +74,26 @@ def parse_parameter_code(code: int, parameter_value: Union[str, int]) -> Dict[st
 	
 	program_type = int(program_type_byte)
 	parameter_id = int(parameter_id_byte)
+	parameter_id_key = None
 	
 	'''
 	program_type_key = None
-	parameter_id_key = None
 	
 	# Find program type key
 	for key, value in ProgramTypes.items():
 		if program_type_byte == value:
 			program_type_key = key
 			break
+	'''
 	
 	# Find parameter ID key
-	if program_type_key in ParameterDict:
-		params = ParameterDict[program_type_key]
+	if program_type in ParameterDict:
+		params = ParameterDict[program_type]
 		for key, value in params.items():
 			if parameter_id_byte == value['id']:
 				parameter_id_key = key
 				break
-	'''
+	
 	
 	# Try to parse value as JSON, fall back to raw value
 	try:
@@ -102,7 +103,7 @@ def parse_parameter_code(code: int, parameter_value: Union[str, int]) -> Dict[st
 	
 	return {
 		'programType': program_type,
-		'parameterId': parameter_id,
+		'parameterId': parameter_id_key,
 		'value': parsed_value
 	}
 
@@ -348,7 +349,7 @@ def get_program_type_dict(programs: List[Dict[str, Any]]) -> str:
 	lines = ['programType = {']
 	for program in programs:
 		prog_id = get_program_id(program)
-		lines.append(f"'{prog_id}': '{program['type']}',")
+		lines.append(f"'{prog_id}': {program['type']},")
 	lines.append('}\n\n')
 	return '\n'.join(lines)
 
@@ -464,7 +465,7 @@ def get_parameter_setting_string(param: Dict[str, Any], value: Any) -> str:
 	"""
 	if param_is_string(param):
 		value = f"'{value}'"
-	return f"\trc.RemoteControlParameter('{param['programType']}', '{param['parameterId']}', {value}),\n"
+	return f"\trc.RemoteControlParameter({param['programType']}, '{param['parameterId']}', {value}),\n"
 
 
 def get_parameter_array_setting_string(param: Dict[str, Any], value: Any, index: int) -> str:
@@ -481,7 +482,7 @@ def get_parameter_array_setting_string(param: Dict[str, Any], value: Any, index:
 	"""
 	if param_is_string(param):
 		value = f"'{value}'"
-	return f"\trc.RemoteControlParameter('{param['programType']}', '{param['parameterId']}', {value}, {index}),\n"
+	return f"\trc.RemoteControlParameter({param['programType']}, '{param['parameterId']}', {value}, {index}),\n"
 
 
 def get_program_settings_dict(programs: List[Dict[str, Any]]) -> str:
@@ -655,6 +656,7 @@ def convert_config_to_preset(json_string: str) -> str:
 	for program_config in programs:
 		program_type_code = int(program_config['type'])
 		
+		'''
 		# Find the program type key
 		program_type_key = None
 		for key, type_value in ProgramTypes.items():
@@ -664,10 +666,11 @@ def convert_config_to_preset(json_string: str) -> str:
 		
 		if program_type_key is None:
 			continue
+		'''
 		
 		# Initialize program structure
 		program = {
-			'type': program_type_key,
+			'type': program_type_code,
 			'id': program_config['id'],
 			'title': program_config['title'],
 			'inputs': [],
