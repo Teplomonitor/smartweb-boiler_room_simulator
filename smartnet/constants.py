@@ -23,6 +23,24 @@ class ControllerType(IntEnum):
     EXT_CONTROLLER = 14
     CALEONBOX = 15
 
+ProgramScheme = {
+	'DEFAULT' : 0,
+
+	'CIRCUIT_MIXED'         : 0,
+	'CIRCUIT_HEAT_EXCHANGE' : 1,
+	'CIRCUIT_DIRECT'        : 2,
+	'CIRCUIT_HEATING_LINE'  : 3,
+	
+	
+	'PROGRAM_SCHEME_0': 0,
+	'PROGRAM_SCHEME_1': 1,
+	'PROGRAM_SCHEME_2': 2,
+	'PROGRAM_SCHEME_3': 3,
+	'PROGRAM_SCHEME_4': 4,
+	'PROGRAM_SCHEME_5': 5,
+}
+
+
 class ProgramType(IntEnum):
     CAN_PROGRAM_TYPE_UNDEFINED = 0
     PROGRAM = 1
