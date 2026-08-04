@@ -24,31 +24,31 @@ import simulator.virtualController
 BROADCAST_ID = 0
 
 simulatorType = {
-	'OUTDOOR_SENSOR'   : simulator.oat             .Simulator,
-	'BOILER'           : simulator.boiler          .Simulator,
+	snc.ProgramType.OUTDOOR_SENSOR   : simulator.oat             .Simulator,
+	snc.ProgramType.BOILER           : simulator.boiler          .Simulator,
 	'CASCADE_MANAGER'  : simulator.cascade         .Simulator,
-	'ROOM_DEVICE'      : simulator.room            .Simulator,
-	'HEATING_CIRCUIT'  : simulator.heating_circuit .Simulator,
-	'SNOWMELT'         : simulator.snowmelter      .Simulator,
-	'DHW'              : simulator.dhw             .Simulator,
-	'DISTRICT_HEATING' : simulator.district_heating.Simulator,
+	snc.ProgramType.ROOM_DEVICE      : simulator.room            .Simulator,
+	snc.ProgramType.HEATING_CIRCUIT  : simulator.heating_circuit .Simulator,
+	snc.ProgramType.SNOWMELT         : simulator.snowmelter      .Simulator,
+	snc.ProgramType.DHW              : simulator.dhw             .Simulator,
+	snc.ProgramType.DISTRICT_HEATING : simulator.district_heating.Simulator,
 	snc.ProgramType.FILLING_LOOP     : simulator.fillingLoop     .Simulator,
 	snc.ProgramType.TPT_VALVE_ADAPTER: simulator.tptValve        .Simulator,
 	snc.ProgramType.POOL             : simulator.swimmingPool    .Simulator,
-	'VIRTUAL_CONTROLLER': simulator.virtualController.Simulator,
+	snc.ProgramType.VIRTUAL_CONTROLLER: simulator.virtualController.Simulator,
 }
 
 consumerTypesList = [
-	'HEATING_CIRCUIT',
-	'SNOWMELT',
-	'DHW',
+	snc.ProgramType.HEATING_CIRCUIT,
+	snc.ProgramType.SNOWMELT,
+	snc.ProgramType.DHW,
 	snc.ProgramType.POOL,
 ]
 
 sourceTypesList = [
-	'BOILER',
+	snc.ProgramType.BOILER,
 	'CASCADE_MANAGER',
-	'DISTRICT_HEATING',
+	snc.ProgramType.DISTRICT_HEATING,
 ]
 
 
@@ -160,9 +160,9 @@ class Simulator(threading.Thread):
 			
 			if program.get_type() in consumerTypesList: self._consumersList.append(sim)
 			if program.get_type() in sourceTypesList  : self._generatorsList.append(sim)
-			if program.get_type() == 'OUTDOOR_SENSOR' : self._oat = sim
-			if program.get_type() == 'ROOM_DEVICE'    : self._roomList.append(sim)
-			if program.get_type() == 'HEATING_CIRCUIT': self._heatingCircuitList.append(sim)
+			if program.get_type() == snc.ProgramType.OUTDOOR_SENSOR : self._oat = sim
+			if program.get_type() == snc.ProgramType.ROOM_DEVICE    : self._roomList.append(sim)
+			if program.get_type() == snc.ProgramType.HEATING_CIRCUIT: self._heatingCircuitList.append(sim)
 			if program.get_type() == 'CASCADE_MANAGER': self._cascadeList.append(sim)
 
 		self._collector = simulator.collector.Simulator(self)

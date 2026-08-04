@@ -12,7 +12,7 @@ class HeatingCircuit(Program):
 	classdocs
 	'''
 	@staticmethod
-	def get_type(): return 'HEATING_CIRCUIT'
+	def get_type(): return snc.ProgramType.HEATING_CIRCUIT
 	
 	def getOutputTitles(self):
 		return [

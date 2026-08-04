@@ -13,7 +13,7 @@ class Dhw(Program):
 	'''
 
 	@staticmethod
-	def get_type(): return 'DHW'
+	def get_type(): return snc.ProgramType.DHW
 	
 	def init_inputs(self):
 		self._inputs['temperature'        ] = input_info(0, 'Т бойлера')

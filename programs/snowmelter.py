@@ -13,16 +13,16 @@ class Snowmelter(Program):
 	classdocs
 	'''
 	@staticmethod
-	def get_type(): return 'SNOWMELT'
+	def get_type(): return snc.ProgramType.SNOWMELT
 	
 	_remoteControlParameters = {
-		'minOutdoorTemp'     : PI('SNOWMELT', 'MINIMUM_OUTDOOR_TEMPERATURE'                            ),
-		'maxOutdoorTemp'     : PI('SNOWMELT', 'MAXIMUM_OUTDOOR_TEMPERATURE'                            ),
-		'reqFlowTemp'        : PI('SNOWMELT', 'REQUIRED_CONSTANT_FLOW_TEMPERATURE_OF_SECONDARY_CIRCUIT'),
-		'outdoorTemp'        : PI('SNOWMELT', 'OUTDOOR_TEMPERATURE'                                    ),
-		'frostProtectionTemp': PI('SNOWMELT', 'PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE'                 ),
-		'reqPlateTemp'       : PI('SNOWMELT', 'REQUIRED_PLATE_TEMPERATURE'                             ),
-		'alarmProgramId'     : PI('CONSUMER', 'ALARM_PROGRAM_ID'                                       ),
+		'minOutdoorTemp'     : PI(snc.ProgramType.SNOWMELT, 'MINIMUM_OUTDOOR_TEMPERATURE'                            ),
+		'maxOutdoorTemp'     : PI(snc.ProgramType.SNOWMELT, 'MAXIMUM_OUTDOOR_TEMPERATURE'                            ),
+		'reqFlowTemp'        : PI(snc.ProgramType.SNOWMELT, 'REQUIRED_CONSTANT_FLOW_TEMPERATURE_OF_SECONDARY_CIRCUIT'),
+		'outdoorTemp'        : PI(snc.ProgramType.SNOWMELT, 'OUTDOOR_TEMPERATURE'                                    ),
+		'frostProtectionTemp': PI(snc.ProgramType.SNOWMELT, 'PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE'                 ),
+		'reqPlateTemp'       : PI(snc.ProgramType.SNOWMELT, 'REQUIRED_PLATE_TEMPERATURE'                             ),
+		'alarmProgramId'     : PI(snc.ProgramType.CONSUMER, 'ALARM_PROGRAM_ID'                                       ),
 		#TODO: add more parameters
 	}
 	

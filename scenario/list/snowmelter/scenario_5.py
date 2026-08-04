@@ -23,8 +23,8 @@ class Scenario(Parent):
 	
 	def get_required_programs(self):
 		requiredProgramTypesList = {
-			'snowmelter': 'SNOWMELT',
-			'oat'       : 'OUTDOOR_SENSOR',
+			'snowmelter': snc.ProgramType.SNOWMELT,
+			'oat'       : snc.ProgramType.OUTDOOR_SENSOR,
 			'pressure'  : snc.ProgramType.FILLING_LOOP,
 		}
 		return requiredProgramTypesList

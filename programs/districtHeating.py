@@ -13,7 +13,7 @@ class DistrictHeating(Program):
 	'''
 
 	@staticmethod
-	def get_type(): return 'DISTRICT_HEATING'
+	def get_type(): return snc.ProgramType.DISTRICT_HEATING
 	
 	def init_inputs(self):
 		self._inputs['supply_direct_temp'  ] = input_info(0, 'Подача из города')

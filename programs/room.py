@@ -13,7 +13,7 @@ class Room(Program):
 	'''
 
 	@staticmethod
-	def get_type(): return 'ROOM_DEVICE'
+	def get_type(): return snc.ProgramType.ROOM_DEVICE
 	
 	def init_inputs(self):
 		self._inputs.update({
@@ -58,7 +58,7 @@ class Room(Program):
 		circuitList = [0, 0, 0]
 		
 		for setting in settings:
-			if setting.get_program_type() == 'ROOM_DEVICE':
+			if setting.get_program_type() == snc.ProgramType.ROOM_DEVICE:
 				parameterIdCode = setting.get_parameter_id_code()
 				parameterValue  = setting.get_value()
 				if   parameterIdCode == 'RESPONSIBLE_CIRCUIT_1': circuitList[0] = parameterValue

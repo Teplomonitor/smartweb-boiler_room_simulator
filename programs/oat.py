@@ -11,7 +11,7 @@ class Oat(Program):
 	'''
 
 	@staticmethod
-	def get_type(): return 'OUTDOOR_SENSOR'
+	def get_type(): return snc.ProgramType.OUTDOOR_SENSOR
 	
 	def init_inputs(self):
 		self._inputs['outdoorTemperature'] = input_info(0, 'Улица', -40, 40)

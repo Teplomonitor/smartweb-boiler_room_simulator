@@ -13,7 +13,7 @@ class Boiler(Program):
 	'''
 
 	@staticmethod
-	def get_type(): return 'BOILER'
+	def get_type(): return snc.ProgramType.BOILER
 	
 	def init_inputs(self):
 		self._inputs['temperature'        ] = input_info(0, 'Т котла'       )
