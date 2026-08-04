@@ -60,10 +60,9 @@ class Room(Program):
 		
 		for setting in settings:
 			if setting.get_program_type() == snc.ProgramType.ROOM_DEVICE:
-				parameterIdCode = setting.get_parameter_id_code()
-				parameterValue  = setting.get_value()
-				if   parameterIdCode == 'RESPONSIBLE_CIRCUIT_1': circuitList[0] = parameterValue
-				elif parameterIdCode == 'RESPONSIBLE_CIRCUIT_2': circuitList[1] = parameterValue
-				elif parameterIdCode == 'RESPONSIBLE_CIRCUIT_3': circuitList[2] = parameterValue
+				parameterId = setting.get_parameter_id()
+				if   parameterId == snc.RoomDeviceParameterId['RESPONSIBLE_CIRCUIT_1']: circuitList[0] = setting.get_value()
+				elif parameterId == snc.RoomDeviceParameterId['RESPONSIBLE_CIRCUIT_2']: circuitList[1] = setting.get_value()
+				elif parameterId == snc.RoomDeviceParameterId['RESPONSIBLE_CIRCUIT_3']: circuitList[2] = setting.get_value()
 		return circuitList
 	

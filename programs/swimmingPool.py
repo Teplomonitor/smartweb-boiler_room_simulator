@@ -3,7 +3,6 @@
 '''
 
 from .program import Program
-from .program import ParameterInfo as PI
 from .program import input_info
 from .program import output_info
 from gui.parameter import GuiParameter as GuiParameter
@@ -18,22 +17,22 @@ class SwimmingPool(Program):
 	def get_type(): return snc.ProgramType.POOL
 
 	_remoteControlParameters = {
-		'requiredPoolTemperatureComfort' : PI(snc.ProgramType.POOL, 'REQUIRED_POOL_TEMPERATURE'        ),
-		'requiredPoolTemperatureEconom'  : PI(snc.ProgramType.POOL, 'REQUIRED_POOL_TEMPERATURE_ECONOM' ),
-		'currentRequiredPoolTemperature' : PI(snc.ProgramType.POOL, 'CURRENT_REQUIRED_POOL_TEMPERATURE'),
-		'workMode'                       : PI(snc.ProgramType.POOL, 'WORK_MODE'                        ),
-#		'schedule'                       : PI(snc.ProgramType.POOL, 'SCHEDULE'                         ),
-		'circulationPumpWorkMode'        : PI(snc.ProgramType.POOL, 'CIRCULATION_PUMP_WORK_MODE'       ),
-		'circulationPumpWorkPeriodOn'    : PI(snc.ProgramType.POOL, 'CIRCULATION_PUMP_WORK_PERIOD_ON'  ),
-		'circulationPumpWorkPeriodOff'   : PI(snc.ProgramType.POOL, 'CIRCULATION_PUMP_WORK_PERIOD_OFF' ),
-		'fillingDuration'                : PI(snc.ProgramType.POOL, 'FILLING_DURATION'                 ),
-		'lowWaterLevelAlarmReset'        : PI(snc.ProgramType.POOL, 'LOW_WATER_LEVEL_ALARM_RESET'      ),
-		'currentWorkModeStatus'          : PI(snc.ProgramType.POOL, 'CURRENT_WORK_MODE_STATUS'         ),
+		'requiredPoolTemperatureComfort' : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.REQUIRED_POOL_TEMPERATURE        ),
+		'requiredPoolTemperatureEconom'  : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.REQUIRED_POOL_TEMPERATURE_ECONOM ),
+		'currentRequiredPoolTemperature' : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.CURRENT_REQUIRED_POOL_TEMPERATURE),
+		'workMode'                       : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.WORK_MODE                        ),
+#		'schedule'                       : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.SCHEDULE                         ),
+		'circulationPumpWorkMode'        : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.CIRCULATION_PUMP_WORK_MODE       ),
+		'circulationPumpWorkPeriodOn'    : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.CIRCULATION_PUMP_WORK_PERIOD_ON  ),
+		'circulationPumpWorkPeriodOff'   : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.CIRCULATION_PUMP_WORK_PERIOD_OFF ),
+		'fillingDuration'                : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.FILLING_DURATION                 ),
+		'lowWaterLevelAlarmReset'        : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.LOW_WATER_LEVEL_ALARM_RESET      ),
+		'currentWorkModeStatus'          : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.CURRENT_WORK_MODE_STATUS         ),
 		
 		#TODO: add more parameters
 	}
 	
-	def get_parameter_info(self, parameter): return self._remoteControlParameters[parameter]
+	def get_parameter_code(self, parameter): return self._remoteControlParameters[parameter]
 	
 	def init_inputs(self):
 		self._inputs['poolTemperature'] = input_info(0, 'Т воды'        , -10, 50)
@@ -58,7 +57,7 @@ class SwimmingPool(Program):
 		
 	def get_gui_color (self): return 'blue'
 	
-	def get_temperature         (self): return self.get_input_channel ('poolTemperature')
+	def get_temperature        (self): return self.get_input_channel ('poolTemperature')
 	def getCirculationPumpState(self): return self.get_output_channel('circulationPump')
 	def getLoadingPumpState    (self): return self.get_output_channel('loadingPump')
 	

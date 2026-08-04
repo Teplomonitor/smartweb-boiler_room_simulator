@@ -109,11 +109,10 @@ class RemoteControlParameter(object):
 		parameterValue = None,
 		parameterIndex = None,
 		programId      = None,
-		parameterInfo  = None
+		parameterCode  = None
 		):
-		if parameterInfo:
-			self._programType   = parameterInfo.get_program_type()
-			self._parameterId   = parameterInfo.get_parameter_id()
+		if parameterCode:
+			self._programType, self._parameterId = parameterCode
 		else:
 			self._programType    = programType
 			self._parameterId    = parameterId
@@ -126,7 +125,7 @@ class RemoteControlParameter(object):
 	
 	def get_value            (self): return self._parameterValue
 	def get_program_type     (self): return self._programType
-	def get_parameter_id_code(self): return self._parameterId
+	def get_parameter_id     (self): return self._parameterId
 	def getParameterIndex    (self): return self._parameterIndex
 	
 	def getParameterType(self):
@@ -160,14 +159,14 @@ class RemoteControlParameter(object):
 #		print(actionStr)
 		
 		def generate_request():
-			parameterIdCode = self.get_parameter_id_code()
+			parameterId = self.get_parameter_id()
 			
 			parameterValue = self.valueToData(self._parameterValue)
 			
 			if self._parameterIndex is None:
-				data = [self._programType, parameterIdCode]
+				data = [self._programType, parameterId]
 			else:
-				data = [self._programType, parameterIdCode, self._parameterIndex]
+				data = [self._programType, parameterId, self._parameterIndex]
 			
 			data.extend(parameterValue)
 			
@@ -228,12 +227,12 @@ class RemoteControlParameter(object):
 			actionStr = f'prg {self._programId} read parameter {self._programType}.{self._parameterId}.{self._parameterIndex}'
 
 		def generate_request():
-			parameterIdCode = self.get_parameter_id_code()
+			parameterId = self.get_parameter_id()
 			
 			if self._parameterIndex is None:
-				data = [self._programType, parameterIdCode]
+				data = [self._programType, parameterId]
 			else:
-				data = [self._programType, parameterIdCode, self._parameterIndex]
+				data = [self._programType, parameterId, self._parameterIndex]
 
 			request = sm.Message(
 				snc.ProgramType.REMOTE_CONTROL,

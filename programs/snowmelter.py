@@ -5,7 +5,6 @@
 from .program import Program
 from .program import input_info
 from .program import output_info
-from .program import ParameterInfo as PI
 from gui.parameter import GuiParameter as GP
 import smartnet.constants as snc
 
@@ -17,13 +16,13 @@ class Snowmelter(Program):
 	def get_type(): return snc.ProgramType.SNOWMELT
 	
 	_remoteControlParameters = {
-		'minOutdoorTemp'     : PI(snc.ProgramType.SNOWMELT, 'MINIMUM_OUTDOOR_TEMPERATURE'                            ),
-		'maxOutdoorTemp'     : PI(snc.ProgramType.SNOWMELT, 'MAXIMUM_OUTDOOR_TEMPERATURE'                            ),
-		'reqFlowTemp'        : PI(snc.ProgramType.SNOWMELT, 'REQUIRED_CONSTANT_FLOW_TEMPERATURE_OF_SECONDARY_CIRCUIT'),
-		'outdoorTemp'        : PI(snc.ProgramType.SNOWMELT, 'OUTDOOR_TEMPERATURE'                                    ),
-		'frostProtectionTemp': PI(snc.ProgramType.SNOWMELT, 'PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE'                 ),
-		'reqPlateTemp'       : PI(snc.ProgramType.SNOWMELT, 'REQUIRED_PLATE_TEMPERATURE'                             ),
-		'alarmProgramId'     : PI(snc.ProgramType.CONSUMER, 'ALARM_PROGRAM_ID'                                       ),
+		'minOutdoorTemp'     : (snc.ProgramType.SNOWMELT, snc.SnowMelterParameterId['MINIMUM_OUTDOOR_TEMPERATURE'                            ]),
+		'maxOutdoorTemp'     : (snc.ProgramType.SNOWMELT, snc.SnowMelterParameterId['MAXIMUM_OUTDOOR_TEMPERATURE'                            ]),
+		'reqFlowTemp'        : (snc.ProgramType.SNOWMELT, snc.SnowMelterParameterId['REQUIRED_CONSTANT_FLOW_TEMPERATURE_OF_SECONDARY_CIRCUIT']),
+		'outdoorTemp'        : (snc.ProgramType.SNOWMELT, snc.SnowMelterParameterId['OUTDOOR_TEMPERATURE'                                    ]),
+		'frostProtectionTemp': (snc.ProgramType.SNOWMELT, snc.SnowMelterParameterId['PRIMARY_CIRCUIT_PROTECTION_TEMPERATURE'                 ]),
+		'reqPlateTemp'       : (snc.ProgramType.SNOWMELT, snc.SnowMelterParameterId['REQUIRED_PLATE_TEMPERATURE'                             ]),
+		'alarmProgramId'     : (snc.ProgramType.CONSUMER, snc.ConsumerParameterId  ['ALARM_PROGRAM_ID'                                       ]),
 		#TODO: add more parameters
 	}
 	
@@ -66,7 +65,7 @@ class Snowmelter(Program):
 	def get_max_flow_rate1(self): return self._parameters['max_flow_rate1'].get_value()
 	def get_max_flow_rate2(self): return self._parameters['max_flow_rate2'].get_value()
 	
-	def get_parameter_info(self, parameter):
+	def get_parameter_code(self, parameter):
 		return self._remoteControlParameters[parameter]
 
 	def get_gui_color (self): return 'blue'

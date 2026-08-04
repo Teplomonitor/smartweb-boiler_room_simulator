@@ -39,17 +39,6 @@ def output_info(channelId, title):
 		title     = title
 		)
 
-
-class ParameterInfo(object):
-	def __init__(self,
-				programType,
-				parameterId):
-		self._programType = programType
-		self._parameterId = parameterId
-	
-	def get_program_type(self): return self._programType
-	def get_parameter_id(self): return self._parameterId
-
 class Program(object):
 	'''
 	classdocs
@@ -313,25 +302,25 @@ class Program(object):
 			
 		return value
 	
-	def get_parameter_info(self, parameter):
+	def get_parameter_code(self, parameter):
 		return None
 	
 	def read_parameter_value(self, parameter):
-		p = self.get_parameter_info(parameter)
+		p = self.get_parameter_code(parameter)
 		if p is None:
 			return None
-		remoteParam = sr.RemoteControlParameter(parameterInfo = p, programId = self.get_id() )
+		remoteParam = sr.RemoteControlParameter(parameterCode = p, programId = self.get_id() )
 		remoteParam.read()
 		
 		return remoteParam.get_value()
 	
 	def write_parameter_value(self, parameter, value, index = None, confirm = True):
-		p = self.get_parameter_info(parameter)
+		p = self.get_parameter_code(parameter)
 		if p is None:
 			return None
 		
 		remoteParam = sr.RemoteControlParameter(
-			parameterInfo = p,
+			parameterCode = p,
 			programId = self.get_id(),
 			parameterValue = value,
 			parameterIndex = index
@@ -359,8 +348,9 @@ class Program(object):
 	def get_temperature_source(self):
 		preset = self.get_preset()
 		settings = preset.getSettings().get()
+		generatorId_code = (snc.ProgramType.CONSUMER, snc.ConsumerParameterId.GENERATOR_ID)
 		for setting in settings:
-			if setting.get_program_type() == snc.ProgramType.CONSUMER and setting.get_parameter_id_code() == 'GENERATOR_ID':
+			if (setting.get_program_type(), setting.get_parameter_id()) == generatorId_code:
 				return setting.get_value()
 		return 0
 	

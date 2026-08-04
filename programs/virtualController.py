@@ -3,7 +3,6 @@
 '''
 
 from .program import Program
-from .program import ParameterInfo as PI
 from gui.parameter import GuiParameter as GuiParameter
 import functions.periodicTrigger as pt
 import smartnet.constants as snc
@@ -19,23 +18,23 @@ class VirtualController(Program):
 	def get_type(): return snc.ProgramType.VIRTUAL_CONTROLLER
 	
 	_remoteControlParameters = {
-		'controllerId'  : PI(snc.ProgramType.VIRTUAL_CONTROLLER, 'CONTROLLERID'),
-		'sensorValue01' : PI(snc.ProgramType.VIRTUAL_CONTROLLER, 'SENSOR01'),
-		'sensorValue02' : PI(snc.ProgramType.VIRTUAL_CONTROLLER, 'SENSOR02'),
-		'sensorValue03' : PI(snc.ProgramType.VIRTUAL_CONTROLLER, 'SENSOR03'),
-		'sensorValue04' : PI(snc.ProgramType.VIRTUAL_CONTROLLER, 'SENSOR04'),
-		'sensorValue05' : PI(snc.ProgramType.VIRTUAL_CONTROLLER, 'SENSOR05'),
-		'sensorValue06' : PI(snc.ProgramType.VIRTUAL_CONTROLLER, 'SENSOR06'),
-		'sensorValue07' : PI(snc.ProgramType.VIRTUAL_CONTROLLER, 'SENSOR07'),
-		'sensorValue08' : PI(snc.ProgramType.VIRTUAL_CONTROLLER, 'SENSOR08'),
-		'sensorValue09' : PI(snc.ProgramType.VIRTUAL_CONTROLLER, 'SENSOR09'),
-		'sensorValue10' : PI(snc.ProgramType.VIRTUAL_CONTROLLER, 'SENSOR10'),
-		'sensorValue11' : PI(snc.ProgramType.VIRTUAL_CONTROLLER, 'SENSOR11'),
-		'sensorValue12' : PI(snc.ProgramType.VIRTUAL_CONTROLLER, 'SENSOR12'),
-		'sensorValue13' : PI(snc.ProgramType.VIRTUAL_CONTROLLER, 'SENSOR13'),
-		'sensorValue14' : PI(snc.ProgramType.VIRTUAL_CONTROLLER, 'SENSOR14'),
-		'sensorValue15' : PI(snc.ProgramType.VIRTUAL_CONTROLLER, 'SENSOR15'),
-		'sensorValue16' : PI(snc.ProgramType.VIRTUAL_CONTROLLER, 'SENSOR16'),
+		'controllerId'  : (snc.ProgramType.VIRTUAL_CONTROLLER, snc.VirtualControllerParameterId['CONTROLLERID']),
+		'sensorValue01' : (snc.ProgramType.VIRTUAL_CONTROLLER, snc.VirtualControllerParameterId['SENSOR01']),
+		'sensorValue02' : (snc.ProgramType.VIRTUAL_CONTROLLER, snc.VirtualControllerParameterId['SENSOR02']),
+		'sensorValue03' : (snc.ProgramType.VIRTUAL_CONTROLLER, snc.VirtualControllerParameterId['SENSOR03']),
+		'sensorValue04' : (snc.ProgramType.VIRTUAL_CONTROLLER, snc.VirtualControllerParameterId['SENSOR04']),
+		'sensorValue05' : (snc.ProgramType.VIRTUAL_CONTROLLER, snc.VirtualControllerParameterId['SENSOR05']),
+		'sensorValue06' : (snc.ProgramType.VIRTUAL_CONTROLLER, snc.VirtualControllerParameterId['SENSOR06']),
+		'sensorValue07' : (snc.ProgramType.VIRTUAL_CONTROLLER, snc.VirtualControllerParameterId['SENSOR07']),
+		'sensorValue08' : (snc.ProgramType.VIRTUAL_CONTROLLER, snc.VirtualControllerParameterId['SENSOR08']),
+		'sensorValue09' : (snc.ProgramType.VIRTUAL_CONTROLLER, snc.VirtualControllerParameterId['SENSOR09']),
+		'sensorValue10' : (snc.ProgramType.VIRTUAL_CONTROLLER, snc.VirtualControllerParameterId['SENSOR10']),
+		'sensorValue11' : (snc.ProgramType.VIRTUAL_CONTROLLER, snc.VirtualControllerParameterId['SENSOR11']),
+		'sensorValue12' : (snc.ProgramType.VIRTUAL_CONTROLLER, snc.VirtualControllerParameterId['SENSOR12']),
+		'sensorValue13' : (snc.ProgramType.VIRTUAL_CONTROLLER, snc.VirtualControllerParameterId['SENSOR13']),
+		'sensorValue14' : (snc.ProgramType.VIRTUAL_CONTROLLER, snc.VirtualControllerParameterId['SENSOR14']),
+		'sensorValue15' : (snc.ProgramType.VIRTUAL_CONTROLLER, snc.VirtualControllerParameterId['SENSOR15']),
+		'sensorValue16' : (snc.ProgramType.VIRTUAL_CONTROLLER, snc.VirtualControllerParameterId['SENSOR16']),
 	}
 	
 	_sensors = [
@@ -77,7 +76,7 @@ class VirtualController(Program):
 	def setSensorControlOptions(self, index, options):
 		self.getSensor(index).setOptions(options)
 		
-	def get_parameter_info(self, parameter):
+	def get_parameter_code(self, parameter):
 		return self._remoteControlParameters[parameter]
 	
 	def getSensor(self, index):
