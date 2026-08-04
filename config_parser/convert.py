@@ -632,18 +632,6 @@ def convert_config_to_preset(json_string: str) -> str:
 	for program_config in programs:
 		program_type_code = int(program_config['type'])
 		
-		'''
-		# Find the program type key
-		program_type_key = None
-		for key, type_value in ProgramTypes.items():
-			if program_type_code == type_value:
-				program_type_key = key
-				break
-		
-		if program_type_key is None:
-			continue
-		'''
-		
 		# Initialize program structure
 		program = {
 			'type': program_type_code,
