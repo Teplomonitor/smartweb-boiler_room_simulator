@@ -19,6 +19,8 @@ from functions.periodicTrigger import PeriodicTrigger
 from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
 
+class ThreadStoppedException(Exception):
+	pass
 
 class Scenario(object):
 	RELAY_OFF = 0
@@ -71,6 +73,7 @@ class Scenario(object):
 		STEP = 1
 		while i < delay:
 			if self.is_stopped():
+				raise ThreadStoppedException(f"scenario {self.get_scenario_title()} was stopped")
 				return False
 		
 			i += STEP
@@ -345,25 +348,23 @@ class ScenarioThread(threading.Thread):
 				self._newScenario = None
 			
 			if self._currentScenario:
-				self._currentScenario.run()
-
-				if self._currentScenario.done():
-					self.append_scenario_result(self._currentScenario)
-					if self._currentScenario.get_status() != 'OK':
-						self.saveScenarioLog(self._currentScenario)
-						
-					self._currentScenario.clear()
-					self._currentScenario = self.getNextScenario()
-					if self._currentScenario == None:
-						self.print_scenario_run_result()
+				try:
+					self._currentScenario.run()
+					
+					if self._currentScenario.done():
+						self.append_scenario_result(self._currentScenario)
+						if self._currentScenario.get_status() != 'OK':
+							self.saveScenarioLog(self._currentScenario)
 							
+						self._currentScenario.clear()
+						self._currentScenario = self.getNextScenario()
+						if self._currentScenario == None:
+							self.print_scenario_run_result()
+				except Exception as e:
+					print_error("Thread stopped via exception")
+					
 			if self._stopScenarioEvent.is_set():
-				self._stopScenarioEvent.clear()
-				if self._currentScenario:
-					print_error(f'Сцераний прерван по внешнему запросу')
-					self._currentScenario.clear()
-					self._currentScenario = None
-					self.print_scenario_run_result()
+				self.stop_scenario_now()
 					
 			time.sleep(1)
 			
@@ -413,7 +414,14 @@ class ScenarioThread(threading.Thread):
 			self._currentScenario = self.get_scenario_object(scenario)
 		else:
 			print_error(f'{scenario} not in scenario list!')
-			
+		
+	def stop_scenario_now(self):
+		self._stopScenarioEvent.clear()
+		if self._currentScenario:
+			print_error(f'Сцераний прерван по внешнему запросу')
+			self._currentScenario.clear()
+			self._currentScenario = None
+			self.print_scenario_run_result()
 	
 	def get_scenario_object(self, scenarioId):
 		scenario_module = importfile(scenarioId)
