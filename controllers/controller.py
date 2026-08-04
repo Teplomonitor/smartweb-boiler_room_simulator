@@ -158,7 +158,7 @@ class Controller(object):
 		if activeProgramList is None:
 			activeProgramList = self.readControllerProgramList()
 		for ap in activeProgramList:
-			if ap['id'] == programId and ap['type'] == snc.ProgramType[programType]:
+			if ap['id'] == programId and ap['type'] == programType:
 				return True
 		return False
 	
