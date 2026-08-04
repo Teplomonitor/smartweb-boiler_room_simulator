@@ -1,4 +1,5 @@
 from scenario.scenario import Scenario as Parent
+import smartnet.constants as snc
 
 
 class SnowmelterScenario(Parent):
@@ -11,8 +12,8 @@ class SnowmelterScenario(Parent):
 
     def get_required_programs(self):
         requiredProgramTypesList = {
-            "snowmelter": "SNOWMELT",
-            "oat": "OUTDOOR_SENSOR",
+            "snowmelter": snc.ProgramType.SNOWMELT,
+            "oat"       : snc.ProgramType.OUTDOOR_SENSOR,
         }
         return requiredProgramTypesList
 
