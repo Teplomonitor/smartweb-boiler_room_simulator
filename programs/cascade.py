@@ -31,7 +31,7 @@ class Cascade(Program):
 		sourceList = [0, 0, 0, 0, 0, 0, 0, 0]
 		for setting in settings:
 			if setting.get_program_type() == snc.ProgramType.CASCADE_MANAGER:
-				if setting.get_parameter_id_code() == 'PARAM_TEMPERATURE_SOURCE_ID':
+				if setting.get_parameter_id_code() == snc.CascadeManagerParameterId.PARAM_TEMPERATURE_SOURCE_ID:
 					sourceList[setting.getParameterIndex()] = setting.get_value()
 		
 		return sourceList

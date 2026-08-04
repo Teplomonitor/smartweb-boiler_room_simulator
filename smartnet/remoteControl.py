@@ -124,13 +124,10 @@ class RemoteControlParameter(object):
 
 	def setProgramId(self, programId): self._programId = programId
 	
-	def get_value         (self): return self._parameterValue
-	def get_program_type   (self): return self._programType
-	def getParameterIndex(self): return self._parameterIndex
-	
-	def get_parameter_id_code(self):
-		param_def = param_registry.get_parameter(self._programType, self._parameterId)
-		return int(self._parameterId) if param_def else None
+	def get_value            (self): return self._parameterValue
+	def get_program_type     (self): return self._programType
+	def get_parameter_id_code(self): return self._parameterId
+	def getParameterIndex    (self): return self._parameterIndex
 	
 	def getParameterType(self):
 		param_def = param_registry.get_parameter(self._programType, self._parameterId)
