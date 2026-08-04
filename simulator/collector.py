@@ -1,4 +1,5 @@
 
+import smartnet.constants as snc
 
 class Simulator(object):
 	def __init__(self, control):
