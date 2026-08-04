@@ -12,7 +12,7 @@ class FillingLoop(Program):
 	'''
 
 	@staticmethod
-	def get_type(): return 'FILLING_LOOP'
+	def get_type(): return snc.ProgramType.FILLING_LOOP
 
 	def init_inputs(self):
 		self._inputs['pressureSensor'      ] = input_info(0, 'Давление', 0, 10, 0.1, 'бар')

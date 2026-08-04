@@ -12,7 +12,7 @@ class TptValve(Program):
 	'''
 
 	@staticmethod
-	def get_type(): return 'TPT_VALVE_ADAPTER'
+	def get_type(): return snc.ProgramType.TPT_VALVE_ADAPTER
 
 	def init_inputs(self):
 		self._inputs['signal'] = input_info(0, 'Управляющий сигнал')

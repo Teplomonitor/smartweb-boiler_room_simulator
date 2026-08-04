@@ -25,7 +25,7 @@ class Scenario(Parent):
 		requiredProgramTypesList = {
 			'snowmelter': 'SNOWMELT',
 			'oat'       : 'OUTDOOR_SENSOR',
-			'pressure'  : 'FILLING_LOOP',
+			'pressure'  : snc.ProgramType.FILLING_LOOP,
 		}
 		return requiredProgramTypesList
 	

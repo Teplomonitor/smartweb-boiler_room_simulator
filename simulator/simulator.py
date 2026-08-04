@@ -32,9 +32,9 @@ simulatorType = {
 	'SNOWMELT'         : simulator.snowmelter      .Simulator,
 	'DHW'              : simulator.dhw             .Simulator,
 	'DISTRICT_HEATING' : simulator.district_heating.Simulator,
-	'FILLING_LOOP'     : simulator.fillingLoop     .Simulator,
-	'TPT_VALVE_ADAPTER': simulator.tptValve        .Simulator,
-	'POOL'             : simulator.swimmingPool    .Simulator,
+	snc.ProgramType.FILLING_LOOP     : simulator.fillingLoop     .Simulator,
+	snc.ProgramType.TPT_VALVE_ADAPTER: simulator.tptValve        .Simulator,
+	snc.ProgramType.POOL             : simulator.swimmingPool    .Simulator,
 	'VIRTUAL_CONTROLLER': simulator.virtualController.Simulator,
 }
 
@@ -42,7 +42,7 @@ consumerTypesList = [
 	'HEATING_CIRCUIT',
 	'SNOWMELT',
 	'DHW',
-	'POOL',
+	snc.ProgramType.POOL,
 ]
 
 sourceTypesList = [

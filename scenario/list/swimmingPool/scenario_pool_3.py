@@ -22,7 +22,7 @@ class Scenario(Parent):
 	
 	def get_required_programs(self):
 		requiredProgramTypesList = {
-			'pool'   : 'POOL',
+			'pool'   : snc.ProgramType.POOL,
 		}
 		return requiredProgramTypesList
 	

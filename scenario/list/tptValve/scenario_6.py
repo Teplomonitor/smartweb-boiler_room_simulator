@@ -28,7 +28,7 @@ class Scenario(Parent):
 	
 	def get_required_programs(self):
 		requiredProgramTypesList = {
-			'tptValve': 'TPT_VALVE_ADAPTER',
+			'tptValve': snc.ProgramType.TPT_VALVE_ADAPTER,
 		}
 		return requiredProgramTypesList
 	
