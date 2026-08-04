@@ -4,6 +4,7 @@
 
 from .program import input_info
 from .program import Program
+import smartnet.constants as snc
 
 class Oat(Program):
 	'''

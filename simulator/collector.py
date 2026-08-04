@@ -18,7 +18,7 @@ class Simulator(object):
 		sourceList   = self._control.getSourceList()
 		
 		for source in sourceList:
-			if source._program.get_type() == 'CASCADE_MANAGER':
+			if source._program.get_type() == snc.ProgramType.CASCADE_MANAGER:
 				#cascade do not produce temperature itself, exclude it
 				pass
 			else:

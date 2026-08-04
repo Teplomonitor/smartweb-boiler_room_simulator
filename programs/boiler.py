@@ -6,6 +6,7 @@ from .program import Program
 from .program import input_info
 from .program import output_info
 from gui.parameter import GuiParameter as GuiParameter
+import smartnet.constants as snc
 
 class Boiler(Program):
 	'''

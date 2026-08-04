@@ -150,7 +150,7 @@ class Program(object):
 		headerOk = (
 					(msg.getProgramId  () == self.get_id()) and
 					(msg.get_program_type() == snc.ProgramType.REMOTE_CONTROL) and
-					(msg.getFunctionId () == snc.RemoteControlFunction['GET_PARAMETER_VALUE']) and
+					(msg.getFunctionId () == snc.RemoteControlFunction.GET_PARAMETER_VALUE) and
 					(msg.getRequestFlag() == snc.RequestFlag.RESPONSE))
 
 		if headerOk:
@@ -226,7 +226,7 @@ class Program(object):
 				data = response.get_data()
 				resultPos = len(data) - 1
 				result = data[resultPos]
-				if result == snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK']:
+				if result == snc.RemoteControlSetParameterResult.SET_PARAMETER_STATUS_OK:
 					print_log('bind ok!')
 					return True
 				else:
@@ -278,7 +278,7 @@ class Program(object):
 				data = response.get_data()
 				resultPos = len(data) - 1
 				result = data[resultPos]
-				if result == snc.RemoteControlSetParameterResult['SET_PARAMETER_STATUS_OK']:
+				if result == snc.RemoteControlSetParameterResult.SET_PARAMETER_STATUS_OK:
 					print_log('bind ok!')
 					return True
 				else:

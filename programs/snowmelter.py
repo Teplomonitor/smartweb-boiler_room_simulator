@@ -7,6 +7,7 @@ from .program import input_info
 from .program import output_info
 from .program import ParameterInfo as PI
 from gui.parameter import GuiParameter as GP
+import smartnet.constants as snc
 
 class Snowmelter(Program):
 	'''

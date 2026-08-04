@@ -5,6 +5,7 @@
 from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
 from scenario.scenario import Scenario   as Parent
+import smartnet.constants as snc
 
 from smartnet.message_log_constants import MessageLogCode
 

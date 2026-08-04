@@ -7,6 +7,7 @@ from .program import ParameterInfo as PI
 from .program import input_info
 from .program import output_info
 from gui.parameter import GuiParameter as GuiParameter
+import smartnet.constants as snc
 
 class SwimmingPool(Program):
 	'''

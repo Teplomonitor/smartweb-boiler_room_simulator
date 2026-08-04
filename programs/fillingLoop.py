@@ -5,6 +5,7 @@
 from .program import Program
 from .program import input_info
 from .program import output_info
+import smartnet.constants as snc
 
 class FillingLoop(Program):
 	'''

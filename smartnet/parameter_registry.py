@@ -8,7 +8,6 @@ and parameter ID. Implements caching to avoid repeated dictionary lookups.
 import logging
 from typing import Optional, Dict, Tuple, Any
 
-import smartnet.constants as snc
 import smartnet.parameter_info as snpi
 
 # Configure logger for this module

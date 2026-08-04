@@ -6,6 +6,7 @@ from .program import Program
 from .program import ParameterInfo as PI
 from gui.parameter import GuiParameter as GuiParameter
 import functions.periodicTrigger as pt
+import smartnet.constants as snc
 
 PARAMETER_NUM = 16
 

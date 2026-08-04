@@ -20,13 +20,14 @@ import simulator.collector
 import simulator.tptValve
 import simulator.swimmingPool
 import simulator.virtualController
+import smartnet.constants as snc
 
 BROADCAST_ID = 0
 
 simulatorType = {
 	snc.ProgramType.OUTDOOR_SENSOR   : simulator.oat             .Simulator,
 	snc.ProgramType.BOILER           : simulator.boiler          .Simulator,
-	'CASCADE_MANAGER'  : simulator.cascade         .Simulator,
+	snc.ProgramType.CASCADE_MANAGER  : simulator.cascade         .Simulator,
 	snc.ProgramType.ROOM_DEVICE      : simulator.room            .Simulator,
 	snc.ProgramType.HEATING_CIRCUIT  : simulator.heating_circuit .Simulator,
 	snc.ProgramType.SNOWMELT         : simulator.snowmelter      .Simulator,
@@ -47,7 +48,7 @@ consumerTypesList = [
 
 sourceTypesList = [
 	snc.ProgramType.BOILER,
-	'CASCADE_MANAGER',
+	snc.ProgramType.CASCADE_MANAGER,
 	snc.ProgramType.DISTRICT_HEATING,
 ]
 
@@ -163,7 +164,7 @@ class Simulator(threading.Thread):
 			if program.get_type() == snc.ProgramType.OUTDOOR_SENSOR : self._oat = sim
 			if program.get_type() == snc.ProgramType.ROOM_DEVICE    : self._roomList.append(sim)
 			if program.get_type() == snc.ProgramType.HEATING_CIRCUIT: self._heatingCircuitList.append(sim)
-			if program.get_type() == 'CASCADE_MANAGER': self._cascadeList.append(sim)
+			if program.get_type() == snc.ProgramType.CASCADE_MANAGER: self._cascadeList.append(sim)
 
 		self._collector = simulator.collector.Simulator(self)
 		self._simulator_ready = True
