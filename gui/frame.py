@@ -413,8 +413,8 @@ class MainFrame ( wx.Frame ):
 		collector_box = wx.StaticBoxSizer(
 			wx.StaticBox(self._collector_panel, wx.ID_ANY, _(u"Collector")),
 			wx.VERTICAL)
-		temperatures_box = wx.FlexGridSizer(6, 2, 5, 10)
-		temperatures_box.AddGrowableCol(1, 1)
+		status_box = wx.FlexGridSizer(6, 2, 5, 10)
+		status_box.AddGrowableCol(1, 1)
 
 		for name, title in (
 			('supply_direct', _(u"Supply from boilers")),
@@ -422,29 +422,29 @@ class MainFrame ( wx.Frame ):
 			('direct', _(u"Supply to consumers")),
 			('backward', _(u"Return from consumers")),
 			):
-			temperatures_box.Add(wx.StaticText(
+			status_box.Add(wx.StaticText(
 				collector_box.GetStaticBox(), wx.ID_ANY, title),
 				0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 3)
 			value_label = wx.StaticText(
 				collector_box.GetStaticBox(), wx.ID_ANY, u"—")
 			value_label.SetMinSize(wx.Size(90, -1))
-			temperatures_box.Add(value_label, 0, wx.ALIGN_RIGHT | wx.ALL, 3)
+			status_box.Add(value_label, 0, wx.ALIGN_RIGHT | wx.ALL, 3)
 			self._collector_temperature_labels[name] = value_label
 
 		for name, title in (
 			('boiler_flow', _(u"Boiler flow")),
 			('consumer_flow', _(u"Consumer flow")),
 			):
-			temperatures_box.Add(wx.StaticText(
+			status_box.Add(wx.StaticText(
 				collector_box.GetStaticBox(), wx.ID_ANY, title),
 				0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 3)
 			value_label = wx.StaticText(
 				collector_box.GetStaticBox(), wx.ID_ANY, u"—")
 			value_label.SetMinSize(wx.Size(90, -1))
-			temperatures_box.Add(value_label, 0, wx.ALIGN_RIGHT | wx.ALL, 3)
+			status_box.Add(value_label, 0, wx.ALIGN_RIGHT | wx.ALL, 3)
 			self._collector_flow_labels[name] = value_label
 			
-		collector_box.Add(temperatures_box, 1, wx.EXPAND | wx.ALL, 5)
+		collector_box.Add(status_box, 1, wx.EXPAND | wx.ALL, 5)
 		self._collector_panel.SetSizer(collector_box)
 		self._collector_panel.Layout()
 		collector_box.Fit(self._collector_panel)
