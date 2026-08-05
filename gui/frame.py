@@ -396,6 +396,7 @@ class MainFrame ( wx.Frame ):
 		ProgramPanel.Layout()
 		ProgramBoxSizer.Fit( ProgramPanel )
 		self.programsWrapSizer.Add( ProgramPanel, 1, wx.EXPAND |wx.ALL, 5 )
+		self.mainScrollableWindow.FitInside()
 		self.Layout()
 
 	def add_collector(self, collector):
@@ -451,6 +452,7 @@ class MainFrame ( wx.Frame ):
 		self.programsWrapSizer.Add(self._collector_panel, 1, wx.EXPAND | wx.ALL, 5)
 		self.update_collector_temperatures()
 		self._collector_timer.Start(500)
+		self.mainScrollableWindow.FitInside()
 		self.mainScrollableWindow.Layout()
 		self.Layout()
 
