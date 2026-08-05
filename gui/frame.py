@@ -137,7 +137,7 @@ class MainFrame ( wx.Frame ):
 		self.mainScrollableWindow.SetSizer( self.programsWrapSizer )
 		self.mainScrollableWindow.Layout()
 
-		self.ConsoleTextCtrl = wx.TextCtrl( self.mainSplitter, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE|wx.TE_READONLY )
+		self.ConsoleTextCtrl = wx.TextCtrl( self.mainSplitter, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE|wx.TE_READONLY|wx.TE_RICH2 )
 		self.ConsoleTextCtrl.SetForegroundColour( wx.Colour( 14, 173, 5 ) )
 		self.ConsoleTextCtrl.SetBackgroundColour( wx.Colour( 0, 0, 0 ) )
 
@@ -185,8 +185,18 @@ class MainFrame ( wx.Frame ):
 	def OnExitButtonPress( self, event ):
 		self.doClose(event)
 
-	def printText(self, text):
+	def printText(self, text, color='GREEN'):
+		colors = {
+			'GREEN': wx.Colour(14, 173, 5),
+			'RED': wx.Colour(173, 40, 40),
+		}
+		start_position = self.ConsoleTextCtrl.GetLastPosition()
 		self.ConsoleTextCtrl.AppendText(text)
+		self.ConsoleTextCtrl.SetStyle(
+			start_position,
+			start_position + len(text),
+			wx.TextAttr(colors.get(color, colors['GREEN']))
+		)
 
 	def setTextColor(self, color):
 		if color == 'GREEN':
@@ -429,12 +439,11 @@ class guiThread():
 	def saveProgramPlots(self):
 		main.saveProgramPlots()
 	
-	def printConsoleText(self, text):
-		wx.CallAfter(self.printConsoleTextNow, text)
+	def printConsoleText(self, text, color='GREEN'):
+		wx.CallAfter(self.printConsoleTextNow, text, color)
 		
-	def printConsoleTextNow(self, text):
-		self._ex.printText(text)
-		self._ex.printText('\n')
+	def printConsoleTextNow(self, text, color='GREEN'):
+		self._ex.printText(f'{text}\n', color)
 		
 	def setTextColor(self, color):
 		self._ex.setTextColor(color)
