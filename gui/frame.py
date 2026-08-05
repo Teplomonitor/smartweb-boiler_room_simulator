@@ -210,6 +210,7 @@ class MainFrame ( wx.Frame ):
 		self._collector = None
 		self._collector_panel = None
 		self._collector_temperature_labels = {}
+		self._collector_flow_labels = {}
 		self._collector_timer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.on_collector_timer, self._collector_timer)
 		
@@ -412,7 +413,7 @@ class MainFrame ( wx.Frame ):
 		collector_box = wx.StaticBoxSizer(
 			wx.StaticBox(self._collector_panel, wx.ID_ANY, _(u"Collector")),
 			wx.VERTICAL)
-		temperatures_box = wx.FlexGridSizer(4, 2, 5, 10)
+		temperatures_box = wx.FlexGridSizer(6, 2, 5, 10)
 		temperatures_box.AddGrowableCol(1, 1)
 
 		for name, title in (
@@ -430,6 +431,19 @@ class MainFrame ( wx.Frame ):
 			temperatures_box.Add(value_label, 0, wx.ALIGN_RIGHT | wx.ALL, 3)
 			self._collector_temperature_labels[name] = value_label
 
+		for name, title in (
+			('boiler_flow', _(u"Boiler flow")),
+			('consumer_flow', _(u"Consumer flow")),
+			):
+			temperatures_box.Add(wx.StaticText(
+				collector_box.GetStaticBox(), wx.ID_ANY, title),
+				0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 3)
+			value_label = wx.StaticText(
+				collector_box.GetStaticBox(), wx.ID_ANY, u"—")
+			value_label.SetMinSize(wx.Size(90, -1))
+			temperatures_box.Add(value_label, 0, wx.ALIGN_RIGHT | wx.ALL, 3)
+			self._collector_flow_labels[name] = value_label
+			
 		collector_box.Add(temperatures_box, 1, wx.EXPAND | wx.ALL, 5)
 		self._collector_panel.SetSizer(collector_box)
 		self._collector_panel.Layout()
@@ -451,6 +465,7 @@ class MainFrame ( wx.Frame ):
 		self._collector = None
 		self._collector_panel = None
 		self._collector_temperature_labels = {}
+		self._collector_flow_labels = {}
 
 	def on_collector_timer(self, event):
 		self.update_collector_temperatures()
@@ -465,9 +480,17 @@ class MainFrame ( wx.Frame ):
 			'direct': self._collector.get_direct_temperature(),
 			'backward': self._collector.get_backward_temperature(),
 		}
+		
+		flows = {
+			'boiler_flow'  : self._collector.get_generator_flow(),
+			'consumer_flow': self._collector.get_consumer_flow(),
+			}
 
 		for name, temperature in temperatures.items():
 			self._collector_temperature_labels[name].SetLabel(f'{temperature:.1f} °C')
+		
+		for name, flow in flows.items():
+			self._collector_flow_labels[name].SetLabel(f'{flow:.1f} t/h')
 		
 	def __del__( self ):
 		pass
