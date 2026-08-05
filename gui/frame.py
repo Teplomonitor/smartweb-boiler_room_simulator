@@ -121,7 +121,12 @@ class MainFrame ( wx.Frame ):
 		mainBoxSizer = wx.BoxSizer( wx.VERTICAL )
 
 		mainBoxSizer.SetMinSize( wx.Size( 640,-1 ) )
-		self.mainScrollableWindow = wx.ScrolledWindow( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( 640,480 ), wx.HSCROLL|wx.VSCROLL )
+
+		self.mainSplitter = wx.SplitterWindow( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.SP_LIVE_UPDATE )
+		self.mainSplitter.SetMinimumPaneSize( 150 )
+		self.mainSplitter.SetSashGravity( 0.7 )
+
+		self.mainScrollableWindow = wx.ScrolledWindow( self.mainSplitter, wx.ID_ANY, wx.DefaultPosition, wx.Size( 640,480 ), wx.HSCROLL|wx.VSCROLL )
 		self.mainScrollableWindow.SetScrollRate( 5, 5 )
 		self.mainScrollableWindow.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_INACTIVECAPTION ) )
 
@@ -131,7 +136,13 @@ class MainFrame ( wx.Frame ):
 
 		self.mainScrollableWindow.SetSizer( self.programsWrapSizer )
 		self.mainScrollableWindow.Layout()
-		mainBoxSizer.Add( self.mainScrollableWindow, 1, wx.EXPAND |wx.ALL, 5 )
+
+		self.ConsoleTextCtrl = wx.TextCtrl( self.mainSplitter, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE|wx.TE_READONLY )
+		self.ConsoleTextCtrl.SetForegroundColour( wx.Colour( 14, 173, 5 ) )
+		self.ConsoleTextCtrl.SetBackgroundColour( wx.Colour( 0, 0, 0 ) )
+
+		self.mainSplitter.SplitHorizontally( self.mainScrollableWindow, self.ConsoleTextCtrl, 560 )
+		mainBoxSizer.Add( self.mainSplitter, 1, wx.EXPAND |wx.ALL, 5 )
 
 
 		self.SetSizer( mainBoxSizer )
@@ -173,6 +184,15 @@ class MainFrame ( wx.Frame ):
 
 	def OnExitButtonPress( self, event ):
 		self.doClose(event)
+
+	def printText(self, text):
+		self.ConsoleTextCtrl.AppendText(text)
+
+	def setTextColor(self, color):
+		if color == 'GREEN':
+			self.ConsoleTextCtrl.SetForegroundColour( wx.Colour( 14, 173, 5 ) )
+		elif color == 'RED':
+			self.ConsoleTextCtrl.SetForegroundColour( wx.Colour( 173, 40, 40 ) )
 
 	def __init__( self, parent , guithread):
 		self.makeFrame(parent)
@@ -365,53 +385,6 @@ class MainFrame ( wx.Frame ):
 	def __del__( self ):
 		pass
 
-class ConsoleFrame ( wx.Frame ):
-
-	def __init__( self, parent ):
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 640,480 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
-
-		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
-
-		ConsoleSizer = wx.BoxSizer( wx.VERTICAL )
-
-		self.ConsoleTextCtrl = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE|wx.TE_READONLY )
-		self.ConsoleTextCtrl.SetForegroundColour( wx.Colour( 14, 173, 5 ) )
-		self.ConsoleTextCtrl.SetBackgroundColour( wx.Colour( 0, 0, 0 ) )
-		
-		ConsoleSizer.Add( self.ConsoleTextCtrl, 1, wx.ALL|wx.EXPAND, 5 )
-
-
-		self.SetSizer( ConsoleSizer )
-		self.Layout()
-
-		self.Centre( wx.BOTH )
-
-		# Connect Events
-		self.Bind( wx.EVT_CLOSE, self.doClose )
-		
-	def __del__( self ):
-		pass
-	
-	# Virtual event handlers, override them in your derived class
-	def doClose( self, event ):
-		event.Skip()
-		main.MainStop()
-		guiThread().clear()
-		exit(0)
-	
-	def printText(self, text):
-		self.ConsoleTextCtrl.AppendText(text)
-	
-	def setTextColor(self, color):
-		if color == 'GREEN':
-			self.ConsoleTextCtrl.SetForegroundColour( wx.Colour( 14, 173, 5 ) )
-		elif color == 'RED':
-			self.ConsoleTextCtrl.SetForegroundColour( wx.Colour( 173, 40, 40 ) )
-			
-
-	def OnExitButtonPress( self, event ):
-		self.doClose(event)
-
 class guiThread():
 	def __new__(cls, *args, **kwargs):
 		if not hasattr(cls, 'instance'):
@@ -425,9 +398,7 @@ class guiThread():
 		self._app = wx.App()
 		self._frame = wx.Frame(None, title='Simple application')
 		self._ex = MainFrame(self._frame, self)
-		self._consoleFrame = ConsoleFrame(self._frame)
 		self._ex.Show()
-		self._consoleFrame.Show()
 		
 		self._initDone = True
 		
@@ -462,11 +433,11 @@ class guiThread():
 		wx.CallAfter(self.printConsoleTextNow, text)
 		
 	def printConsoleTextNow(self, text):
-		self._consoleFrame.printText(text)
-		self._consoleFrame.printText('\n')
+		self._ex.printText(text)
+		self._ex.printText('\n')
 		
 	def setTextColor(self, color):
-		self._consoleFrame.setTextColor(color)
+		self._ex.setTextColor(color)
 		
 	def run(self):
 		self._app.MainLoop()
