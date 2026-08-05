@@ -348,7 +348,7 @@ class MessageLogReader:
             if not data:
                 continue
             
-            print(f"found: {response.generateHeader():08X} - {' '.join(format(x, '02x') for x in response._data)}")
+#            print(f"found: {response.generateHeader():08X} - {' '.join(format(x, '02x') for x in response._data)}")
             
             op = MLCDataParser.parse_operation(data[0])
             
