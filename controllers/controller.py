@@ -213,6 +213,7 @@ class Controller(object):
 		return preset.loadPreset(self)
 
 	def get_program_list(self): return self._programList
+	def get_gui(self): return self._gui
 	
 	def on_can_message_received(self, msg):
 		def generateResponse():

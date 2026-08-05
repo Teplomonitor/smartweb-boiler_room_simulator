@@ -167,6 +167,9 @@ class Simulator(threading.Thread):
 			if program.get_type() == snc.ProgramType.CASCADE_MANAGER: self._cascadeList.append(sim)
 
 		self._collector = simulator.collector.Simulator(self)
+		gui = self._controllerHost.get_gui()
+		if gui:
+			gui.add_collector(self._collector)
 		self._simulator_ready = True
 
 	def getControllersIOList (self): return self._controllerIo
