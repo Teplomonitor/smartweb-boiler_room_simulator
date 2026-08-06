@@ -275,6 +275,18 @@ class RemoteControlParameter(object):
 
 		request = generate_request()
 		
+		parameter_size = self.getParameterSize()
+		if self._parameterIndex is None:
+			data_size = parameter_size
+		else:
+			index_len = len(self._parameterIndex)
+			data_size = parameter_size + index_len
+		
+		# response flag don't fit in message body so no need to wait confirm
+		# actually instead we should wait for response with new data value but I'm lazy to do it
+		if data_size >= 6:
+			confirm = False
+			
 		if confirm == False:
 			request.send()
 			return True
