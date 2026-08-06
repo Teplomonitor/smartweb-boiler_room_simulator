@@ -4,11 +4,10 @@
 
 from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
-from scenario.scenario import Scenario   as Parent
-import smartnet.constants as snc
+from scenario.base.swimming_pool import PoolScenario
 
 
-class Scenario(Parent):
+class Scenario(PoolScenario):
 	MODE_COMFORT = 0
 	MODE_ECONOM = 1
 	MODE_OFF = 3
@@ -17,24 +16,12 @@ class Scenario(Parent):
 	TEST_ECONOM_TEMPERATURE = 20
 	TEMPERATURE_TOLERANCE = 0.1
 
-	def __init__(self, controllerHost, sim):
-		super().__init__(controllerHost, sim)
-
-		self._pool = self._programList['pool']
-
 	def get_scenario_title(self): return 'pool test 4 - required temperature depends on work mode'
 
 	def get_scenario_description(self):
 		return 'Проверка расчёта требуемой температуры бассейна в зависимости от режима работы'
 
 	def get_checklist_id(self): return '3.11.4'
-
-	def get_required_programs(self):
-		return {
-			'pool': snc.ProgramType.POOL,
-		}
-
-	def get_default_preset(self): return 'swimmingPool'
 
 	def read_work_mode(self):
 		return self._pool.read_parameter_value('workMode')

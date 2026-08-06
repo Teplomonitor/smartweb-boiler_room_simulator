@@ -4,15 +4,13 @@
 
 from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
-from scenario.scenario import Scenario as Parent
+from scenario.base.swimming_pool import PoolScenario
 import smartnet.constants as snc
 
 
-class Scenario(Parent):
+class Scenario(PoolScenario):
 	def __init__(self, controllerHost, sim):
 		super().__init__(controllerHost, sim)
-
-		self._pool = self._programList['pool']
 		self._pressure = self._programList['pressure']
 
 	def get_scenario_title(self): return 'pool test 6 - pumps shutdown on alarm'
@@ -30,32 +28,11 @@ class Scenario(Parent):
 
 	def get_default_preset(self): return 'swimmingPoolWithPressureControl'
 
-	def get_loading_pump_state(self):
-		return self._pool.getLoadingPumpState().get_value()
-
-	def get_circulation_pump_state(self):
-		return self._pool.getCirculationPumpState().get_value()
-
-	def loading_pump_is_on(self):
-		return self.get_loading_pump_state() != self.RELAY_OFF
-
-	def circulation_pump_is_on(self):
-		return self.get_circulation_pump_state() != self.RELAY_OFF
-
 	def pumps_are_on(self):
 		return self.loading_pump_is_on() and self.circulation_pump_is_on()
 
-	def loading_pump_is_off(self):
-		return not self.loading_pump_is_on()
-
-	def circulation_pump_is_off(self):
-		return not self.circulation_pump_is_on()
-
 	def pumps_are_off(self):
 		return self.loading_pump_is_off() and self.circulation_pump_is_off()
-
-	def set_pool_temperature(self, value):
-		self.set_sensor_value(self._pool.get_temperature(), value)
 
 	def set_alarm_signal(self, value):
 		pressure = self._pressure.getPressure()
@@ -63,7 +40,7 @@ class Scenario(Parent):
 		self.set_sensor_value(pressure, state)
 
 	def run(self):
-		pool_setpoint = self._pool.read_parameter_value('currentRequiredPoolTemperature')
+		pool_setpoint = self.read_required_pool_temperature()
 		if pool_setpoint is None:
 			self._status = 'FAIL'
 			print_error('Проблема! не удалось получить уставку бассейна')

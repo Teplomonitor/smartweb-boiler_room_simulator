@@ -4,15 +4,9 @@
 
 from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
-from scenario.scenario import Scenario   as Parent
-import smartnet.constants as snc
+from scenario.base.swimming_pool import PoolScenario
 
-class Scenario(Parent):
-	
-	def __init__(self, controllerHost, sim):
-		super().__init__(controllerHost, sim)
-		
-		self._pool   = self._programList['pool']
+class Scenario(PoolScenario):
 
 	def get_scenario_title(self): return 'pool test 3'
 	
@@ -21,25 +15,17 @@ class Scenario(Parent):
 	
 	def get_checklist_id(self): return '3.11.8'
 	
-	def get_required_programs(self):
-		requiredProgramTypesList = {
-			'pool'   : snc.ProgramType.POOL,
-		}
-		return requiredProgramTypesList
-	
-	def get_default_preset(self): return 'swimmingPool_with_level'
-
 	def force_preset_load(self):
 		return True
 	
-	def getWaterLevelControlState(self): return self._pool.get_output_channel('waterLevelControl').get_value()
+	def get_water_level_control_state(self): return self._pool.get_output_channel('waterLevelControl').get_value()
 	
-	def waterLevelControlIsOn (self): return self.getWaterLevelControlState() != self.RELAY_OFF
-	def waterLevelControlIsOff(self): return not self.waterLevelControlIsOn()
+	def water_level_control_is_on(self): return self.get_water_level_control_state() != self.RELAY_OFF
+	def water_level_control_is_off(self): return not self.water_level_control_is_on()
 	
-	def setWaterLevel(self, value):
-		waterLevel = self._pool.get_input_channel('waterLevel')
-		self.set_sensor_value(waterLevel, value)
+	def set_water_level(self, value):
+		water_level = self._pool.get_input_channel('waterLevel')
+		self.set_sensor_value(water_level, value)
 	
 	def run(self):
 		print_log('Убедимся, что программа бассейна активна')
@@ -47,13 +33,13 @@ class Scenario(Parent):
 		
 		# Устанавливаем нормальный уровень воды (WATER_LEVEL_HI = 'short')
 		# В этом состоянии выход подпитки должен быть отключен
-		WATER_LEVEL_HI = 'short'
-		print_log(f'устанавливаем нормальный уровень воды (значение {WATER_LEVEL_HI})')
-		self.setWaterLevel(WATER_LEVEL_HI)
+		water_level_hi = 'short'
+		print_log(f'устанавливаем нормальный уровень воды (значение {water_level_hi})')
+		self.set_water_level(water_level_hi)
 		self.wait(2)
 		
 		print_log('проверяем, что выход "Подпитка" выключен при нормальном уровне воды')
-		if not self.wait_state_permanence(self.waterLevelControlIsOff, 20, 30):
+		if not self.wait_state_permanence(self.water_level_control_is_off, 20, 30):
 			self._status = 'FAIL'
 			print_error('Плохо! Выход "Подпитка" должен быть выключен при нормальном уровне воды')
 			return
@@ -61,14 +47,14 @@ class Scenario(Parent):
 		self.wait(1)
 		
 		# Устанавливаем низкий уровень воды (любое значение кроме WATER_LEVEL_HI)
-		WATER_LEVEL_LOW = 'open'
-		print_log(f'устанавливаем низкий уровень воды (значение {WATER_LEVEL_LOW})')
-		self.setWaterLevel(WATER_LEVEL_LOW)
+		water_level_low = 'open'
+		print_log(f'устанавливаем низкий уровень воды (значение {water_level_low})')
+		self.set_water_level(water_level_low)
 		self.wait(1)
 		
 		print_log('ждём, что выход "Подпитка" включится при низком уровне воды')
-		waterLevelControlSwitchOnTimeout = 30
-		if self.wait_event(self.waterLevelControlIsOn, waterLevelControlSwitchOnTimeout):
+		water_level_control_switch_on_timeout = 30
+		if self.wait_event(self.water_level_control_is_on, water_level_control_switch_on_timeout):
 			print_log('Хорошо, выход "Подпитка" включен')
 		else:
 			self._status = 'FAIL'
@@ -79,12 +65,12 @@ class Scenario(Parent):
 		
 		# Восстанавливаем нормальный уровень воды
 		print_log('восстанавливаем нормальный уровень воды')
-		self.setWaterLevel(WATER_LEVEL_HI)
+		self.set_water_level(water_level_hi)
 		self.wait(1)
 		
 		print_log('ждём, что выход "Подпитка" выключится при восстановленном уровне воды')
-		waterLevelControlSwitchOffTimeout = 30
-		if self.wait_event(self.waterLevelControlIsOff, waterLevelControlSwitchOffTimeout):
+		water_level_control_switch_off_timeout = 30
+		if self.wait_event(self.water_level_control_is_off, water_level_control_switch_off_timeout):
 			print_log('Хорошо! Выход "Подпитка" включается и выключается корректно')
 			self._status = 'OK'
 		else:
