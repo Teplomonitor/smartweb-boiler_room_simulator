@@ -15,6 +15,8 @@ ParameterSize =  {
 	'UINT16_T'   : 2,
 	'TEMPERATURE': 2,
 	'TIME_MS'    : 4,
+	'DATE'       : 5,
+	'TIME'       : 4,
 	'SCHEDULE'   : 4,
 	'TDP_FLOAT'  : 2,
 }
@@ -77,15 +79,47 @@ def tdpFloatToData(value, littleEndian = False):
 def timeToData(value, littleEndian = False):
 	return int(value*1000)
 
+def date_to_data(value):
+	"""Encode (day, weekday, month, year) as the packed tsDate payload."""
+	if len(value) != 4:
+		raise ValueError('date value must contain day, weekday, month, and year')
+	day, weekday, month, year = [int(item) for item in value]
+	if not 1 <= day <= 31 or not 0 <= weekday <= 6 or not 1 <= month <= 12:
+		raise ValueError('date value is out of range')
+	return [day, weekday, month, *year.to_bytes(2, 'little')]
+
+def bytes_to_date(data):
+	if len(data) != 5:
+		raise ValueError('date data must contain five bytes')
+	return (data[0], data[1], data[2], int.from_bytes(data[3:5], 'little'))
+
+def clock_time_to_data(value):
+	"""Encode (hour, minute, second, is_dst) as the packed tsTime payload."""
+	if len(value) != 4:
+		raise ValueError('time value must contain four components')
+	hour, minute, second, is_dst = [int(item) for item in value]
+	if not 0 <= hour <= 23 or not 0 <= minute <= 59 or not 0 <= second <= 59:
+		raise ValueError('time value is out of range')
+	return [hour, minute, second, is_dst]
+
+def bytes_to_clock_time(data):
+	if len(data) != 4:
+		raise ValueError('time data must contain four bytes')
+	return tuple(data)
+
 def schedule_value_to_data(value):
 	"""Encode (start_hour, start_minute, end_hour, end_minute)."""
 	if len(value) != 4:
 		raise ValueError('schedule value must contain four time components')
 
 	components = [int(item) for item in value]
-	for component, maximum in zip(components, (23, 59, 23, 59)):
-		if not 0 <= component <= maximum:
-			raise ValueError('schedule time component is out of range')
+	start_hour, start_minute, end_hour, end_minute = components
+	if not 0 <= start_hour <= 23 or not 0 <= start_minute <= 59:
+		raise ValueError('schedule start time component is out of range')
+	if not 0 <= end_minute <= 59 or not 0 <= end_hour <= 24:
+		raise ValueError('schedule end time component is out of range')
+	if end_hour == 24 and end_minute != 0:
+		raise ValueError('schedule end time 24:00 must have zero minutes')
 	return components
 
 def bytesToInt(data, littleEndian = False):
@@ -185,7 +219,7 @@ class RemoteControlParameter(object):
 		if self.getParameterType() == 'STRING':
 			return False
 		
-		if self.getParameterType() == 'SCHEDULE':
+		if self.getParameterType() in ('SCHEDULE', 'DATE', 'TIME'):
 			actionStr = f'prg {self._programId} write parameter {self._programType}.{self._parameterId}.{self._parameterIndex} = {self._parameterValue}'
 		elif self._parameterIndex is None:
 			actionStr = f'prg {self._programId} write parameter {self._programType}.{self._parameterId} = {self._parameterValue:.2f}'
@@ -341,6 +375,8 @@ class RemoteControlParameter(object):
 		elif parameterType == 'UINT16_T'   : return bytesToInt(data)
 		elif parameterType == 'TEMPERATURE': return bytesToTemp(data)
 		elif parameterType == 'TIME_MS'    : return bytesToTime(data)
+		elif parameterType == 'DATE'       : return bytes_to_date(data)
+		elif parameterType == 'TIME'       : return bytes_to_clock_time(data)
 		elif parameterType == 'SCHEDULE':
 			if self._parameterIndex == SCHEDULE_CRC_SELECTOR:
 				return bytes_to_schedule_crc(data)
@@ -356,6 +392,8 @@ class RemoteControlParameter(object):
 		elif parameterType == 'UINT16_T'   : data = int(value)
 		elif parameterType == 'TEMPERATURE': data = tempToData(value); signedValue = True
 		elif parameterType == 'TIME_MS'    : data = timeToData(value)
+		elif parameterType == 'DATE'       : return date_to_data(value)
+		elif parameterType == 'TIME'       : return clock_time_to_data(value)
 		elif parameterType == 'SCHEDULE':
 			if self._parameterIndex == SCHEDULE_CRC_SELECTOR:
 				return schedule_crc_to_data(value)
