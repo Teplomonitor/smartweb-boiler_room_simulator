@@ -362,6 +362,7 @@ class ScenarioThread(threading.Thread):
 							self.print_scenario_run_result()
 				except Exception as e:
 					print_error("Thread stopped via exception")
+					self.stop_scenario_now()
 					
 			if self._stopScenarioEvent.is_set():
 				self.stop_scenario_now()
