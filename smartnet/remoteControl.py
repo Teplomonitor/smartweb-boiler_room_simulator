@@ -4,6 +4,7 @@ from copy import copy
 import smartnet.constants as snc
 import smartnet.message as sm
 import smartnet.parameter_registry as param_registry
+from smartnet.crc16 import CRC16
 
 from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
@@ -17,6 +18,10 @@ ParameterSize =  {
 	'SCHEDULE'   : 4,
 	'TDP_FLOAT'  : 2,
 }
+
+SCHEDULE_WEEK_DAYS = 7
+SCHEDULE_PERIODS = 3
+SCHEDULE_CRC_SELECTOR = (0xFF, 0xFF)
 
 
 def concatByteArray(data, littleEndian = False):
@@ -72,11 +77,16 @@ def tdpFloatToData(value, littleEndian = False):
 def timeToData(value, littleEndian = False):
 	return int(value*1000)
 
-def schedulePeriodToData(value, littleEndian = False):
-	start = int(value[0] / 60)
-	stop  = int(value[1] / 60)
-	data  = start | stop << 16
-	return data
+def schedule_value_to_data(value):
+	"""Encode (start_hour, start_minute, end_hour, end_minute)."""
+	if len(value) != 4:
+		raise ValueError('schedule value must contain four time components')
+
+	components = [int(item) for item in value]
+	for component, maximum in zip(components, (23, 59, 23, 59)):
+		if not 0 <= component <= maximum:
+			raise ValueError('schedule time component is out of range')
+	return components
 
 def bytesToInt(data, littleEndian = False):
 	value = concatByteArray(data, littleEndian)
@@ -87,10 +97,36 @@ def bytesToTime(data, littleEndian = False):
 	value /=1000
 	return value
 
-def bytesToSchedulePeriod(data, littleEndian = False):
-	start = bytesToInt(data[0:2], littleEndian)
-	stop  = bytesToInt(data[2:4], littleEndian)
-	return [start*60, stop*60]
+def bytes_to_schedule_value(data):
+	if len(data) != 4:
+		raise ValueError('schedule data must contain four bytes')
+	return tuple(data)
+
+
+def schedule_table_to_bytes(schedule_table):
+	"""Flatten the 21 values in weekday/period order for CRC calculation."""
+	values = list(schedule_table)
+	if len(values) != SCHEDULE_WEEK_DAYS * SCHEDULE_PERIODS:
+		raise ValueError('schedule table must contain 21 values')
+
+	data = []
+	for value in values:
+		data.extend(schedule_value_to_data(value))
+	return data
+
+
+def schedule_table_crc(schedule_table):
+	return CRC16.calc(schedule_table_to_bytes(schedule_table))
+
+
+def schedule_crc_to_data(value):
+	return list(int(value).to_bytes(2, 'little'))
+
+
+def bytes_to_schedule_crc(data):
+	if len(data) != 2:
+		raise ValueError('schedule CRC data must contain two bytes')
+	return int.from_bytes(data, 'little')
 	
 
 class RemoteControlParameter(object):
@@ -148,10 +184,10 @@ class RemoteControlParameter(object):
 		#not supported yet
 		if self.getParameterType() == 'STRING':
 			return False
-		if self.getParameterType() == 'SCHEDULE':
-			return False
 		
-		if self._parameterIndex is None:
+		if self.getParameterType() == 'SCHEDULE':
+			actionStr = f'prg {self._programId} write parameter {self._programType}.{self._parameterId}.{self._parameterIndex} = {self._parameterValue}'
+		elif self._parameterIndex is None:
 			actionStr = f'prg {self._programId} write parameter {self._programType}.{self._parameterId} = {self._parameterValue:.2f}'
 		else:
 			actionStr = f'prg {self._programId} write parameter {self._programType}.{self._parameterId}.{self._parameterIndex} = {self._parameterValue:.2f}'
@@ -163,7 +199,9 @@ class RemoteControlParameter(object):
 			
 			parameterValue = self.valueToData(self._parameterValue)
 			
-			if self._parameterIndex is None:
+			if self.getParameterType() == 'SCHEDULE':
+				data = [self._programType, parameterId, *self._parameterIndex]
+			elif self._parameterIndex is None:
 				data = [self._programType, parameterId]
 			else:
 				data = [self._programType, parameterId, self._parameterIndex]
@@ -221,7 +259,11 @@ class RemoteControlParameter(object):
 			print_error('wrong programId')
 			return False
 		
-		if self._parameterIndex is None:
+		if self.getParameterType() == 'SCHEDULE':
+			if not self._is_schedule_selector_valid():
+				return False
+			actionStr = f'prg {self._programId} read parameter {self._programType}.{self._parameterId}.{self._parameterIndex}'
+		elif self._parameterIndex is None:
 			actionStr = f'prg {self._programId} read parameter {self._programType}.{self._parameterId}'
 		else:
 			actionStr = f'prg {self._programId} read parameter {self._programType}.{self._parameterId}.{self._parameterIndex}'
@@ -229,7 +271,9 @@ class RemoteControlParameter(object):
 		def generate_request():
 			parameterId = self.get_parameter_id()
 			
-			if self._parameterIndex is None:
+			if self.getParameterType() == 'SCHEDULE':
+				data = [self._programType, parameterId, *self._parameterIndex]
+			elif self._parameterIndex is None:
 				data = [self._programType, parameterId]
 			else:
 				data = [self._programType, parameterId, self._parameterIndex]
@@ -254,7 +298,9 @@ class RemoteControlParameter(object):
 			else:
 				data = response.get_data()
 				
-				if self._parameterIndex is None:
+				if self.getParameterType() == 'SCHEDULE':
+					valuePos = 4
+				elif self._parameterIndex is None:
 					valuePos = 2
 				else:
 					valuePos = 3
@@ -283,6 +329,8 @@ class RemoteControlParameter(object):
 	
 	def getParameterSize(self):
 		parameterType = self.getParameterType()
+		if parameterType == 'SCHEDULE' and self._parameterIndex == SCHEDULE_CRC_SELECTOR:
+			return 2
 		if parameterType in ParameterSize:
 			return ParameterSize[parameterType]
 		return 1
@@ -293,7 +341,10 @@ class RemoteControlParameter(object):
 		elif parameterType == 'UINT16_T'   : return bytesToInt(data)
 		elif parameterType == 'TEMPERATURE': return bytesToTemp(data)
 		elif parameterType == 'TIME_MS'    : return bytesToTime(data)
-		elif parameterType == 'SCHEDULE'   : return bytesToSchedulePeriod(data)
+		elif parameterType == 'SCHEDULE':
+			if self._parameterIndex == SCHEDULE_CRC_SELECTOR:
+				return bytes_to_schedule_crc(data)
+			return bytes_to_schedule_value(data)
 		if   parameterType == 'TDP_FLOAT'  : return bytesToTdpFloat(data)
 		return data[0]
 		
@@ -305,10 +356,26 @@ class RemoteControlParameter(object):
 		elif parameterType == 'UINT16_T'   : data = int(value)
 		elif parameterType == 'TEMPERATURE': data = tempToData(value); signedValue = True
 		elif parameterType == 'TIME_MS'    : data = timeToData(value)
-		elif parameterType == 'SCHEDULE'   : data = schedulePeriodToData(value)
+		elif parameterType == 'SCHEDULE':
+			if self._parameterIndex == SCHEDULE_CRC_SELECTOR:
+				return schedule_crc_to_data(value)
+			return schedule_value_to_data(value)
 		elif parameterType == 'TDP_FLOAT'  : data = tdpFloatToData(value)
 		
 		parameterSize = self.getParameterSize()
 		data_bytes = data.to_bytes(parameterSize, 'little', signed = signedValue)
 		
 		return list(data_bytes)
+
+	def _is_schedule_selector_valid(self):
+		if not isinstance(self._parameterIndex, (tuple, list)) or len(self._parameterIndex) != 2:
+			print_error('schedule parameterIndex must be (week_day, period)')
+			return False
+
+		week_day, period = self._parameterIndex
+		if (week_day, period) == SCHEDULE_CRC_SELECTOR:
+			return True
+		if not 0 <= week_day < SCHEDULE_WEEK_DAYS or not 0 <= period < SCHEDULE_PERIODS:
+			print_error('schedule selector is out of range')
+			return False
+		return True
