@@ -21,7 +21,7 @@ class Scenario(Parent):
 	def get_scenario_description(self):
 		return 'Проверка отключения подпитки и насосов бассейна по истечению заданного времени подпитки и фиксация в журнале'
 	
-	def get_checklist_id(self): return '3.11.4'
+	def get_checklist_id(self): return '3.11.7 & 3.11.9'
 	
 	def get_required_programs(self):
 		requiredProgramTypesList = {

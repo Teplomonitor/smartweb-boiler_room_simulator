@@ -18,7 +18,7 @@ class Scenario(Parent):
 	def get_scenario_description(self):
 		return 'Программа включает выход "Подпитка" при низком уровне воды в бассейне'
 	
-	def get_checklist_id(self): return '3.11.3'
+	def get_checklist_id(self): return '3.11.8'
 	
 	def get_required_programs(self):
 		requiredProgramTypesList = {
