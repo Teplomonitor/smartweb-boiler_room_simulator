@@ -84,6 +84,27 @@ Do not install packages globally with a different Python executable. Prefer a vi
 - Treat parameter indexes, channel indexes, program IDs, and CAN/UDP packet layouts as externally observable values. Do not renumber them casually.
 - Avoid broad cleanup or reformatting unrelated to the requested change.
 
+## Scenario Development
+
+Scenarios are automatically discovered from `scenario/list/`; do not add a manual registry entry unless the loader is changed intentionally. A new scenario must:
+
+- use a filename containing its checklist ID, such as `scenario_pool_3_11_6.py`;
+- define a `Scenario` class derived from `scenario.scenario.Scenario` or an appropriate class in `scenario/base/`;
+- implement `get_scenario_title()`, `get_scenario_description()`, `get_checklist_id()`, `get_required_programs()`, `get_default_preset()`, and `run()`;
+- return a unique, non-empty checklist ID from `get_checklist_id()`;
+- import `smartnet.constants as snc` when using `snc.ProgramType` or protocol constants;
+- use exact preset names and verify that every required program type exists in that preset;
+- use `snake_case` for new scenario methods and attributes. Existing model methods such as `getPressure()` and `getLoadingPumpState()` are legacy APIs and may be wrapped rather than renamed;
+- use named timeout and duration constants instead of unexplained numeric literals;
+- set `_status` to `OK` or `FAIL` on every completed test path;
+- restore modified parameters, manual sensors, and alarm signals in `finally` blocks. A failed scenario must not leave an alarm or manual input active;
+- check `None` results from parameter reads and writes before using them;
+- use shared helpers or a base scenario class for repeated pump, alarm, sensor, and timeout logic instead of copying implementations between scenarios.
+
+Prefer a short scenario that describes the test sequence over a scenario that reimplements controller behavior. Keep protocol and simulator behavior in `smartnet/`, `programs/`, or `simulator/`; scenario files should only configure inputs, wait for observable outputs, and report the result.
+
+Before adding a new scenario, inspect at least one neighboring scenario, the relevant program model, the selected preset, and the corresponding simulator/controller behavior. Do not infer channel names, relay values, alarm polarity, or preset contents from a scenario title.
+
 ## Validation
 
 Use targeted validation with the confirmed interpreter. At minimum, compile changed Python files:
@@ -100,6 +121,15 @@ Set-Location C:\development\BoilerRoomSimulator
 C:\Tools\Python311\python.exe -m compileall -q .
 ```
 
+Validate the complete scenario collection after adding or changing a scenario:
+
+```powershell
+Set-Location C:\development\BoilerRoomSimulator
+C:\Tools\Python311\python.exe tools\validate_scenarios.py
+```
+
+The scenario validator is static and must not require GUI, CAN hardware, UDP, or an external controller. Runtime behavior still requires a separate simulator or integration check when the relevant dependencies are available.
+
 Before running the application, inspect whether the selected preset, GUI, CAN backend, UDP bridge, or external controller is required. Prefer `--no-gui` for headless checks. Do not claim that a simulator run or integration test passed unless its required hardware, GUI, network, and preset dependencies were actually available.
 
 When changing protocol behavior, validate both message construction and parsing where practical. When changing simulator behavior, validate boundary cases such as missing mappings, empty presets, invalid program IDs, and indexed parameters.
@@ -110,5 +140,7 @@ When changing protocol behavior, validate both message construction and parsing 
 - [ ] Protocol names, IDs, indexes, and mappings remain compatible.
 - [ ] Imports work with `C:\Tools\Python311\python.exe`.
 - [ ] Changed files pass targeted `py_compile` checks.
+- [ ] `tools\validate_scenarios.py` passes, or all reported legacy exceptions are documented.
+- [ ] New or changed scenarios restore manual inputs, parameters, and alarm signals.
 - [ ] Relevant existing scripts or application paths were exercised when their dependencies were available.
 - [ ] No generated files, build artifacts, caches, or binaries were modified unintentionally.
