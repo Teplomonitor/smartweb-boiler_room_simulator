@@ -6,6 +6,14 @@ Tests CRC16 calculation, message packing/unpacking, and entry creation
 
 import unittest
 import struct
+import sys
+import types
+
+
+main_thread_stub = types.ModuleType('mainThread')
+main_thread_stub.taskEnable = lambda: True
+sys.modules.setdefault('mainThread', main_thread_stub)
+
 from smartnet.constants import ControllerFunction
 from smartnet.message_log import (
     CRC16, MLCDataParser, LogEntry, MessageLogReader,
@@ -83,7 +91,7 @@ class TestMLCDataParser(unittest.TestCase):
         self.assertEqual(len(data), 8)
         
         # Check operation code
-        self.assertEqual(data[0] & 0x07, OP_STATUS)
+        self.assertEqual(MLCDataParser.parse_operation(data[0]), OP_STATUS)
         
         # Check CRC and timestamp are present
         unpacked_crc = struct.unpack_from('<H', data, 1)[0]
@@ -108,7 +116,7 @@ class TestMLCDataParser(unittest.TestCase):
     def test_unpack_status_wrong_op(self):
         """Test unpacking status with wrong operation code"""
         data = bytearray(8)
-        data[0] = OP_MESSAGE1  # Wrong operation
+        data[0] = MLCDataParser.pack_operation_byte(OP_MESSAGE1)  # Wrong operation
         
         timestamp, crc16_value = MLCDataParser.unpack_status(data)
         
@@ -118,7 +126,7 @@ class TestMLCDataParser(unittest.TestCase):
     def test_unpack_message1(self):
         """Test unpacking a MESSAGE1 message"""
         data = bytearray(8)
-        data[0] = OP_MESSAGE1
+        data[0] = MLCDataParser.pack_operation_byte(OP_MESSAGE1)
         data[1] = 0x02  # severity
         data[2:4] = struct.pack('<H', 0x29B1)
         data[4:8] = struct.pack('<I', 0x12345678)
@@ -132,22 +140,22 @@ class TestMLCDataParser(unittest.TestCase):
     def test_unpack_message2(self):
         """Test unpacking a MESSAGE2 message"""
         data = bytearray(8)
-        data[0] = OP_MESSAGE2
-        data[1:3] = struct.pack('<H', 0x1234)  # code
-        data[3] = 0xAA  # param_ex0
-        data[4] = 0xBB  # param_ex1
-        data[5:9] = struct.pack('<I', 0x56789ABC)  # param (but only 3 bytes fit)
+        data[0] = MLCDataParser.pack_operation_byte(OP_MESSAGE2)
+        data[1] = 0x12  # code
+        data[2] = 0xAA  # param_ex0
+        data[3] = 0xBB  # param_ex1
+        data[4:8] = struct.pack('<I', 0x56789ABC)  # param
         
         code, param, (param_ex0, param_ex1) = MLCDataParser.unpack_message2(data)
         
-        self.assertEqual(code, 0x1234)
+        self.assertEqual(code, 0x12)
         self.assertEqual(param_ex0, 0xAA)
         self.assertEqual(param_ex1, 0xBB)
     
     def test_unpack_message3(self):
         """Test unpacking a MESSAGE3 message"""
         data = bytearray(8)
-        data[0] = OP_MESSAGE3
+        data[0] = MLCDataParser.pack_operation_byte(OP_MESSAGE3)
         data[1:7] = b'\x11\x22\x33\x44\x55\x66'
         
         param_ex = MLCDataParser.unpack_message3(data)
@@ -158,13 +166,13 @@ class TestMLCDataParser(unittest.TestCase):
         """Test operation code extraction"""
         # Test all operation codes
         self.assertEqual(MLCDataParser.parse_operation(0x00), OP_STATUS)
-        self.assertEqual(MLCDataParser.parse_operation(0x01), OP_MESSAGE1)
-        self.assertEqual(MLCDataParser.parse_operation(0x02), OP_MESSAGE2)
-        self.assertEqual(MLCDataParser.parse_operation(0x03), OP_MESSAGE3)
+        self.assertEqual(MLCDataParser.parse_operation(MLCDataParser.pack_operation_byte(OP_MESSAGE1)), OP_MESSAGE1)
+        self.assertEqual(MLCDataParser.parse_operation(MLCDataParser.pack_operation_byte(OP_MESSAGE2)), OP_MESSAGE2)
+        self.assertEqual(MLCDataParser.parse_operation(MLCDataParser.pack_operation_byte(OP_MESSAGE3)), OP_MESSAGE3)
         
         # Test with number bits set
-        self.assertEqual(MLCDataParser.parse_operation(0xF8), OP_STATUS)
-        self.assertEqual(MLCDataParser.parse_operation(0xF9), OP_MESSAGE1)
+        self.assertEqual(MLCDataParser.parse_operation(0xF8 | OP_STATUS), OP_STATUS)
+        self.assertEqual(MLCDataParser.parse_operation(0xF8 | OP_MESSAGE1), OP_MESSAGE1)
 
 
 class TestLogEntry(unittest.TestCase):
@@ -204,11 +212,11 @@ class TestMessageLogReader(unittest.TestCase):
     
     def setUp(self):
         """Set up test reader"""
-        self.reader = MessageLogReader(program_id=1)
+        self.reader = MessageLogReader(controller_id=1, timeout=10)
     
     def test_reader_initialization(self):
         """Test reader initialization"""
-        self.assertEqual(self.reader.program_id, 1)
+        self.assertEqual(self.reader.controller_id, 1)
         self.assertEqual(self.reader.FUNCTION_ID, ControllerFunction['JOURNAL'])
         self.assertEqual(self.reader.timeout, 10)
         self.assertEqual(len(self.reader.entries), 0)
@@ -218,7 +226,7 @@ class TestMessageLogReader(unittest.TestCase):
         entry = LogEntry()
         entry.timestamp = 0x12345678
         entry.severity = 0x01
-        entry.code = 0x1234
+        entry.code = 0x34
         entry.param = 0x56789ABC
         entry.param_ex[0] = 0x11
         entry.param_ex[1] = 0x22
@@ -241,7 +249,7 @@ class TestMessageLogReader(unittest.TestCase):
         entry = LogEntry()
         entry.timestamp = 0x12345678
         entry.severity = 0x01
-        entry.code = 0x1234
+        entry.code = 0x34
         entry.param = 0x56789ABC
         entry.param_ex = bytearray(8)
         

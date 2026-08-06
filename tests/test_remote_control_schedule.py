@@ -1,0 +1,84 @@
+import unittest
+import sys
+import types
+from unittest.mock import patch
+
+# smartnet.message imports mainThread for runtime CAN-loop state.  A minimal
+# test stub keeps these pure conversion tests independent of application setup.
+main_thread_stub = types.ModuleType('mainThread')
+main_thread_stub.taskEnable = lambda: True
+sys.modules.setdefault('mainThread', main_thread_stub)
+
+from smartnet.crc16 import CRC16
+from smartnet.remoteControl import (
+	RemoteControlParameter,
+	SCHEDULE_CRC_SELECTOR,
+	bytes_to_schedule_crc,
+	bytes_to_schedule_value,
+	schedule_table_crc,
+	schedule_table_to_bytes,
+	schedule_value_to_data,
+)
+
+
+class TestScheduleEncoding(unittest.TestCase):
+	def test_schedule_value_round_trip(self):
+		value = (0, 5, 23, 59)
+		data = schedule_value_to_data(value)
+
+		self.assertEqual(data, [0, 5, 23, 59])
+		self.assertEqual(bytes_to_schedule_value(data), value)
+
+	def test_schedule_value_rejects_invalid_time(self):
+		with self.assertRaises(ValueError):
+			schedule_value_to_data((24, 0, 23, 59))
+		with self.assertRaises(ValueError):
+			schedule_value_to_data((0, 60, 23, 59))
+
+	def test_schedule_crc_uses_all_21_values(self):
+		table = [(day, period, 23, 59) for day in range(7) for period in range(3)]
+		raw_data = schedule_table_to_bytes(table)
+
+		self.assertEqual(len(raw_data), 7 * 3 * 4)
+		self.assertEqual(schedule_table_crc(table), CRC16.calc(raw_data))
+
+	def test_schedule_crc_is_little_endian(self):
+		crc = 0x1234
+		self.assertEqual(bytes_to_schedule_crc([0x34, 0x12]), crc)
+
+
+class TestScheduleParameterConversion(unittest.TestCase):
+	def _parameter(self, value, selector):
+		return RemoteControlParameter(
+			programType=1,
+			parameterId=1,
+			parameterValue=value,
+			parameterIndex=selector,
+			programId=1,
+		)
+
+	@patch.object(RemoteControlParameter, 'getParameterType', return_value='SCHEDULE')
+	def test_schedule_value_conversion(self, _get_type):
+		parameter = self._parameter((6, 30, 8, 45), (6, 2))
+		self.assertEqual(parameter.valueToData(parameter.get_value()), [6, 30, 8, 45])
+		self.assertEqual(parameter.getParameterSize(), 4)
+
+	@patch.object(RemoteControlParameter, 'getParameterType', return_value='SCHEDULE')
+	def test_crc_conversion(self, _get_type):
+		parameter = self._parameter(0x1234, SCHEDULE_CRC_SELECTOR)
+		self.assertEqual(parameter.valueToData(parameter.get_value()), [0x34, 0x12])
+		self.assertEqual(parameter.getParameterSize(), 2)
+
+	@patch.object(RemoteControlParameter, 'getParameterType', return_value='SCHEDULE')
+	def test_schedule_selector_validation(self, _get_type):
+		valid = self._parameter((1, 2, 3, 4), (6, 2))
+		crc = self._parameter(0x1234, SCHEDULE_CRC_SELECTOR)
+		invalid = self._parameter((1, 2, 3, 4), (7, 0))
+
+		self.assertTrue(valid._is_schedule_selector_valid())
+		self.assertTrue(crc._is_schedule_selector_valid())
+		self.assertFalse(invalid._is_schedule_selector_valid())
+
+
+if __name__ == '__main__':
+	unittest.main()
