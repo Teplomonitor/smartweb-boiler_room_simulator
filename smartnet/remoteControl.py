@@ -108,19 +108,20 @@ def bytes_to_clock_time(data):
 	return tuple(data)
 
 def schedule_value_to_data(value):
-	"""Encode (start_hour, start_minute, end_hour, end_minute)."""
-	if len(value) != 4:
-		raise ValueError('schedule value must contain four time components')
+	"""Encode (start_minutes, end_minutes) as two little-endian uint16 values."""
+	if len(value) != 2:
+		raise ValueError('schedule value must contain start and end minutes')
 
-	components = [int(item) for item in value]
-	start_hour, start_minute, end_hour, end_minute = components
-	if not 0 <= start_hour <= 23 or not 0 <= start_minute <= 59:
-		raise ValueError('schedule start time component is out of range')
-	if not 0 <= end_minute <= 59 or not 0 <= end_hour <= 24:
-		raise ValueError('schedule end time component is out of range')
-	if end_hour == 24 and end_minute != 0:
-		raise ValueError('schedule end time 24:00 must have zero minutes')
-	return components
+	start_minutes, end_minutes = [int(item) for item in value]
+	if not 0 <= start_minutes < 24 * 60:
+		raise ValueError('schedule start minutes are out of range')
+	if not 0 <= end_minutes <= 24 * 60:
+		raise ValueError('schedule end minutes are out of range')
+
+	return [
+		*start_minutes.to_bytes(2, 'little'),
+		*end_minutes.to_bytes(2, 'little'),
+	]
 
 def bytesToInt(data, littleEndian = False):
 	value = concatByteArray(data, littleEndian)
@@ -134,7 +135,10 @@ def bytesToTime(data, littleEndian = False):
 def bytes_to_schedule_value(data):
 	if len(data) != 4:
 		raise ValueError('schedule data must contain four bytes')
-	return tuple(data)
+	return (
+		int.from_bytes(data[0:2], 'little'),
+		int.from_bytes(data[2:4], 'little'),
+	)
 
 
 def schedule_table_to_bytes(schedule_table):
@@ -170,7 +174,7 @@ class RemoteControlParameter(object):
 		'UINT8_T'    : 1 byte value, unsigned
 		'TEMPERATURE': 2 byte value, used mostly for temperature. Value x10
 		'TIME_MS'    : 4 byte value, used for time parameters. Milliseconds
-		'SCHEDULE'   : table parameter (day, period). One table element - 4 bytes: 2 bytes - period start, 2 bytes - end (in minutes).
+		'SCHEDULE'   : table parameter (day, period). One table element - 4 bytes: 2 bytes - period start minutes, 2 bytes - end minutes.
 		'TDP_FLOAT'  : two decimal places float value x100. Used mostly for heating slope
 	'''
 	def __init__(self,
