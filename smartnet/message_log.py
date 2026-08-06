@@ -18,6 +18,7 @@ from smartnet.message import CanListener
 from smartnet.constants import RequestFlag
 from smartnet.constants import ProgramType
 from smartnet.constants import ControllerFunction
+from smartnet.crc16 import CRC16
 
 
 
@@ -33,58 +34,6 @@ PR_STATUS_NOTEQUAL = 1
 PR_MESSAGE = 2
 PR_MESSAGE_RECEIVED = 3
 PR_MESSAGE_WRONG_CRC = 4
-
-
-class CRC16:
-    """CRC16 CCITT implementation matching the controller's crc16.c"""
-    
-    # CRC16 Lookup tables for 4-bit processing
-    CRC16_LookupHigh = [
-        0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70,
-        0x81, 0x91, 0xA1, 0xB1, 0xC1, 0xD1, 0xE1, 0xF1
-    ]
-    
-    CRC16_LookupLow = [
-        0x00, 0x21, 0x42, 0x63, 0x84, 0xA5, 0xC6, 0xE7,
-        0x08, 0x29, 0x4A, 0x6B, 0x8C, 0xAD, 0xCE, 0xEF
-    ]
-    
-    def __init__(self):
-        self.high = 0xFF
-        self.low = 0xFF
-    
-    def add_byte(self, val):
-        """Add one byte to the CRC (processing high and low nibbles)"""
-        self._update_4bits(val >> 4)      # High nibble first
-        self._update_4bits(val & 0x0F)    # Low nibble
-    
-    def _update_4bits(self, val):
-        """Process 4 bits of message to update CRC"""
-        # Extract MSB 4 bits of CRC register
-        t = self.high >> 4
-        
-        # XOR in the message data
-        t = t ^ val
-        
-        # Shift CRC register left 4 bits
-        self.high = ((self.high << 4) | (self.low >> 4)) & 0xFF
-        self.low = (self.low << 4) & 0xFF
-        
-        # Do table lookups and XOR result into CRC
-        self.high = self.high ^ self.CRC16_LookupHigh[t]
-        self.low = self.low ^ self.CRC16_LookupLow[t]
-    
-    def get(self):
-        """Get the calculated CRC value"""
-        return ((self.high << 8) | self.low) & 0xFFFF
-    
-    @staticmethod
-    def calc(data):
-        """Calculate CRC16 for a byte sequence"""
-        crc = CRC16()
-        for byte in data:
-            crc.add_byte(byte)
-        return crc.get()
 
 
 class LogEntry:
