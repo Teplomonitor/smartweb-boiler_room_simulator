@@ -305,11 +305,11 @@ class Program(object):
 	def get_parameter_code(self, parameter):
 		return None
 	
-	def read_parameter_value(self, parameter):
+	def read_parameter_value(self, parameter, index = None):
 		p = self.get_parameter_code(parameter)
 		if p is None:
 			return None
-		remoteParam = sr.RemoteControlParameter(parameterCode = p, programId = self.get_id() )
+		remoteParam = sr.RemoteControlParameter(parameterCode = p, programId = self.get_id(), parameterIndex = index)
 		remoteParam.read()
 		
 		return remoteParam.get_value()
