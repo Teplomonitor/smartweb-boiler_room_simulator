@@ -21,7 +21,7 @@ class SwimmingPool(Program):
 		'requiredPoolTemperatureEconom'  : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.REQUIRED_POOL_TEMPERATURE_ECONOM ),
 		'currentRequiredPoolTemperature' : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.CURRENT_REQUIRED_POOL_TEMPERATURE),
 		'workMode'                       : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.WORK_MODE                        ),
-#		'schedule'                       : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.SCHEDULE                         ),
+		'schedule'                       : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.SCHEDULE                         ),
 		'circulationPumpWorkMode'        : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.CIRCULATION_PUMP_WORK_MODE       ),
 		'circulationPumpWorkPeriodOn'    : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.CIRCULATION_PUMP_WORK_PERIOD_ON  ),
 		'circulationPumpWorkPeriodOff'   : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.CIRCULATION_PUMP_WORK_PERIOD_OFF ),
