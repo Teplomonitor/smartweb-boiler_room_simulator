@@ -6,6 +6,7 @@ import time
 from copy import copy
 
 import smartnet.message as sm
+import smartnet.remoteControl as sr
 
 import smartnet.constants as snc
 import programs.factory   as pf
@@ -214,6 +215,45 @@ class Controller(object):
 
 	def get_program_list(self): return self._programList
 	def get_gui(self): return self._gui
+	def get_controller_id(self): return self._controllerId
+
+	def read_date(self):
+		parameter = sr.RemoteControlParameter(
+			programType=snc.ProgramType.CONTROLLER,
+			parameterId=snc.ControllerParameterId.DATE,
+			programId=self._controllerId,
+		)
+		if parameter.read():
+			return parameter.get_value()
+		return None
+
+	def write_date(self, value):
+		parameter = sr.RemoteControlParameter(
+			programType=snc.ProgramType.CONTROLLER,
+			parameterId=snc.ControllerParameterId.DATE,
+			parameterValue=value,
+			programId=self._controllerId,
+		)
+		return parameter.write()
+
+	def read_time(self):
+		parameter = sr.RemoteControlParameter(
+			programType=snc.ProgramType.CONTROLLER,
+			parameterId=snc.ControllerParameterId.TIME,
+			programId=self._controllerId,
+		)
+		if parameter.read():
+			return parameter.get_value()
+		return None
+
+	def write_time(self, value):
+		parameter = sr.RemoteControlParameter(
+			programType=snc.ProgramType.CONTROLLER,
+			parameterId=snc.ControllerParameterId.TIME,
+			parameterValue=value,
+			programId=self._controllerId,
+		)
+		return parameter.write()
 	
 	def on_can_message_received(self, msg):
 		def generateResponse():
