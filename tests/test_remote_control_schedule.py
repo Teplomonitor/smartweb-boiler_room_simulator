@@ -27,29 +27,31 @@ from smartnet.remoteControl import (
 
 class TestScheduleEncoding(unittest.TestCase):
 	def test_schedule_value_round_trip(self):
-		value = (0, 5, 23, 59)
+		value = (5, 1439)
 		data = schedule_value_to_data(value)
 
-		self.assertEqual(data, [0, 5, 23, 59])
+		self.assertEqual(data, [5, 0, 159, 5])
 		self.assertEqual(bytes_to_schedule_value(data), value)
 
 	def test_schedule_value_allows_midnight_end(self):
-		value = (18, 30, 24, 0)
+		value = (1110, 1440)
 		data = schedule_value_to_data(value)
 
-		self.assertEqual(data, [18, 30, 24, 0])
+		self.assertEqual(data, [86, 4, 160, 5])
 		self.assertEqual(bytes_to_schedule_value(data), value)
 
-	def test_schedule_value_rejects_invalid_time(self):
+	def test_schedule_value_rejects_invalid_minutes(self):
 		with self.assertRaises(ValueError):
-			schedule_value_to_data((24, 0, 23, 59))
+			schedule_value_to_data((-1, 0))
 		with self.assertRaises(ValueError):
-			schedule_value_to_data((18, 30, 24, 1))
+			schedule_value_to_data((1440, 1440))
 		with self.assertRaises(ValueError):
-			schedule_value_to_data((0, 60, 23, 59))
+			schedule_value_to_data((0, 1441))
+		with self.assertRaises(ValueError):
+			schedule_value_to_data((0,))
 
 	def test_schedule_crc_uses_all_21_values(self):
-		table = [(day, period, 23, 59) for day in range(7) for period in range(3)]
+		table = [(day * 60, 23 * 60 + 59) for day in range(7) for _ in range(3)]
 		raw_data = schedule_table_to_bytes(table)
 
 		self.assertEqual(len(raw_data), 7 * 3 * 4)
@@ -72,8 +74,8 @@ class TestScheduleParameterConversion(unittest.TestCase):
 
 	@patch.object(RemoteControlParameter, 'getParameterType', return_value='SCHEDULE')
 	def test_schedule_value_conversion(self, _get_type):
-		parameter = self._parameter((6, 30, 8, 45), (6, 2))
-		self.assertEqual(parameter.valueToData(parameter.get_value()), [6, 30, 8, 45])
+		parameter = self._parameter((6 * 60 + 30, 8 * 60 + 45), (6, 2))
+		self.assertEqual(parameter.valueToData(parameter.get_value()), [134, 1, 13, 2])
 		self.assertEqual(parameter.getParameterSize(), 4)
 
 	@patch.object(RemoteControlParameter, 'getParameterType', return_value='SCHEDULE')
