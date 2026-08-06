@@ -28,6 +28,7 @@ class SwimmingPool(Program):
 		'fillingDuration'                : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.FILLING_DURATION                 ),
 		'lowWaterLevelAlarmReset'        : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.LOW_WATER_LEVEL_ALARM_RESET      ),
 		'currentWorkModeStatus'          : (snc.ProgramType.POOL, snc.SwimmingPoolParameterId.CURRENT_WORK_MODE_STATUS         ),
+		'alarmProgramId'                 : (snc.ProgramType.CONSUMER, snc.ConsumerParameterId.ALARM_PROGRAM_ID                 ),
 		
 		#TODO: add more parameters
 	}
