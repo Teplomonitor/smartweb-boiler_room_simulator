@@ -58,7 +58,7 @@ programId = {
 }
 
 programSettings = {
-	'SWIMMING_POOL' : spSettings(programId['BOILER']),
+	'SWIMMING_POOL' : spSettings(programId['BOILER'], programId['FILLING_LOOP']),
 	'BOILER'        : None,
 	'FILLING_LOOP'  : None,
 }
