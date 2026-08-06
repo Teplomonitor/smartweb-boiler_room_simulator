@@ -5,6 +5,7 @@
 from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
 from scenario.base.snowmelter import SnowmelterScenario   as Parent
+import smartnet.constants as snc
 
 class Scenario(Parent):
 	def __init__(self, controllerHost, sim):

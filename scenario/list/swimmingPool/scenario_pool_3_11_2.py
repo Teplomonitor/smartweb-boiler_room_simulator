@@ -8,6 +8,7 @@ from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
 from scenario.scenario import Scenario   as Parent
 import functions.trigger as ft
+import smartnet.constants as snc
 
 from functions.timeOnDelay  import TimeOnDelay  as TimeOnDelay
 
