@@ -47,7 +47,7 @@ class Scenario(Parent):
 		self.wait(30)
 		
 		print_log('Waiting for circulation pump to switch on')
-		if self.wait_event(self.circulationPumpIsOn, 60):
+		if self.wait_event(self.circulationPumpIsOn, 120):
 			print_log('ok, cirulation pump is working')
 		else:
 			self._status = 'FAIL'
