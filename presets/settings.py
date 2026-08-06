@@ -137,12 +137,15 @@ class DistrictHeatingSettings(object):
 class SwimmingPoolSettings(object):
 	def __init__(self,
 			source         = None,
+			alarmProgram   = None,
 			):
 		self._source         = source
+		self._alarmProgram   = alarmProgram
 
 	def get(self):
 		return [
 			RemoteControlParameter(snc.ProgramType.CONSUMER, snc.ConsumerParameterId.GENERATOR_ID, self._source),
+			RemoteControlParameter(snc.ProgramType.CONSUMER, snc.ConsumerParameterId.ALARM_PROGRAM_ID, self._alarmProgram),
 		]
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]
