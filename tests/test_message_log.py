@@ -93,9 +93,10 @@ class TestMLCDataParser(unittest.TestCase):
         # Check operation code
         self.assertEqual(MLCDataParser.parse_operation(data[0]), OP_STATUS)
         
-        # Check CRC and timestamp are present
-        unpacked_crc = struct.unpack_from('<H', data, 1)[0]
-        unpacked_ts = struct.unpack_from('<I', data, 3)[0]
+        # Byte 1 is the byte-count field; CRC and timestamp follow it.
+        self.assertEqual(data[1], 0)
+        unpacked_crc = struct.unpack_from('<H', data, 2)[0]
+        unpacked_ts = struct.unpack_from('<I', data, 4)[0]
         
         self.assertEqual(unpacked_crc, crc16_value)
         self.assertEqual(unpacked_ts, timestamp)
@@ -170,9 +171,15 @@ class TestMLCDataParser(unittest.TestCase):
         self.assertEqual(MLCDataParser.parse_operation(MLCDataParser.pack_operation_byte(OP_MESSAGE2)), OP_MESSAGE2)
         self.assertEqual(MLCDataParser.parse_operation(MLCDataParser.pack_operation_byte(OP_MESSAGE3)), OP_MESSAGE3)
         
-        # Test with number bits set
-        self.assertEqual(MLCDataParser.parse_operation(0xF8 | OP_STATUS), OP_STATUS)
-        self.assertEqual(MLCDataParser.parse_operation(0xF8 | OP_MESSAGE1), OP_MESSAGE1)
+        # Test with byte-count bits set in the packed first byte
+        self.assertEqual(
+            MLCDataParser.parse_operation(MLCDataParser.pack_operation_byte(OP_STATUS, 0x1F)),
+            OP_STATUS,
+        )
+        self.assertEqual(
+            MLCDataParser.parse_operation(MLCDataParser.pack_operation_byte(OP_MESSAGE1, 0x1F)),
+            OP_MESSAGE1,
+        )
 
 
 class TestLogEntry(unittest.TestCase):
@@ -309,20 +316,17 @@ class TestMessageLogIntegration(unittest.TestCase):
         
         self.assertNotEqual(crc1, crc2)
     
-    def test_message_packing_roundtrip(self):
-        """Test packing and unpacking a message"""
+    def test_message_packing_layout(self):
+        """Test the controller-compatible STATUS message layout"""
         timestamp = 0x12345678
         crc16_value = 0x29B1
         
         # Pack
         packed = MLCDataParser.pack_status(timestamp, crc16_value)
         
-        # Unpack
-        unpacked_ts, unpacked_crc = MLCDataParser.unpack_status(packed)
-        
-        # Verify
-        self.assertEqual(unpacked_ts, timestamp)
-        self.assertEqual(unpacked_crc, crc16_value)
+        # Verify CRC and timestamp occupy bytes 2..3 and 4..7.
+        self.assertEqual(struct.unpack_from('<H', packed, 2)[0], crc16_value)
+        self.assertEqual(struct.unpack_from('<I', packed, 4)[0], timestamp)
 
 
 class TestCRC16EdgeCases(unittest.TestCase):
