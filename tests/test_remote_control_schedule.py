@@ -15,6 +15,10 @@ from smartnet.remoteControl import (
 	SCHEDULE_CRC_SELECTOR,
 	bytes_to_schedule_crc,
 	bytes_to_schedule_value,
+	bytes_to_clock_time,
+	bytes_to_date,
+	clock_time_to_data,
+	date_to_data,
 	schedule_table_crc,
 	schedule_table_to_bytes,
 	schedule_value_to_data,
@@ -29,9 +33,18 @@ class TestScheduleEncoding(unittest.TestCase):
 		self.assertEqual(data, [0, 5, 23, 59])
 		self.assertEqual(bytes_to_schedule_value(data), value)
 
+	def test_schedule_value_allows_midnight_end(self):
+		value = (18, 30, 24, 0)
+		data = schedule_value_to_data(value)
+
+		self.assertEqual(data, [18, 30, 24, 0])
+		self.assertEqual(bytes_to_schedule_value(data), value)
+
 	def test_schedule_value_rejects_invalid_time(self):
 		with self.assertRaises(ValueError):
 			schedule_value_to_data((24, 0, 23, 59))
+		with self.assertRaises(ValueError):
+			schedule_value_to_data((18, 30, 24, 1))
 		with self.assertRaises(ValueError):
 			schedule_value_to_data((0, 60, 23, 59))
 
@@ -78,6 +91,22 @@ class TestScheduleParameterConversion(unittest.TestCase):
 		self.assertTrue(valid._is_schedule_selector_valid())
 		self.assertTrue(crc._is_schedule_selector_valid())
 		self.assertFalse(invalid._is_schedule_selector_valid())
+
+
+class TestControllerClockConversion(unittest.TestCase):
+	def test_date_round_trip(self):
+		value = (3, 0, 8, 2026)
+		data = date_to_data(value)
+
+		self.assertEqual(data, [3, 0, 8, 234, 7])
+		self.assertEqual(bytes_to_date(data), value)
+
+	def test_time_round_trip(self):
+		value = (23, 59, 58, 0)
+		data = clock_time_to_data(value)
+
+		self.assertEqual(data, [23, 59, 58, 0])
+		self.assertEqual(bytes_to_clock_time(data), value)
 
 
 if __name__ == '__main__':
