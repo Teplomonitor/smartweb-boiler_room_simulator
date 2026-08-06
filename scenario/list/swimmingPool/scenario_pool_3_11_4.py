@@ -22,9 +22,16 @@ class Scenario(PoolScenario):
 	TEST_NEXT_DATE = TEST_DATE + datetime.timedelta(days=1)
 	TEST_DAY_PERIOD = 0
 	TEST_NEXT_DAY_PERIOD = 0
-	EMPTY_SCHEDULE = (0, 0, 0, 0)
-	TEST_DAY_SCHEDULE = (18, 0, 24, 0)
-	TEST_NEXT_DAY_SCHEDULE = (0, 0, 6, 0)
+	EMPTY_SCHEDULE = (0, 0)
+	
+	TEST_HOUR_START = 18
+	TEST_HOUR_END   = 24
+	
+	TEST_HOUR_MIDDLE = (TEST_HOUR_START + TEST_HOUR_END) / 2
+	
+	TEST_DAY_SCHEDULE = (TEST_HOUR_START * 60, TEST_HOUR_END * 60)
+	TEST_NEXT_DAY_SCHEDULE = (0, 6 * 60)
+
 
 	def get_scenario_title(self): return 'pool test 4 - required temperature depends on work mode'
 
@@ -225,6 +232,12 @@ class Scenario(PoolScenario):
 				print_error('Плохо, не удалось задать расписание бассейна')
 				return
 
+			if not self.set_controller_clock(self.TEST_DATE, self.TEST_HOUR_MIDDLE, 0):
+				self._status = 'FAIL'
+				print_error('Плохо, не удалось установить время комфорта')
+				return
+				
+			
 			if not self.check_mode_temperature(self.MODE_PROGRAM, self.TEST_COMFORT_TEMPERATURE, 'PROGRAM'):
 				self._status = 'FAIL'
 				return
