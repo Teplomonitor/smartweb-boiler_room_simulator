@@ -6,4 +6,5 @@ python-can
 wxPython
 
 # Async testing
+pytest
 pytest-aio
