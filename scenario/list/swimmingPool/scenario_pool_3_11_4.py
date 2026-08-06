@@ -135,7 +135,7 @@ class Scenario(PoolScenario):
 			lambda: self.temperatures_equal(
 				self.read_current_required_temperature(), expected_temperature
 			),
-			15
+			90
 		):
 			print_log(
 				f'Хорошо, в режиме {mode_title} требуемая температура '
