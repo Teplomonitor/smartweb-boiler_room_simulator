@@ -28,6 +28,12 @@ class Scenario(PoolScenario):
 		self.set_sensor_value(water_level, value)
 	
 	def run(self):
+		
+		#reset water level alarm and fill counter
+		print_log('Сбрасываем сигнализацию низкого уровня воды и счётчик наполнения бассейна')
+		self._pool.resetWaterLevelAlarm()
+		
+		
 		print_log('Убедимся, что программа бассейна активна')
 		self.wait(1)
 		

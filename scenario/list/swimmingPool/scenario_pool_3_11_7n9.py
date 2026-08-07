@@ -46,6 +46,10 @@ class Scenario(PoolScenario):
 		return self._pool.write_parameter_value('fillingDuration', minutes * 60)  # convert minutes to seconds
 
 	def run(self):
+		#reset water level alarm and fill counter
+		print_log('Сбрасываем сигнализацию низкого уровня воды и счётчик наполнения бассейна')
+		self._pool.resetWaterLevelAlarm()
+		
 		print_log('Убедимся, что программа бассейна активна')
 		self.wait(1)
 		
