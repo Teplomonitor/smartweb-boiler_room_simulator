@@ -22,6 +22,7 @@ class DistrictHeating(Program):
 		'maximumBackwardTemperatureII'   : (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_MAXIMUM_BACKWARD_TEMPERATURE_II),
 		'outdoorTemperatureII'           : (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_OUTDOOR_TEMPERATURE_II),
 		'currentMaximumBackwardTemperature': (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_CURRENT_MAXIMUM_BACKWARD_TEMPERATURE),
+		'valveRunningTime'               : (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_VALVE_RUNNING_TIME),
 	}
 
 	def get_parameter_code(self, parameter):
