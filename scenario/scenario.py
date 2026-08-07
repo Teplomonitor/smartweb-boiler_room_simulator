@@ -359,7 +359,9 @@ class ScenarioThread(threading.Thread):
 						self._currentScenario.clear()
 						self._currentScenario = self.getNextScenario()
 						if self._currentScenario == None:
-							self.print_scenario_run_result()
+							if len(self._scenarioResultList) > 1:
+								self.print_scenario_run_result()
+								
 				except Exception as e:
 					print_error("Thread stopped via exception")
 					self.stop_scenario_now()
@@ -375,8 +377,21 @@ class ScenarioThread(threading.Thread):
 			'result'     : scenario.get_status(),
 			'duration'   : scenario.get_duration()
 		}
+		self.print_result(result)
 		self._scenarioResultList.append(result)
+	
+	def print_result(self, result):
+		checklistId = result['checklistId']
+		value       = result['result']
+		duration    = result['duration']
+		durationStr = time.strftime('%H:%M:%S', time.gmtime(duration))
+		if value == 'OK':
+			printFunc = print_log
+		else:
+			printFunc = print_error
 		
+		printFunc(f'{checklistId}: {value} ({durationStr})')
+	
 	def print_scenario_run_result(self):
 		dt = time.time() - self._scenarioStartTime
 		dtStr = time.strftime('%H:%M:%S', time.gmtime(dt))
@@ -385,16 +400,7 @@ class ScenarioThread(threading.Thread):
 		print_log(f'Time: {dtStr}')
 		
 		for result in self._scenarioResultList:
-			checklistId = result['checklistId']
-			value       = result['result']
-			duration    = result['duration']
-			durationStr = time.strftime('%H:%M:%S', time.gmtime(duration))
-			if value == 'OK':
-				printFunc = print_log
-			else:
-				printFunc = print_error
-			
-			printFunc(f'{checklistId}: {value} ({durationStr})')
+			self.print_result(result)
 				
 	def start_scenario(self, scenario):
 		self._newScenario = scenario
