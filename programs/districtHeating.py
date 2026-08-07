@@ -15,6 +15,15 @@ class DistrictHeating(Program):
 
 	@staticmethod
 	def get_type(): return snc.ProgramType.DISTRICT_HEATING
+
+	_remoteControlParameters = {
+		'backwardControlType'            : (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_BACKWARD_CONTROL_TYPE),
+		'maximumBackwardTemperature'     : (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_MAXIMUM_BACKWARD_TEMPERATURE),
+		'currentMaximumBackwardTemperature': (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_CURRENT_MAXIMUM_BACKWARD_TEMPERATURE),
+	}
+
+	def get_parameter_code(self, parameter):
+		return self._remoteControlParameters[parameter]
 	
 	def init_inputs(self):
 		self._inputs['supply_direct_temp'  ] = input_info(0, 'Подача из города')
