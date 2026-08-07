@@ -287,7 +287,7 @@ class Simulator(object):
 		df = qtown/square
 		ato = 300 + 3500*math.tanh(df) # !!!корректируем коэффициент теплопередачи по расходу/площадь
 		
-		print(igss,' ddt %.2f.' % ddt,' d_ratio %.2f.' % d_ratio, ' ugol %.2f.' % ugolserv, 'qtown/S %.2f.' % df, ' rettown %.1f.' % t_rettown,'tinhouse %.2f.' % tinhouse, 'rethous %.1f.' % t_rethouse)
+#		print(igss,' ddt %.2f.' % ddt,' d_ratio %.2f.' % d_ratio, ' ugol %.2f.' % ugolserv, 'qtown/S %.2f.' % df, ' rettown %.1f.' % t_rettown,'tinhouse %.2f.' % tinhouse, 'rethous %.1f.' % t_rethouse)
 
 		self.t_rettown, self.tinhouse = gss_solver(self.tintown, self._pdiss, qtown, qhouse, ato)
 		if d_ratio > 2.1:
@@ -297,10 +297,10 @@ class Simulator(object):
 				k +=1
 				
 				ddt, d_ratio = self.ddtf() # температурный напор
-				print(k, 'corr %.2f.' % correction,' d_ratio %.2f.' % d_ratio, ' ddt %.2f.' % ddt, ' rettown %.1f.' % t_rettown,'tinhouse %.2f.' % tinhouse, 'rethous %.1f.' % t_rethouse)
+#				print(k, 'corr %.2f.' % correction,' d_ratio %.2f.' % d_ratio, ' ddt %.2f.' % ddt, ' rettown %.1f.' % t_rettown,'tinhouse %.2f.' % tinhouse, 'rethous %.1f.' % t_rethouse)
 				corr = correction
 				correction = 1-(d_ratio - 2)/(2.549*d_ratio+2.78)
-				print('corr 2 %.2f.' % correction, ' ------------------')
+#				print('corr 2 %.2f.' % correction, ' ------------------')
 		
 	
 	def computeTemp(self):
