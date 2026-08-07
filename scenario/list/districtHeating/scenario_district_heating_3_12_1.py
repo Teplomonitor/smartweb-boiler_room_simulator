@@ -14,6 +14,9 @@ class Scenario(DistrictHeatingScenario):
 		return '3.12.1'
 
 	def run(self):
+		print_log('Задаём режим фикс.')
+		self.write_backward_control_type(self.BACKWARD_CONTROL_TYPE_CONST)
+		
 		control_type = self.read_backward_control_type()
 		if control_type is None:
 			print_error('Не удалось получить параметр Темп. огранич.')
