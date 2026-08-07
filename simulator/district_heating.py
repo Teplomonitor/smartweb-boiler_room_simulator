@@ -160,7 +160,7 @@ class Simulator(object):
 
 
 	def get_pump_state(self, pumpId):
-		pump = self._program.get_output_channel(self._outputId[pumpId])
+		pump = self._program.get_output_channel(pumpId)
 		if pump.get_mapping() is None:
 			return 1
 
@@ -173,8 +173,8 @@ class Simulator(object):
 		return self.get_pump_state('supply_pump')
 	
 	def getValveState(self):
-		valve        = self._program.get_output_channel(self._outputId['valve'])
-		analog_valve = self._program.get_output_channel(self._outputId['analog_valve'])
+		valve        = self._program.get_output_channel('valve')
+		analog_valve = self._program.get_output_channel('analog_valve')
 		
 		if (valve.get_mapping() is None) and (analog_valve.get_mapping() is None ):
 			return 1
