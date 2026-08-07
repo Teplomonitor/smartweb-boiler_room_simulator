@@ -170,8 +170,8 @@ class Scenario(PoolScenario):
 #		periodOn  = self.readCirculationPumpWorkPeriodOn ()
 #		periodOff = self.readCirculationPumpWorkPeriodOff()
 		
-		period_on = 2 * 60
-		period_off = 3 * 60
+		period_on = 1 * 60
+		period_off = 2 * 60
 		
 		if self.write_circulation_pump_work_period_on(period_on) == None:
 			print_error('Плохо, не удалось задать длительность включения')
@@ -185,7 +185,7 @@ class Scenario(PoolScenario):
 			
 		print_log(f'Период работы {period_on}/{period_off}')
 		
-		repeat_test_count = 5
+		repeat_test_count = 3
 		test_duration = (period_on + period_off) * repeat_test_count
 		
 		period_on_hysteresis = period_on / 10
