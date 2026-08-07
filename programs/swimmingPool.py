@@ -35,6 +35,9 @@ class SwimmingPool(Program):
 	
 	def get_parameter_code(self, parameter): return self._remoteControlParameters[parameter]
 	
+	def resetWaterLevelAlarm(self):
+		return self.write_parameter_value('lowWaterLevelAlarmReset', 0)
+	
 	def init_inputs(self):
 		self._inputs['poolTemperature'] = input_info(0, 'Т воды'        , -10, 50)
 		self._inputs['outsideRequest' ] = input_info(1, 'Внешний запрос')
