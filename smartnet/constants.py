@@ -449,6 +449,8 @@ class ControllerFunction(IntEnum):
     INIT_LOG_TRANSMIT = 80
     GET_LOG_PART = 81
 
+class OutdoorSensorFunction(IntEnum):
+	GET_TEMPERATURE = 1
 
 class RemoteControlFunction(IntEnum):
     GET_PARAMETER_VALUE          = 1,
