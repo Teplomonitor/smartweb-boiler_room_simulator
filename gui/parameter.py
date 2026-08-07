@@ -121,6 +121,16 @@ class GuiParameter(object):
 		self.setUnits(units)
 			
 
+	def enable_gui_control(self):
+		if self._gui:
+			self._gui._slider .Enable( True )
+			self._gui._spinner.Enable( True )
+		
+	def disable_gui_control(self):
+		if self._gui:
+			self._gui._slider .Enable( False )
+			self._gui._spinner.Enable( False )
+		
 class GuiParameterApi(object):
 	def __init__(self, spinner, slider, combobox = None):
 		self._spinner       = spinner
