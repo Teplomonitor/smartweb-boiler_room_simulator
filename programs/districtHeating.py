@@ -19,6 +19,8 @@ class DistrictHeating(Program):
 	_remoteControlParameters = {
 		'backwardControlType'            : (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_BACKWARD_CONTROL_TYPE),
 		'maximumBackwardTemperature'     : (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_MAXIMUM_BACKWARD_TEMPERATURE),
+		'maximumBackwardTemperatureII'   : (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_MAXIMUM_BACKWARD_TEMPERATURE_II),
+		'outdoorTemperatureII'           : (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_OUTDOOR_TEMPERATURE_II),
 		'currentMaximumBackwardTemperature': (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_CURRENT_MAXIMUM_BACKWARD_TEMPERATURE),
 	}
 
