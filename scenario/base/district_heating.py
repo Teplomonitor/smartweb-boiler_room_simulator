@@ -23,6 +23,9 @@ class DistrictHeatingScenario(Parent):
 
 	def read_backward_control_type(self):
 		return self._district_heating.read_parameter_value('backwardControlType')
+	
+	def write_backward_control_type(self, value):
+		return self._district_heating.write_parameter_value('backwardControlType', value)
 
 	def read_maximum_backward_temperature(self):
 		return self._district_heating.read_parameter_value('maximumBackwardTemperature')
