@@ -44,3 +44,6 @@ class DistrictHeatingScenario(Parent):
 
 	def set_outdoor_temperature(self, value):
 		self.set_sensor_value(self._outdoor.getOutdoorTemperature(), value)
+		
+	def write_valve_running_time(self, value):
+		return self._district_heating.write_parameter_value('valveRunningTime', value)
