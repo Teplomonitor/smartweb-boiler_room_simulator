@@ -72,6 +72,10 @@ class Scenario(DistrictHeatingScenario):
 			self._status = 'FAIL'
 			return
 
+
+		print_log('Подождём, пока программа ИТП пересчитает температуру обратки в соответствии с новой уличной температурой')
+		self.wait(10)
+		
 		actual_outdoor_temperature = oat_temperature_averaged
 		current_maximum_temperature = self.read_current_maximum_backward_temperature()
 		if actual_outdoor_temperature is None or current_maximum_temperature is None:
