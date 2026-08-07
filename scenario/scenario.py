@@ -194,7 +194,7 @@ class Scenario(object):
 		return self._status != 'IN_PROGRESS'
 	
 	def clear(self):
-		for prg in self._programList.values():
+		for prg in self.get_program_list():
 			prg.enable_gui_control()
 			
 		for sensor in self._manualSensorsList:
@@ -224,7 +224,7 @@ class Scenario(object):
 				controller_is_configured = True
 				
 		if controller_is_configured:
-			for prg in self._programList.values():
+			for prg in self.get_program_list():
 				prg.disable_gui_control()
 				
 		self._startTime = time.time()
@@ -324,6 +324,12 @@ class ScenarioThread(threading.Thread):
 	
 	def getStopScenarioEvent(self):
 		return self._stopScenarioEvent
+
+	def set_gui_status(self, state, scenario_title = ''):
+		if self._controllerHost:
+			gui = self._controllerHost.get_gui()
+			if gui:
+				gui.set_scenario_status(state, scenario_title)
 	
 	def getNextScenario(self):
 		if self._stopScenarioEvent.is_set():
@@ -358,13 +364,16 @@ class ScenarioThread(threading.Thread):
 							
 						self._currentScenario.clear()
 						self._currentScenario = self.getNextScenario()
-						if self._currentScenario == None:
+						if self._currentScenario:
+							self.set_gui_status('running', self._currentScenario.get_scenario_title())
+						else:
+							self.set_gui_status('finished')
 							if len(self._scenarioResultList) > 1:
 								self.print_scenario_run_result()
 								
 				except Exception as e:
 					print_error("Thread stopped via exception")
-					self.stop_scenario_now()
+					self.stop_scenario_now('failed')
 					
 			if self._stopScenarioEvent.is_set():
 				self.stop_scenario_now()
@@ -403,7 +412,12 @@ class ScenarioThread(threading.Thread):
 			self.print_result(result)
 				
 	def start_scenario(self, scenario):
+		if self._currentScenario or self._newScenario:
+			print_error('Scenario is already running. Stop it before starting another scenario.')
+			return
+
 		self._newScenario = scenario
+		self.set_gui_status('preparing')
 	
 	def start_scenario_now(self, scenario):
 		self._scenarioStartTime = time.time()
@@ -412,6 +426,10 @@ class ScenarioThread(threading.Thread):
 		if scenario == 'all':
 			self._scenarioIndex = 0
 			self._currentScenario = self.getNextScenario()
+			if self._currentScenario:
+				self.set_gui_status('running', self._currentScenario.get_scenario_title())
+			else:
+				self.set_gui_status('finished')
 			return
 		
 		__all__ = self._scenarioList
@@ -419,16 +437,20 @@ class ScenarioThread(threading.Thread):
 		if scenario in __all__:
 			self._scenarioIndex   = len(__all__)
 			self._currentScenario = self.get_scenario_object(scenario)
+			self.set_gui_status('running', self._currentScenario.get_scenario_title())
 		else:
 			print_error(f'{scenario} not in scenario list!')
+			self.set_gui_status('failed')
 		
-	def stop_scenario_now(self):
+	def stop_scenario_now(self, state = 'stopped'):
 		self._stopScenarioEvent.clear()
+		self._newScenario = None
 		if self._currentScenario:
 			print_error(f'Сцераний прерван по внешнему запросу')
 			self._currentScenario.clear()
 			self._currentScenario = None
 			self.print_scenario_run_result()
+		self.set_gui_status(state)
 	
 	def get_scenario_object(self, scenarioId):
 		scenario_module = importfile(scenarioId)
