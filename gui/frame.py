@@ -122,6 +122,20 @@ class MainFrame ( wx.Frame ):
 
 		mainBoxSizer.SetMinSize( wx.Size( 640,-1 ) )
 
+		self.scenarioStatusBanner = wx.StaticText(
+			self,
+			wx.ID_ANY,
+			_(u"No scenario running — sensor controls are available"),
+			wx.DefaultPosition,
+			wx.DefaultSize,
+			wx.ALIGN_CENTER)
+		self.scenarioStatusBanner.SetMinSize( wx.Size(-1, 32) )
+		bannerFont = self.scenarioStatusBanner.GetFont()
+		bannerFont.SetWeight(wx.FONTWEIGHT_BOLD)
+		self.scenarioStatusBanner.SetFont(bannerFont)
+		self.set_scenario_banner_style('idle')
+		mainBoxSizer.Add(self.scenarioStatusBanner, 0, wx.EXPAND | wx.ALL, 5)
+
 		self.mainSplitter = wx.SplitterWindow( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.SP_LIVE_UPDATE )
 		self.mainSplitter.SetMinimumPaneSize( 150 )
 		self.mainSplitter.SetSashGravity( 0.7 )
@@ -163,6 +177,9 @@ class MainFrame ( wx.Frame ):
 		self.m_menubar1.Append( self.m_menu1, _(u"File") )
 
 		self.SetMenuBar( self.m_menubar1 )
+		self.scenarioStatusBar = self.CreateStatusBar(2)
+		self.scenarioStatusBar.SetStatusWidths([-1, 220])
+		self.set_scenario_status_now('idle')
 
 		self.Centre( wx.BOTH )
 		
@@ -203,6 +220,38 @@ class MainFrame ( wx.Frame ):
 			self.ConsoleTextCtrl.SetForegroundColour( wx.Colour( 14, 173, 5 ) )
 		elif color == 'RED':
 			self.ConsoleTextCtrl.SetForegroundColour( wx.Colour( 173, 40, 40 ) )
+
+	def set_scenario_banner_style(self, state):
+		styles = {
+			'idle': (wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE), wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNTEXT)),
+			'preparing': (wx.Colour(254, 216, 114), wx.Colour(0, 0, 0)),
+			'running': (wx.Colour(254, 216, 114), wx.Colour(0, 0, 0)),
+			'finished': (wx.Colour(120, 248, 158), wx.Colour(0, 0, 0)),
+			'stopped': (wx.Colour(251, 117, 126), wx.Colour(0, 0, 0)),
+			'failed': (wx.Colour(251, 117, 126), wx.Colour(0, 0, 0)),
+		}
+		background, foreground = styles.get(state, styles['idle'])
+		self.scenarioStatusBanner.SetBackgroundColour(background)
+		self.scenarioStatusBanner.SetForegroundColour(foreground)
+		self.scenarioStatusBanner.Refresh()
+
+	def set_scenario_status_now(self, state, scenario_title = ''):
+		messages = {
+			'idle': u"No scenario running — sensor controls are available",
+			'preparing': u"SCENARIO PREPARING — please wait",
+			'running': u"SCENARIO RUNNING — sensor controls are locked",
+			'finished': u"SCENARIO FINISHED — sensor controls are available",
+			'stopped': u"SCENARIO STOPPED — sensor controls are available",
+			'failed': u"SCENARIO FAILED — sensor controls are available",
+		}
+		self.scenarioStatusBanner.SetLabel(_(messages.get(state, messages['idle'])))
+		self.set_scenario_banner_style(state)
+		self.scenarioStatusBar.SetStatusText(_(messages.get(state, messages['idle'])), 0)
+		self.scenarioStatusBar.SetStatusText(scenario_title, 1)
+		self.Layout()
+
+	def set_scenario_status(self, state, scenario_title = ''):
+		wx.CallAfter(self.set_scenario_status_now, state, scenario_title)
 
 	def __init__( self, parent , guithread):
 		self.makeFrame(parent)
@@ -528,6 +577,7 @@ class guiThread():
 		self._ex.remove_collector()
 		self._ex.programsWrapSizer.Clear(True)
 		self._ex.programsWrapSizer.Layout()
+		self._ex.set_scenario_status_now('idle')
 		self._ex.Layout()
 #		wx.GetApp().OnInit()
 	
@@ -556,6 +606,9 @@ class guiThread():
 		
 	def setTextColor(self, color):
 		self._ex.setTextColor(color)
+
+	def set_scenario_status(self, state, scenario_title = ''):
+		self._ex.set_scenario_status(state, scenario_title)
 		
 	def run(self):
 		self._app.MainLoop()
