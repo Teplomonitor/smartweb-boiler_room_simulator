@@ -180,11 +180,17 @@ class Program(object):
 	def disable_gui_control(self):
 		for prgInput in self._inputs.values():
 			prgInput.disable_gui_control()
+		
+		for prgParameter in self._parameters.values():
+			prgParameter.disable_gui_control()
 			
 	def enable_gui_control(self):
 		for prgInput in self._inputs.values():
 			prgInput.enable_gui_control()
 		
+		for prgParameter in self._parameters.values():
+			prgParameter.enable_gui_control()
+			
 	def bind_input(self, channel_id, mapping):
 		print_log(f'bind program input {channel_id}')
 		def generate_request():
