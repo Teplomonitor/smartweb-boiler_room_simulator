@@ -1,6 +1,8 @@
 from consoleLog import print_error
 from consoleLog import print_log
 from scenario.base.district_heating import DistrictHeatingScenario
+import smartnet.message as snm
+import smartnet.constants as snc
 
 
 class Scenario(DistrictHeatingScenario):
@@ -16,6 +18,9 @@ class Scenario(DistrictHeatingScenario):
 		return '3.12.2'
 
 	def run(self):
+		print_log('Задаём режим авто.')
+		self.write_backward_control_type(self.BACKWARD_CONTROL_TYPE_AUTO)
+		
 		control_type = self.read_backward_control_type()
 		if control_type is None:
 			print_error('Не удалось получить параметр Темп. огранич.')
@@ -47,9 +52,27 @@ class Scenario(DistrictHeatingScenario):
 
 		test_outdoor_temperature = (outdoor_temperature_i + outdoor_temperature_ii) / 2
 		self.set_outdoor_temperature(test_outdoor_temperature)
-		self.wait(2)
+		
+		print_log('Подождём, пока программа улицы отфильтрует полученное значение уличной температуры')
+		self.wait(30)
+		
+		msg = snm.Message()
+		result = msg.recv(
+			snm.Message(
+				snc.ProgramType.OUTDOOR_SENSOR, None,
+				snc.OutdoorSensorFunction.GET_TEMPERATURE, 
+				snc.RequestFlag.RESPONSE),
+			30)
+		
+		if result:
+			data = result.get_data()
+			oat_temperature_averaged = (data[0] + (data[1] << 8))/10.0
+		else:
+			print_error('Не удалось получить усреднённую уличную температуру')
+			self._status = 'FAIL'
+			return
 
-		actual_outdoor_temperature = self.get_outdoor_temperature()
+		actual_outdoor_temperature = oat_temperature_averaged
 		current_maximum_temperature = self.read_current_maximum_backward_temperature()
 		if actual_outdoor_temperature is None or current_maximum_temperature is None:
 			print_error('Не удалось получить текущую уличную температуру или предел обратки')
