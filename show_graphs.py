@@ -15,6 +15,7 @@ import matplotlib.dates as mdates
 
 
 logsRootDir = os.path.join(os.getcwd(), 'log')
+MAX_MARKERS_PER_TREND = 200
 
 
 def getRandomColor():
@@ -32,6 +33,12 @@ def valueToPlot(value, valueFormat):
 	if valueFormat == 'RELAY':
 		return float(value)/255*100
 	return float(value)
+
+
+def get_marker_interval(point_count):
+	if point_count <= MAX_MARKERS_PER_TREND:
+		return 1
+	return (point_count + MAX_MARKERS_PER_TREND - 1) // MAX_MARKERS_PER_TREND
 
 
 @dataclass
@@ -69,15 +76,18 @@ def _read_trends(ax):
 					x.append(datetime.datetime.fromtimestamp(int(row[0])))
 					y.append(valueToPlot(row[1], valueFormat))
 				converted_dates = mdates.date2num(x)
+				marker_interval = get_marker_interval(len(y))
 				label = str(get_n_last_subparts_path(filePath, 2))
 				color = getRandomColor()
 
 				if valueFormat == 'RELAY':
 					line = ax.step(converted_dates, y, c=color,
-						where='post', marker='o', label=label, picker=True)[0]
+						where='post', marker='o', markevery=marker_interval,
+						label=label, picker=True)[0]
 				else:
 					line = ax.plot(converted_dates, y, c=color,
-						marker='.', label=label, picker=True)[0]
+						marker='.', markevery=marker_interval,
+						label=label, picker=True)[0]
 				trends.append(Trend(label, line, color, line.get_linewidth()))
 
 	return trends
