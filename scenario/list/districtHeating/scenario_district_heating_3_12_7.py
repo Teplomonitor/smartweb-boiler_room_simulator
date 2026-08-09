@@ -11,6 +11,7 @@ class Scenario(DistrictHeatingScenario):
 	VALVE_CLOSED_POSITION = 10
 	PUMP_OFF_DURATION = 30
 	PUMP_OFF_TIMEOUT = 60
+	PUMP_ON_DELAY = 60
 
 	def get_scenario_title(self):
 		return 'District Heating: loading pump switches off when valve is closed'
@@ -61,7 +62,15 @@ class Scenario(DistrictHeatingScenario):
 				print_error(f'Не найден {description}')
 				self._status = 'FAIL'
 				return
-
+			
+			
+		print_log(
+			f'Ждём, пока насос загрузки включится. Задержка на включение - {self.PUMP_ON_DELAY} секунд'
+		)
+		if not self.wait(self.PUMP_ON_DELAY + 10):
+			self._status = 'FAIL'
+			return
+		
 		city_supply_temperature = city_supply_sensor.get_value()
 		initial_valve = analog_valve.get_value()
 		initial_pump = loading_pump.get_value()
