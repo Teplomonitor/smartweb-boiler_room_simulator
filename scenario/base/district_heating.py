@@ -47,3 +47,6 @@ class DistrictHeatingScenario(Parent):
 		
 	def write_valve_running_time(self, value):
 		return self._district_heating.write_parameter_value('valveRunningTime', value)
+
+	def read_valve_running_time(self):
+		return self._district_heating.read_parameter_value('valveRunningTime')
