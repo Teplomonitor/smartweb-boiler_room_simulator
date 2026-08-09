@@ -198,7 +198,10 @@ class Scenario(DistrictHeatingScenario):
 				self.FLOW_CONTROL_TIMEOUT,
 				dtAvrMax=self.MAXIMUM_TEMPERATURE_ERROR,
 			)
-			self._status = 'OK' if result else 'FAIL'
+			if result:
+				self._status = 'OK'
+			else:
+				self._status = 'FAIL'
 		finally:
 			if self.write_valve_running_time(original_valve_running_time) is None:
 				print_error('Не удалось восстановить исходное время хода крана')
