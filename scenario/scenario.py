@@ -45,7 +45,8 @@ class Scenario(object):
 		self._startTime = time.time()
 		self._EventStop = ScenarioThread().getStopScenarioEvent()
 				
-		print_log(f'starting {self.get_scenario_title()}')
+		print_log(f'starting   : {self.get_checklist_id()}')
+		print_log(f'title      : {self.get_scenario_title()}')
 		print_log(f'description: {self.get_scenario_description()}')
 		
 		self._manualSensorsList = []
