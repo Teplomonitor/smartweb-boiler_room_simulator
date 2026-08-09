@@ -6,7 +6,7 @@ import smartnet.remoteControl as sr
 
 
 class Scenario(DistrictHeatingScenario):
-	STABILIZATION_DURATION = 30
+	STABILIZATION_DURATION = 60
 	FLOW_CONTROL_DURATION = 10 * 60
 	FLOW_CONTROL_TIMEOUT = 30 * 60
 	MAXIMUM_TEMPERATURE_ERROR = 3
@@ -23,30 +23,23 @@ class Scenario(DistrictHeatingScenario):
 	def get_checklist_id(self):
 		return '3.12.6'
 
+	def get_default_preset(self):
+		return 'district_heating_3_12_6'
+
+	def force_preset_load(self):
+		return True
+
 	def get_required_programs(self):
 		return {
 			'districtHeating': snc.ProgramType.DISTRICT_HEATING,
 			'outdoor': snc.ProgramType.OUTDOOR_SENSOR,
+			'heatingCircuit': snc.ProgramType.HEATING_CIRCUIT,
 		}
 
 	def read_required_temperature(self):
-		source_id = self.read_temperature_source_id()
-		if source_id is None:
-			return None
-
 		parameter = sr.RemoteControlParameter(
 			programType=snc.ProgramType.TEMPERATURE_SOURCE,
 			parameterId=snc.TemperatureSourceParameterId.REQUIRED_TEMPERATURE,
-			programId=source_id,
-		)
-		if not parameter.read():
-			return None
-		return parameter.get_value()
-
-	def read_temperature_source_id(self):
-		parameter = sr.RemoteControlParameter(
-			programType=snc.ProgramType.DISTRICT_HEATING,
-			parameterId=snc.DistrictHeatingParameterId.PARAM_TEMPERATURE_SOURCE_ID,
 			programId=self._district_heating.get_id(),
 		)
 		if not parameter.read():
@@ -61,12 +54,20 @@ class Scenario(DistrictHeatingScenario):
 			self._status = 'FAIL'
 			return
 
-		source_id = self.read_temperature_source_id()
-		if source_id is None:
-			print_error('Не удалось получить ID температурного источника ИТП')
+		# Set outdoor temperature to 0 degrees to ensure that the heating system is active and the flow temperature is being controlled.
+		# also we don't need very cold outdoor temperature to test flow temperature control,
+		# becase District heating may fail to maintain flow temperature if outdoor temperature is too low.
+		
+		
+		print_log(
+			f'Делаем на улице 0 градусов, чтобы ИТП работал и контролировал температуру подачи в дом'
+		)
+		self.set_outdoor_temperature(0)
+		
+		if not self.wait(10):
 			self._status = 'FAIL'
 			return
-
+		
 		print_log(
 			f'Ждём {self.STABILIZATION_DURATION} секунд перед чтением текущей уставки ИТП'
 		)
@@ -90,7 +91,7 @@ class Scenario(DistrictHeatingScenario):
 		)
 		result = self.wait_value_maintaining(
 			direct_temperature.get_value,
-			lambda: required_temperature,
+			self.read_required_temperature,
 			self.FLOW_CONTROL_DURATION,
 			self.FLOW_CONTROL_TIMEOUT,
 			dtAvrMax=self.MAXIMUM_TEMPERATURE_ERROR,
