@@ -5,6 +5,9 @@ python-can
 # GUI library
 wxPython
 
+# Plotting and interactive graph controls
+matplotlib
+
 # Async testing
 pytest
 pytest-aio
