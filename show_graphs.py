@@ -12,7 +12,6 @@ from pathlib import Path
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from matplotlib.widgets import CheckButtons
 
 
 logsRootDir = os.path.join(os.getcwd(), 'log')
@@ -40,9 +39,10 @@ class Trend:
 	label: str
 	line: Line2D
 	color: tuple
-	control_label: str = None
+	line_width: float = 1.5
 	legend_line: Line2D = None
 	legend_text: object = None
+	legend_line_width: float = 1.5
 
 
 def _read_trends(ax):
@@ -78,7 +78,7 @@ def _read_trends(ax):
 				else:
 					line = ax.plot(converted_dates, y, c=color,
 						marker='.', label=label, picker=True)[0]
-				trends.append(Trend(label, line, color))
+				trends.append(Trend(label, line, color, line.get_linewidth()))
 
 	return trends
 
@@ -86,32 +86,21 @@ def _read_trends(ax):
 def _set_highlight(trends, selected):
 	for trend in trends:
 		is_selected = trend is selected
-		trend.line.set_alpha(1.0 if selected is None or is_selected else 0.2)
-		trend.line.set_linewidth(2.5 if is_selected else 1.5)
+		trend.line.set_linewidth(
+			trend.line_width + 1.5 if is_selected else trend.line_width)
 		if trend.legend_line is not None:
-			trend.legend_line.set_alpha(1.0 if selected is None or is_selected else 0.2)
+			trend.legend_line.set_linewidth(
+				trend.legend_line_width + 1.5 if is_selected
+				else trend.legend_line_width)
 
 
 def _add_interactions(fig, ax, trends, legend):
-	checkbox_axis = fig.add_axes([0.01, 0.15, 0.24, 0.7])
-	labels_seen = {}
-	control_labels = []
-	for trend in trends:
-		labels_seen[trend.label] = labels_seen.get(trend.label, 0) + 1
-		count = labels_seen[trend.label]
-		trend.control_label = trend.label if count == 1 else f'{trend.label} ({count})'
-		control_labels.append(trend.control_label)
-	checkbox = CheckButtons(checkbox_axis,
-		control_labels, [True] * len(trends))
-	checkbox_axis.set_title('Show trends', fontsize=10)
-	for label, trend in zip(checkbox.labels, trends):
-		label.set_color(trend.color)
-
 	legend_lines = legend.get_lines()
 	legend_texts = legend.get_texts()
 	for trend, legend_line, legend_text in zip(trends, legend_lines, legend_texts):
 		trend.legend_line = legend_line
 		trend.legend_text = legend_text
+		trend.legend_line_width = legend_line.get_linewidth()
 		legend_line.set_picker(True)
 		legend_text.set_picker(True)
 		legend_line.set_color(trend.color)
@@ -119,34 +108,30 @@ def _add_interactions(fig, ax, trends, legend):
 
 	selected = [None]
 
-	def toggle_trend(label):
-		for trend in trends:
-			if trend.control_label == label:
-				trend.line.set_visible(not trend.line.get_visible())
-				break
-		fig.canvas.draw_idle()
-
-	def highlight_artist(artist):
+	def find_trend(artist):
 		for trend in trends:
 			if (artist is trend.line or artist is trend.legend_line or
 					artist is trend.legend_text):
-				selected[0] = None if selected[0] is trend else trend
-				_set_highlight(trends, selected[0])
-				fig.canvas.draw_idle()
-				break
-
-	checkbox.on_clicked(toggle_trend)
+				return trend
+		return None
 
 	def on_pick(event):
-		highlight_artist(event.artist)
+		trend = find_trend(event.artist)
+		if trend is None:
+			return
+		if event.mouseevent.button == 3:
+			trend.line.set_visible(not trend.line.get_visible())
+		else:
+			selected[0] = None if selected[0] is trend else trend
+			_set_highlight(trends, selected[0])
+		fig.canvas.draw_idle()
 
 	fig.canvas.mpl_connect('pick_event', on_pick)
-	return checkbox
 
 
 def showPlots():
 	fig, ax = plt.subplots()
-	fig.subplots_adjust(left=0.29, right=0.98)
+	fig.subplots_adjust(right=0.72)
 	ax.xaxis.axis_date()
 	trends = _read_trends(ax)
 
@@ -154,7 +139,8 @@ def showPlots():
 	ax.set_ylabel('Value')
 	ax.set_title('Simulator log', fontsize=20)
 	ax.grid()
-	legend = ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
+	legend = ax.legend(loc='upper left', bbox_to_anchor=(1.02, 1.0),
+		borderaxespad=0)
 	if trends:
 		_add_interactions(fig, ax, trends, legend)
 	else:
