@@ -3,6 +3,7 @@
 '''
 
 import os
+import re
 from os.path import dirname, join
 
 from pydoc import importfile
@@ -21,6 +22,15 @@ from consoleLog import print_error as print_error
 
 class ThreadStoppedException(Exception):
 	pass
+
+def sanitize_scenario_log_name(value):
+	if value is None:
+		return 'scenario'
+
+	name = re.sub(r'[\x00-\x1f<>:"/\\|?*]', '_', str(value))
+	name = re.sub(r'\s+', '_', name)
+	name = re.sub(r'_+', '_', name).rstrip(' ._')
+	return name or 'scenario'
 
 class Scenario(object):
 	RELAY_OFF = 0
@@ -343,7 +353,9 @@ class ScenarioThread(threading.Thread):
 		programList = self._controllerHost.get_program_list()
 		now = datetime.datetime.now()
 		date_time = now.strftime("%Y-%m-%d_%H_%M")
-		logDir = date_time + '_' + scenario.get_scenario_title().replace(" ", "_")
+		scenario_id = sanitize_scenario_log_name(scenario.get_checklist_id())
+		logDir = date_time + '_' + scenario_id
+
 		for prg in programList:
 			prg.save_log(logDir)
 			
