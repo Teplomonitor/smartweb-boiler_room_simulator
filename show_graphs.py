@@ -94,13 +94,15 @@ def _read_trends(ax):
 
 
 def _set_highlight(trends, selected):
+	line_width_increase = 2
+	
 	for trend in trends:
 		is_selected = trend is selected
 		trend.line.set_linewidth(
-			trend.line_width + 1.5 if is_selected else trend.line_width)
+			trend.line_width + line_width_increase if is_selected else trend.line_width)
 		if trend.legend_line is not None:
 			trend.legend_line.set_linewidth(
-				trend.legend_line_width + 1.5 if is_selected
+				trend.legend_line_width + line_width_increase if is_selected
 				else trend.legend_line_width)
 
 
