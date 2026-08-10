@@ -1,0 +1,3 @@
+# Optional standalone graph viewer dependencies
+pyqtgraph>=0.13
+PySide6>=6.6
