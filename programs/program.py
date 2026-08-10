@@ -192,7 +192,9 @@ class Program(object):
 			prgParameter.enable_gui_control()
 			
 	def bind_input(self, channel_id, mapping):
-		print_log(f'bind program input {channel_id}')
+		channel_title = next((channel.get_title() for channel in self._inputs.values()
+							 if channel.get_id() == channel_id), channel_id)
+		print_log(f'bind program input {channel_title}')
 		def generate_request():
 			request = sm.Message(
 			snc.ProgramType.REMOTE_CONTROL,
@@ -244,7 +246,9 @@ class Program(object):
 		return result
 
 	def bind_output(self, channel_id, mapping):
-		print_log(f'bind program output {channel_id}')
+		channel_title = next((channel.get_title() for channel in self._outputs.values()
+							  if channel.get_id() == channel_id), channel_id)
+		print_log(f'bind program output {channel_title}')
 		def generate_request():
 			request = sm.Message(
 			snc.ProgramType.REMOTE_CONTROL,

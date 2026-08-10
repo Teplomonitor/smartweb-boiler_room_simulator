@@ -164,7 +164,7 @@ class Controller(object):
 		return False
 	
 	def sendProgramAddRequest(self, programType, programId, programScheme):
-		print_log('Send program add request')
+		print_log(f'Send program add request: type={snc.ProgramType(programType).name}, id={programId}')
 		def generate_request():
 			request = sm.Message(
 			snc.ProgramType.CONTROLLER,
