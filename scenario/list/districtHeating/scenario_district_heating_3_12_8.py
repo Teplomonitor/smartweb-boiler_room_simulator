@@ -21,8 +21,8 @@ class Scenario(DistrictHeatingScenario):
 
 	def get_scenario_description(self):
 		return (
-			'Если кран ИТП открыт менее чем на 50%, он раз в три часа открывается на 50% '
-			'на пять минут'
+			'Если кран ИТП открыт менее чем на 50%, контроллер раз в три часа '
+			'открывает его на 50% на пять минут и выключает циркуляционный насос'
 		)
 
 	def get_checklist_id(self):
@@ -57,6 +57,7 @@ class Scenario(DistrictHeatingScenario):
 		city_return_sensor = self._district_heating.get_input_channel('supply_backward_temp')
 		house_return_sensor = self._district_heating.get_input_channel('backward_temp')
 		analog_valve = self._district_heating.get_output_channel('analog_valve')
+		circulation_pump = self._district_heating.get_output_channel('circulation_pump')
 
 		for sensor, description in (
 			(city_supply_sensor, 'датчик температуры подачи из города'),
@@ -70,6 +71,11 @@ class Scenario(DistrictHeatingScenario):
 
 		if not analog_valve.is_mapped():
 			print_error('Не найден аналоговый выход крана')
+			self._status = 'FAIL'
+			return
+
+		if not circulation_pump.is_mapped():
+			print_error('Не найден выход циркуляционного насоса')
 			self._status = 'FAIL'
 			return
 
@@ -165,17 +171,23 @@ class Scenario(DistrictHeatingScenario):
 			opened_valve = analog_valve.get_value()
 			print_log(
 				f'Кран периодически открыт до положения {opened_valve}. '
-				f'Проверяем удержание {self.PERIODIC_OPEN_DURATION} секунд'
+				f'Проверяем удержание крана и выключение циркуляционного насоса '
+				f'{self.PERIODIC_OPEN_DURATION} секунд'
 			)
 			if not self.wait_state_permanence(
-				lambda: self.valve_is_half_open(analog_valve),
+				lambda: (
+					self.valve_is_half_open(analog_valve)
+					and circulation_pump.get_value() == self.RELAY_OFF
+				),
 				self.PERIODIC_OPEN_DURATION,
 				self.PERIODIC_OPEN_DURATION,
 			):
 				final_valve = analog_valve.get_value()
+				pump_state = circulation_pump.get_value()
 				print_error(
-					'Кран не удерживал положение около 50% пять минут: '
-				f'текущее положение {final_valve}'
+					'Кран не удерживал положение около 50% или циркуляционный насос '
+					f'не выключился в течение пяти минут: положение крана {final_valve}, '
+					f'состояние насоса {pump_state}'
 				)
 				self._status = 'FAIL'
 				return
