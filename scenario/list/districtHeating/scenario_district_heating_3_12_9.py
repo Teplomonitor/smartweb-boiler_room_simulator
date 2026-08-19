@@ -8,6 +8,8 @@ import smartnet.units as snu
 
 class Scenario(DistrictHeatingScenario):
 	OUTDOOR_TEMPERATURE_MARGIN = 5
+	OUTDOOR_TEMPERATURE_TOLERANCE = 1
+	OUTDOOR_TEMPERATURE_TIMEOUT = 6 * 60
 	REQUEST_ON_STABILIZATION_DURATION = 20
 	REQUEST_ON_TIMEOUT = 3 * 60
 	REQUEST_OFF_TIMEOUT = 3 * 60
@@ -53,6 +55,25 @@ class Scenario(DistrictHeatingScenario):
 
 	def read_heating_circuit_parameter(self, parameter_id):
 		return self.read_parameter(snc.ProgramType.HEATING_CIRCUIT, parameter_id)
+
+	def read_circuit_outdoor_temperature(self):
+		return self.read_parameter(
+			snc.ProgramType.CIRCUIT,
+			snc.CircuitParameterId.OUTDOOR_TEMPERATURE,
+		)
+
+	def circuit_outdoor_temperature_is_close(self, target_temperature):
+		outdoor_temperature = self.read_circuit_outdoor_temperature()
+		return (
+			outdoor_temperature is not None
+			and abs(outdoor_temperature - target_temperature) <= self.OUTDOOR_TEMPERATURE_TOLERANCE
+		)
+
+	def wait_circuit_outdoor_temperature(self, target_temperature):
+		return self.wait_event(
+			lambda: self.circuit_outdoor_temperature_is_close(target_temperature),
+			self.OUTDOOR_TEMPERATURE_TIMEOUT,
+		)
 
 	def read_consumer_required_temperature(self):
 		return self.read_parameter(
@@ -122,6 +143,16 @@ class Scenario(DistrictHeatingScenario):
 			self.set_sensor_value(outdoor_sensor, cold_outdoor_temperature)
 
 			print_log(
+				f'Ждём, пока отопительный контур увидит температуру около '
+				f'{cold_outdoor_temperature:.1f} C, не более '
+				f'{self.OUTDOOR_TEMPERATURE_TIMEOUT} секунд'
+			)
+			if not self.wait_circuit_outdoor_temperature(cold_outdoor_temperature):
+				print_error('Отопительный контур не увидел заданную холодную уличную температуру')
+				self._status = 'FAIL'
+				return
+
+			print_log(
 				f'Ждём включения насоса и наличия запроса тепла не более '
 				f'{self.REQUEST_ON_TIMEOUT} секунд'
 			)
@@ -142,6 +173,16 @@ class Scenario(DistrictHeatingScenario):
 				'чтобы потребитель прекратил запрос тепла'
 			)
 			self.set_sensor_value(outdoor_sensor, hot_outdoor_temperature)
+
+			print_log(
+				f'Ждём, пока отопительный контур увидит температуру около '
+				f'{hot_outdoor_temperature:.1f} C, не более '
+				f'{self.OUTDOOR_TEMPERATURE_TIMEOUT} секунд'
+			)
+			if not self.wait_circuit_outdoor_temperature(hot_outdoor_temperature):
+				print_error('Отопительный контур не увидел заданную горячую уличную температуру')
+				self._status = 'FAIL'
+				return
 
 			print_log(
 				f'Ждём уставку 0 или SENSOR_UNDEFINED не более '
