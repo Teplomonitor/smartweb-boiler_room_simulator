@@ -9,6 +9,7 @@ import logging
 from typing import Optional, Dict, Tuple, Any
 
 import smartnet.parameter_info as snpi
+from smartnet.program_type_hierarchy import get_program_type_chain
 
 # Configure logger for this module
 logger = logging.getLogger(__name__)
@@ -21,7 +22,7 @@ class ParameterDefinition:
 	Encapsulates the properties of a parameter: id, type, and array_size.
 	"""
 	
-	def __init__(self, metadata: Dict[str, Any]):
+	def __init__(self, metadata: Dict[str, Any], program_type=None):
 		"""
 		Initialize parameter definition from metadata dictionary.
 		
@@ -31,6 +32,7 @@ class ParameterDefinition:
 		self._id = metadata.get('id')
 		self._type = metadata.get('type')
 		self._array_size = metadata.get('array_size', 1)
+		self._program_type = program_type
 	
 	@property
 	def id(self) -> int:
@@ -46,6 +48,11 @@ class ParameterDefinition:
 	def array_size(self) -> int:
 		"""Get the array size. Defaults to 1 for scalar parameters."""
 		return self._array_size
+
+	@property
+	def program_type(self):
+		"""Get the program type that owns this parameter definition."""
+		return self._program_type
 	
 	def is_array(self) -> bool:
 		"""Check if this parameter is an array type."""
@@ -100,29 +107,27 @@ class ParameterRegistry:
 		if cache_key in self._cache:
 			return self._cache[cache_key]
 		
-		# Look up in ParameterDict
-		if program_type not in snpi.ParameterDict:
-			logger.warning(
-				f'Program type {program_type} not found in ParameterDict'
-			)
-			self._cache[cache_key] = None
-			return None
-		
-		param_info_dict = snpi.ParameterDict[program_type]
-		
-		if parameter_id not in param_info_dict:
-			logger.warning(
-				f'Parameter ID {parameter_id} not found for program type {program_type}'
-			)
-			self._cache[cache_key] = None
-			return None
-		
-		# Create and cache the definition
-		metadata = param_info_dict[parameter_id]
-		param_def = ParameterDefinition(metadata)
-		self._cache[cache_key] = param_def
-		
-		return param_def
+		for candidate_type in get_program_type_chain(program_type):
+			param_info_dict = snpi.ParameterDict.get(candidate_type)
+			if param_info_dict is None:
+				continue
+			if parameter_id in param_info_dict:
+				metadata = dict(param_info_dict[parameter_id])
+				metadata['id'] = parameter_id
+				param_def = ParameterDefinition(metadata, candidate_type)
+				self._cache[cache_key] = param_def
+				return param_def
+
+		logger.warning(
+			f'Parameter ID {parameter_id} not found for program type {program_type}'
+		)
+		self._cache[cache_key] = None
+		return None
+
+	def get_parameter_owner(self, program_type: int, parameter_id: int):
+		"""Return the type that defines a parameter, or ``None`` if unknown."""
+		param_def = self.get_parameter(program_type, parameter_id)
+		return param_def.program_type if param_def else None
 	
 	def is_string(self, program_type: int, parameter_id: str) -> bool:
 		"""
@@ -176,6 +181,11 @@ def get_parameter(
 		ParameterDefinition if found, None otherwise
 	"""
 	return _registry_instance.get_parameter(program_type, parameter_id)
+
+
+def get_parameter_owner(program_type: int, parameter_id: int):
+	"""Return the owning program type for a parameter, or ``None``."""
+	return _registry_instance.get_parameter_owner(program_type, parameter_id)
 
 
 def is_string(program_type: int, parameter_id: str) -> bool:
