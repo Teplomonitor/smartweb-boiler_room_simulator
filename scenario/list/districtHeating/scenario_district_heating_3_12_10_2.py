@@ -82,6 +82,10 @@ class Scenario(DistrictHeatingScenario):
 		city_supply_temperature = city_supply_sensor.get_value()
 		initial_valve = analog_valve.get_value()
 		original_valve_running_time = self.read_valve_running_time()
+		initial_minimum_temperature_restriction = self.read_temperature_generator_parameter(
+			self._boiler,
+			snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
+		)
 
 		if city_supply_temperature is None:
 			print_error('Не удалось получить температуру подачи из города')
@@ -98,7 +102,21 @@ class Scenario(DistrictHeatingScenario):
 			self._status = 'FAIL'
 			return
 
+		if initial_minimum_temperature_restriction is None:
+			print_error('Не удалось получить исходное ограничение минимальной температуры котла')
+			self._status = 'FAIL'
+			return
+
 		try:
+			if not self.write_temperature_generator_parameter(
+				self._boiler,
+				snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
+				0,
+			):
+				print_error('Не удалось отключить ограничение минимальной температуры котла')
+				self._status = 'FAIL'
+				return
+
 			if self.write_valve_running_time(self.VALVE_RUNNING_TIME) is None:
 				print_error('Не удалось изменить время хода крана')
 				self._status = 'FAIL'
@@ -194,4 +212,11 @@ class Scenario(DistrictHeatingScenario):
 		finally:
 			if self.write_valve_running_time(original_valve_running_time) is None:
 				print_error('Не удалось восстановить исходное время хода крана')
+				self._status = 'FAIL'
+			if not self.write_temperature_generator_parameter(
+				self._boiler,
+				snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
+				initial_minimum_temperature_restriction,
+			):
+				print_error('Не удалось восстановить ограничение минимальной температуры котла')
 				self._status = 'FAIL'

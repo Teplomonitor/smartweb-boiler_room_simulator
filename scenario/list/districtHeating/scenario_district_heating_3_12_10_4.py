@@ -47,13 +47,31 @@ class Scenario(DistrictHeatingScenario):
 			return
 
 		initial_tank_temperature = tank_sensor.get_value()
+		initial_minimum_temperature_restriction = self.read_temperature_generator_parameter(
+			self._boiler,
+			snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
+		)
 
 		if initial_tank_temperature is None:
 			print_error('Не удалось получить исходную температуру бойлера ГВС')
 			self._status = 'FAIL'
 			return
 
+		if initial_minimum_temperature_restriction is None:
+			print_error('Не удалось получить исходное ограничение минимальной температуры котла')
+			self._status = 'FAIL'
+			return
+
 		try:
+			if not self.write_temperature_generator_parameter(
+				self._boiler,
+				snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
+				0,
+			):
+				print_error('Не удалось отключить ограничение минимальной температуры котла')
+				self._status = 'FAIL'
+				return
+
 			print_log(
 				f'Устанавливаем температуру бойлера ГВС {self.SATISFIED_TANK_TEMPERATURE} C, '
 				'чтобы потребитель перестал запрашивать тепло у ИТП'
@@ -102,3 +120,10 @@ class Scenario(DistrictHeatingScenario):
 			self._status = 'OK'
 		finally:
 			self.set_sensor_value(tank_sensor, initial_tank_temperature)
+			if not self.write_temperature_generator_parameter(
+				self._boiler,
+				snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
+				initial_minimum_temperature_restriction,
+			):
+				print_error('Не удалось восстановить ограничение минимальной температуры котла')
+				self._status = 'FAIL'

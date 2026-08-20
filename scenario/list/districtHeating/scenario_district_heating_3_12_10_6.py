@@ -63,6 +63,10 @@ class Scenario(DistrictHeatingScenario):
 		initial_direct_temperature = direct_temperature_sensor.get_value()
 		initial_city_supply_temperature = city_supply_sensor.get_value()
 		initial_house_return_temperature = house_return_sensor.get_value()
+		initial_minimum_temperature_restriction = self.read_temperature_generator_parameter(
+			self._boiler,
+			snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
+		)
 
 		if initial_direct_temperature is None:
 			print_error('Не удалось получить исходную температуру подачи в дом')
@@ -76,6 +80,11 @@ class Scenario(DistrictHeatingScenario):
 
 		if initial_house_return_temperature is None:
 			print_error('Не удалось получить исходную температуру обратки из дома')
+			self._status = 'FAIL'
+			return
+
+		if initial_minimum_temperature_restriction is None:
+			print_error('Не удалось получить исходное ограничение минимальной температуры котла')
 			self._status = 'FAIL'
 			return
 
@@ -97,6 +106,15 @@ class Scenario(DistrictHeatingScenario):
 			return
 
 		try:
+			if not self.write_temperature_generator_parameter(
+				self._boiler,
+				snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
+				0,
+			):
+				print_error('Не удалось отключить ограничение минимальной температуры котла')
+				self._status = 'FAIL'
+				return
+
 			print_log(
 				f'Ждём исходное состояние ИТП (нет запроса резервному генератору) не более '
 				f'{self.STARTUP_TIMEOUT} секунд'
@@ -182,3 +200,10 @@ class Scenario(DistrictHeatingScenario):
 			self.set_sensor_value(direct_temperature_sensor, initial_direct_temperature)
 			self.set_sensor_value(city_supply_sensor, initial_city_supply_temperature)
 			self.set_sensor_value(house_return_sensor, initial_house_return_temperature)
+			if not self.write_temperature_generator_parameter(
+				self._boiler,
+				snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
+				initial_minimum_temperature_restriction,
+			):
+				print_error('Не удалось восстановить ограничение минимальной температуры котла')
+				self._status = 'FAIL'

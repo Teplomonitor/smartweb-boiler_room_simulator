@@ -45,7 +45,25 @@ class Scenario(DistrictHeatingScenario):
 			self._status = 'FAIL'
 			return
 
+		initial_minimum_temperature_restriction = self.read_temperature_generator_parameter(
+			self._boiler,
+			snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
+		)
+		if initial_minimum_temperature_restriction is None:
+			print_error('Не удалось получить исходное ограничение минимальной температуры котла')
+			self._status = 'FAIL'
+			return
+
 		try:
+			if not self.write_temperature_generator_parameter(
+				self._boiler,
+				snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
+				0,
+			):
+				print_error('Не удалось отключить ограничение минимальной температуры котла')
+				self._status = 'FAIL'
+				return
+
 			print_log(
 				f'Ждём исходное состояние ИТП (нет запроса резервному генератору) не более '
 				f'{self.STARTUP_TIMEOUT} секунд'
@@ -91,3 +109,10 @@ class Scenario(DistrictHeatingScenario):
 			self._status = 'OK'
 		finally:
 			self.set_sensor_value(pressure_sensor, 'short')
+			if not self.write_temperature_generator_parameter(
+				self._boiler,
+				snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
+				initial_minimum_temperature_restriction,
+			):
+				print_error('Не удалось восстановить ограничение минимальной температуры котла')
+				self._status = 'FAIL'
