@@ -91,6 +91,25 @@ class DistrictHeatingScenario(Parent):
 			return None
 		return parameter.get_value()
 
+	def read_temperature_generator_parameter(self, program, parameter_id):
+		parameter = sr.RemoteControlParameter(
+			programType=snc.ProgramType.TEMPERATURE_GENERATOR,
+			parameterId=parameter_id,
+			programId=program.get_id(),
+		)
+		if not parameter.read():
+			return None
+		return parameter.get_value()
+
+	def write_temperature_generator_parameter(self, program, parameter_id, value):
+		parameter = sr.RemoteControlParameter(
+			programType=snc.ProgramType.TEMPERATURE_GENERATOR,
+			parameterId=parameter_id,
+			parameterValue=value,
+			programId=program.get_id(),
+		)
+		return parameter.write()
+
 	def backup_generator_is_requested(self, program):
 		'''
 		True if the district heating program currently requires heat from the
