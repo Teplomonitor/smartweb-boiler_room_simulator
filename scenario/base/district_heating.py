@@ -1,5 +1,7 @@
 from scenario.scenario import Scenario as Parent
 import smartnet.constants as snc
+import smartnet.remoteControl as sr
+import smartnet.units as snu
 
 
 class DistrictHeatingScenario(Parent):
@@ -50,3 +52,67 @@ class DistrictHeatingScenario(Parent):
 
 	def read_valve_running_time(self):
 		return self._district_heating.read_parameter_value('valveRunningTime')
+
+	def read_temperature_source_power_request_delay(self):
+		return self._district_heating.read_parameter_value('temperatureSourcePowerRequestDelay')
+
+	def write_temperature_source_power_request_delay(self, value):
+		return self._district_heating.write_parameter_value('temperatureSourcePowerRequestDelay', value)
+
+	def read_temperature_source_required_temperature(self, program):
+		'''
+		Reads TemperatureSourceParameterId.REQUIRED_TEMPERATURE for a backup/reserve
+		heat generator program (e.g. the BOILER referenced by
+		DistrictHeatingParameterId.PARAM_TEMPERATURE_SOURCE_ID).
+		'''
+		parameter = sr.RemoteControlParameter(
+			programType=snc.ProgramType.TEMPERATURE_SOURCE,
+			parameterId=snc.TemperatureSourceParameterId.REQUIRED_TEMPERATURE,
+			programId=program.get_id(),
+		)
+		if not parameter.read():
+			return None
+		return parameter.get_value()
+
+	def read_temperature_source_consumer_id(self, program):
+		'''
+		Reads TemperatureSourceParameterId.CURRENTLY_SERVICES_CONSUMER_ID for a
+		backup/reserve heat generator program.
+		'''
+		parameter = sr.RemoteControlParameter(
+			programType=snc.ProgramType.TEMPERATURE_SOURCE,
+			parameterId=snc.TemperatureSourceParameterId.CURRENTLY_SERVICES_CONSUMER_ID,
+			programId=program.get_id(),
+		)
+		if not parameter.read():
+			return None
+		return parameter.get_value()
+
+	def backup_generator_is_requested(self, program):
+		'''
+		True if the district heating program currently requires heat from the
+		given backup/reserve generator program: its required temperature is
+		above zero and it currently services the district heating program.
+		'''
+		required_temperature = self.read_temperature_source_required_temperature(program)
+		consumer_id = self.read_temperature_source_consumer_id(program)
+
+		if required_temperature is None or consumer_id is None:
+			return None
+
+		return (
+			required_temperature not in (0, snu.SENSOR_UNDEFINED)
+			and consumer_id == self._district_heating.get_id()
+		)
+
+	def backup_generator_is_not_requested(self, program):
+		'''
+		True if the backup/reserve generator's required temperature is 0 or
+		SENSOR_UNDEFINED, meaning district heating does not request heat from it.
+		'''
+		required_temperature = self.read_temperature_source_required_temperature(program)
+
+		if required_temperature is None:
+			return None
+
+		return required_temperature in (0, snu.SENSOR_UNDEFINED)
