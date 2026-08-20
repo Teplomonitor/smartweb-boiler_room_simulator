@@ -124,13 +124,22 @@ class RoomSettings(object):
 class DistrictHeatingSettings(object):
 	def __init__(self,
 			source         = None,
+			alarm_program  = None,
 			):
 		self._source         = source
+		self._alarm_program  = alarm_program
 
 	def get(self):
-		return [
+		parameters = [
 			RemoteControlParameter(snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_TEMPERATURE_SOURCE_ID, self._source),
 		]
+		if self._alarm_program is not None:
+			parameters.append(RemoteControlParameter(
+				snc.ProgramType.TEMPERATURE_SOURCE,
+				snc.TemperatureSourceParameterId.ALARM_PROGRAM_ID,
+				self._alarm_program,
+			))
+		return parameters
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]
 
