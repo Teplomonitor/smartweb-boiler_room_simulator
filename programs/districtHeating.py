@@ -17,6 +17,7 @@ class DistrictHeating(Program):
 	def get_type(): return snc.ProgramType.DISTRICT_HEATING
 
 	_remoteControlParameters = {
+		'alarmProgramId'                 : (snc.ProgramType.TEMPERATURE_SOURCE, snc.TemperatureSourceParameterId.ALARM_PROGRAM_ID),
 		'backwardControlType'            : (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_BACKWARD_CONTROL_TYPE),
 		'maximumBackwardTemperature'     : (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_MAXIMUM_BACKWARD_TEMPERATURE),
 		'maximumBackwardTemperatureII'   : (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_MAXIMUM_BACKWARD_TEMPERATURE_II),
