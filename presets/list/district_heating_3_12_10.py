@@ -64,10 +64,16 @@ programId = {
 
 # The BOILER program here is only a dummy reserve/backup heat generator: it
 # receives (or does not receive) the heat request that DistrictHeatingProgram
-# sends to DistrictHeatingParameterId.PARAM_TEMPERATURE_SOURCE_ID. Its own
-# inputs/outputs are intentionally left unmapped, since the 3.12.10.x scenarios
-# only check TemperatureSourceParameterId.REQUIRED_TEMPERATURE and
-# CURRENTLY_SERVICES_CONSUMER_ID on it, not its internal simulated behavior.
+# sends to DistrictHeatingParameterId.PARAM_TEMPERATURE_SOURCE_ID. The
+# 3.12.10.x scenarios only check TemperatureSourceParameterId.REQUIRED_TEMPERATURE
+# and CURRENTLY_SERVICES_CONSUMER_ID on it, not its internal simulated
+# behavior. Its temperature sensor and stage (burner) output are still mapped
+# below: simulator/boiler.py treats an unmapped stage/pump output as
+# permanently "on" (get_stage_state()/get_pump_state() default to 1 when
+# is_mapped() is False), which made the boiler simulator behave as if it was
+# constantly heating and settle its temperature around the collector's ~40 C
+# backward temperature. Mapping the stage output lets it report its real
+# (normally off) relay state instead.
 programSettings = {
 	'DISTRICT_HEATING': dhSettings(
 		source=programId['BOILER'],
@@ -94,7 +100,7 @@ programInputs = {
 		inputMapping(3, hostId['HOST_2']),
 		inputMapping(4, hostId['HOST_2']),
 	],
-	'BOILER': [],
+	'BOILER': [inputMapping(1, hostId['HOST_1'])],
 	'DHW': [inputMapping(0, hostId['HOST_1'])],
 	'FILLING_LOOP': [inputMapping(5, hostId['HOST_2'])],
 }
@@ -106,7 +112,10 @@ programOutputs = {
 		None,
 		outputMapping(6, hostId['HOST_2']),
 	],
-	'BOILER': [],
+	'BOILER': [
+		outputMapping(3, hostId['HOST_1']),
+		outputMapping(2, hostId['HOST_1']),
+	],
 	'DHW': [
 		outputMapping(0, hostId['HOST_1']),
 		outputMapping(1, hostId['HOST_1']),
