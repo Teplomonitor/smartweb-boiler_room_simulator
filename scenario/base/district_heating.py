@@ -12,7 +12,10 @@ class DistrictHeatingScenario(Parent):
 	def __init__(self, controllerHost, sim):
 		super().__init__(controllerHost, sim)
 		self._district_heating = self._programList['districtHeating']
-		self._outdoor = self._programList['outdoor']
+		# Not every district heating scenario needs an outdoor sensor (e.g. the
+		# 3.12.10.x reserve generator family uses DHW as its consumer, which does
+		# not depend on outdoor temperature), so this is optional.
+		self._outdoor = self._programList.get('outdoor')
 
 	def get_required_programs(self):
 		return {
