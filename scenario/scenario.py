@@ -32,6 +32,12 @@ def sanitize_scenario_log_name(value):
 	name = re.sub(r'_+', '_', name).rstrip(' ._')
 	return name or 'scenario'
 
+def natural_sort_key(value):
+	return [
+		int(part) if part.isdigit() else part.casefold()
+		for part in re.split(r'(\d+)', str(value))
+	]
+
 class Scenario(object):
 	RELAY_OFF = 0
 	RELAY_ON  = 255
@@ -305,8 +311,8 @@ def get_scenario_files_list():
 			
 	
 	add_scenario_items(get_scenario_dir())
-	
-	return __all__
+
+	return sorted(__all__, key=natural_sort_key)
 
 class ScenarioThread(threading.Thread):
 	def __new__(cls, *args, **kwargs):
