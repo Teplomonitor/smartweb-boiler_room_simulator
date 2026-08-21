@@ -9,9 +9,11 @@ from smartnet.remoteControl import bytesToTemp
 class Scenario(DistrictHeatingScenario):
 	OUTDOOR_TEMPERATURE_POINT_I = 10
 	OUTDOOR_TEMPERATURE_OFFSET = 5
-	OUTDOOR_TEMPERATURE_FILTER_WAIT = 30
+	OUTDOOR_TEMPERATURE_SETTLING_TIMEOUT = 300
+	OUTDOOR_TEMPERATURE_POLL_INTERVAL = 5
+	OUTDOOR_TEMPERATURE_TOLERANCE = 1
 	BACKWARD_TEMPERATURE_RECALCULATION_WAIT = 10
-	OUTDOOR_TEMPERATURE_MESSAGE_TIMEOUT = 30
+	OUTDOOR_TEMPERATURE_MESSAGE_TIMEOUT = 5
 
 	def get_scenario_title(self):
 		return 'District Heating: outdoor-temperature backward limit'
@@ -26,28 +28,39 @@ class Scenario(DistrictHeatingScenario):
 		self.set_outdoor_temperature(requested_temperature)
 
 		print_log(
-			'Подождём, пока программа улицы отфильтрует температуру '
-			f'{requested_temperature:.1f} °C'
-		)
-		self.wait(self.OUTDOOR_TEMPERATURE_FILTER_WAIT)
-
-		msg = snm.Message()
-		result = msg.recv(
-			snm.Message(
-				snc.ProgramType.OUTDOOR_SENSOR, None,
-				snc.OutdoorSensorFunction.GET_TEMPERATURE,
-				snc.RequestFlag.RESPONSE),
-			self.OUTDOOR_TEMPERATURE_MESSAGE_TIMEOUT
+			'Следим за отфильтрованной температурой улицы до достижения '
+			f'значения {requested_temperature:.1f} °C '
+			f'с допуском ±{self.OUTDOOR_TEMPERATURE_TOLERANCE:.1f} °C'
 		)
 
-		if not result:
-			return None
+		poll_count = self.OUTDOOR_TEMPERATURE_SETTLING_TIMEOUT // self.OUTDOOR_TEMPERATURE_POLL_INTERVAL
+		for _ in range(poll_count):
+			if self.wait(self.OUTDOOR_TEMPERATURE_POLL_INTERVAL) == False:
+				return None
 
-		data = result.get_data()
-		if data is None or len(data) < 2:
-			return None
+			msg = snm.Message()
+			result = msg.recv(
+				snm.Message(
+					snc.ProgramType.OUTDOOR_SENSOR, None,
+					snc.OutdoorSensorFunction.GET_TEMPERATURE,
+					snc.RequestFlag.RESPONSE),
+				self.OUTDOOR_TEMPERATURE_MESSAGE_TIMEOUT
+			)
 
-		return bytesToTemp(data[0:2])
+			if not result:
+				continue
+
+			data = result.get_data()
+			if data is None or len(data) < 2:
+				continue
+
+			filtered_temperature = bytesToTemp(data[0:2])
+			if filtered_temperature is not None and abs(
+				filtered_temperature - requested_temperature
+			) <= self.OUTDOOR_TEMPERATURE_TOLERANCE:
+				return filtered_temperature
+
+		return None
 
 	def run(self):
 		print_log('Задаём режим авто.')
