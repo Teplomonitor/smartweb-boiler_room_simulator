@@ -12,6 +12,25 @@ class HeatingCircuit(Program):
 	'''
 	classdocs
 	'''
+
+	_remoteControlParameters = {
+		'heatCalculationMode': (
+			snc.ProgramType.CIRCUIT,
+			snc.CircuitParameterId.HEAT_CALCULATION_MODE,
+		),
+		'requiredConstantFlowTemperature': (
+			snc.ProgramType.CIRCUIT,
+			snc.CircuitParameterId.REQUIRED_CONSTANT_FLOW_TEMPERATURE,
+		),
+		'temperatureCompensation': (
+			snc.ProgramType.CONSUMER,
+			snc.ConsumerParameterId.TEMPERATURE_COMPENSATION,
+		),
+	}
+
+	def get_parameter_code(self, parameter):
+		return self._remoteControlParameters[parameter]
+
 	@staticmethod
 	def get_type(): return snc.ProgramType.HEATING_CIRCUIT
 	
