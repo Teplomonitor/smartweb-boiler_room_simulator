@@ -14,6 +14,10 @@ class HeatingCircuit(Program):
 	'''
 
 	_remoteControlParameters = {
+		'generatorId': (
+			snc.ProgramType.CONSUMER,
+			snc.ConsumerParameterId.GENERATOR_ID,
+		),
 		'heatCalculationMode': (
 			snc.ProgramType.CIRCUIT,
 			snc.CircuitParameterId.HEAT_CALCULATION_MODE,
