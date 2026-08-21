@@ -2,7 +2,7 @@ import threading
 import unittest
 from unittest.mock import Mock
 
-from scenario.scenario import ScenarioThread
+from scenario.scenario import ScenarioThread, natural_sort_key
 
 
 class TestScenarioSelection(unittest.TestCase):
@@ -51,6 +51,14 @@ class TestScenarioSelection(unittest.TestCase):
 				unittest.mock.call('third.py'),
 				unittest.mock.call('first.py'),
 			],
+		)
+
+	def test_natural_sort_places_numbered_scenarios_in_numeric_order(self):
+		scenarios = ['scenario_10.py', 'scenario_2.py', 'scenario_1.py', 'scenario_9.py']
+
+		self.assertEqual(
+			sorted(scenarios, key=natural_sort_key),
+			['scenario_1.py', 'scenario_2.py', 'scenario_9.py', 'scenario_10.py'],
 		)
 
 
