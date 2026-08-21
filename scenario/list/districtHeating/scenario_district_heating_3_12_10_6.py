@@ -41,6 +41,7 @@ class Scenario(DistrictHeatingScenario):
 		return {
 			'districtHeating': snc.ProgramType.DISTRICT_HEATING,
 			'boiler': snc.ProgramType.BOILER,
+			'circuit': snc.ProgramType.HEATING_CIRCUIT,
 		}
 
 	def run(self):
