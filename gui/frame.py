@@ -10,6 +10,7 @@ except ImportError:
 	print('import gui fail. Please install wxPython if you wish to use gui: pip install -U wxPython')
 
 import main
+import config
 
 from gui.parameter import GuiParameterApi  as GuiParameterApi
 from gui.parameter import GuiInputChannel  as GuiInputChannel
@@ -188,6 +189,7 @@ class MainFrame ( wx.Frame ):
 		try:
 			if dialog.ShowModal() == wx.ID_OK:
 				self._selected_scenarios = dialog.selected_scenarios
+				self._config.setSelectedScenarios(self._profile, self._selected_scenarios)
 				sc.start_scenario(list(self._selected_scenarios))
 		finally:
 			dialog.Destroy()
@@ -332,8 +334,15 @@ class MainFrame ( wx.Frame ):
 	def set_scenario_status(self, state, scenario_title = ''):
 		wx.CallAfter(self.set_scenario_status_now, state, scenario_title)
 
-	def __init__( self, parent , guithread):
-		self._selected_scenarios = []
+	def __init__( self, parent , guithread, profile='main'):
+		self._profile = profile
+		self._config = config.ConfigParserInstance()
+		scenario_paths = sc.get_scenario_files_list()
+		selected_scenarios = set(self._config.getSelectedScenarios(self._profile))
+		self._selected_scenarios = [
+			path for path in scenario_paths
+			if path in selected_scenarios
+		]
 		self.makeFrame(parent)
 		self._guithread = guithread
 		self._collector = None
@@ -632,13 +641,13 @@ class guiThread():
 			cls.instance = super(guiThread, cls).__new__(cls)
 		return cls.instance
 
-	def __init__(self):
+	def __init__(self, profile='main'):
 		if hasattr(self, '_initDone'):
 			return
 		
 		self._app = wx.App()
 		self._frame = wx.Frame(None, title='Simple application')
-		self._ex = MainFrame(self._frame, self)
+		self._ex = MainFrame(self._frame, self, profile)
 		self._ex.Show()
 		
 		self._initDone = True
