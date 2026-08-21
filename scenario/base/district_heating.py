@@ -138,3 +138,17 @@ class DistrictHeatingScenario(Parent):
 			return None
 
 		return required_temperature in (0, snu.SENSOR_UNDEFINED)
+
+	def wait_backup_generator_requested(self, program, stabilization_duration, timeout):
+		return self.wait_state_permanence(
+			lambda: self.backup_generator_is_requested(program) is True,
+			stabilization_duration,
+			timeout,
+		)
+
+	def wait_backup_generator_not_requested(self, program, stabilization_duration, timeout):
+		return self.wait_state_permanence(
+			lambda: self.backup_generator_is_not_requested(program) is True,
+			stabilization_duration,
+			timeout,
+		)
