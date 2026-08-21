@@ -246,6 +246,10 @@ class CircuitParameterId(IntEnum):
 	ANALOG_PUMP_MAXIMUM_SPEED = 17
 	FLOW_CIRCULATION_IS_ACTIVE = 18
 
+class ConsumerHeatCalculationMode(IntEnum):
+	WEATHER_HEATING_SLOPE = 0
+	CONSTANT_TEMPERATURE = 1
+
 class ConsumerParameterId(IntEnum):
 	PRIORITY = 1
 	GENERATOR_ID = 2
