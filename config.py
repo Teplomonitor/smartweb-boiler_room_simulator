@@ -5,6 +5,7 @@ Created on 9 июл. 2025 г.
 '''
 
 import os
+import json
 
 try:
 	import configparser
@@ -86,3 +87,22 @@ class ConfigParserInstance():
 		
 		with open(self._settingsPath, "w", encoding='utf-8') as config_file:
 			self._configParserInstance.write(config_file)
+
+	def getSelectedScenarios(self, profile):
+		try:
+			value = self.getParameterValue(profile, 'selected_scenarios')
+			selected_scenarios = json.loads(value)
+		except (configparser.Error, json.JSONDecodeError, TypeError):
+			return []
+
+		if not isinstance(selected_scenarios, list):
+			return []
+
+		return [scenario for scenario in selected_scenarios if isinstance(scenario, str)]
+
+	def setSelectedScenarios(self, profile, selected_scenarios):
+		self.setParameterValue(
+			profile,
+			'selected_scenarios',
+			json.dumps(list(selected_scenarios), ensure_ascii=False),
+		)
