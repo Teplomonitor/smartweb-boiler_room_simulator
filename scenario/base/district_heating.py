@@ -110,6 +110,30 @@ class DistrictHeatingScenario(Parent):
 		)
 		return parameter.write()
 
+	def read_circuit_parameter(self, circuit, parameter):
+		return circuit.read_parameter_value(parameter)
+
+	def write_circuit_parameter(self, circuit, parameter, value):
+		return circuit.write_parameter_value(parameter, value)
+
+	def read_circuit_heat_calculation_mode(self, circuit):
+		return self.read_circuit_parameter(circuit, 'heatCalculationMode')
+
+	def write_circuit_heat_calculation_mode(self, circuit, value):
+		return self.write_circuit_parameter(circuit, 'heatCalculationMode', value)
+
+	def read_circuit_required_constant_flow_temperature(self, circuit):
+		return self.read_circuit_parameter(circuit, 'requiredConstantFlowTemperature')
+
+	def write_circuit_required_constant_flow_temperature(self, circuit, value):
+		return self.write_circuit_parameter(circuit, 'requiredConstantFlowTemperature', value)
+
+	def read_circuit_temperature_compensation(self, circuit):
+		return self.read_circuit_parameter(circuit, 'temperatureCompensation')
+
+	def write_circuit_temperature_compensation(self, circuit, value):
+		return self.write_circuit_parameter(circuit, 'temperatureCompensation', value)
+
 	def backup_generator_is_requested(self, program):
 		'''
 		True if the district heating program currently requires heat from the
