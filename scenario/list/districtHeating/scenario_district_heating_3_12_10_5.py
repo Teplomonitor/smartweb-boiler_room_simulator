@@ -68,6 +68,9 @@ class Scenario(DistrictHeatingScenario):
 			self._status = 'FAIL'
 			return
 
+		print_log('Ждём 30 секунд для стабилизации требуемой температуры подачи в дом')
+		self.wait(30)
+
 		required_temperature = self.read_temperature_source_required_temperature(self._district_heating)
 
 		if required_temperature is None or required_temperature in (0, snu.SENSOR_UNDEFINED):
