@@ -17,15 +17,40 @@ class HeatingCircuitSettings(object):
 	def __init__(self,
 			source         = None,
 			heatingSlope   = None,
+			heatCalculationMode = None,
+			requiredConstantFlowTemperature = None,
+			temperatureCompensation = None,
 			):
 		self._source         = source
 		self._heatingSlope   = heatingSlope
+		self._heatCalculationMode = heatCalculationMode
+		self._requiredConstantFlowTemperature = requiredConstantFlowTemperature
+		self._temperatureCompensation = temperatureCompensation
 
 	def get(self):
-		return [
+		settings = [
 			RemoteControlParameter(snc.ProgramType.CONSUMER, snc.ConsumerParameterId.GENERATOR_ID, self._source),
 			RemoteControlParameter(snc.ProgramType.CIRCUIT , snc.CircuitParameterId.HEATING_SLOPE, self._heatingSlope),
 		]
+		if self._heatCalculationMode is not None:
+			settings.append(RemoteControlParameter(
+				snc.ProgramType.CIRCUIT,
+				snc.CircuitParameterId.HEAT_CALCULATION_MODE,
+				self._heatCalculationMode,
+			))
+		if self._requiredConstantFlowTemperature is not None:
+			settings.append(RemoteControlParameter(
+				snc.ProgramType.CIRCUIT,
+				snc.CircuitParameterId.REQUIRED_CONSTANT_FLOW_TEMPERATURE,
+				self._requiredConstantFlowTemperature,
+			))
+		if self._temperatureCompensation is not None:
+			settings.append(RemoteControlParameter(
+				snc.ProgramType.CONSUMER,
+				snc.ConsumerParameterId.TEMPERATURE_COMPENSATION,
+				self._temperatureCompensation,
+			))
+		return settings
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]
 
