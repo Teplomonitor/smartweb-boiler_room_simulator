@@ -102,8 +102,8 @@ class Scenario(DistrictHeatingScenario):
 				f'Ждём исходное состояние ИТП (нет запроса резервному генератору) не более '
 				f'{self.STARTUP_TIMEOUT} секунд'
 			)
-			if not self.wait_state_permanence(
-				lambda: self.backup_generator_is_not_requested(self._boiler) is True,
+			if not self.wait_backup_generator_not_requested(
+				self._boiler,
 				self.STARTUP_STABILIZATION_DURATION,
 				self.STARTUP_TIMEOUT,
 			):
@@ -135,8 +135,8 @@ class Scenario(DistrictHeatingScenario):
 				'Ждём разрешения работы резервного генератора не более '
 				f'{self.ON_RESPONSE_TIMEOUT} секунд'
 			)
-			if not self.wait_state_permanence(
-				lambda: self.backup_generator_is_requested(self._boiler) is True,
+			if not self.wait_backup_generator_requested(
+				self._boiler,
 				self.ON_RESPONSE_STABILIZATION_DURATION,
 				self.ON_RESPONSE_TIMEOUT,
 			):
@@ -157,8 +157,8 @@ class Scenario(DistrictHeatingScenario):
 				'Проверяем, что резервный генератор остаётся включённым в течение '
 				f'{self.OFF_DELAY_HOLD_DURATION} секунд (меньше задержки на выключение 5 минут)'
 			)
-			if not self.wait_state_permanence(
-				lambda: self.backup_generator_is_requested(self._boiler) is True,
+			if not self.wait_backup_generator_requested(
+				self._boiler,
 				self.OFF_DELAY_HOLD_DURATION,
 				self.OFF_DELAY_HOLD_DURATION,
 			):
@@ -172,8 +172,8 @@ class Scenario(DistrictHeatingScenario):
 				'Ждём выключения резервного генератора после задержки на выключение (5 минут) '
 				f'не более {self.OFF_RESPONSE_TIMEOUT} секунд'
 			)
-			if not self.wait_state_permanence(
-				lambda: self.backup_generator_is_not_requested(self._boiler) is True,
+			if not self.wait_backup_generator_not_requested(
+				self._boiler,
 				self.OFF_RESPONSE_STABILIZATION_DURATION,
 				self.OFF_RESPONSE_TIMEOUT,
 			):
