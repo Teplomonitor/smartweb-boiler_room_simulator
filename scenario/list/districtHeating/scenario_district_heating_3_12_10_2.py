@@ -14,6 +14,8 @@ class Scenario(DistrictHeatingScenario):
 	VALVE_HALF_OPEN_MAXIMUM = 140
 	PERIODIC_OPEN_DURATION = 5 * 60
 	PERIODIC_OPEN_TIMEOUT = 3 * 60 * 60
+	REQUESTED_STABILIZATION_DURATION = 20
+	REQUESTED_TIMEOUT = 3 * 60
 
 	def get_scenario_title(self):
 		return 'District Heating: reserve generator work is disabled during backward flow check'
@@ -161,6 +163,25 @@ class Scenario(DistrictHeatingScenario):
 				return
 
 			initial_low_position = analog_valve.get_value()
+			print_log(
+				'Проверяем, что перед периодической проверкой резервный генератор запрошен, '
+				f'не более {self.REQUESTED_TIMEOUT} секунд'
+			)
+			if not self.wait_backup_generator_requested(
+				self._boiler,
+				self.REQUESTED_STABILIZATION_DURATION,
+				self.REQUESTED_TIMEOUT,
+			):
+				required_temperature = self.read_temperature_source_required_temperature(self._boiler)
+				consumer_id = self.read_temperature_source_consumer_id(self._boiler)
+				print_error(
+					'Не удалось подготовить включённое состояние резервного генератора перед '
+					f'периодической проверкой: требуемая температура={required_temperature}, '
+					f'обслуживаемый потребитель={consumer_id}'
+				)
+				self._status = 'FAIL'
+				return
+
 			print_log(
 				f'Кран открыт менее чем на 50% (положение {initial_low_position}). '
 				f'Ждём периодической проверки обратного потока в течение трёх часов '
