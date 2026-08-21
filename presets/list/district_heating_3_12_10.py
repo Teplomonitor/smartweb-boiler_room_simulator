@@ -1,7 +1,7 @@
 from smartnet.channelMapping import ChannelMapping as Mapping
 import smartnet.constants as snc
 
-from presets.settings import DhwSettings as dhwSettings
+from presets.settings import HeatingCircuitSettings as heatingCircuitSettings
 from presets.settings import DistrictHeatingSettings as dhSettings
 
 import presets.preset
@@ -30,35 +30,35 @@ hostTitle = {
 programList = [
 	'DISTRICT_HEATING',
 	'BOILER',
-	'DHW',
+	'HEATING_CIRCUIT',
 	'FILLING_LOOP',
 ]
 
 programType = {
 	'DISTRICT_HEATING': snc.ProgramType.DISTRICT_HEATING,
 	'BOILER': snc.ProgramType.BOILER,
-	'DHW': snc.ProgramType.DHW,
+	'HEATING_CIRCUIT': snc.ProgramType.HEATING_CIRCUIT,
 	'FILLING_LOOP': snc.ProgramType.FILLING_LOOP,
 }
 
 programScheme = {
 	'DISTRICT_HEATING': 'DEFAULT',
 	'BOILER': 'DEFAULT',
-	'DHW': 'DEFAULT',
+	'HEATING_CIRCUIT': 'CIRCUIT_MIXED',
 	'FILLING_LOOP': 'DEFAULT',
 }
 
 programTitle = {
 	'DISTRICT_HEATING': 'distHeat',
 	'BOILER': 'Reserve',
-	'DHW': 'DHW',
+	'HEATING_CIRCUIT': 'Test circuit',
 	'FILLING_LOOP': 'Pressure',
 }
 
 programId = {
 	'DISTRICT_HEATING': 108,
 	'BOILER': 106,
-	'DHW': 105,
+	'HEATING_CIRCUIT': 105,
 	'FILLING_LOOP': 109,
 }
 
@@ -80,7 +80,12 @@ programSettings = {
 		alarm_program=programId['FILLING_LOOP'],
 	),
 	'BOILER': None,
-	'DHW': dhwSettings(programId['DISTRICT_HEATING']),
+	'HEATING_CIRCUIT': heatingCircuitSettings(
+		source=programId['DISTRICT_HEATING'],
+		heatCalculationMode=snc.ConsumerHeatCalculationMode.CONSTANT_TEMPERATURE,
+		requiredConstantFlowTemperature=45,
+		temperatureCompensation=5,
+	),
 	'FILLING_LOOP': None,
 }
 
@@ -101,7 +106,7 @@ programInputs = {
 		inputMapping(4, hostId['HOST_2']),
 	],
 	'BOILER': [inputMapping(1, hostId['HOST_1'])],
-	'DHW': [inputMapping(0, hostId['HOST_1'])],
+	'HEATING_CIRCUIT': [inputMapping(4, hostId['HOST_1'])],
 	'FILLING_LOOP': [inputMapping(5, hostId['HOST_2'])],
 }
 
@@ -116,8 +121,10 @@ programOutputs = {
 		outputMapping(3, hostId['HOST_1']),
 		outputMapping(2, hostId['HOST_1']),
 	],
-	'DHW': [
+	'HEATING_CIRCUIT': [
 		outputMapping(0, hostId['HOST_1']),
+		None,
+		None,
 		outputMapping(1, hostId['HOST_1']),
 	],
 	'FILLING_LOOP': [],
