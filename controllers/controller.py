@@ -305,7 +305,7 @@ class Controller(object):
 
 
 	def addProgram(self, program):
-		print_log('add prg to list')
+		print_log('add prg to simulator list')
 		self._programList.append(program)
 		
 		prg = {'id': program.get_id(), 'type': program.get_type()}
