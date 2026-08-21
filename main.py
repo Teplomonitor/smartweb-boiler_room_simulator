@@ -131,7 +131,7 @@ def main(argv=None): # IGNORE:C0111
 		args = initArgParser(program_license)
 		
 		if args.gui:
-			guiThread = guiFrameThread.guiThread()
+			guiThread = guiFrameThread.guiThread(args.profile)
 		else:
 			guiThread = None
 
