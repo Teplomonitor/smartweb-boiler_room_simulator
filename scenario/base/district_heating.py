@@ -116,6 +116,12 @@ class DistrictHeatingScenario(Parent):
 	def write_circuit_parameter(self, circuit, parameter, value):
 		return circuit.write_parameter_value(parameter, value)
 
+	def read_circuit_generator_id(self, circuit):
+		return self.read_circuit_parameter(circuit, 'generatorId')
+
+	def write_circuit_generator_id(self, circuit, value):
+		return self.write_circuit_parameter(circuit, 'generatorId', value)
+
 	def read_circuit_heat_calculation_mode(self, circuit):
 		return self.read_circuit_parameter(circuit, 'heatCalculationMode')
 
