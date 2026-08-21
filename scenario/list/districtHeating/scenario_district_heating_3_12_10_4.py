@@ -5,8 +5,10 @@ import smartnet.constants as snc
 
 
 class Scenario(DistrictHeatingScenario):
-	SATISFIED_TANK_TEMPERATURE = 90
-	REQUESTING_TANK_TEMPERATURE = 20
+	REQUESTING_CIRCUIT_TEMPERATURE = 45
+	TEMPERATURE_COMPENSATION = 5
+	CONSTANT_TEMPERATURE_MODE = snc.ConsumerHeatCalculationMode.CONSTANT_TEMPERATURE
+	DISCONNECTED_GENERATOR_ID = 107
 	REQUESTED_STABILIZATION_DURATION = 20
 	REQUESTED_TIMEOUT = 3 * 60
 	NO_REQUEST_STABILIZATION_DURATION = 30
@@ -35,37 +37,53 @@ class Scenario(DistrictHeatingScenario):
 		return {
 			'districtHeating': snc.ProgramType.DISTRICT_HEATING,
 			'boiler': snc.ProgramType.BOILER,
-			'dhw': snc.ProgramType.DHW,
+			'circuit': snc.ProgramType.HEATING_CIRCUIT,
 		}
 
 	def run(self):
 		self._boiler = self._programList['boiler']
-		dhw = self._programList['dhw']
-
-		tank_sensor = dhw.get_input_channel('temperature')
-
-		if not tank_sensor.is_mapped():
-			print_error('Не найден датчик температуры бойлера ГВС')
-			self._status = 'FAIL'
-			return
-
-		initial_tank_temperature = tank_sensor.get_value()
+		circuit = self._programList['circuit']
 		initial_minimum_temperature_restriction = self.read_temperature_generator_parameter(
 			self._boiler,
 			snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
 		)
-
-		if initial_tank_temperature is None:
-			print_error('Не удалось получить исходную температуру бойлера ГВС')
-			self._status = 'FAIL'
-			return
+		initial_heat_calculation_mode = self.read_circuit_heat_calculation_mode(circuit)
+		initial_constant_flow_temperature = self.read_circuit_required_constant_flow_temperature(circuit)
+		initial_temperature_compensation = self.read_circuit_temperature_compensation(circuit)
+		initial_generator_id = self.read_circuit_generator_id(circuit)
 
 		if initial_minimum_temperature_restriction is None:
 			print_error('Не удалось получить исходное ограничение минимальной температуры котла')
 			self._status = 'FAIL'
 			return
 
+		if (
+			initial_heat_calculation_mode is None
+			or initial_constant_flow_temperature is None
+			or initial_temperature_compensation is None
+			or initial_generator_id is None
+		):
+			print_error('Не удалось получить исходные параметры контура отопления')
+			self._status = 'FAIL'
+			return
+
 		try:
+			for parameter, value, description in (
+				('mode', self.CONSTANT_TEMPERATURE_MODE, 'режим постоянной температуры'),
+				('temperature', self.REQUESTING_CIRCUIT_TEMPERATURE, 'температуру постоянного потока'),
+				('compensation', self.TEMPERATURE_COMPENSATION, 'температурную компенсацию'),
+			):
+				if parameter == 'mode':
+					result = self.write_circuit_heat_calculation_mode(circuit, value)
+				elif parameter == 'temperature':
+					result = self.write_circuit_required_constant_flow_temperature(circuit, value)
+				else:
+					result = self.write_circuit_temperature_compensation(circuit, value)
+				if result is None:
+					print_error(f'Не удалось установить {description}')
+					self._status = 'FAIL'
+					return
+
 			if not self.write_temperature_generator_parameter(
 				self._boiler,
 				snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
@@ -76,10 +94,10 @@ class Scenario(DistrictHeatingScenario):
 				return
 
 			print_log(
-				f'Устанавливаем температуру бойлера ГВС {self.REQUESTING_TANK_TEMPERATURE} C, '
+				f'Устанавливаем температуру постоянного потока контура '
+				f'{self.REQUESTING_CIRCUIT_TEMPERATURE} C '
 				'чтобы резервный генератор получил запрос на тепло'
 			)
-			self.set_sensor_value(tank_sensor, self.REQUESTING_TANK_TEMPERATURE)
 
 			print_log(
 				'Ждём устойчивого запроса резервному генератору перед проверкой выключения, '
@@ -100,10 +118,13 @@ class Scenario(DistrictHeatingScenario):
 				return
 
 			print_log(
-				f'Устанавливаем температуру бойлера ГВС {self.SATISFIED_TANK_TEMPERATURE} C, '
-				'чтобы потребитель перестал запрашивать тепло у ИТП'
+				f'Отключаем контур от ИТП: устанавливаем несуществующий номер генератора '
+				f'{self.DISCONNECTED_GENERATOR_ID}'
 			)
-			self.set_sensor_value(tank_sensor, self.SATISFIED_TANK_TEMPERATURE)
+			if self.write_circuit_generator_id(circuit, self.DISCONNECTED_GENERATOR_ID) is None:
+				print_error('Не удалось отключить контур отопления от ИТП')
+				self._status = 'FAIL'
+				return
 
 			print_log(
 				f'Ждём, пока у ИТП пропадёт запрос на тепло от потребителя, не более '
@@ -116,7 +137,7 @@ class Scenario(DistrictHeatingScenario):
 			):
 				required_temperature = self.read_temperature_source_required_temperature(self._district_heating)
 				print_error(
-					'Потребитель (ГВС) продолжает запрашивать тепло у ИТП: '
+					'Контур отопления продолжает запрашивать тепло у ИТП: '
 					f'требуемая температура={required_temperature}'
 				)
 				self._status = 'FAIL'
@@ -146,7 +167,21 @@ class Scenario(DistrictHeatingScenario):
 			)
 			self._status = 'OK'
 		finally:
-			self.set_sensor_value(tank_sensor, initial_tank_temperature)
+			if self.write_circuit_generator_id(circuit, initial_generator_id) is None:
+				print_error('Не удалось восстановить номер генератора контура отопления')
+				self._status = 'FAIL'
+			if self.write_circuit_heat_calculation_mode(circuit, initial_heat_calculation_mode) is None:
+				print_error('Не удалось восстановить режим расчёта контура отопления')
+				self._status = 'FAIL'
+			if self.write_circuit_required_constant_flow_temperature(
+				circuit,
+				initial_constant_flow_temperature,
+			) is None:
+				print_error('Не удалось восстановить постоянную температуру контура отопления')
+				self._status = 'FAIL'
+			if self.write_circuit_temperature_compensation(circuit, initial_temperature_compensation) is None:
+				print_error('Не удалось восстановить температурную компенсацию контура отопления')
+				self._status = 'FAIL'
 			if not self.write_temperature_generator_parameter(
 				self._boiler,
 				snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
