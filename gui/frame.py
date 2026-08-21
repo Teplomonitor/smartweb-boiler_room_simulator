@@ -60,6 +60,67 @@ class ScenarioItem(object):
 	def stop_scenario(self):
 		sc.stop_scenario()
 
+class ScenarioSelectionDialog(wx.Dialog):
+	def __init__(self, parent, scenario_paths, selected_scenarios):
+		wx.Dialog.__init__(self, parent, wx.ID_ANY, _(u"Select scenarios"), wx.DefaultPosition, wx.Size(520, 600))
+		self._scenario_paths = list(scenario_paths)
+		self.selected_scenarios = []
+
+		scenario_dir = sc.get_scenario_dir()
+		labels = [
+			os.path.relpath(path, scenario_dir).replace(os.sep, '/')
+			for path in self._scenario_paths
+		]
+		self._scenario_check_list = wx.CheckListBox(
+			self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, labels)
+		selected_scenarios = set(selected_scenarios)
+		for index, path in enumerate(self._scenario_paths):
+			self._scenario_check_list.Check(index, path in selected_scenarios)
+
+		button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+		select_all_button = wx.Button(self, wx.ID_ANY, _(u"Select all"))
+		clear_all_button = wx.Button(self, wx.ID_ANY, _(u"Clear all"))
+		run_button = wx.Button(self, wx.ID_OK, _(u"Run selected"))
+		cancel_button = wx.Button(self, wx.ID_CANCEL, _(u"Cancel"))
+		button_sizer.Add(select_all_button, 0, wx.ALL, 5)
+		button_sizer.Add(clear_all_button, 0, wx.ALL, 5)
+		button_sizer.AddStretchSpacer(1)
+		button_sizer.Add(run_button, 0, wx.ALL, 5)
+		button_sizer.Add(cancel_button, 0, wx.ALL, 5)
+
+		main_sizer = wx.BoxSizer(wx.VERTICAL)
+		main_sizer.Add(self._scenario_check_list, 1, wx.EXPAND | wx.ALL, 10)
+		main_sizer.Add(button_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
+		self.SetSizer(main_sizer)
+		self.SetSizeHints(wx.Size(400, 300), wx.DefaultSize)
+
+		select_all_button.Bind(wx.EVT_BUTTON, self.on_select_all)
+		clear_all_button.Bind(wx.EVT_BUTTON, self.on_clear_all)
+		run_button.Bind(wx.EVT_BUTTON, self.on_run)
+		self.Centre(wx.BOTH)
+
+	def on_select_all(self, event):
+		for index in range(self._scenario_check_list.GetCount()):
+			self._scenario_check_list.Check(index, True)
+
+	def on_clear_all(self, event):
+		for index in range(self._scenario_check_list.GetCount()):
+			self._scenario_check_list.Check(index, False)
+
+	def on_run(self, event):
+		self.selected_scenarios = [
+			path for index, path in enumerate(self._scenario_paths)
+			if self._scenario_check_list.IsChecked(index)
+		]
+		if not self.selected_scenarios:
+			wx.MessageBox(
+				_(u"Select at least one scenario."),
+				_(u"No scenarios selected"),
+				wx.OK | wx.ICON_WARNING,
+				parent=self)
+			return
+		self.EndModal(wx.ID_OK)
+
 class MainFrame ( wx.Frame ):
 	
 	def addPresetsMenu(self):
@@ -84,6 +145,14 @@ class MainFrame ( wx.Frame ):
 		
 		startScenarioSubmenu = wx.Menu()
 		addScenarioItem(startScenarioSubmenu, 'all')
+		selectScenarioMenuItem = wx.MenuItem(
+			startScenarioSubmenu,
+			wx.ID_ANY,
+			_(u"Select scenarios..."),
+			wx.EmptyString,
+			wx.ITEM_NORMAL)
+		startScenarioSubmenu.Append(selectScenarioMenuItem)
+		self.Bind(wx.EVT_MENU, self.onScenarioSelection, id=selectScenarioMenuItem.GetId())
 		startScenarioSubmenu.AppendSeparator()
 		
 		scenarioDir = sc.get_scenario_dir()
@@ -96,10 +165,10 @@ class MainFrame ( wx.Frame ):
 			for root, dirs, files in os.walk(scenarioDir):
 				filter_scenario_items()
 				
-				for scenarioFile in files:
+				for scenarioFile in sorted(files, key=sc.natural_sort_key):
 					addScenarioItem(subMenu, scenarioFile, scenarioDir)
 					
-				for scenarioSubDir in dirs:
+				for scenarioSubDir in sorted(dirs, key=sc.natural_sort_key):
 					scenarioSubmenu = wx.Menu()
 					subMenu.AppendSubMenu(scenarioSubmenu, _(scenarioSubDir))
 					
@@ -112,6 +181,16 @@ class MainFrame ( wx.Frame ):
 		addScenarioItem(startScenarioSubmenu, 'Stop')
 		
 		self.m_menu1.AppendSubMenu( startScenarioSubmenu, _(u"Scenario") )
+
+	def onScenarioSelection(self, event):
+		scenario_paths = sc.get_scenario_files_list()
+		dialog = ScenarioSelectionDialog(self, scenario_paths, self._selected_scenarios)
+		try:
+			if dialog.ShowModal() == wx.ID_OK:
+				self._selected_scenarios = dialog.selected_scenarios
+				sc.start_scenario(list(self._selected_scenarios))
+		finally:
+			dialog.Destroy()
 
 	def makeFrame(self, parent ):
 		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 1020,800 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
@@ -254,6 +333,7 @@ class MainFrame ( wx.Frame ):
 		wx.CallAfter(self.set_scenario_status_now, state, scenario_title)
 
 	def __init__( self, parent , guithread):
+		self._selected_scenarios = []
 		self.makeFrame(parent)
 		self._guithread = guithread
 		self._collector = None
