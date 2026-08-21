@@ -34,6 +34,9 @@ class Scenario(DistrictHeatingScenario):
 			self._status = 'FAIL'
 			return
 
+		print_log('Ждём, пока программа ИТП пересчитает порог температуры обратки')
+		self.wait(20)
+		
 		current_maximum_temperature = self.read_current_maximum_backward_temperature()
 		if current_maximum_temperature is None:
 			print_error('Не удалось получить текущую максимально допустимую температуру обратки')
