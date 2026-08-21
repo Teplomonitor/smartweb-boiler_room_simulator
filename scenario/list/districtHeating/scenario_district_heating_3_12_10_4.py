@@ -6,6 +6,9 @@ import smartnet.constants as snc
 
 class Scenario(DistrictHeatingScenario):
 	SATISFIED_TANK_TEMPERATURE = 90
+	REQUESTING_TANK_TEMPERATURE = 20
+	REQUESTED_STABILIZATION_DURATION = 20
+	REQUESTED_TIMEOUT = 3 * 60
 	NO_REQUEST_STABILIZATION_DURATION = 30
 	NO_REQUEST_TIMEOUT = 3 * 60
 	DISABLED_STABILIZATION_DURATION = 30
@@ -73,6 +76,30 @@ class Scenario(DistrictHeatingScenario):
 				return
 
 			print_log(
+				f'Устанавливаем температуру бойлера ГВС {self.REQUESTING_TANK_TEMPERATURE} C, '
+				'чтобы резервный генератор получил запрос на тепло'
+			)
+			self.set_sensor_value(tank_sensor, self.REQUESTING_TANK_TEMPERATURE)
+
+			print_log(
+				'Ждём устойчивого запроса резервному генератору перед проверкой выключения, '
+				f'не более {self.REQUESTED_TIMEOUT} секунд'
+			)
+			if not self.wait_backup_generator_requested(
+				self._boiler,
+				self.REQUESTED_STABILIZATION_DURATION,
+				self.REQUESTED_TIMEOUT,
+			):
+				required_temperature = self.read_temperature_source_required_temperature(self._boiler)
+				consumer_id = self.read_temperature_source_consumer_id(self._boiler)
+				print_error(
+					'Не удалось подготовить включённое состояние резервного генератора: '
+					f'требуемая температура={required_temperature}, обслуживаемый потребитель={consumer_id}'
+				)
+				self._status = 'FAIL'
+				return
+
+			print_log(
 				f'Устанавливаем температуру бойлера ГВС {self.SATISFIED_TANK_TEMPERATURE} C, '
 				'чтобы потребитель перестал запрашивать тепло у ИТП'
 			)
@@ -99,8 +126,8 @@ class Scenario(DistrictHeatingScenario):
 				'Проверяем запрет работы резервного генератора при отсутствии запроса на тепло '
 				f'не более {self.DISABLED_TIMEOUT} секунд'
 			)
-			if not self.wait_state_permanence(
-				lambda: self.backup_generator_is_not_requested(self._boiler) is True,
+			if not self.wait_backup_generator_not_requested(
+				self._boiler,
 				self.DISABLED_STABILIZATION_DURATION,
 				self.DISABLED_TIMEOUT,
 			):
