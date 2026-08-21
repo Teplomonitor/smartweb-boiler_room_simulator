@@ -320,7 +320,7 @@ class ScenarioThread(threading.Thread):
 		
 		threading.Thread.__init__(self, name = 'Scenario')
 		
-		self._scenarioIndex = 0
+		self._scenarioQueue = []
 		self._currentScenario = None
 		self._controllerHost = controllerHost
 		self._simulator      = simulator
@@ -345,10 +345,12 @@ class ScenarioThread(threading.Thread):
 	def getNextScenario(self):
 		if self._stopScenarioEvent.is_set():
 			return None
-		
-		scenario = self.get_scenario(self._scenarioIndex)
-		self._scenarioIndex += 1
-		return scenario
+
+		if not self._scenarioQueue:
+			return None
+
+		scenarioId = self._scenarioQueue.pop(0)
+		return self.get_scenario_object(scenarioId)
 	
 	def saveScenarioLog(self, scenario):
 		programList = self._controllerHost.get_program_list()
@@ -362,7 +364,7 @@ class ScenarioThread(threading.Thread):
 			
 	def run(self):
 		while mainThread.taskEnable():
-			if self._newScenario:
+			if self._newScenario is not None:
 				self.start_scenario_now(self._newScenario)
 				self._newScenario = None
 			
@@ -425,7 +427,7 @@ class ScenarioThread(threading.Thread):
 			self.print_result(result)
 				
 	def start_scenario(self, scenario):
-		if self._currentScenario or self._newScenario:
+		if self._currentScenario or self._newScenario is not None:
 			print_error('Scenario is already running. Stop it before starting another scenario.')
 			return
 
@@ -435,25 +437,36 @@ class ScenarioThread(threading.Thread):
 	def start_scenario_now(self, scenario):
 		self._scenarioStartTime = time.time()
 		self._scenarioResultList = []
-		
-		if scenario == 'all':
-			self._scenarioIndex = 0
-			self._currentScenario = self.getNextScenario()
-			if self._currentScenario:
-				self.set_gui_status('running', self._currentScenario.get_scenario_title())
-			else:
-				self.set_gui_status('finished')
+		self._scenarioQueue = self.get_scenario_queue(scenario)
+
+		if self._scenarioQueue is None:
+			self.set_gui_status('failed')
 			return
-		
-		__all__ = self._scenarioList
-		
-		if scenario in __all__:
-			self._scenarioIndex   = len(__all__)
-			self._currentScenario = self.get_scenario_object(scenario)
+
+		self._currentScenario = self.getNextScenario()
+		if self._currentScenario:
 			self.set_gui_status('running', self._currentScenario.get_scenario_title())
 		else:
-			print_error(f'{scenario} not in scenario list!')
-			self.set_gui_status('failed')
+			self.set_gui_status('finished')
+
+	def get_scenario_queue(self, scenario):
+		if scenario == 'all':
+			return list(self._scenarioList)
+
+		if isinstance(scenario, (list, tuple)):
+			scenarioQueue = list(scenario)
+		else:
+			scenarioQueue = [scenario]
+
+		invalidScenarios = [
+			scenarioId for scenarioId in scenarioQueue
+			if scenarioId not in self._scenarioList
+		]
+		if invalidScenarios:
+			print_error(f'{invalidScenarios} not in scenario list!')
+			return None
+
+		return scenarioQueue
 		
 	def stop_scenario_now(self, state = 'stopped'):
 		self._stopScenarioEvent.clear()
@@ -469,14 +482,6 @@ class ScenarioThread(threading.Thread):
 		scenario_module = importfile(scenarioId)
 		return scenario_module.Scenario(self._controllerHost, self._simulator)
 
-	def get_scenario(self, scenarioIndex):
-		__all__ = self._scenarioList
-		
-		if scenarioIndex < len(__all__): 
-			scenarioId = __all__[scenarioIndex]
-			return self.get_scenario_object(scenarioId)
-		
-		return None
 
 def start_scenario(scenario):
 	ScenarioThread().start_scenario(scenario)
