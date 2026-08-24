@@ -41,6 +41,7 @@ class Scenario(FillingLoopScenario):
 				print_error('Не удалось отключить автоматический режим')
 				self._status = 'FAIL'
 				return
+			self.wait(2)
 			if not self.write_parameter('singleFill', 1):
 				print_error('Не удалось включить однократную подпитку')
 				self._status = 'FAIL'

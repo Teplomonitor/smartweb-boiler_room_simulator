@@ -33,6 +33,7 @@ class Scenario(FillingLoopScenario):
 				self._status = 'FAIL'
 				return
 			self.set_low_pressure()
+			self.wait(2)
 			if not self.write_parameter('singleFill', 1):
 				print_error('Не удалось включить однократную подпитку')
 				self._status = 'FAIL'
