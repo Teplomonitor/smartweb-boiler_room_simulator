@@ -294,12 +294,16 @@ class RemoteControlParameter(object):
 		responseFilter = generate_required_response()
 
 		i = 0
+		had_retry = False
 		while i < 3:
 			response = request.send(responseFilter, 3)
 			result = handle_response()
 			if result:
+				if had_retry:
+					print_log(f'{actionStr}: write succeeded after retry')
 				break;
 			print_log(f'{actionStr}: retry')
+			had_retry = True
 			i = i + 1
 			
 		return result
