@@ -12,6 +12,20 @@ class FillingLoop(Program):
 	classdocs
 	'''
 
+	_remoteControlParameters = {
+		'singleFill': (snc.ProgramType.FILLING_LOOP, snc.FillingLoopParameterId.SINGLE_FILL),
+		'autoFill': (snc.ProgramType.FILLING_LOOP, snc.FillingLoopParameterId.AUTO_FILL),
+		'pressureInputType': (snc.ProgramType.FILLING_LOOP, snc.FillingLoopParameterId.PRESSURE_INPUT_TYPE),
+		'minimumPressure': (snc.ProgramType.FILLING_LOOP, snc.FillingLoopParameterId.MINIMUM_PRESSURE),
+		'pressureHyst': (snc.ProgramType.FILLING_LOOP, snc.FillingLoopParameterId.PRESSURE_HYST),
+		'fillingDuration': (snc.ProgramType.FILLING_LOOP, snc.FillingLoopParameterId.FILLING_DURATION),
+		'pressureLossAlarmReset': (snc.ProgramType.FILLING_LOOP, snc.FillingLoopParameterId.PRESSURE_LOSS_ALARM_RESET),
+		'autoFillCounter': (snc.ProgramType.FILLING_LOOP, snc.FillingLoopParameterId.AUTO_FILL_COUNTER),
+	}
+
+	def get_parameter_code(self, parameter):
+		return self._remoteControlParameters[parameter]
+
 	@staticmethod
 	def get_type(): return snc.ProgramType.FILLING_LOOP
 
