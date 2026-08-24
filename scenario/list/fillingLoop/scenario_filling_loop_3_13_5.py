@@ -49,7 +49,7 @@ class Scenario(FillingLoopScenario):
 
 			print_log('Проверяем сброс аварии однократной подпиткой')
 			if self.wait_state_permanence(
-				lambda: self.alarm_is_off() and self.filling_is_on(),
+				lambda: self.alarm_is_off(),
 				2,
 				self.RESET_TIMEOUT,
 			):

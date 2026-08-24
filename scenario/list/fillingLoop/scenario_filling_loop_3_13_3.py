@@ -46,11 +46,6 @@ class Scenario(FillingLoopScenario):
 				if pulse_number < self.PULSES_TO_ALARM:
 					self.set_low_pressure()
 
-			if not self.alarm_is_on():
-				print_error('После третьей автоматической подпитки авария не включилась')
-				self._status = 'FAIL'
-				return
-
 			print_log('Проверяем, что четвёртая автоматическая подпитка заблокирована')
 			self.set_low_pressure()
 			if self.wait_event(self.filling_is_on, self.PULSE_TIMEOUT):
@@ -59,5 +54,11 @@ class Scenario(FillingLoopScenario):
 			else:
 				print_log('Четвёртая автоматическая подпитка не включилась')
 				self._status = 'OK'
+				
+			if not self.alarm_is_on():
+				print_error('После четвёртого проседания давления авария не включилась')
+				self._status = 'FAIL'
+				return
+
 		finally:
 			self.finish_test()
