@@ -1,6 +1,7 @@
 
 #CAN library
 python-can
+pyusb
 
 # GUI library
 wxPython
