@@ -57,13 +57,22 @@ class HeatingCircuitSettings(object):
 class DhwSettings(object):
 	def __init__(self,
 			source         = None,
+				alarmProgram   = None,
 			):
 		self._source         = source
+		self._alarmProgram   = alarmProgram
 
 	def get(self):
-		return [
+		parameters = [
 			RemoteControlParameter(snc.ProgramType.CONSUMER, snc.ConsumerParameterId.GENERATOR_ID, self._source),
 		]
+		if self._alarmProgram is not None:
+			parameters.append(RemoteControlParameter(
+				snc.ProgramType.CONSUMER,
+				snc.ConsumerParameterId.ALARM_PROGRAM_ID,
+				self._alarmProgram,
+			))
+		return parameters
 	def getSource    (self): return  self._source
 	def getSourceList(self): return [self._source]
 
