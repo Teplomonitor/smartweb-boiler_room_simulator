@@ -276,11 +276,7 @@ class RemoteControlParameter(object):
 		request = generate_request()
 		
 		parameter_size = self.getParameterSize()
-		if self._parameterIndex is None:
-			data_size = parameter_size
-		else:
-			index_len = len(self._parameterIndex)
-			data_size = parameter_size + index_len
+		data_size = parameter_size + self.getParameterIndexSize()
 		
 		# response flag don't fit in message body so no need to wait confirm
 		# actually instead we should wait for response with new data value but I'm lazy to do it
@@ -387,6 +383,13 @@ class RemoteControlParameter(object):
 			return 2
 		if parameterType in ParameterSize:
 			return ParameterSize[parameterType]
+		return 1
+
+	def getParameterIndexSize(self):
+		if self._parameterIndex is None:
+			return 0
+		if self.getParameterType() == 'SCHEDULE':
+			return 2
 		return 1
 		
 	def dataToValue(self, data):

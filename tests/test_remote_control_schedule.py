@@ -95,6 +95,32 @@ class TestScheduleParameterConversion(unittest.TestCase):
 		self.assertFalse(invalid._is_schedule_selector_valid())
 
 
+class TestParameterIndexSize(unittest.TestCase):
+	def _parameter(self, index):
+		return RemoteControlParameter(
+			programType=1,
+			parameterId=1,
+			parameterIndex=index,
+			programId=1,
+		)
+
+	@patch.object(RemoteControlParameter, 'getParameterType', return_value='UINT8_T')
+	def test_unindexed_parameter_has_no_index_bytes(self, _get_type):
+		self.assertEqual(self._parameter(None).getParameterIndexSize(), 0)
+
+	@patch.object(RemoteControlParameter, 'getParameterType', return_value='UINT8_T')
+	def test_array_index_is_one_byte(self, _get_type):
+		self.assertEqual(self._parameter(3).getParameterIndexSize(), 1)
+
+	@patch.object(RemoteControlParameter, 'getParameterType', return_value='SCHEDULE')
+	def test_table_index_is_two_bytes(self, _get_type):
+		self.assertEqual(self._parameter((2, 1)).getParameterIndexSize(), 2)
+
+	@patch.object(RemoteControlParameter, 'getParameterType', return_value='SCHEDULE')
+	def test_schedule_crc_index_is_two_bytes(self, _get_type):
+		self.assertEqual(self._parameter(SCHEDULE_CRC_SELECTOR).getParameterIndexSize(), 2)
+
+
 class TestControllerClockConversion(unittest.TestCase):
 	def test_date_round_trip(self):
 		value = (3, 0, 8, 2026)
