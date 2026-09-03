@@ -18,6 +18,7 @@ from consoleLog import print_error as print_error
 SCAN_PACKET_DATA_SIZE = 16
 
 ip_list      = {}
+ip_list_lock = threading.Lock()
 self_ip_list = []
 
 SELF_ID = uuid.uuid4()
@@ -57,22 +58,25 @@ def update_ip_list(data, ip):
 		result = 'SELF_IP_FOUND'
 	else:
 		now = time.time()
-		
-		if ip in ip_list:
-#			print_log(f'update {ip}')
-			result = 'UPDATE_IP'
-		else:
-			print_log(f'add new udp-controller {ip}')
-			result = 'NEW_CONTROLLER_FOUND'
-			
-		ip_list[ip] = now
-		
 		timeout = 10*60
-		
-		for ip in ip_list:
-			if now - ip_list[ip] > timeout:
-				print_log(f'delete {ip}')
-				del ip_list[ip]
+
+		with ip_list_lock:
+			if ip in ip_list:
+#				print_log(f'update {ip}')
+				result = 'UPDATE_IP'
+			else:
+				print_log(f'add new udp-controller {ip}')
+				result = 'NEW_CONTROLLER_FOUND'
+
+			ip_list[ip] = now
+
+			stale_ips = [
+				stale_ip for stale_ip, last_seen in ip_list.items()
+				if now - last_seen > timeout
+			]
+			for stale_ip in stale_ips:
+				print_log(f'delete {stale_ip}')
+				del ip_list[stale_ip]
 	
 	return result
 
@@ -158,7 +162,9 @@ class can_thread(threading.Thread):
 			if queue_size:
 				self._send_can_time = now
 #				print(f'udp_tx data {queue_size}')
-				for ip in ip_list:
+				with ip_list_lock:
+					destination_ips = tuple(ip_list)
+				for ip in destination_ips:
 					self.send_udp_packet(bytes(messages), ip, self._port)
 					
 				self.clear_send_queue()
@@ -225,7 +231,10 @@ class udp_listen_thread(threading.Thread):
 #			send_udp_packet(ip, scan_msg, self._port)
 			return
 		
-		if len(ip_list) == 0:
+		with ip_list_lock:
+			connection_available = bool(ip_list)
+
+		if not connection_available:
 			return
 		
 		messages = udp_to_can(data)
