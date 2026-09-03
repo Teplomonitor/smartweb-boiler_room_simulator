@@ -149,11 +149,11 @@ class MainThread(threading.Thread):
 	
 	def checkAliveThreads(self):
 		if not ss.Simulator().is_alive():
-			print('Simulator is dead!')
+			print_error('Simulator is dead!')
 			return False
 		
 		if not scenario.ScenarioThread().is_alive():
-			print('Scenario is dead!')
+			print_error('Scenario is dead!')
 			return False
 		
 		return True
@@ -169,7 +169,7 @@ class MainThread(threading.Thread):
 					loadPresetNow(self._newPreset)
 					self._lastPreset = self._newPreset
 				except:
-					print('Wrong preset!!!')
+					print_error('Wrong preset!!!')
 				self._newPreset = None
 
 			if self._saveProgramPlots.is_set():
