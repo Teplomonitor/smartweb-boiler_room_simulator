@@ -12,6 +12,7 @@ import smartnet.message as sm
 import controllers.controller_io as ccio
 import controllers.controller    as cc
 import simulator.simulator       as ss
+import consoleLog
 
 import scenario.scenario as scenario
 
@@ -117,6 +118,7 @@ class MainThread(threading.Thread):
 		programList = cc.Controller().get_program_list()
 		for prg in programList:
 			prg.save_log()
+		consoleLog.save_log()
 
 	def initSimulator(self):
 		sm.CanListener()
