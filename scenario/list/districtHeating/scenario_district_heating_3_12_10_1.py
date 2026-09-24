@@ -1,6 +1,11 @@
 from consoleLog import print_error
 from consoleLog import print_log
 from scenario.base.district_heating import DistrictHeatingScenario
+from scenario.base.filling_loop_signal import (
+	PRESSURE_INPUT_TYPE_SHORTABLE,
+	read_pressure_input_type,
+	write_pressure_input_type,
+)
 import smartnet.constants as snc
 
 
@@ -45,6 +50,11 @@ class Scenario(DistrictHeatingScenario):
 			print_error('Не найден датчик давления программы подпитки')
 			self._status = 'FAIL'
 			return
+		original_pressure_input_type = read_pressure_input_type(self._alarm)
+		if original_pressure_input_type is None:
+			print_error('Не удалось прочитать тип сигнала программы подпитки')
+			self._status = 'FAIL'
+			return
 
 		initial_minimum_temperature_restriction = self.read_temperature_generator_parameter(
 			self._boiler,
@@ -56,6 +66,10 @@ class Scenario(DistrictHeatingScenario):
 			return
 
 		try:
+			if not write_pressure_input_type(self._alarm, PRESSURE_INPUT_TYPE_SHORTABLE):
+				print_error('Не удалось настроить дискретный тип сигнала подпитки')
+				self._status = 'FAIL'
+				return
 			if not self.write_temperature_generator_parameter(
 				self._boiler,
 				snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
@@ -110,6 +124,9 @@ class Scenario(DistrictHeatingScenario):
 			self._status = 'OK'
 		finally:
 			self.set_sensor_value(pressure_sensor, 'short')
+			if not write_pressure_input_type(self._alarm, original_pressure_input_type):
+				print_error('Не удалось восстановить тип сигнала программы подпитки')
+				self._status = 'FAIL'
 			if not self.write_temperature_generator_parameter(
 				self._boiler,
 				snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,

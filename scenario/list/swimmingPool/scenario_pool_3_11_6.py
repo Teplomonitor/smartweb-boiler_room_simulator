@@ -5,6 +5,11 @@
 from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
 from scenario.base.swimming_pool import PoolScenario
+from scenario.base.filling_loop_signal import (
+	PRESSURE_INPUT_TYPE_SHORTABLE,
+	read_pressure_input_type,
+	write_pressure_input_type,
+)
 import smartnet.constants as snc
 
 
@@ -45,8 +50,17 @@ class Scenario(PoolScenario):
 			self._status = 'FAIL'
 			print_error('Проблема! не удалось получить уставку бассейна')
 			return
+		original_pressure_input_type = read_pressure_input_type(self._pressure)
+		if original_pressure_input_type is None:
+			self._status = 'FAIL'
+			print_error('Не удалось прочитать тип сигнала программы подпитки')
+			return
 
 		try:
+			if not write_pressure_input_type(self._pressure, PRESSURE_INPUT_TYPE_SHORTABLE):
+				self._status = 'FAIL'
+				print_error('Не удалось настроить дискретный тип сигнала подпитки')
+				return
 			print_log('снимаем аварийный сигнал программы подпитки')
 			self.set_alarm_signal(False)
 
@@ -83,3 +97,6 @@ class Scenario(PoolScenario):
 		finally:
 			print_log('сбрасываем аварийный сигнал программы подпитки')
 			self.set_alarm_signal(False)
+			if not write_pressure_input_type(self._pressure, original_pressure_input_type):
+				self._status = 'FAIL'
+				print_error('Не удалось восстановить тип сигнала программы подпитки')

@@ -28,6 +28,10 @@ class Scenario(FillingLoopScenario):
 				print_error('Не удалось установить длительность однократной подпитки')
 				self._status = 'FAIL'
 				return
+			if not self.prepare_pressure_input_type():
+				print_error('Не удалось настроить дискретный тип сигнала подпитки')
+				self._status = 'FAIL'
+				return
 			if not self.reset_test_state():
 				print_error('Не удалось подготовить программу подпитки')
 				self._status = 'FAIL'

@@ -2,6 +2,11 @@ import smartnet.constants as snc
 
 from consoleLog import print_error, print_log
 from scenario.base.dhw import DhwScenario
+from scenario.base.filling_loop_signal import (
+	PRESSURE_INPUT_TYPE_RANGEABLE,
+	read_pressure_input_type,
+	write_pressure_input_type,
+)
 
 
 class Scenario(DhwScenario):
@@ -33,7 +38,16 @@ class Scenario(DhwScenario):
 		return not self.filling_alarm_is_on()
 
 	def run(self):
+		original_pressure_input_type = read_pressure_input_type(self._filling_loop)
+		if original_pressure_input_type is None:
+			print_error('Не удалось прочитать тип сигнала подпитки')
+			self._status = 'FAIL'
+			return
 		try:
+			if not write_pressure_input_type(self._filling_loop, PRESSURE_INPUT_TYPE_RANGEABLE):
+				print_error('Не удалось настроить диапазонный тип сигнала подпитки')
+				self._status = 'FAIL'
+				return
 			print_log('устанавливаем нормальное давление подпитки')
 			if not self.set_pressure(self.PRESSURE_NORMAL):
 				self._status = 'FAIL'
@@ -59,3 +73,4 @@ class Scenario(DhwScenario):
 				self._status = 'FAIL'
 		finally:
 			self.set_pressure(self.PRESSURE_NORMAL)
+			write_pressure_input_type(self._filling_loop, original_pressure_input_type)

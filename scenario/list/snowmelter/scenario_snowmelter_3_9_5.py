@@ -5,6 +5,11 @@
 from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
 from scenario.base.snowmelter import SnowmelterScenario   as Parent
+from scenario.base.filling_loop_signal import (
+	PRESSURE_INPUT_TYPE_SHORTABLE,
+	read_pressure_input_type,
+	write_pressure_input_type,
+)
 import smartnet.constants as snc
 
 class Scenario(Parent):
@@ -40,6 +45,24 @@ class Scenario(Parent):
 		self.set_sensor_value(t, state)
 		
 	def run(self):
+		original_pressure_input_type = read_pressure_input_type(self._pressure)
+		if original_pressure_input_type is None:
+			print_error('Не удалось прочитать тип сигнала программы подпитки')
+			self._status = 'FAIL'
+			return
+		if not write_pressure_input_type(self._pressure, PRESSURE_INPUT_TYPE_SHORTABLE):
+			print_error('Не удалось настроить дискретный тип сигнала подпитки')
+			self._status = 'FAIL'
+			return
+		try:
+			self._run_test()
+		finally:
+			self.setAlarmSignal(False)
+			if not write_pressure_input_type(self._pressure, original_pressure_input_type):
+				print_error('Не удалось восстановить тип сигнала программы подпитки')
+				self._status = 'FAIL'
+
+	def _run_test(self):
 		plateSetpoint = self.readRequiredPlateTemperatureValue()
 		
 		if plateSetpoint is None:
