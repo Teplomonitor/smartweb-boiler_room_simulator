@@ -1,6 +1,12 @@
 from scenario.scenario import Scenario as Parent
 import smartnet.constants as snc
 
+from scenario.base.filling_loop_signal import (
+	PRESSURE_INPUT_TYPE_SHORTABLE,
+	read_pressure_input_type,
+	write_pressure_input_type,
+)
+
 
 class FillingLoopScenario(Parent):
 	NORMAL_PRESSURE = 'short'
@@ -8,10 +14,12 @@ class FillingLoopScenario(Parent):
 	DEFAULT_FILLING_DURATION = 20
 	OUTPUT_FILLING = 'filling_loop_output'
 	OUTPUT_ALARM = 'alarm_output'
+	PRESSURE_INPUT_TYPE = PRESSURE_INPUT_TYPE_SHORTABLE
 
 	def __init__(self, controllerHost, sim):
 		super().__init__(controllerHost, sim)
 		self._filling_loop = self._programList['fillingLoop']
+		self._original_pressure_input_type = None
 
 	def get_required_programs(self):
 		return {'fillingLoop': snc.ProgramType.FILLING_LOOP}
@@ -62,6 +70,13 @@ class FillingLoopScenario(Parent):
 	def set_low_pressure(self):
 		self.set_pressure(self.LOW_PRESSURE)
 
+	def prepare_pressure_input_type(self, input_type=PRESSURE_INPUT_TYPE_SHORTABLE):
+		if self._original_pressure_input_type is None:
+			self._original_pressure_input_type = read_pressure_input_type(self._filling_loop)
+		if self._original_pressure_input_type is None:
+			return False
+		return write_pressure_input_type(self._filling_loop, input_type)
+
 	def reset_test_state(self):
 		if not self.write_parameter('autoFill', 0):
 			return False
@@ -75,6 +90,8 @@ class FillingLoopScenario(Parent):
 		return self.wait_state_permanence(self.filling_is_off, 2, 30)
 
 	def prepare_low_pressure_test(self, auto_fill=True):
+		if not self.prepare_pressure_input_type():
+			return False
 		if not self.reset_test_state():
 			return False
 		if auto_fill and not self.write_parameter('autoFill', 1):
@@ -89,4 +106,7 @@ class FillingLoopScenario(Parent):
 		self.write_parameter('autoFillCounter', 0)
 		if original_duration is not None:
 			self.write_parameter('fillingDuration', original_duration)
+		if self._original_pressure_input_type is not None:
+			write_pressure_input_type(self._filling_loop, self._original_pressure_input_type)
+			self._original_pressure_input_type = None
 		self.set_normal_pressure()
