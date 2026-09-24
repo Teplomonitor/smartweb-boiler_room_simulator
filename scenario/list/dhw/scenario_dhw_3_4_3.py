@@ -5,6 +5,7 @@ from scenario.base.dhw import DhwScenario
 class Scenario(DhwScenario):
 	HYSTERESIS_MARGIN = 0.5
 	TIMEOUT = 60
+	CHECK_DURATION = 10
 
 	def get_scenario_title(self): return 'DHW test 3 - loading pump temperature control'
 
@@ -15,8 +16,13 @@ class Scenario(DhwScenario):
 
 	def run(self):
 		required_temperature = self.read_required_temperature()
-		if required_temperature is None:
+		temperature_hysteresis = self.read_parameter('temperatureHysteresis')
+		if required_temperature is None or temperature_hysteresis is None:
 			print_error('Не удалось получить требуемую температуру ГВС')
+			self._status = 'FAIL'
+			return
+		if temperature_hysteresis < 0:
+			print_error('Параметр гистерезиса температуры ГВС имеет неверное значение')
 			self._status = 'FAIL'
 			return
 
@@ -28,8 +34,18 @@ class Scenario(DhwScenario):
 				self._status = 'FAIL'
 				return
 
+			if temperature_hysteresis > 0:
+				print_log('проверяем, что насос не меняет состояние внутри гистерезиса')
+				self.set_boiler_temperature(required_temperature - temperature_hysteresis / 2)
+				if not self.wait_state_permanence(self.supply_pump_is_off, self.CHECK_DURATION, self.TIMEOUT):
+					print_error('Плохо! насос изменил состояние внутри гистерезиса')
+					self._status = 'FAIL'
+					return
+
 			print_log('задаём температуру бойлера ниже требуемой')
-			self.set_boiler_temperature(required_temperature - 2 * self.HYSTERESIS_MARGIN)
+			self.set_boiler_temperature(
+				required_temperature - temperature_hysteresis - self.HYSTERESIS_MARGIN
+			)
 			if not self.wait_event(self.supply_pump_is_on, self.TIMEOUT):
 				print_error('Плохо! насос загрузки не включился')
 				self._status = 'FAIL'
