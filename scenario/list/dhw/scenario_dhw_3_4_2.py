@@ -4,7 +4,7 @@ from scenario.base.dhw import DhwScenario
 
 class Scenario(DhwScenario):
 	TIMEOUT = 60
-	CHECK_DURATION = 3
+	CHECK_DURATION = 10
 	PERIOD_ON = 2 * 1000
 	PERIOD_OFF = 2 * 1000
 
