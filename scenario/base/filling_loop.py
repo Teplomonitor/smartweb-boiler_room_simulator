@@ -99,9 +99,9 @@ class FillingLoopScenario(Parent):
 	def set_normal_pressure(self):
 		input_type = self.get_pressure_input_type()
 		if input_type == PRESSURE_INPUT_TYPE_SHORTABLE:
-			value = 'short'
-		elif input_type == PRESSURE_INPUT_TYPE_OPENABLE:
 			value = 'open'
+		elif input_type == PRESSURE_INPUT_TYPE_OPENABLE:
+			value = 'short'
 		elif input_type == PRESSURE_INPUT_TYPE_RANGEABLE:
 			value = self.read_range_pressure(False)
 			if value is None:
