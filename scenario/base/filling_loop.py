@@ -2,6 +2,8 @@ from scenario.scenario import Scenario as Parent
 import smartnet.constants as snc
 
 from scenario.base.filling_loop_signal import (
+	PRESSURE_INPUT_TYPE_OPENABLE,
+	PRESSURE_INPUT_TYPE_RANGEABLE,
 	PRESSURE_INPUT_TYPE_SHORTABLE,
 	read_pressure_input_type,
 	write_pressure_input_type,
@@ -9,8 +11,9 @@ from scenario.base.filling_loop_signal import (
 
 
 class FillingLoopScenario(Parent):
-	NORMAL_PRESSURE = 'short'
-	LOW_PRESSURE = 'open'
+	PRESSURE_SENSOR_MIN = 0
+	PRESSURE_SENSOR_MAX = 10
+	RANGE_PRESSURE_MARGIN = 0.1
 	DEFAULT_FILLING_DURATION = 20
 	OUTPUT_FILLING = 'filling_loop_output'
 	OUTPUT_ALARM = 'alarm_output'
@@ -20,6 +23,7 @@ class FillingLoopScenario(Parent):
 		super().__init__(controllerHost, sim)
 		self._filling_loop = self._programList['fillingLoop']
 		self._original_pressure_input_type = None
+		self._test_pressure_input_type = None
 
 	def get_required_programs(self):
 		return {'fillingLoop': snc.ProgramType.FILLING_LOOP}
@@ -64,18 +68,75 @@ class FillingLoopScenario(Parent):
 	def set_pressure(self, value):
 		self.set_sensor_value(self._filling_loop.getPressure(), value)
 
+	def get_pressure_input_type(self):
+		if self._test_pressure_input_type is not None:
+			return self._test_pressure_input_type
+		return self.PRESSURE_INPUT_TYPE
+
+	def read_range_pressure(self, low_pressure):
+		minimum_pressure = self.read_parameter('minimumPressure')
+		pressure_hyst = self.read_parameter('pressureHyst')
+		if minimum_pressure is None or pressure_hyst is None:
+			return None
+
+		try:
+			minimum_pressure = float(minimum_pressure)
+			pressure_hyst = float(pressure_hyst)
+		except (TypeError, ValueError):
+			return None
+
+		if pressure_hyst < 0:
+			return None
+		margin = self.RANGE_PRESSURE_MARGIN
+		if low_pressure:
+			value = minimum_pressure - pressure_hyst - margin
+		else:
+			value = minimum_pressure + margin
+		if not self.PRESSURE_SENSOR_MIN <= value <= self.PRESSURE_SENSOR_MAX:
+			return None
+		return value
+
 	def set_normal_pressure(self):
-		self.set_pressure(self.NORMAL_PRESSURE)
+		input_type = self.get_pressure_input_type()
+		if input_type == PRESSURE_INPUT_TYPE_SHORTABLE:
+			value = 'short'
+		elif input_type == PRESSURE_INPUT_TYPE_OPENABLE:
+			value = 'open'
+		elif input_type == PRESSURE_INPUT_TYPE_RANGEABLE:
+			value = self.read_range_pressure(False)
+			if value is None:
+				return False
+		else:
+			return False
+		self.set_pressure(value)
+		return True
 
 	def set_low_pressure(self):
-		self.set_pressure(self.LOW_PRESSURE)
+		input_type = self.get_pressure_input_type()
+		if input_type == PRESSURE_INPUT_TYPE_SHORTABLE:
+			value = 'short'
+		elif input_type == PRESSURE_INPUT_TYPE_OPENABLE:
+			value = 'open'
+		elif input_type == PRESSURE_INPUT_TYPE_RANGEABLE:
+			value = self.read_range_pressure(True)
+			if value is None:
+				return False
+		else:
+			return False
+		self.set_pressure(value)
+		return True
 
-	def prepare_pressure_input_type(self, input_type=PRESSURE_INPUT_TYPE_SHORTABLE):
+	def prepare_pressure_input_type(self, input_type=None):
+		if input_type is None:
+			input_type = self.PRESSURE_INPUT_TYPE
 		if self._original_pressure_input_type is None:
 			self._original_pressure_input_type = read_pressure_input_type(self._filling_loop)
 		if self._original_pressure_input_type is None:
 			return False
-		return write_pressure_input_type(self._filling_loop, input_type)
+		if not write_pressure_input_type(self._filling_loop, input_type):
+			return False
+		self._test_pressure_input_type = input_type
+		return True
 
 	def reset_test_state(self):
 		if not self.write_parameter('autoFill', 0):
@@ -86,7 +147,8 @@ class FillingLoopScenario(Parent):
 			return False
 		if not self.write_parameter('pressureLossAlarmReset', 0):
 			return False
-		self.set_normal_pressure()
+		if not self.set_normal_pressure():
+			return False
 		return self.wait_state_permanence(self.filling_is_off, 2, 30)
 
 	def prepare_low_pressure_test(self, auto_fill=True):
@@ -96,8 +158,7 @@ class FillingLoopScenario(Parent):
 			return False
 		if auto_fill and not self.write_parameter('autoFill', 1):
 			return False
-		self.set_low_pressure()
-		return True
+		return self.set_low_pressure()
 
 	def finish_test(self, original_duration=None):
 		self.write_parameter('singleFill', 0)
@@ -108,5 +169,7 @@ class FillingLoopScenario(Parent):
 			self.write_parameter('fillingDuration', original_duration)
 		if self._original_pressure_input_type is not None:
 			write_pressure_input_type(self._filling_loop, self._original_pressure_input_type)
+			self._test_pressure_input_type = self._original_pressure_input_type
 			self._original_pressure_input_type = None
 		self.set_normal_pressure()
+		self._test_pressure_input_type = None
