@@ -265,9 +265,9 @@ class Scenario(PoolScenario):
 		self.set_pool_temperature(pool_setpoint + pool_hysteresis + 0.5)
 		self.wait(1)
 
-		print_log('Ждём, что насос загрузки выключится')
 		pump_switch_off_timeout = 60
-		pump_switch_off_duration = 5 * 60
+		pump_switch_off_duration = 2 * 60
+		print_log(f'Ждём, что насос загрузки выключится хотя бы на {pump_switch_off_duration} секунд')
 		
 		if self.wait_state_permanence(self.loading_pump_is_off, pump_switch_off_duration, pump_switch_off_timeout):
 			print_log('Хорошо, насос выключен')
