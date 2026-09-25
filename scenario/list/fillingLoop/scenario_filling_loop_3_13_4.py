@@ -36,7 +36,10 @@ class Scenario(FillingLoopScenario):
 				print_error('Не удалось подготовить программу подпитки')
 				self._status = 'FAIL'
 				return
-			self.set_low_pressure()
+			if not self.set_low_pressure():
+				print_error('Не удалось установить низкое давление подпитки')
+				self._status = 'FAIL'
+				return
 			self.wait(2)
 			if not self.write_parameter('singleFill', 1):
 				print_error('Не удалось включить однократную подпитку')
@@ -47,7 +50,10 @@ class Scenario(FillingLoopScenario):
 				print_error('Однократная подпитка не включила реле')
 				self._status = 'FAIL'
 				return
-			self.set_normal_pressure()
+			if not self.set_normal_pressure():
+				print_error('Не удалось восстановить нормальное давление подпитки')
+				self._status = 'FAIL'
+				return
 
 			print_log(f'Ждём отключения реле через {self.TEST_DURATION} секунд')
 			if self.wait_state_permanence(
