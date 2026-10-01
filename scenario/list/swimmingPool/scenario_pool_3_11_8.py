@@ -15,6 +15,9 @@ class Scenario(PoolScenario):
 	
 	def get_checklist_id(self): return '3.11.8'
 	
+	def get_default_preset(self):
+		return 'swimmingPool_with_level'
+	
 	def force_preset_load(self):
 		return True
 	
