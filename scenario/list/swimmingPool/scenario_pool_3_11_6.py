@@ -41,7 +41,7 @@ class Scenario(PoolScenario):
 
 	def set_alarm_signal(self, value):
 		pressure = self._pressure.getPressure()
-		state = 'open' if value else 'short'
+		state = 'short' if value else 'open'
 		self.set_sensor_value(pressure, state)
 
 	def run(self):
