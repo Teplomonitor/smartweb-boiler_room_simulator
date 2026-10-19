@@ -41,7 +41,10 @@ programInputs = {
 }
 programOutputs = {
 	'DHW': [outputMapping(0, hostId['HOST_1'])],
-	'BOILER': [None, outputMapping(1, hostId['HOST_1'])],
+	'BOILER': [
+		outputMapping(1, hostId['HOST_1']),  # насос
+		outputMapping(2, hostId['HOST_1']),  # первая ступень
+	],
 }
 
 
