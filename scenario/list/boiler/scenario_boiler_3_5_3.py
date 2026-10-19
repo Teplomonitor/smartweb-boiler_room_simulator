@@ -4,7 +4,7 @@ import smartnet.constants as snc
 
 
 class Scenario(Parent):
-	PUMP_OFF_DELAY = 60 * 1000
+	PUMP_OFF_DELAY = 60
 	PUMP_OFF_MARGIN = 5
 	PUMP_OFF_CONFIRMATION_TIMEOUT = 5
 	BOILER_COLD_TEMPERATURE = 20
@@ -59,8 +59,8 @@ class Scenario(Parent):
 			return
 
 		try:
-			print_log(f'Устанавливаем задержку выключения насоса {self.PUMP_OFF_DELAY} мс')
-			self._boiler.set_pump_off_delay(self.PUMP_OFF_DELAY)
+			print_log(f'Устанавливаем задержку выключения насоса {self.PUMP_OFF_DELAY} с')
+			self._boiler.set_pump_off_delay(self.PUMP_OFF_DELAY * 1000)
 
 			print_log('Делаем котёл холодным, чтобы включилась первая ступень')
 			self.set_sensor_value(boiler_temperature, self.BOILER_COLD_TEMPERATURE)
@@ -114,7 +114,7 @@ class Scenario(Parent):
 				self._status = 'FAIL'
 				return
 
-			pump_delay_seconds = self.PUMP_OFF_DELAY / 1000.0
+			pump_delay_seconds = self.PUMP_OFF_DELAY
 			pump_delay_timeout = pump_delay_seconds + self.PUMP_OFF_CONFIRMATION_TIMEOUT
 
 			print_log(
@@ -128,14 +128,14 @@ class Scenario(Parent):
 				pump_delay_timeout,
 			):
 				print_error(
-					f'Насос выключился раньше задержки {self.PUMP_OFF_DELAY} мс '
+					f'Насос выключился раньше задержки {self.PUMP_OFF_DELAY} с '
 					f'или не удержался включённым'
 				)
 				self._status = 'FAIL'
 				return
 
 			print_log(
-				f'Ждём выключения насоса после задержки {self.PUMP_OFF_DELAY} мс '
+				f'Ждём выключения насоса после задержки {self.PUMP_OFF_DELAY} с '
 				f'не более {pump_delay_timeout:.0f} секунд'
 			)
 			if not self.wait_event(
@@ -143,7 +143,7 @@ class Scenario(Parent):
 				pump_delay_timeout,
 			):
 				print_error(
-					f'Насос не выключился после задержки {self.PUMP_OFF_DELAY} мс '
+					f'Насос не выключился после задержки {self.PUMP_OFF_DELAY} с '
 					f'в течение {pump_delay_timeout:.0f} секунд'
 				)
 				self._status = 'FAIL'
