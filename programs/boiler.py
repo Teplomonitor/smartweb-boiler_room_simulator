@@ -13,15 +13,25 @@ class Boiler(Program):
 	classdocs
 	'''
 
+	_remoteControlParameters = {
+		'pumpOffDelay': (
+			snc.ProgramType.TEMPERATURE_GENERATOR,
+			snc.TemperatureGeneratorParameterId.PUMP_OFF_DELAY,
+		),
+	}
+
 	@staticmethod
 	def get_type(): return snc.ProgramType.BOILER
-	
+
+	def get_parameter_code(self, parameter):
+		return self._remoteControlParameters[parameter]
+
 	def init_inputs(self):
 		self._inputs['temperature'        ] = input_info(0, 'Т котла'       )
 		self._inputs['backwardTemperature'] = input_info(1, 'Т обратки'     )
 		self._inputs['outsideRequest'     ] = input_info(2, 'Внешний запрос')
 		self._inputs['error'              ] = input_info(3, 'Ошибка котла'  )
-		
+
 	def init_outputs(self):
 		self._outputs['pump'               ] = output_info(0, 'Насос'           )
 		self._outputs['burner1'            ] = output_info(1, 'Ступень 1'       )
@@ -33,25 +43,36 @@ class Boiler(Program):
 	def init_gui_parameters(self):
 		self._parameters['max_flow_rate'] = GuiParameter(3000, 'Расход'  , 0, 5000, 1, 'кг/ч')
 		self._parameters['max_power'    ] = GuiParameter(  30, 'Мощность', 5,  300, 1, 'кВт')
-		
+
 	def __init__(self, preset):
 		'''
 		Constructor
 		'''
 		super().__init__(preset)
-		
-	def get_gui_color (self): return 'yellow'
+
+	def get_gui_color(self): return 'yellow'
 
 	def get_temperature(self):
 		return self.get_input_channel('temperature').get_value()
 
 	def set_temperature(self, value):
-#		print(f'boiler: {value}')
 		self.get_input_channel('temperature').set_value(value)
 
 	def get_stage_1(self):
 		return self.get_output_channel('burner1')
-	
+
 	def get_pump(self):
 		return self.get_output_channel('pump')
-		
+
+	def get_pump_state(self):
+		pump = self.get_pump()
+		if pump is None:
+			return None
+		return pump.get_value()
+
+	def get_pump_off_delay(self):
+		return self.read_parameter_value('pumpOffDelay')
+
+	def set_pump_off_delay(self, value):
+		return self.write_parameter_value('pumpOffDelay', value)
+
