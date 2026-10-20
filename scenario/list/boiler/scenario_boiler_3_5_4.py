@@ -36,6 +36,8 @@ class Scenario(Parent):
 		return {
 			'heating_circuit_1': snc.ProgramType.HEATING_CIRCUIT,
 			'heating_circuit_2': snc.ProgramType.HEATING_CIRCUIT,
+			'heating_circuit_3': snc.ProgramType.HEATING_CIRCUIT,
+			'heating_circuit_4': snc.ProgramType.HEATING_CIRCUIT,
 			'boiler': snc.ProgramType.BOILER,
 		}
 
@@ -147,8 +149,8 @@ class Scenario(Parent):
 	def run(self):
 		self._boiler = self._programList['boiler']
 		circuits = [
-			self._programList['heating_circuit_1'],
-			self._programList['heating_circuit_2'],
+			self._programList[f'heating_circuit_{index}']
+			for index in range(1, 5)
 		]
 		minimum_temperature = self._boiler.get_minimum_temperature()
 		maximum_temperature = self._boiler.get_maximum_temperature()
@@ -250,65 +252,61 @@ class Scenario(Parent):
 				return
 
 			request_span = maximum_temperature - minimum_temperature
-			lower_request = round(minimum_temperature + request_span / 3, 1)
-			upper_request = round(minimum_temperature + 2 * request_span / 3, 1)
-			if upper_request - lower_request <= 2 * self.TEMPERATURE_TOLERANCE:
+			request_levels = [
+				round(minimum_temperature + request_span * fraction, 1)
+				for fraction in (0.2, 0.4, 0.6, 0.8)
+			]
+			if min(
+				request_levels[index + 1] - request_levels[index]
+				for index in range(len(request_levels) - 1)
+			) <= 2 * self.TEMPERATURE_TOLERANCE:
 				print_error('Диапазон температуры котла слишком узкий для сравнения запросов контуров')
 				self._status = 'FAIL'
 				return
 			compensation = self.TEST_POSITIVE_SHIFT
-			print_log('Проверяем выбор максимального запроса при перестановке контуров')
-
-			if not self._set_circuit_request(circuits[0], lower_request - compensation, compensation) or not self._set_circuit_request(
-				circuits[1], upper_request - compensation, compensation
-			):
-				print_error('Не удалось задать уставки для первого порядка контуров')
-				self._status = 'FAIL'
-				return
-			if not self._check_requests(
-				circuits,
-				[lower_request, upper_request],
-				minimum_temperature,
-				maximum_temperature,
-				'первый контур запрашивает меньше',
-			):
-				self._status = 'FAIL'
-				return
-
-			if not self._set_circuit_request(circuits[0], upper_request - compensation, compensation) or not self._set_circuit_request(
-				circuits[1], lower_request - compensation, compensation
-			):
-				print_error('Не удалось задать уставки для обратного порядка контуров')
-				self._status = 'FAIL'
-				return
-			if not self._check_requests(
-				circuits,
-				[upper_request, lower_request],
-				minimum_temperature,
-				maximum_temperature,
-				'второй контур запрашивает меньше',
-			):
-				self._status = 'FAIL'
-				return
+			print_log('Проверяем выбор максимального запроса при смене лидирующего контура')
+			for winner_index in range(len(circuits)):
+				expected_requests = [
+					request_levels[(index - winner_index - 1) % len(request_levels)]
+					for index in range(len(circuits))
+				]
+				for circuit, expected_request in zip(circuits, expected_requests):
+					if not self._set_circuit_request(
+						circuit,
+						expected_request - compensation,
+						compensation,
+					):
+						print_error(f'Не удалось задать запросы для проверки контура {winner_index + 1}')
+						self._status = 'FAIL'
+						return
+				if not self._check_requests(
+					circuits,
+					expected_requests,
+					minimum_temperature,
+					maximum_temperature,
+					f'контур {winner_index + 1} имеет максимальный запрос',
+				):
+					self._status = 'FAIL'
+					return
 
 			print_log('Проверяем ограничение сверху: запрос контура выше максимума котла с учётом сдвига')
-			if not self._set_circuit_request(
-				circuits[0],
-				self.TEST_MAXIMUM_FLOW_TEMPERATURE,
-				compensation,
-			) or not self._set_circuit_request(
-				circuits[1],
-				(minimum_temperature + maximum_temperature) / 2 - compensation,
-				compensation,
-			):
-				print_error('Не удалось задать запрос выше максимума котла')
-				self._status = 'FAIL'
-				return
 			maximum_request = self.TEST_MAXIMUM_FLOW_TEMPERATURE + compensation
-			middle_request = (minimum_temperature + maximum_temperature) / 2
+			maximum_test_requests = [maximum_request] + [
+				round(minimum_temperature + request_span * fraction, 1)
+				for fraction in (0.2, 0.4, 0.6)
+			]
+			for circuit, expected_request in zip(circuits, maximum_test_requests):
+				if not self._set_circuit_request(
+					circuit,
+					expected_request - compensation,
+					compensation,
+				):
+					print_error('Не удалось задать запрос выше максимума котла')
+					self._status = 'FAIL'
+					return
 			if not self._check_requests(
 				circuits,
-				[maximum_request, middle_request],
+				maximum_test_requests,
 				minimum_temperature,
 				maximum_temperature,
 				'ограничение максимальной температуры',
