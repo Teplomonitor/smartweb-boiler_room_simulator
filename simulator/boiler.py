@@ -62,6 +62,9 @@ class Simulator(object):
 		return self._program.get_max_power()
 	
 	def compute_power(self):	
+		if self._program.get_power_output().is_mapped():
+			self.compute_modulating_power()
+			return
 		if self.get_stage_state():
 			offset = 20
 			temp = self.get_temperature()
@@ -90,9 +93,25 @@ class Simulator(object):
 			P = 0
 		
 		if self._currentPower < P:
-			self._currentPower += 0.05
+			self._currentPower = min(P, self._currentPower + 0.05)
 		else:
-			self._currentPower -= 0.5
+			self._currentPower = max(P, self._currentPower - 0.5)
+
+	def compute_modulating_power(self):
+		modulation = self._program.get_power_output_percent()
+		fraction = 0 if modulation is None else limit(0, modulation / 100, 1)
+		stage = self._program.get_stage_1()
+		if stage.is_mapped():
+			stage_1_fraction = limit(0, self._program.get_stage_1_power_percent() / 100, 1)
+			fraction *= 1 - stage_1_fraction
+			if stage.get_value():
+				fraction += stage_1_fraction
+
+		if self._boilerOverheatDelay.get(self.get_temperature() > self._tMax, 30, 30):
+			fraction = 0
+		# The analog signal controls delivered power; temperature inertia is
+		# already modelled by compute_temperature(), not a second regulator.
+		self._currentPower = self.get_max_power() * fraction
 			
 	def get_power(self):
 		return self._currentPower
