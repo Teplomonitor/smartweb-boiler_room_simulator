@@ -10,6 +10,11 @@ import smartnet.channelMapping as scm
 from functions.periodicTrigger import PeriodicTrigger as PeriodicTrigger
 import smartnet.constants as snc
 
+SWK_1_INPUT_COUNT = 6
+SWK_1_OUTPUT_COUNT = 8
+DEFAULT_INPUT_COUNT = 10
+DEFAULT_OUTPUT_COUNT = 10
+
 def reportOutputMapping(controllerId, outputId, mapping):
 	if mapping is None: return False
 
@@ -103,26 +108,40 @@ class ControllerIO(object):
 #	}
 	def getInputNumber(self):
 		if self.get_type() == 'SWK_1':
-			return 6
-		return 10
+			return SWK_1_INPUT_COUNT
+		return DEFAULT_INPUT_COUNT
 	
 	def getOutputNumber(self):
 		if self.get_type() == 'SWK_1':
-			return 8
-		return 10
+			return SWK_1_OUTPUT_COUNT
+		return DEFAULT_OUTPUT_COUNT
+
+	def _get_channel(self, channels, channel_id, channel_kind):
+		if not isinstance(channel_id, int) or not 0 <= channel_id < len(channels):
+			raise ValueError(
+				f'{self.get_type()} controller {self.get_id()} has no '
+				f'{channel_kind} channel {channel_id}; valid range is 0..{len(channels) - 1}'
+			)
+		return channels[channel_id]
+
+	def validate_input_channel(self, channel_id):
+		self._get_channel(self._inputs, channel_id, 'input')
+
+	def validate_output_channel(self, channel_id):
+		self._get_channel(self._outputs, channel_id, 'output')
 	
 	
 	def setOutputMapping(self, channelId, mapping):
-		self._outputs[channelId].set_mapping(mapping)
+		self._get_channel(self._outputs, channelId, 'output').set_mapping(mapping)
 	
 	def set_output_value(self, channelId, value):
-		self._outputs[channelId].set_value(value)
+		self._get_channel(self._outputs, channelId, 'output').set_value(value)
 	
 	def getOutputMapping(self, channelId):
-		return self._outputs[channelId].get_mapping()
+		return self._get_channel(self._outputs, channelId, 'output').get_mapping()
 	
 	def getOutputValue(self, channelId):
-		return self._outputs[channelId].get_value()
+		return self._get_channel(self._outputs, channelId, 'output').get_value()
 	
 	def reportOutputMapping(self, channelId):
 		mapping = self.getOutputMapping(channelId)
