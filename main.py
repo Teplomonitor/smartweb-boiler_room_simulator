@@ -20,6 +20,11 @@ It defines classes_and_methods
 import sys
 import os
 
+if sys.stdout is None:
+	sys.stdout = open(os.devnull, 'w')
+if sys.stderr is None:
+	sys.stderr = open(os.devnull, 'w')
+
 import time
 
 from argparse import ArgumentParser
@@ -65,6 +70,7 @@ def initArgParser(program_license):
 	parser.add_argument('-d', '--debug'   , action='store_true'                          , help='start debugger that will reply on simulator commands')
 	parser.add_argument('-p', '--profile' , nargs='?', const='main'   , default='main'   , help='select program profile')
 	parser.add_argument('-u', '--udp'     , nargs='?', const=31987    , default=0        , help='enable CAN-UDP bridge. Can be value from 0 to 65535. 0 - disable CAN-UDP bridge')
+	parser.add_argument(      '--console' , action='store_true'                          , help='keep a console window open when using a Windows launch script')
 	parser.add_argument(      '--gui'     , action='store_true'       , default=True     , help='enable gui window. [DEPRECATED] GUI always enable by default now. Use --no-gui to switch off GUI')
 	parser.add_argument(      '--no-gui'  , action='store_false'      , dest='gui'       , help='disable gui window')
 	parser.add_argument(      '--id'      , nargs='?'                 , default=0        , help='select specific controller ID address to control')
