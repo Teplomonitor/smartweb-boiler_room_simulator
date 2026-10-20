@@ -137,15 +137,24 @@ class Simulator(threading.Thread):
 		
 		for program in programsList:
 			programId = program.get_id()
+			for program_input in program.get_inputs().values():
+				mapping = program_input.get_mapping()
+				if mapping:
+					for ctrlIo in self._controllerIo:
+						if ctrlIo.get_id() == mapping.get_host_id():
+							ctrlIo.validate_input_channel(mapping.get_channel_id())
+
 			i = 0
 			for output in program.get_outputs().values():
 				mapping = output.get_mapping()
 				if mapping:
 					for ctrlIo in self._controllerIo:
-						if (ctrlIo.get_id() == mapping.get_host_id()) and (mapping.get_channel_type() == 'CHANNEL_RELAY'):
-							ctrlOutputMapping = ChannelMapping(i, 'CHANNEL_OUTPUT', programId)
-							ctrlIo.setOutputMapping(mapping.get_channel_id(), ctrlOutputMapping)
-							ctrlIo.reportOutputMapping(mapping.get_channel_id())
+						if ctrlIo.get_id() == mapping.get_host_id():
+							ctrlIo.validate_output_channel(mapping.get_channel_id())
+							if mapping.get_channel_type() == 'CHANNEL_RELAY':
+								ctrlOutputMapping = ChannelMapping(i, 'CHANNEL_OUTPUT', programId)
+								ctrlIo.setOutputMapping(mapping.get_channel_id(), ctrlOutputMapping)
+								ctrlIo.reportOutputMapping(mapping.get_channel_id())
 							
 					time.sleep(0.1)
 				i = i + 1
