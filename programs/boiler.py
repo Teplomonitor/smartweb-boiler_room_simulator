@@ -14,6 +14,18 @@ class Boiler(Program):
 	'''
 
 	_remoteControlParameters = {
+		'maximumTemperature': (
+			snc.ProgramType.TEMPERATURE_GENERATOR,
+			snc.TemperatureGeneratorParameterId.MAXIMUM_TEMPERATURE,
+		),
+		'minimumTemperature': (
+			snc.ProgramType.TEMPERATURE_GENERATOR,
+			snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE,
+		),
+		'minimumTemperatureRestriction': (
+			snc.ProgramType.TEMPERATURE_GENERATOR,
+			snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
+		),
 		'pumpOffDelay': (
 			snc.ProgramType.TEMPERATURE_GENERATOR,
 			snc.TemperatureGeneratorParameterId.PUMP_OFF_DELAY,
@@ -72,6 +84,15 @@ class Boiler(Program):
 
 	def get_pump_off_delay(self):
 		return self.read_parameter_value('pumpOffDelay')
+
+	def get_maximum_temperature(self):
+		return self.read_parameter_value('maximumTemperature')
+
+	def get_minimum_temperature(self):
+		return self.read_parameter_value('minimumTemperature')
+
+	def get_minimum_temperature_restriction(self):
+		return self.read_parameter_value('minimumTemperatureRestriction')
 
 	def set_pump_off_delay(self, value):
 		return self.write_parameter_value('pumpOffDelay', value)
