@@ -168,8 +168,14 @@ class MainThread(threading.Thread):
 			
 			if self._newPreset:
 				try:
-					loadPresetNow(self._newPreset)
-					self._lastPreset = self._newPreset
+					if self._guiThread:
+						self._guiThread.set_preset_loading(True)
+					try:
+						loadPresetNow(self._newPreset)
+						self._lastPreset = self._newPreset
+					finally:
+						if self._guiThread:
+							self._guiThread.set_preset_loading(False)
 				except:
 					print_error('Wrong preset!!!')
 				self._newPreset = None
