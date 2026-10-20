@@ -12,6 +12,7 @@ class Simulator(object):
 		self._time_start    = time.time()
 		self._control    = control
 		self._currentPower = 0
+		self._discrete_power = 0
 		
 		self._boilerOverheatDelay = TimeOnOffDelay()
 		
@@ -40,7 +41,7 @@ class Simulator(object):
 	def get_stage_state(self):
 		stage = self._program.get_stage_1()
 		if stage.is_mapped() is False:
-			return 1
+			return 0
 
 		if stage.get_value():
 			return 1
@@ -61,57 +62,34 @@ class Simulator(object):
 	def get_max_power(self):
 		return self._program.get_max_power()
 	
-	def compute_power(self):	
-		if self._program.get_power_output().is_mapped():
-			self.compute_modulating_power()
-			return
-		if self.get_stage_state():
-			offset = 20
-			temp = self.get_temperature()
+	def compute_power(self):
+		discrete_target = sum(power for stage, power in (
+			(self._program.get_stage_1(), self._program.get_stage_1_power()),
+			(self._program.get_stage_2(), self._program.get_stage_2_power()),
+		) if stage.is_mapped() and stage.get_value())
 
-			overheatOnDelay  = 30
-			overheatOffDelay = 30
-			
-			if self._boilerOverheatDelay.get(temp > self._tMax, overheatOnDelay, overheatOffDelay):
-				Pmax = 0
-			else:
-				Pmax = self.get_max_power()
-				
-			Pmin = 0.6 * Pmax
-			
-			t1 = self._tMax - offset
-			t2 = self._tMax
-			
-			if temp < t1:
-				P = Pmax
-			elif temp > t2:
-				P = Pmin
-			else:
-				Pmin = Pmax*0.6
-				P = Pmax + (Pmin - Pmax) * (temp - t1)/(t2 - t1)
-		else:
-			P = 0
-		
-		if self._currentPower < P:
-			self._currentPower = min(P, self._currentPower + 0.05)
-		else:
-			self._currentPower = max(P, self._currentPower - 0.5)
+		# Preserve the existing discrete burner temperature characteristic.
+		temperature_fraction = limit(0, (self.get_temperature() - (self._tMax - 20)) / 20, 1)
+		discrete_target *= 1 - 0.4 * temperature_fraction
 
-	def compute_modulating_power(self):
 		modulation = self._program.get_power_output_percent()
 		fraction = 0 if modulation is None else limit(0, modulation / 100, 1)
-		stage = self._program.get_stage_1()
-		if stage.is_mapped():
-			stage_1_fraction = limit(0, self._program.get_stage_1_power_percent() / 100, 1)
-			fraction *= 1 - stage_1_fraction
-			if stage.get_value():
-				fraction += stage_1_fraction
+		analog_power = self._program.get_analog_power() * fraction
 
 		if self._boilerOverheatDelay.get(self.get_temperature() > self._tMax, 30, 30):
-			fraction = 0
-		# The analog signal controls delivered power; temperature inertia is
-		# already modelled by compute_temperature(), not a second regulator.
-		self._currentPower = self.get_max_power() * fraction
+			discrete_target = 0
+			analog_power = 0
+
+		# Keep the legacy ramp rates (kW per simulation tick), also in mixed mode.
+		if self._discrete_power < discrete_target:
+			self._discrete_power = min(discrete_target, self._discrete_power + 0.05)
+		else:
+			self._discrete_power = max(discrete_target, self._discrete_power - 0.5)
+		self._currentPower = self._discrete_power + analog_power
+
+	def compute_modulating_power(self):
+		# Compatibility entry point; all combinations use the same power model.
+		self.compute_power()
 			
 	def get_power(self):
 		return self._currentPower
