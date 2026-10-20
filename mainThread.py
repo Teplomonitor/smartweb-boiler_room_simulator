@@ -32,19 +32,31 @@ except:
 	guiFrameThread = mock_missing('guiFrameThread')
 
 def loadPresetNow(preset):
-	programList, controllerIoList = presets.preset.get_presets_list(preset)
+	main_thread = MainThread()
+	gui = main_thread._guiThread
+	if gui:
+		gui.set_preset_loading(True)
+	try:
+		programList, controllerIoList = presets.preset.get_presets_list(preset)
 
-	ioSimulator    = ss.Simulator()
-	controllerHost = cc.Controller()
-	
-	ioSimulator.clear()
-	controllerHost.clear()
-	
-	controllerHost.initController(True, programList)
-	ctrlIo = ccio.initVirtualControllers(controllerIoList)
-	ioSimulator.reloadConfig(controllerHost, ctrlIo)
-	
-	MainThread().setCurrentPreset(preset)
+		ioSimulator    = ss.Simulator()
+		controllerHost = cc.Controller()
+		
+		ioSimulator.clear()
+		controllerHost.clear()
+		
+		controllerHost.initController(True, programList)
+		ctrlIo = ccio.initVirtualControllers(controllerIoList)
+		ioSimulator.reloadConfig(controllerHost, ctrlIo)
+		
+		main_thread.setCurrentPreset(preset)
+		return True
+	except Exception:
+		print_error('Wrong preset!!!')
+		return False
+	finally:
+		if gui:
+			gui.set_preset_loading(False)
 	
 class MainThread(threading.Thread):
 	def __new__(cls, *args, **kwargs):
@@ -167,17 +179,8 @@ class MainThread(threading.Thread):
 			time.sleep(1)
 			
 			if self._newPreset:
-				try:
-					if self._guiThread:
-						self._guiThread.set_preset_loading(True)
-					try:
-						loadPresetNow(self._newPreset)
-						self._lastPreset = self._newPreset
-					finally:
-						if self._guiThread:
-							self._guiThread.set_preset_loading(False)
-				except:
-					print_error('Wrong preset!!!')
+				if loadPresetNow(self._newPreset):
+					self._lastPreset = self._newPreset
 				self._newPreset = None
 
 			if self._saveProgramPlots.is_set():
