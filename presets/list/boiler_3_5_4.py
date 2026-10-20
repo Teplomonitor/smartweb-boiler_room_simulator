@@ -6,6 +6,7 @@ import presets.preset
 
 
 HOST_ID = 123
+BOILER_HOST_ID = 124
 
 PROGRAM_LIST = [
 	'HEATING_CIRCUIT_1',
@@ -75,8 +76,8 @@ def input_mapping(channel_id):
 	return Mapping(channel_id, 'CHANNEL_SENSOR', HOST_ID)
 
 
-def output_mapping(channel_id):
-	return Mapping(channel_id, 'CHANNEL_RELAY', HOST_ID)
+def output_mapping(channel_id, host_id=HOST_ID):
+	return Mapping(channel_id, 'CHANNEL_RELAY', host_id)
 
 
 PROGRAM_INPUTS = {
@@ -91,7 +92,10 @@ PROGRAM_OUTPUTS = {
 	'HEATING_CIRCUIT_2': [output_mapping(2), None, None, output_mapping(3)],
 	'HEATING_CIRCUIT_3': [output_mapping(4), None, None, output_mapping(5)],
 	'HEATING_CIRCUIT_4': [output_mapping(6), None, None, output_mapping(7)],
-	'BOILER': [output_mapping(8), output_mapping(9)],
+	'BOILER': [
+		output_mapping(0, BOILER_HOST_ID),
+		output_mapping(1, BOILER_HOST_ID),
+	],
 }
 
 
@@ -110,5 +114,6 @@ def get_presets_list():
 
 	controller_preset_list = [
 		presets.preset.ControllerPreset('SWK_1', HOST_ID, f'SWK_{HOST_ID}'),
+		presets.preset.ControllerPreset('SWK_1', BOILER_HOST_ID, f'SWK_{BOILER_HOST_ID}'),
 	]
 	return program_preset_list, controller_preset_list
