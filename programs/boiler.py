@@ -55,6 +55,8 @@ class Boiler(Program):
 	def init_gui_parameters(self):
 		self._parameters['max_flow_rate'] = GuiParameter(3000, 'Расход'  , 0, 5000, 1, 'кг/ч')
 		self._parameters['max_power'    ] = GuiParameter(  30, 'Мощность', 5,  300, 1, 'кВт')
+		# Used only with a discrete first stage and a modulating second stage.
+		self._parameters['stage_1_power_percent'] = GuiParameter(50, 'Доля ступени 1', 0, 100, 1, '%')
 
 	def __init__(self, preset):
 		'''
@@ -72,6 +74,22 @@ class Boiler(Program):
 
 	def get_stage_1(self):
 		return self.get_output_channel('burner1')
+
+	def get_power_output(self):
+		return self.get_output_channel('power')
+
+	def get_power_output_percent(self):
+		output = self.get_power_output()
+		if not output.is_mapped():
+			return None
+		signal = output.get_value()
+		if signal is None:
+			return None
+		# SmartWeb: OFF=0, analog range=1..254, discrete ON=255.
+		return max(0.0, min(100.0, (signal - 1) * 100.0 / 253))
+
+	def get_stage_1_power_percent(self):
+		return self._parameters['stage_1_power_percent'].get_value()
 
 	def get_pump(self):
 		return self.get_output_channel('pump')
