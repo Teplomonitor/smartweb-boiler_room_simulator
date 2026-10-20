@@ -10,7 +10,7 @@ PARAMETER_INFO = {
 	CascadeManagerParameterId.PARAM_TEMPERATURE_SOURCE_POWER:              {'type': 'UINT8_T', 'array_size': CASCADE_SOURCES_MAX_NUM},
 	CascadeManagerParameterId.PARAM_TEMPERATURE_SOURCE_WORKTIME:           {'type': 'UINT8_T', 'array_size': CASCADE_SOURCES_MAX_NUM},
 	CascadeManagerParameterId.PARAM_TEMPERATURE_SOURCE_PRIORITY:           {'type': 'UINT8_T', 'array_size': CASCADE_SOURCES_MAX_NUM},
-	CascadeManagerParameterId.PARAM_P_FACTOR:                              {'type': 'UINT8_T'},
+	CascadeManagerParameterId.PARAM_P_FACTOR:                              {'type': 'TEMPERATURE'},
 	CascadeManagerParameterId.PARAM_I_FACTOR:                              {'type': 'UINT8_T'},
 	CascadeManagerParameterId.PARAM_D_FACTOR:                              {'type': 'UINT8_T'},
 	CascadeManagerParameterId.SCHEDULE:                                    {'type': 'SCHEDULE', 'array_size': SCHEDULE_ARRAY_SIZE},
