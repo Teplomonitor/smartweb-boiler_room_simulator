@@ -307,6 +307,7 @@ class MainFrame ( wx.Frame ):
 			'idle': (wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE), wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNTEXT)),
 			'preparing': (wx.Colour(254, 216, 114), wx.Colour(0, 0, 0)),
 			'running': (wx.Colour(254, 216, 114), wx.Colour(0, 0, 0)),
+			'preset_loading': (wx.Colour(254, 216, 114), wx.Colour(0, 0, 0)),
 			'finished': (wx.Colour(120, 248, 158), wx.Colour(0, 0, 0)),
 			'stopped': (wx.Colour(251, 117, 126), wx.Colour(0, 0, 0)),
 			'failed': (wx.Colour(251, 117, 126), wx.Colour(0, 0, 0)),
@@ -316,7 +317,7 @@ class MainFrame ( wx.Frame ):
 		self.scenarioStatusBanner.SetForegroundColour(foreground)
 		self.scenarioStatusBanner.Refresh()
 
-	def set_scenario_status_now(self, state, scenario_title = ''):
+	def render_scenario_status(self, state, scenario_title = ''):
 		messages = {
 			'idle': u"No scenario running — sensor controls are available",
 			'preparing': u"SCENARIO PREPARING — please wait",
@@ -325,18 +326,42 @@ class MainFrame ( wx.Frame ):
 			'stopped': u"SCENARIO STOPPED — sensor controls are available",
 			'failed': u"SCENARIO FAILED — sensor controls are available",
 		}
-		self.scenarioStatusBanner.SetLabel(_(messages.get(state, messages['idle'])))
+		message = _(messages.get(state, messages['idle']))
+		self.scenarioStatusBanner.SetLabel(message)
 		self.set_scenario_banner_style(state)
-		self.scenarioStatusBar.SetStatusText(_(messages.get(state, messages['idle'])), 0)
+		self.scenarioStatusBar.SetStatusText(message, 0)
 		self.scenarioStatusBar.SetStatusText(scenario_title, 1)
 		self.Layout()
+
+	def set_scenario_status_now(self, state, scenario_title = ''):
+		self._scenario_status = state
+		self._scenario_title = scenario_title
+		if not self._preset_loading:
+			self.render_scenario_status(state, scenario_title)
+
+	def set_preset_loading_now(self, loading):
+		self._preset_loading = loading
+		if loading:
+			message = u"ЗАГРУЗКА ПРЕСЕТА — пожалуйста, подождите"
+			self.scenarioStatusBanner.SetLabel(message)
+			self.set_scenario_banner_style('preset_loading')
+			self.scenarioStatusBar.SetStatusText(message, 0)
+			self.Layout()
+		else:
+			self.render_scenario_status(self._scenario_status, self._scenario_title)
 
 	def set_scenario_status(self, state, scenario_title = ''):
 		wx.CallAfter(self.set_scenario_status_now, state, scenario_title)
 
+	def set_preset_loading(self, loading):
+		wx.CallAfter(self.set_preset_loading_now, loading)
+
 	def __init__( self, parent , guithread, profile='main'):
 		self._profile = profile
 		self._config = config.ConfigParserInstance()
+		self._scenario_status = 'idle'
+		self._scenario_title = ''
+		self._preset_loading = False
 		scenario_paths = sc.get_scenario_files_list()
 		selected_scenarios = set(self._config.getSelectedScenarios(self._profile))
 		self._selected_scenarios = [
@@ -666,7 +691,8 @@ class guiThread():
 		self._ex.remove_collector()
 		self._ex.programsWrapSizer.Clear(True)
 		self._ex.programsWrapSizer.Layout()
-		self._ex.set_scenario_status_now('idle')
+		if not self._ex._preset_loading:
+			self._ex.set_scenario_status_now('idle')
 		self._ex.Layout()
 #		wx.GetApp().OnInit()
 	
@@ -698,6 +724,9 @@ class guiThread():
 
 	def set_scenario_status(self, state, scenario_title = ''):
 		self._ex.set_scenario_status(state, scenario_title)
+
+	def set_preset_loading(self, loading):
+		self._ex.set_preset_loading(loading)
 		
 	def run(self):
 		self._app.MainLoop()
