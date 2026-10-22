@@ -87,7 +87,7 @@ class ScenarioValidator:
 		return False
 
 	@staticmethod
-	def assigns_status(class_node: ast.ClassDef) -> set[str]:
+	def assigns_status(class_node: ast.AST) -> set[str]:
 		result = set()
 		for node in ast.walk(class_node):
 			if not isinstance(node, ast.Assign):
@@ -103,6 +103,65 @@ class ScenarioValidator:
 				):
 					result.add(node.value.value)
 		return result
+
+	def scenario_class_hierarchy(self, path, tree, class_node, visited=None):
+		"""Read local scenario bases as AST only; never import application code."""
+		if visited is None:
+			visited = set()
+		key = (path.resolve(), class_node.name)
+		if key in visited:
+			return
+		visited.add(key)
+		yield class_node
+		local_classes = {node.name: node for node in tree.body if isinstance(node, ast.ClassDef)}
+		imports = {
+			alias.asname or alias.name: (node.module, alias.name)
+			for node in tree.body
+			if isinstance(node, ast.ImportFrom) and not node.level
+			and node.module and node.module.startswith('scenario.base.')
+			for alias in node.names
+		}
+		for base in class_node.bases:
+			if not isinstance(base, ast.Name):
+				continue
+			if base.id in local_classes:
+				yield from self.scenario_class_hierarchy(path, tree, local_classes[base.id], visited)
+			elif base.id in imports:
+				module_name, class_name = imports[base.id]
+				base_path = self.repository_root.joinpath(*module_name.split('.')).with_suffix('.py')
+				try:
+					base_tree = ast.parse(base_path.read_text(encoding='utf-8'), filename=str(base_path))
+				except (OSError, SyntaxError, UnicodeError):
+					continue  # Unresolved inheritance must not suppress status warnings.
+				base_class = next((
+					node for node in base_tree.body
+					if isinstance(node, ast.ClassDef) and node.name == class_name
+				), None)
+				if base_class is not None:
+					yield from self.scenario_class_hierarchy(base_path, base_tree, base_class, visited)
+
+	def scenario_statuses(self, path, tree, class_node):
+		statuses = self.assigns_status(class_node)
+		methods = {}
+		for parent in self.scenario_class_hierarchy(path, tree, class_node):
+			for method in parent.body:
+				if isinstance(method, (ast.FunctionDef, ast.AsyncFunctionDef)):
+					methods.setdefault(method.name, method)  # Respect child overrides.
+		pending = ['run']
+		visited = set()
+		while pending:
+			name = pending.pop()
+			if name in visited or name not in methods:
+				continue
+			visited.add(name)
+			method = methods[name]
+			statuses.update(self.assigns_status(method))
+			pending.extend(
+				node.func.attr for node in ast.walk(method)
+				if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+				and isinstance(node.func.value, ast.Name) and node.func.value.id == 'self'
+			)
+		return statuses
 
 	def validate_file(self, path: Path):
 		try:
@@ -154,7 +213,7 @@ class ScenarioValidator:
 			if not preset_path.is_file():
 				self.error(path, f'preset {preset!r} does not exist at {self.relative(preset_path)}')
 
-		statuses = self.assigns_status(class_node)
+		statuses = self.scenario_statuses(path, tree, class_node)
 		if 'OK' not in statuses or 'FAIL' not in statuses:
 			self.warning(path, 'scenario should assign both _status = \'OK\' and _status = \'FAIL\'')
 
