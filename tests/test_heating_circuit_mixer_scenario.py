@@ -11,28 +11,36 @@ import smartnet.constants as snc
 from simulator.heating_circuit import Simulator as CircuitModel
 
 
-def load_scenario():
+def load_scenario(checklist='3_3_2'):
 	parent = ModuleType('scenario.scenario')
-	parent.Scenario = type('Parent', (), {'RELAY_MIN': 1, 'RELAY_MAX': 254, 'RELAY_ON': 255})
+	parent.Scenario = type('Parent', (), {'RELAY_MIN': 1, 'RELAY_MAX': 254, 'RELAY_ON': 255, 'RELAY_OFF': 0})
 	remote = ModuleType('smartnet.remoteControl')
 	remote.RemoteControlParameter = Mock()
 	console = ModuleType('consoleLog')
 	console.print_log = Mock()
 	console.print_error = Mock()
-	path = Path(__file__).resolve().parents[1] / 'scenario/list/heating_circuit/scenario_heating_circuit_3_3_2.py'
+	root = Path(__file__).resolve().parents[1]
+	base_name = 'scenario.base.heating_circuit_mixer'
+	base_spec = importlib.util.spec_from_file_location(base_name, root / 'scenario/base/heating_circuit_mixer.py')
+	base = importlib.util.module_from_spec(base_spec)
+	path = root / f'scenario/list/heating_circuit/scenario_heating_circuit_{checklist}.py'
 	spec = importlib.util.spec_from_file_location('mixer_scenario_under_test', path)
 	module = importlib.util.module_from_spec(spec)
 	with patch.dict(sys.modules, {
 		'scenario.scenario': parent,
 		'smartnet.remoteControl': remote,
 		'consoleLog': console,
+		base_name: base,
 	}):
+		base_spec.loader.exec_module(base)
 		spec.loader.exec_module(module)
+	module.base_module = base
 	return module
 
 
 scenario_module = load_scenario()
 Scenario = scenario_module.Scenario
+three_point_module = load_scenario('3_3_3')
 
 
 class Channel:
@@ -68,8 +76,11 @@ class Channel:
 
 
 class TestHeatingCircuitMixerScenario(unittest.TestCase):
+	scenario_module = scenario_module
+	scenario_class = Scenario
+
 	def setUp(self):
-		self.scenario = Scenario()
+		self.scenario = self.scenario_class()
 		self.clock = 0
 		self.fault = None
 		self.seen_cold = False
@@ -85,6 +96,9 @@ class TestHeatingCircuitMixerScenario(unittest.TestCase):
 		self.circuit.get_input_channel.side_effect = self.inputs.__getitem__
 		self.circuit.get_output_channel.side_effect = self.outputs.__getitem__
 		self.circuit.get_max_flow_rate.return_value = 1000
+		self.running_time = Channel(180)
+		self.circuit.get_parameters.return_value = {'valve_running_time': self.running_time}
+		self.circuit.get_valve_running_time.side_effect = lambda: self.running_time.value
 		control = SimpleNamespace(
 			getOat=lambda: None,
 			_collector=SimpleNamespace(get_direct_temperature=lambda: self.boiler_sensor.value - 1),
@@ -108,7 +122,7 @@ class TestHeatingCircuitMixerScenario(unittest.TestCase):
 		self.scenario.wait_event = Mock(side_effect=lambda predicate, timeout: predicate())
 		self.valve_percent = 0
 		self.readings = []
-		self.time_patch = patch.object(scenario_module, 'time', SimpleNamespace(monotonic=lambda: self.clock))
+		self.time_patch = patch.object(self.scenario_module.base_module, 'time', SimpleNamespace(monotonic=lambda: self.clock))
 		self.time_patch.start()
 		self.addCleanup(self.time_patch.stop)
 
@@ -156,6 +170,7 @@ class TestHeatingCircuitMixerScenario(unittest.TestCase):
 		self.assertEqual(self.values, self.initial_values)
 		self.assertEqual(self.boiler_sensor.value, 30)
 		self.assertFalse(self.boiler_sensor.manual)
+		self.assertEqual(self.running_time.value, 180)
 
 	def test_success_with_real_thermal_model_and_all_phases(self):
 		self.scenario.run()
@@ -219,6 +234,7 @@ class TestHeatingCircuitMixerScenario(unittest.TestCase):
 		self.scenario.REGULATION_TIMEOUT = 60
 		self.scenario._sample = lambda: dict(
 			boiler=70, source=69, flow=45 if self.clock % 20 == 0 else 40, valve=100, pump=255,
+			valve_open=0, valve_close=0,
 		)
 		self.assertIsNone(self.scenario._check_phase('transient', 40))
 		self.assertGreaterEqual(self.clock, 60)
@@ -278,6 +294,105 @@ class TestHeatingCircuitMixerScenario(unittest.TestCase):
 				self.assertEqual(self.values[key], original)
 		self.assertEqual(self.boiler_sensor.value, 30)
 		self.assertFalse(self.boiler_sensor.manual)
+
+
+class TestThreePointHeatingCircuitMixerScenario(TestHeatingCircuitMixerScenario):
+	scenario_module = three_point_module
+	scenario_class = three_point_module.Scenario
+
+	def setUp(self):
+		super().setUp()
+		self.outputs['analogValve'].mapped = False
+		for name in ('tptValveOpen', 'tptValveClose'):
+			self.outputs[name].mapped = True
+		lock_key = (101, snc.ProgramType.HEATING_CIRCUIT, snc.HeatingCircuitParameterId.VALVE_BLOCK)
+		self.values[lock_key] = self.initial_values[lock_key] = 1
+		self.model._valve_update_time = 0
+		self.pulse_remaining = 0
+		self.pause_remaining = 0
+		self.pulses = []
+		model_time = patch('simulator.heating_circuit.time', SimpleNamespace(monotonic=lambda: self.clock))
+		model_time.start()
+		self.addCleanup(model_time.stop)
+
+	def tick(self, duration):
+		# Reference pulse regulator, not execution of the firmware. Only the
+		# existing physical model integrates actuator travel and temperatures.
+		self.clock += duration
+		delta = self.inputs['temperature'].value - self.setpoint()
+		relative = 0 if abs(delta) < 1 else delta / self.scenario.VALVE_PROPORTIONAL_BAND
+		opening = closing = 0
+		if abs(relative) < 0.1:
+			self.pulse_remaining = self.pause_remaining = 0
+		else:
+			if self.pulse_remaining <= 0 and self.pause_remaining <= 0:
+				self.pulse_remaining = self.scenario.VALVE_RUNNING_TIME / 30
+				self.pause_remaining = 10 / abs(relative)
+			if self.pulse_remaining > 0:
+				opening = 255 if relative < 0 else 0
+				closing = 255 if relative > 0 else 0
+				self.pulse_remaining -= duration
+			else:
+				self.pause_remaining -= duration
+		if self.fault == 'closed':
+			opening, closing = 0, 255
+		elif self.fault == 'open':
+			opening, closing = 255, 0
+		elif self.fault == 'pump_off':
+			self.outputs['pump'].value = 0
+		elif self.fault == 'unknown':
+			opening = None
+		elif self.fault == 'conflict':
+			opening = closing = 255
+		elif self.fault == 'invalid_relay':
+			opening = 1
+		elif self.fault == 'cold_source':
+			self.boiler_sensor.set_value(35, True)
+		if self.boiler_sensor.value == 35:
+			self.seen_cold = True
+		if self.fault == 'no_recovery' and self.seen_cold:
+			self.boiler_sensor.set_value(35, True)
+		self.outputs['tptValveOpen'].value = opening
+		self.outputs['tptValveClose'].value = closing
+		self.pulses.append((opening, closing))
+		self.model.run()
+		self.readings.append((self.boiler_sensor.value, self.setpoint(), self.model.getValveState() * 254))
+		return True
+
+	def test_unsafe_outputs_fail_immediately_and_restore(self):
+		for fault in ('conflict', 'invalid_relay'):
+			with self.subTest(fault=fault):
+				self.fault = fault
+				previous_clock = self.clock
+				self.scenario.run()
+				self.assertEqual(self.scenario._status, 'FAIL')
+				self.assertLess(self.clock - previous_clock, self.scenario.REGULATION_TIMEOUT)
+				self.assert_restored()
+
+	def test_both_directions_and_pauses_are_observed(self):
+		self.scenario.run()
+		self.assertEqual(self.scenario._status, 'OK')
+		self.assertTrue({(255, 0), (0, 255), (0, 0)}.issubset(self.pulses))
+		self.assert_restored()
+
+	def test_wrong_or_incomplete_mappings_prevent_writes(self):
+		self.outputs['analogValve'].mapped = True
+		self.scenario.run()
+		self.assertEqual(self.scenario._status, 'FAIL')
+		self.outputs['analogValve'].mapped = False
+		self.outputs['tptValveClose'].mapped = False
+		self.scenario.run()
+		self.assertEqual(self.scenario._status, 'FAIL')
+		self.scenario._write_parameter.assert_not_called()
+		self.assert_restored()
+
+	def test_invalid_model_running_time_prevents_writes(self):
+		for value in (None, 0, -1, float('nan')):
+			with self.subTest(value=value):
+				self.running_time.value = value
+				self.scenario.run()
+				self.assertEqual(self.scenario._status, 'FAIL')
+				self.scenario._write_parameter.assert_not_called()
 
 
 if __name__ == '__main__':
