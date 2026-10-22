@@ -243,7 +243,7 @@ class Simulator(threading.Thread):
 				print('Oh shi! Sensor report is dead')
 				break
 
-		self.clear()
+		# ApplicationWorker clears shared state after all users have stopped.
 
 def initIoSimulator():
 	simulatorThread = Simulator("simulator thread", 789)

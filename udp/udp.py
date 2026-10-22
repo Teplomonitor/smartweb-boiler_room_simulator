@@ -28,6 +28,8 @@ self_id_bytes[SCAN_PACKET_DATA_SIZE-1] = 0;
 scan_msg = make_scan_message(self_id_bytes)
 
 DATA_PACKET_SIZE = 24
+RECEIVE_TIMEOUT = 0.2
+THREAD_JOIN_TIMEOUT = 5.0
 
 class UdpCanBusInterface(object):
 	def __new__(cls, *args, **kwargs):
@@ -111,8 +113,9 @@ def make_rand_delay(queue_size):
 	return dt
 
 class can_thread(threading.Thread):
-	def __init__(self, thread_name, thread_ID, port):
+	def __init__(self, thread_name, thread_ID, port, auto_start=True):
 		threading.Thread.__init__(self, name = thread_name)
+		self._stop_event = threading.Event()
 		self.thread_name = thread_name
 		self.thread_ID   = thread_ID
 		self._port       = port
@@ -126,7 +129,8 @@ class can_thread(threading.Thread):
 		self._udp_messages_to_send = bytearray([])
 	
 		self.daemon = True
-		self.start()
+		if auto_start:
+			self.start()
 		
 	def get_send_queue(self):
 		return self._udp_messages_to_send
@@ -177,31 +181,40 @@ class can_thread(threading.Thread):
 		return 0
 		
 	def run(self):
-		while mainThread.taskEnable():
-			self.do_run()
+		try:
+			while mainThread.taskEnable() and not self._stop_event.is_set():
+				self.do_run()
+		finally:
+			self._sock.close()
 
 
 class udp_listen_thread(threading.Thread):
-	def __init__(self, thread_name, thread_ID, port):
+	def __init__(self, thread_name, thread_ID, port, auto_start=True):
 		threading.Thread.__init__(self, name = thread_name)
+		self._stop_event = threading.Event()
 		self.thread_name = thread_name
 		self.thread_ID   = thread_ID
 		self._port       = port
-		self._sock       = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		self._canbus     = UdpCanBusInterface().get()
+		self._sock       = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 		ip_any = '0.0.0.0'
 
 		ip_addr = ip_any
 		
-		self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-		self._sock.bind((ip_addr, self._port))
-		self._sock.settimeout(10)
+		try:
+			self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+			self._sock.bind((ip_addr, self._port))
+			self._sock.settimeout(RECEIVE_TIMEOUT)
+		except BaseException:
+			self._sock.close()
+			raise
 		
 		self._messages = []
 		
 		self.daemon = True
-		self.start()
+		if auto_start:
+			self.start()
 
 	def clear_buffer(self):
 		try:
@@ -244,12 +257,42 @@ class udp_listen_thread(threading.Thread):
 			self._canbus.send(msg)
 			
 	def run(self):
-		while mainThread.taskEnable():
-			self.do_run()
+		try:
+			while mainThread.taskEnable() and not self._stop_event.is_set():
+				self.do_run()
+		finally:
+			self._sock.close()
 			
 
 
+class UdpBridge:
+	def __init__(self, port):
+		self._threads = []
+		self._canbus = UdpCanBusInterface().get()
+		self._closed = False
+		try:
+			self._threads.append(udp_listen_thread("UDP_listen", 123, port, auto_start=False))
+			self._threads.append(can_thread("UDP_CAN_send", 456, port, auto_start=False))
+			for thread in self._threads:
+				thread.start()
+		except BaseException:
+			self.stop()
+			raise
+
+	def stop(self):
+		if self._closed:
+			return
+		for thread in self._threads:
+			thread._stop_event.set()
+		for thread in self._threads:
+			if thread.ident is not None:
+				thread.join(THREAD_JOIN_TIMEOUT)
+			if thread.is_alive():
+				raise RuntimeError(f'{thread.name} did not stop before the timeout')
+			thread._sock.close()
+		self._canbus.shutdown()
+		self._closed = True
+
+
 def init_udp_bridge(UDP_PORT):
-	udp_listen_thread("UDP_listen", 123, UDP_PORT)
-	
-	can_thread  ("UDP_CAN_send", 456, UDP_PORT)
+	return UdpBridge(UDP_PORT)

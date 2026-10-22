@@ -4,6 +4,7 @@
 
 import can
 import time
+import threading
 
 import mainThread
 
@@ -235,7 +236,7 @@ class Message(object):
 
 class CanListener(can.Listener):
 	_listeners   = []
-	_lockSubscribe = 0
+	_listeners_lock = threading.Lock()
 	
 	def __new__(cls, *args, **kwargs):
 		if not hasattr(cls, 'instance'):
@@ -247,9 +248,23 @@ class CanListener(can.Listener):
 			return
 		
 		self._canbus   = CanBusInterface().get()
-		self._notifier = can.Notifier(self._canbus, [self])
+		try:
+			self._notifier = can.Notifier(self._canbus, [self])
+		except BaseException:
+			self._canbus.shutdown()
+			raise
+		self._closed = False
 	
 		self._initDone = True
+
+	def close(self):
+		if self._closed:
+			return
+		self._closed = True
+		try:
+			self._notifier.stop(timeout=5)
+		finally:
+			self._canbus.shutdown()
 		
 	@staticmethod
 	def countListeners():
@@ -262,22 +277,17 @@ class CanListener(can.Listener):
 		
 	@staticmethod
 	def subscribe(listener):
-		if listener in CanListener._listeners:
-			return
-		
-		while CanListener._lockSubscribe:
-			time.sleep(0.1)
-		
-		CanListener._listeners.append(listener)
+		with CanListener._listeners_lock:
+			if listener not in CanListener._listeners:
+				CanListener._listeners.append(listener)
 #		CanListener.countListeners()
 		
 		
 	@staticmethod
 	def unsubscribe(listener):
-		while CanListener._lockSubscribe:
-			time.sleep(0.1)
-		if listener in CanListener._listeners:
-			CanListener._listeners.remove(listener)
+		with CanListener._listeners_lock:
+			if listener in CanListener._listeners:
+				CanListener._listeners.remove(listener)
 #		CanListener.countListeners()
 		
 	def on_message_received(self, message):
@@ -290,16 +300,9 @@ class CanListener(can.Listener):
 		if msg is None:
 			return
 		
-		i = 0
-		
-		for listener in CanListener._listeners:
-			i += 1
-			
-#		print(f"rx: {msg.generateHeader():08X} - {' '.join(format(x, '02x') for x in msg._data)} s = {i}")
-
-		CanListener._lockSubscribe = 1
-		for listener in CanListener._listeners:
+		with CanListener._listeners_lock:
+			listeners = tuple(CanListener._listeners)
+		for listener in listeners:
 			listener.on_can_message_received(msg)
-		CanListener._lockSubscribe = 0
 		
 

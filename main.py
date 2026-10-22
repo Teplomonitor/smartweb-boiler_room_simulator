@@ -25,27 +25,14 @@ if sys.stdout is None:
 if sys.stderr is None:
 	sys.stderr = open(os.devnull, 'w')
 
-import time
-
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
 
 import mainThread
 import consoleLog
+from application import Application
 
-
-def mock_missing(name):
-	def init(self, *args, **kwargs):
-		raise ImportError(
-			f'The class {name} you tried to call is not importable; '
-			f'this is likely due to it not being installed.')
-	return type(name, (), {'__init__': init})
-
-try:
-	import gui.frame as guiFrameThread
-except:
-	guiFrameThread = mock_missing('guiFrameThread')
 
 __all__ = []
 __version__ = 0.1
@@ -65,7 +52,7 @@ class CLIError(Exception):
 	def __unicode__(self):
 		return self.msg
 
-def initArgParser(program_license):
+def initArgParser(program_license, argv=None):
 	parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
 	parser.add_argument('-d', '--debug'   , action='store_true'                          , help='start debugger that will reply on simulator commands')
 	parser.add_argument('-p', '--profile' , nargs='?', const='main'   , default='main'   , help='select program profile')
@@ -78,13 +65,13 @@ def initArgParser(program_license):
 	parser.add_argument('-c', '--can'     , nargs='?', const='default', default='none'   , help='select CANBus config')
 	parser.add_argument(      '--preset'  , nargs='?'                 , default=None     , help='load specific preset on controller startup')
 	
-	return parser.parse_args()
+	return parser.parse_args(argv)
 
 def getProgramLicense():
 	program_version = "v%s" % __version__
 	program_build_date = str(__updated__)
 	program_version_message = '%%(prog)s %s (%s)' % (program_version, program_build_date)
-	program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
+	program_shortdesc = __doc__.split("\n")[1]
 	program_license = '''%s
 
 	%s
@@ -124,53 +111,39 @@ def MainStop():
 def main(argv=None): # IGNORE:C0111
 	'''Command line options.'''
 	
-	if argv is None:
-		argv = sys.argv
-	else:
-		sys.argv.extend(argv)
-
 	program_name = os.path.basename(sys.argv[0])
+	application = None
+	exit_code = 0
 
 	try:
 		program_license = getProgramLicense()
 		# Setup argument parser
-		args = initArgParser(program_license)
-		
-		if args.gui:
-			guiThread = guiFrameThread.guiThread(args.profile)
+		args = initArgParser(program_license, argv)
+		application = Application(args)
+		application.start()
+		if application.gui:
+			application.gui.run()
 		else:
-			guiThread = None
-
-		consoleLog.init_gui(guiThread)
-		
-		initMainThread(args)
-		
-		# should run in main loop
-		if guiThread:
-			guiThread.run()
-		else:
-			while mainThread.taskEnable():
-				time.sleep(1)
-				
-		MainStop()
-		
-		return 0
+			application.stop_event.wait()
 	
 	except KeyboardInterrupt:
 		### handle keyboard interrupt ###
-		MainStop()
 		consoleLog.print_log('exit')
-		return 0
 	
 	except Exception as e:
-		MainStop()
-		
 		if DEBUG:
 			raise(e)
 		indent = len(program_name) * " "
 		sys.stderr.write(program_name + ": " + repr(e) + "\n")
 		sys.stderr.write(indent + "  for help use --help")
-		return 2
+		exit_code = 2
+	finally:
+		if application:
+			if not application.shutdown():
+				exit_code = 2
+			if application.worker and application.worker.error:
+				exit_code = 2
+	return exit_code
 
 if __name__ == "__main__":
 	if DEBUG:

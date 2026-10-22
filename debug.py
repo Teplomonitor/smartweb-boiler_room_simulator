@@ -1,7 +1,6 @@
 
 import threading
 import can
-import time
 
 import mainThread
 
@@ -16,6 +15,7 @@ class i_am_here_thread(threading.Thread):
 		self.thread_ID   = thread_ID
 		self._canbus     = canbus
 		self._controllerId = 123
+		self._stop_event = threading.Event()
 	def setControllerId(self, controllerId):
 		self._controllerId = controllerId
 		
@@ -30,9 +30,9 @@ class i_am_here_thread(threading.Thread):
 		msg.send(bus = self._canbus)
 
 	def run(self):
-		while mainThread.taskEnable():
+		while mainThread.taskEnable() and not self._stop_event.is_set():
 			self.sendImHere()
-			time.sleep(10)
+			self._stop_event.wait(10)
 
 def programsResetFilter(msg):
 	return ((msg.get_program_type() == snc.ProgramType.CONTROLLER) and
@@ -73,14 +73,41 @@ def programOutputMappingFilter(msg):
 class debug_thread(can.Listener):
 	def __init__(self, requiredControllerId):
 		self._canbus   = sm.createBus()
-		self._notifier = can.Notifier(self._canbus, [self])
+		self._closed = False
+		try:
+			self._notifier = can.Notifier(self._canbus, [self])
+		except BaseException:
+			self._canbus.shutdown()
+			raise
 
 		thread1 = i_am_here_thread("IMH", 1001, self._canbus)
+		self._heartbeat = thread1
 		if requiredControllerId != 0:
 			thread1.setControllerId(requiredControllerId)
 		#to kill thread on sys.exit()
 		thread1.daemon = True
-		thread1.start()
+		try:
+			thread1.start()
+		except BaseException:
+			self.stop()
+			raise
+
+	def stop(self):
+		# Notifier.stop also invokes listener.stop; guard against re-entry.
+		if self._closed:
+			return
+		self._closed = True
+		self._heartbeat._stop_event.set()
+		try:
+			if self._heartbeat.ident is not None:
+				self._heartbeat.join(5)
+			if self._heartbeat.is_alive():
+				raise RuntimeError('Debug heartbeat did not stop before the timeout')
+		finally:
+			try:
+				self._notifier.stop(timeout=5)
+			finally:
+				self._canbus.shutdown()
 
 	def on_message_received(self, message):
 		if message is None:

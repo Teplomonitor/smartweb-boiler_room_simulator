@@ -369,6 +369,13 @@ class ScenarioThread(threading.Thread):
 			prg.save_log(logDir)
 			
 	def run(self):
+		try:
+			self.run_scenarios()
+		finally:
+			# Restore manual inputs before the application closes its transports.
+			self.stop_scenario_now()
+
+	def run_scenarios(self):
 		while mainThread.taskEnable():
 			if self._newScenario is not None:
 				self.start_scenario_now(self._newScenario)
@@ -377,6 +384,8 @@ class ScenarioThread(threading.Thread):
 			if self._currentScenario:
 				try:
 					self._currentScenario.run()
+					if not mainThread.taskEnable():
+						break
 					
 					if self._currentScenario.done():
 						self.append_scenario_result(self._currentScenario)
@@ -393,7 +402,7 @@ class ScenarioThread(threading.Thread):
 								self.print_scenario_run_result()
 								
 				except Exception as e:
-					print_error("Thread stopped via exception")
+					print_error(f"Scenario interrupted: {e!r}")
 					self.stop_scenario_now('failed')
 					
 			if self._stopScenarioEvent.is_set():

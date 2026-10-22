@@ -271,10 +271,10 @@ class MainFrame ( wx.Frame ):
 
 	# Virtual event handlers, override them in your derived class
 	def doClose( self, event ):
-		event.Skip()
+		if getattr(event, 'CanVeto', lambda: False)():
+			event.Veto()
+		self.Disable()
 		main.MainStop()
-		guiThread().clear()
-		exit(0)
 	
 	def OnLogSaveButtonPress( self, event ):
 		event.Skip()
@@ -671,6 +671,7 @@ class guiThread():
 			return
 		
 		self._app = wx.App()
+		self._stopped = False
 		self._frame = wx.Frame(None, title='Simple application')
 		self._ex = MainFrame(self._frame, self, profile)
 		self._ex.Show()
@@ -681,11 +682,19 @@ class guiThread():
 		wx.CallAfter(self.ClearNow)
 	
 	def stopNow(self):
+		if self._stopped:
+			return
+		self._stopped = True
 		self.ClearNow()
-		exit(0)
+		self._ex.Destroy()
+		self._frame.Destroy()
+		self._app.ExitMainLoop()
 		
 	def stop(self):
-		wx.CallAfter(self.stopNow)
+		if wx.IsMainThread():
+			self.stopNow()
+		else:
+			wx.CallAfter(self.stopNow)
 		
 	def ClearNow(self):
 		self._ex.remove_collector()

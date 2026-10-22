@@ -1,7 +1,5 @@
 
-import time
 import threading
-import sys
 import config
 
 import presets.preset
@@ -19,17 +17,34 @@ import scenario.scenario as scenario
 import debug
 import udp.udp as udp
 
-def mock_missing(name):
-	def init(self, *args, **kwargs):
-		raise ImportError(
-			f'The class {name} you tried to call is not importable; '
-			f'this is likely due to it not being installed.')
-	return type(name, (), {'__init__': init})
+THREAD_JOIN_TIMEOUT = 5.0
+_application = None
 
-try:
-	import gui.frame as guiFrameThread
-except:
-	guiFrameThread = mock_missing('guiFrameThread')
+
+def register_application(application):
+	global _application
+	if _application is not None and _application is not application:
+		raise RuntimeError('An application session is already active')
+	_application = application
+
+
+def unregister_application(application):
+	global _application
+	if _application is application:
+		_application = None
+
+
+def MainThread(args=None):
+	"""Compatibility accessor; no-argument calls never create services."""
+	if _application is None:
+		if args is None:
+			raise RuntimeError('Application has not been started')
+		from application import Application
+		application = Application(args)
+		application.start()
+	if _application.worker is None:
+		raise RuntimeError('Application worker has not been initialized')
+	return _application.worker
 
 def loadPresetNow(preset):
 	main_thread = MainThread()
@@ -58,17 +73,17 @@ def loadPresetNow(preset):
 		if gui:
 			gui.set_preset_loading(False)
 	
-class MainThread(threading.Thread):
-	def __new__(cls, *args, **kwargs):
-		if not hasattr(cls, 'instance'):
-			cls.instance = super(MainThread, cls).__new__(cls)
-		return cls.instance
-
-	def __init__(self, args = None):
-		if hasattr(self, '_initDone'):
-			return
-		
+class ApplicationWorker(threading.Thread):
+	def __init__(self, args, gui, stop_event):
 		threading.Thread.__init__(self, name = 'MyMainThread')
+		self._taskStopEvent = stop_event
+		self._guiThread = gui
+		self._simulator = None
+		self._controller = None
+		self._scenario_thread = None
+		self._can_listener = None
+		self._udp_bridge = None
+		self.error = None
 
 		self.configParserInstance = config.ConfigParserInstance()
 		
@@ -82,11 +97,6 @@ class MainThread(threading.Thread):
 		
 		self._lastPreset                    = None
 		
-		if args.gui:
-			self._guiThread = guiFrameThread.guiThread()
-		else:
-			self._guiThread = None
-
 		self._programPresetList = []
 		self._controllerIoList  = []
 		
@@ -105,16 +115,11 @@ class MainThread(threading.Thread):
 			
 			if self._programPresetList is None:
 				print_error('wrong preset. Exit')
-				sys.exit(1)
-		
-		self._taskStopEvent = threading.Event()
+				raise ValueError('Invalid preset')
 		
 		self._saveProgramPlots = threading.Event()
 
-		self._initDone = True
-		
 		self.daemon = True
-		self.start()
 	
 	def getCANBusConfig(self): return self._canConfig
 
@@ -133,77 +138,109 @@ class MainThread(threading.Thread):
 		consoleLog.save_log()
 
 	def initSimulator(self):
-		sm.CanListener()
+		self._can_listener = sm.CanListener()
 		
 		if self._udp_bridge_enable:
-			udp.init_udp_bridge(self._udp_bridge_enable)
+			self._udp_bridge = udp.init_udp_bridge(self._udp_bridge_enable)
 		
 		if self._debug:
 			self._debug_thread = debug.debug_thread(self._controllerId)
 			
 		controllerId = ctrlSearch.findOnlineController(self._controllerId)
+		if not self.taskEnable():
+			return
 		
 		if controllerId is None:
 			print_error('controller not found. Exit')
+			self.error = RuntimeError('Controller not found')
 			self.taskStop()
 			return
 		
 		ioSimulator    = ss.Simulator("simulator thread", 789)
+		self._simulator = ioSimulator
 		controllerHost = cc.Controller(controllerId, self._guiThread)
+		self._controller = controllerHost
 		
 		controllerHost.initController(False, self._programPresetList)
+		if not self.taskEnable():
+			return
 		ctrlIo = ccio.initVirtualControllers(self._controllerIoList)
 		ioSimulator.reloadConfig(controllerHost, ctrlIo)
+		if not self.taskEnable():
+			return
 		
-		scenario.ScenarioThread(controllerHost, ioSimulator)
+		self._scenario_thread = scenario.ScenarioThread(controllerHost, ioSimulator)
 		
 		if self._scenario != 'none':
 			scenario.start_scenario(self._scenario)
 			
 	
 	def checkAliveThreads(self):
-		if not ss.Simulator().is_alive():
+		if self._simulator is None or not self._simulator.is_alive():
 			print_error('Simulator is dead!')
 			return False
 		
-		if not scenario.ScenarioThread().is_alive():
+		if self._scenario_thread is None or not self._scenario_thread.is_alive():
 			print_error('Scenario is dead!')
 			return False
 		
 		return True
 		
 	def run(self):
-		self.initSimulator()
-		
-		while self.taskEnable():
-			time.sleep(1)
-			
-			if self._newPreset:
-				if loadPresetNow(self._newPreset):
-					self._lastPreset = self._newPreset
-				self._newPreset = None
-
-			if self._saveProgramPlots.is_set():
-				self._saveProgramPlots.clear()
-				self.saveProgramPlotsNow()
-			
-			if self.checkAliveThreads() == False:
-				self.taskStop()
-				
-			
-		self.clear()
+		try:
+			if self.taskEnable():
+				self.initSimulator()
+			while not self._taskStopEvent.wait(1):
+				if self._newPreset:
+					if loadPresetNow(self._newPreset):
+						self._lastPreset = self._newPreset
+					self._newPreset = None
+				if self._saveProgramPlots.is_set():
+					self._saveProgramPlots.clear()
+					self.saveProgramPlotsNow()
+				if not self.checkAliveThreads():
+					self.taskStop()
+		except Exception as exc:
+			self.error = exc
+			print_error(f'Application worker failed: {exc!r}')
+		finally:
+			self.taskStop()
+			self.clear()
 
 	def clear(self):
-		time.sleep(1)
-		
+		# Use owned references only: cleanup must never create a service.
+		def cleanup(name, action):
+			try:
+				action()
+			except Exception as exc:
+				self.error = self.error or exc
+				print_error(f'Failed to stop {name}: {exc!r}')
+
+		def join_thread(thread):
+			thread.join(THREAD_JOIN_TIMEOUT)
+			if thread.is_alive():
+				raise RuntimeError(f'{thread.name} did not stop before the timeout')
+
+		if self._scenario_thread:
+			cleanup('scenario', lambda: join_thread(self._scenario_thread))
+		if self._simulator:
+			cleanup('simulator', lambda: join_thread(self._simulator))
+			cleanup('sensor reporting', lambda: join_thread(self._simulator._srt))
+		users = (self._scenario_thread, self._simulator,
+			self._simulator._srt if self._simulator else None)
+		if not any(thread and thread.is_alive() for thread in users):
+			if self._controller:
+				cleanup('controller', self._controller.clear)
+			if self._simulator:
+				cleanup('simulator state', self._simulator.clear)
 		if self._debug_thread:
-			self._debug_thread.stop()
-			
-		cc.Controller().clear()
-		sm.CanListener().stop()
-		
+			cleanup('debug responder', self._debug_thread.stop)
+		if self._udp_bridge:
+			cleanup('UDP bridge', self._udp_bridge.stop)
+		if self._can_listener:
+			cleanup('CAN listener', self._can_listener.close)
 		if self._guiThread:
-			self._guiThread.stop()
+			cleanup('GUI', self._guiThread.stop)
 			
 	def loadPreset(self, newPreset):
 		if newPreset == self._lastPreset:
@@ -215,10 +252,11 @@ class MainThread(threading.Thread):
 		return self._newPreset == None
 
 def taskEnable():
-	return MainThread().taskEnable()
+	return _application is not None and not _application.stop_event.is_set()
 
 def MainStop():
-	MainThread().taskStop()
+	if _application is not None:
+		_application.request_stop()
 	
 	
 
