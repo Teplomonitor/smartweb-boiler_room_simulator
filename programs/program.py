@@ -3,6 +3,7 @@
 '''
 
 import os
+import warnings
 from copy import copy
 
 
@@ -324,7 +325,36 @@ class Program(object):
 		
 		return remoteParam.get_value()
 	
+	def write_parameter(self, parameter, value, index = None, confirm = True) -> bool:
+		"""Return the write status, or False for an unknown parameter.
+
+		Without confirmation, True only means the request was sent, not that
+		the controller applied it. The protocol layer may disable confirmation
+		for payloads that cannot fit a status byte in the response.
+		"""
+		parameter_code = self.get_parameter_code(parameter)
+		if parameter_code is None:
+			return False
+
+		remote_parameter = sr.RemoteControlParameter(
+			parameterCode = parameter_code,
+			programId = self.get_id(),
+			parameterValue = value,
+			parameterIndex = index
+		)
+		return remote_parameter.write(confirm)
+
 	def write_parameter_value(self, parameter, value, index = None, confirm = True):
+		"""Deprecated: use write_parameter() to obtain the write status.
+
+		Return the supplied value regardless of write success, or None for an
+		unknown parameter. This legacy return value is not read back or verified.
+		"""
+		warnings.warn(
+			'write_parameter_value() is deprecated; use write_parameter() for write status',
+			DeprecationWarning,
+			stacklevel = 2
+		)
 		p = self.get_parameter_code(parameter)
 		if p is None:
 			return None
