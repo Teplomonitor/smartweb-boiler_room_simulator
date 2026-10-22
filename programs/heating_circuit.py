@@ -68,6 +68,10 @@ class HeatingCircuit(Program):
 	def init_gui_parameters(self):
 		self._parameters['max_flow_rate'] = GuiParameter(1000, 'Расход', 0, 3000, 1, 'кг/ч')
 		self._parameters['max_power'    ] = GuiParameter(3, 'Мощность', 0, 10, 1, 'кВт')
+		self._parameters['valve_running_time'] = GuiParameter(120, 'Время хода смесителя', 1, 3600, 1, 'с')
+
+	def get_valve_running_time(self):
+		return self._parameters['valve_running_time'].get_value()
 		
 	def __init__(self, preset):
 		'''
