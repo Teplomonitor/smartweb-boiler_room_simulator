@@ -75,6 +75,7 @@ class TestHeatingCircuitMixerScenario(unittest.TestCase):
 		self.seen_cold = False
 		self.inputs = {'temperature': Channel(20), 'backwardTemperature': Channel(20, False)}
 		self.outputs = {'analogValve': Channel(0), 'pump': Channel(255)}
+		self.outputs.update({name: Channel(0, False) for name in ('tptValveOpen', 'tptValveClose')})
 		self.boiler_sensor = Channel(30)
 		self.boiler = Mock()
 		self.boiler.get_id.return_value = 102
