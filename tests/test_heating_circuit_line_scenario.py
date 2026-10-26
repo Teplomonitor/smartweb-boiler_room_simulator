@@ -44,13 +44,18 @@ with patch.dict(sys.modules, {
 }):
 	base = load_module('line_scenario_parent', 'scenario/base/cascade_manager.py')
 	with patch.dict(sys.modules, {'scenario.base.cascade_manager': base}):
+		line_base = load_module('line_scenario_base', 'scenario/base/heating_circuit_line.py')
+	with patch.dict(sys.modules, {'scenario.base.heating_circuit_line': line_base}):
 		module = load_module('line_scenario_test', 'scenario/list/heating_circuit/scenario_heating_circuit_3_3_6.py')
+		temperature_module = load_module('line_temperature_test', 'scenario/list/heating_circuit/scenario_heating_circuit_3_3_7.py')
 	preset = load_module('line_preset_test', 'presets/list/heating_circuit_3_3_6.py')
 
 
-class TestHeatingCircuitLineScenario(unittest.TestCase):
+class LineScenarioHarness(unittest.TestCase):
+	SCENARIO_CLASS = module.Scenario
+
 	def setUp(self):
-		self.scenario = module.Scenario()
+		self.scenario = self.SCENARIO_CLASS()
 		self.scenario._manualSensorsList = []
 		self.programs, self.controllers = preset.get_presets_list()
 		remaining = list(self.programs)
@@ -193,6 +198,8 @@ class TestHeatingCircuitLineScenario(unittest.TestCase):
 			self.assertEqual(sensor.isManual(), manual)
 		self.assertEqual(self.scenario._manualSensorsList, [])
 
+
+class TestHeatingCircuitLineScenario(LineScenarioHarness):
 	def test_preset_topology_and_unique_channels(self):
 		self.assertEqual(len(self.programs), 8)
 		self.assertEqual(self.controllers[0].get_id(), preset.HOST_ID)
@@ -293,6 +300,114 @@ class TestHeatingCircuitLineScenario(unittest.TestCase):
 	def test_restore_failure_keeps_fail_status_and_restores_sensors(self):
 		# Settings, three writes per phase, then the first restoration write.
 		self.fail_write_number = len(self.settings) + 3 * len(self.scenario.PHASES) + 1
+		self.run_scenario()
+		self.assertEqual(self.scenario._status, 'FAIL')
+		self.assert_restored()
+
+
+class TestHeatingCircuitLineTemperatureScenario(LineScenarioHarness):
+	SCENARIO_CLASS = temperature_module.Scenario
+	# Independent scripted references, not a simulation of firmware regulation.
+	EXPECTED_TEMPERATURES = (45, 45, 45, 50, 60, 55, 60, 55, 45, 60, 45)
+	EXPECTED_REQUESTS = (
+		(0, 0), (35, 40), (45, 40), (50, 0), (50, 60), (55, 40),
+		(55, 60), (55, 0), (0, 0), (0, 60), (0, 0),
+	)
+
+	def observe_requests(self, predicate, timeout):
+		self.assertEqual(timeout, self.scenario.CONSUMER_TIMEOUT)
+		phase_index = len(self.phases)
+		phase = self.scenario.PHASES[phase_index]
+		requests, active, expected = phase
+		self.phases.append(phase)
+		self.assertEqual(expected, self.EXPECTED_TEMPERATURES[phase_index])
+		for circuit, request, enabled, reply in zip(
+			self.scenario._circuits(), requests, active, self.EXPECTED_REQUESTS[phase_index],
+		):
+			self.assertEqual(self.values[circuit.get_id(), snc.ProgramType.CIRCUIT,
+				snc.CircuitParameterId.REQUIRED_CONSTANT_FLOW_TEMPERATURE, None], request)
+			self.assertEqual(self.values[circuit.get_id(), snc.ProgramType.HEATING_CIRCUIT,
+				snc.HeatingCircuitParameterId.PUMP_MODE, None], 2 if enabled else 3)
+			self.replies[circuit.get_id(), snc.ProgramType.CONSUMER,
+				snc.ConsumerParameterId.REQUIRED_TEMPERATURE, None] = reply
+		self.assertEqual(self.values[preset.HEATING_LINE_ID, snc.ProgramType.HEATING_CIRCUIT,
+			snc.HeatingCircuitParameterId.PUMP_MODE, None], 2)
+		self.assertEqual(self.values[preset.DHW_ID, snc.ProgramType.DHW,
+			snc.DhwParameterId.WORK_MODE, None], 3)
+		self.replies[preset.DHW_ID, snc.ProgramType.CONSUMER,
+			snc.ConsumerParameterId.REQUIRED_TEMPERATURE, None] = 0
+		if self.fault in ('consumer', 'unexpected_dhw'):
+			program_id = preset.CIRCUIT_IDS[0] if self.fault == 'consumer' else preset.DHW_ID
+			self.replies[program_id, snc.ProgramType.CONSUMER,
+				snc.ConsumerParameterId.REQUIRED_TEMPERATURE, None] = 99
+		return predicate()
+
+	def observe_line(self, predicate, duration, timeout):
+		self.assertGreater(duration, 2 * 20 + 60)
+		self.assertEqual(timeout, self.scenario.LINE_TIMEOUT)
+		phase_index = len(self.phases) - 1
+		expected = self.EXPECTED_TEMPERATURES[phase_index]
+		pump = self.scenario._programList['heating_line'].get_output_channel('pump')
+		pump.set_value(255)
+		line_key = (preset.HEATING_LINE_ID, snc.ProgramType.CONSUMER,
+			snc.ConsumerParameterId.REQUIRED_TEMPERATURE, None)
+		cascade_key = (preset.CASCADE_ID, snc.ProgramType.TEMPERATURE_SOURCE,
+			snc.TemperatureSourceParameterId.REQUIRED_TEMPERATURE, None)
+		self.replies[line_key] = expected
+		self.replies[cascade_key] = expected
+		if self.fault == 'stuck_off':
+			pump.set_value(0)
+		elif self.fault == 'invalid_relay':
+			pump.set_value(None)
+		elif self.fault in ('line_request', 'missing_read', 'invalid_read'):
+			self.replies[line_key] = {'line_request': 99, 'missing_read': None,
+				'invalid_read': 'OPEN'}[self.fault]
+		elif self.fault == 'cascade':
+			self.replies[cascade_key] = 99
+		elif self.fault == 'ignored_downstream' and phase_index == 3:
+			self.replies[line_key] = 45
+		elif self.fault == 'stale_maximum' and phase_index == 5:
+			self.replies[line_key] = 60
+		elif self.fault == 'lost_own_setpoint' and phase_index == 8:
+			self.replies[line_key] = 0
+		elif self.fault == 'no_restart' and phase_index == 9:
+			self.replies[line_key] = 45
+		return all(predicate() for _ in range(3))
+
+	def test_success_all_reference_points_and_restoration(self):
+		self.run_scenario()
+		self.assertEqual(self.scenario._status, 'OK')
+		self.assertEqual(self.phases, list(self.scenario.PHASES))
+		self.assertEqual(self.scenario.get_checklist_id(), '3.3.7')
+		self.assertEqual(self.scenario.get_default_preset(), 'heating_circuit_3_3_6')
+		self.assert_restored()
+
+	def test_faults_fail_and_restore(self):
+		for fault in ('consumer', 'unexpected_dhw', 'stuck_off', 'invalid_relay',
+			'line_request', 'missing_read', 'invalid_read', 'cascade',
+			'ignored_downstream', 'stale_maximum', 'lost_own_setpoint', 'no_restart'):
+			with self.subTest(fault=fault):
+				self.setUp()
+				self.fault = fault
+				self.run_scenario()
+				self.assertEqual(self.scenario._status, 'FAIL')
+				self.assert_restored()
+
+	def test_failed_phase_write_restores_changed_setpoints(self):
+		self.fail_write_number = len(self.settings) + 5
+		self.run_scenario()
+		self.assertEqual(self.scenario._status, 'FAIL')
+		self.assert_restored()
+
+	def test_stop_restores_changed_setpoints_and_sensors(self):
+		self.scenario.wait_state_permanence.side_effect = InterruptedError('stopped')
+		with self.assertRaisesRegex(InterruptedError, 'stopped'):
+			self.run_scenario()
+		self.assertEqual(self.scenario._status, 'FAIL')
+		self.assert_restored()
+
+	def test_restore_failure_keeps_fail_status(self):
+		self.fail_write_number = len(self.settings) + 4 * len(self.scenario.PHASES) + 1
 		self.run_scenario()
 		self.assertEqual(self.scenario._status, 'FAIL')
 		self.assert_restored()
