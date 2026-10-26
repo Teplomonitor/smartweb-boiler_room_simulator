@@ -20,12 +20,14 @@ class HeatingCircuitSettings(object):
 			heatCalculationMode = None,
 			requiredConstantFlowTemperature = None,
 			temperatureCompensation = None,
+			alarm_program = None,
 			):
 		self._source         = source
 		self._heatingSlope   = heatingSlope
 		self._heatCalculationMode = heatCalculationMode
 		self._requiredConstantFlowTemperature = requiredConstantFlowTemperature
 		self._temperatureCompensation = temperatureCompensation
+		self._alarm_program = alarm_program
 
 	def get(self):
 		settings = [
@@ -49,6 +51,12 @@ class HeatingCircuitSettings(object):
 				snc.ProgramType.CONSUMER,
 				snc.ConsumerParameterId.TEMPERATURE_COMPENSATION,
 				self._temperatureCompensation,
+			))
+		if self._alarm_program is not None:
+			settings.append(RemoteControlParameter(
+				snc.ProgramType.CONSUMER,
+				snc.ConsumerParameterId.ALARM_PROGRAM_ID,
+				self._alarm_program,
 			))
 		return settings
 	def getSource    (self): return  self._source
