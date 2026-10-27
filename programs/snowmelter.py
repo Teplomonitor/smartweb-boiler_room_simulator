@@ -16,6 +16,7 @@ class Snowmelter(Program):
 	def get_type(): return snc.ProgramType.SNOWMELT
 	
 	_remoteControlParameters = {
+		'workMode'           : (snc.ProgramType.SNOWMELT, snc.SnowMelterParameterId.WORK_MODE),
 		'minOutdoorTemp'     : (snc.ProgramType.SNOWMELT, snc.SnowMelterParameterId['MINIMUM_OUTDOOR_TEMPERATURE'                            ]),
 		'maxOutdoorTemp'     : (snc.ProgramType.SNOWMELT, snc.SnowMelterParameterId['MAXIMUM_OUTDOOR_TEMPERATURE'                            ]),
 		'reqFlowTemp'        : (snc.ProgramType.SNOWMELT, snc.SnowMelterParameterId['REQUIRED_CONSTANT_FLOW_TEMPERATURE_OF_SECONDARY_CIRCUIT']),
