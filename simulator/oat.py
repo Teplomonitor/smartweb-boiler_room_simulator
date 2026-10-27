@@ -32,3 +32,5 @@ class Simulator(object):
 
 	def run(self):
 		self.set_temperature(self.compute_temperature())
+		if self._program.get_preset().is_virtual():
+			self._program.publish_temperature()
