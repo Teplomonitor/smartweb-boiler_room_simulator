@@ -8,56 +8,10 @@ import unittest
 from unittest.mock import Mock, patch
 
 import smartnet.constants as snc
+from tests.alarm_scenario_helpers import Sensor, load_alarm_scenario
 
 
-def load_scenario():
-	parent = ModuleType('scenario.scenario')
-	parent.Scenario = object
-	remote = ModuleType('smartnet.remoteControl')
-	remote.RemoteControlParameter = Mock()
-	smartnet = ModuleType('smartnet')
-	smartnet.constants = snc
-	smartnet.remoteControl = remote
-	console = ModuleType('consoleLog')
-	console.print_log = Mock()
-	console.print_error = Mock()
-	path = Path(__file__).resolve().parents[1] / 'scenario/list/boiler/scenario_boiler_3_5_6.py'
-	spec = importlib.util.spec_from_file_location('boiler_alarm_under_test', path)
-	module = importlib.util.module_from_spec(spec)
-	with patch.dict(sys.modules, {
-		'scenario.scenario': parent,
-		'smartnet': smartnet,
-		'smartnet.constants': snc,
-		'smartnet.remoteControl': remote,
-		'consoleLog': console,
-	}):
-		spec.loader.exec_module(module)
-	return module.Scenario
-
-
-Scenario = load_scenario()
-
-
-class Sensor:
-	def __init__(self, value):
-		self.value = value
-		self.manual = False
-		self.mapped = True
-
-	def get_value(self):
-		return self.value
-
-	def set_value(self, value, manual=False):
-		self.value = value
-
-	def is_mapped(self):
-		return self.mapped
-
-	def isManual(self):
-		return self.manual
-
-	def set_manual(self, manual):
-		self.manual = manual
+Scenario = load_alarm_scenario('scenario/list/boiler/scenario_boiler_3_5_6.py')
 
 
 class TestBoilerAlarmScenario(unittest.TestCase):
@@ -65,6 +19,7 @@ class TestBoilerAlarmScenario(unittest.TestCase):
 		self.scenario = Scenario()
 		self.scenario.RELAY_OFF = 0
 		self.scenario.RELAY_ON = 255
+		self.scenario.ALARM_TIMEOUT = 0  # Do not wait on deliberately stuck outputs.
 		self.scenario._manualSensorsList = []
 		self.pressure, self.boiler_temperature, self.dhw_temperature = [Sensor(v) for v in (3, 30, 40)]
 		self.sensors = [self.pressure, self.boiler_temperature, self.dhw_temperature]
@@ -92,15 +47,9 @@ class TestBoilerAlarmScenario(unittest.TestCase):
 		self.scenario._programList = {'boiler': boiler, 'dhw': dhw, 'filling_loop': filling_loop}
 		self.scenario._read_parameter = Mock(side_effect=self.read_parameter)
 		self.scenario._write_parameter = Mock(side_effect=self.write_parameter)
-		self.scenario.set_sensor_value = self.set_sensor_value
 		self.scenario.wait_event = Mock(side_effect=lambda predicate, timeout: predicate())
 		self.scenario.wait_state_permanence = Mock(side_effect=self.hold_state)
-
-	def set_sensor_value(self, sensor, value):
-		sensor.set_manual(True)
-		sensor.set_value(value, True)
-		if sensor not in self.scenario._manualSensorsList:
-			self.scenario._manualSensorsList.append(sensor)
+		self.scenario.simple_wait = Mock()
 
 	def alarm_value(self):
 		if self.pressure.value == Scenario.PRESSURE_LOW:
@@ -117,7 +66,8 @@ class TestBoilerAlarmScenario(unittest.TestCase):
 			return 255 if self.fault == 'ignores_alarm' else 0
 		return 0 if self.fault == 'no_restart' and self.had_alarm else 255
 
-	def read_parameter(self, parameter):
+	def read_parameter(self, program, program_type, parameter_id):
+		parameter = (program_type, parameter_id, program.get_id())
 		if parameter[:2] == (snc.ProgramType.CONSUMER, snc.ConsumerParameterId.REQUIRED_TEMPERATURE):
 			return None if self.fault == 'lost_request' and self.had_alarm else 60
 		if self.fault == 'read_failure':
@@ -126,7 +76,8 @@ class TestBoilerAlarmScenario(unittest.TestCase):
 		self.initial_values.setdefault(parameter, self.values[parameter])
 		return self.values[parameter]
 
-	def write_parameter(self, parameter, value):
+	def write_parameter(self, program, program_type, parameter_id, value):
+		parameter = (program_type, parameter_id, program.get_id())
 		self.values[parameter] = value
 		return self.fault != 'write_failure'
 
@@ -181,8 +132,22 @@ class TestBoilerAlarmScenario(unittest.TestCase):
 			self.scenario.run()
 		self.assert_clean()
 
+	def test_interruption_with_active_alarm_restores_inputs(self):
+		def hold(predicate, duration, timeout):
+			if self.pressure.value == Scenario.PRESSURE_LOW:
+				self.alarm_value()
+				raise RuntimeError('stopped')
+			return self.hold_state(predicate, duration, timeout)
+		self.scenario.wait_state_permanence.side_effect = hold
+		with self.assertRaisesRegex(RuntimeError, 'stopped'):
+			self.scenario.run()
+		self.assertTrue(self.had_alarm)
+		self.assertEqual(self.scenario._status, 'FAIL')
+		self.assert_clean()
+
 	def test_failed_restoration_marks_failure(self):
-		def write(parameter, value):
+		def write(program, program_type, parameter_id, value):
+			parameter = (program_type, parameter_id, program.get_id())
 			self.values[parameter] = value
 			return value != self.initial_values[parameter]
 		self.scenario._write_parameter.side_effect = write
@@ -192,12 +157,17 @@ class TestBoilerAlarmScenario(unittest.TestCase):
 
 	def test_parameter_io_uses_supported_remote_api(self):
 		parameter = (snc.ProgramType.DHW, snc.DhwParameterId.WORK_MODE, 101)
-		remote = Scenario._read_parameter.__globals__['sr'].RemoteControlParameter
+		program = Mock()
+		program.get_id.return_value = parameter[2]
+		remote = Scenario._read_parameter.__globals__['RemoteControlParameter']
 		remote.reset_mock()
 		remote.return_value.read.return_value = False
-		self.assertIsNone(Scenario._read_parameter(self.scenario, parameter))
+		self.assertIsNone(Scenario._read_parameter(self.scenario, program, *parameter[:2]))
+		remote.return_value.read.return_value = True
+		remote.return_value.get_value.return_value = 0
+		self.assertEqual(Scenario._read_parameter(self.scenario, program, *parameter[:2]), 0)
 		remote.return_value.write.return_value = True
-		self.assertTrue(Scenario._write_parameter(self.scenario, parameter, 0))
+		self.assertTrue(Scenario._write_parameter(self.scenario, program, *parameter[:2], 0))
 		remote.assert_called_with(
 			programType=parameter[0], parameterId=parameter[1], programId=101, parameterValue=0,
 		)
