@@ -1,26 +1,30 @@
 import smartnet.constants as snc
 
 from consoleLog import print_error, print_log
-from scenario.base.dhw import DhwScenario
-from scenario.base.filling_loop_signal import (
-	PRESSURE_INPUT_TYPE_RANGEABLE,
-	read_pressure_input_type,
-	write_pressure_input_type,
-)
+from scenario.base.filling_loop_alarm import FillingLoopAlarmScenario
 
 
-class Scenario(DhwScenario):
-	PRESSURE_NORMAL = 3
-	PRESSURE_LOW = 0
-	TIMEOUT = 60
+class Scenario(FillingLoopAlarmScenario):
+	MODE_COMFORT = 0
+	CIRCULATION_ON = 0
+	COLD_TEMPERATURE = 20
+	COMFORT_TEMPERATURE = 60
+	PUMP_RELIEF_OFF = 0
+	TIMEOUT = 120
 	ALARM_DURATION = 5
 
 	def get_scenario_title(self): return 'DHW test 6 - pumps shutdown on alarm'
 
 	def get_scenario_description(self):
-		return 'ГВС выключает насосы загрузки и циркуляции при аварии от программы подпитки'
+		return (
+			'ГВС выключает насосы загрузки и циркуляции при аварии от программы '
+			'подпитки и возобновляет их работу после нормализации давления'
+		)
 
 	def get_checklist_id(self): return '3.4.6'
+
+	def get_default_preset(self):
+		return 'dhw'
 
 	def get_required_programs(self):
 		return {
@@ -29,48 +33,51 @@ class Scenario(DhwScenario):
 		}
 
 	def get_filling_alarm_state(self):
-		return self._filling_loop.get_output_channel('alarm_output').get_value()
+		return self._programList['filling_loop'].get_output_channel('alarm_output').get_value()
 
 	def filling_alarm_is_on(self):
-		return self.get_filling_alarm_state() != self.RELAY_OFF
+		value = self.get_filling_alarm_state()
+		return value is not None and value != self.RELAY_OFF
 
 	def filling_alarm_is_off(self):
-		return not self.filling_alarm_is_on()
+		return self.get_filling_alarm_state() == self.RELAY_OFF
+
+	def _pumps_are(self, running):
+		expected = self.RELAY_ON if running else self.RELAY_OFF
+		return all(pump.get_value() == expected for pump in self._pumps)
+
+	def _check_state(self, alarm, running, description):
+		print_log(description)
+		if not self.wait_state_permanence(
+			lambda: self._alarm_is(alarm) and self._pumps_are(running),
+			self.ALARM_DURATION, self.TIMEOUT,
+		):
+			print_error(f'Не подтверждено состояние: {description}')
+			return False
+		return True
+
+	def _sequence(self):
+		if not self._check_state(False, True, 'Нормальное давление: оба насоса ГВС работают'):
+			return False
+		self._set_pressure(self.PRESSURE_LOW)
+		if not self.wait_event(self.filling_alarm_is_on, self.ALARM_TIMEOUT):
+			print_error('Программа подпитки не сформировала аварию')
+			return False
+		if not self._check_state(True, False, 'Авария подпитки: оба насоса ГВС выключены'):
+			return False
+		self._set_pressure(self.PRESSURE_NORMAL)
+		return self._check_state(False, True, 'Давление восстановлено: оба насоса ГВС снова работают')
 
 	def run(self):
-		original_pressure_input_type = read_pressure_input_type(self._filling_loop)
-		if original_pressure_input_type is None:
-			print_error('Не удалось прочитать тип сигнала подпитки')
-			self._status = 'FAIL'
-			return
-		try:
-			if not write_pressure_input_type(self._filling_loop, PRESSURE_INPUT_TYPE_RANGEABLE):
-				print_error('Не удалось настроить диапазонный тип сигнала подпитки')
-				self._status = 'FAIL'
-				return
-			print_log('устанавливаем нормальное давление подпитки')
-			if not self.set_pressure(self.PRESSURE_NORMAL):
-				self._status = 'FAIL'
-				return
-			if not self.wait_event(self.filling_alarm_is_off, self.TIMEOUT):
-				print_error('Плохо! авария подпитки не снимается при нормальном давлении')
-				self._status = 'FAIL'
-				return
-
-			print_log('задаём низкое давление для формирования аварии')
-			self.set_pressure(self.PRESSURE_LOW)
-			if not self.wait_event(self.filling_alarm_is_on, self.TIMEOUT):
-				print_error('Плохо! программа подпитки не сформировала аварию')
-				self._status = 'FAIL'
-				return
-
-			print_log('проверяем отключение насосов ГВС по аварии')
-			if self.wait_state_permanence(self.pumps_are_off, self.ALARM_DURATION, self.TIMEOUT):
-				print_log('Хорошо! оба насоса ГВС отключились по аварии')
-				self._status = 'OK'
-			else:
-				print_error('Плохо! насосы ГВС не отключились по аварии')
-				self._status = 'FAIL'
-		finally:
-			self.set_pressure(self.PRESSURE_NORMAL)
-			write_pressure_input_type(self._filling_loop, original_pressure_input_type)
+		dhw = self._programList['dhw']
+		self._pumps = [dhw.get_supply_pump_state(), dhw.get_circulation_pump_state()]
+		settings = [
+			(dhw, snc.ProgramType.CONSUMER, snc.ConsumerParameterId.ALARM_PROGRAM_ID,
+			 self._programList['filling_loop'].get_id()),
+			(dhw, snc.ProgramType.DHW, snc.DhwParameterId.WORK_MODE, self.MODE_COMFORT),
+			(dhw, snc.ProgramType.DHW, snc.DhwParameterId.TEMPERATURE_COMFORT, self.COMFORT_TEMPERATURE),
+			(dhw, snc.ProgramType.DHW, snc.DhwParameterId.CIRCULATION_MODE, self.CIRCULATION_ON),
+			(dhw, snc.ProgramType.DHW, snc.DhwParameterId.DHW_RELIEF, self.PUMP_RELIEF_OFF),
+		]
+		sensors = [(dhw.get_temperature(), self.COLD_TEMPERATURE)]
+		self._run_alarm_test(settings, sensors, self._pumps, self._sequence)
