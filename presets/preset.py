@@ -1,5 +1,23 @@
 from os.path import dirname, basename, isfile, join
 import glob
+import smartnet.constants as snc
+
+
+def validate_program_presets(programs):
+	ids = [program.get_id() for program in programs]
+	if len(ids) != len(set(ids)):
+		raise ValueError('Program IDs must be unique within a preset')
+	virtual_outdoor = False
+	for program in programs:
+		if not program.is_virtual():
+			continue
+		if program.get_type() != snc.ProgramType.OUTDOOR_SENSOR:
+			raise ValueError(f'Virtual program type is not implemented: {program.get_type()}')
+		if program.getSettings() is not None or any(program.get_outputs()):
+			raise ValueError('Virtual outdoor programs do not support controller settings or outputs')
+		virtual_outdoor = True
+	if virtual_outdoor and sum(program.get_type() == snc.ProgramType.OUTDOOR_SENSOR for program in programs) != 1:
+		raise ValueError('A virtual outdoor source cannot coexist with another outdoor program')
 
 class ProgramPreset(object):
 	'''
@@ -8,7 +26,10 @@ class ProgramPreset(object):
 	
 	def __init__(self,
 			programType, programScheme, programId,
-			programTitle, programSettings, programInputs, programOutputs):
+			programTitle, programSettings, programInputs, programOutputs, execution='real'):
+		if execution not in ('real', 'virtual'):
+			raise ValueError(f'Unknown program execution mode: {execution}')
+		self._execution = execution
 		self._type      = programType
 		self._scheme    = programScheme
 		self._id        = programId
@@ -26,6 +47,9 @@ class ProgramPreset(object):
 	def getInput    (self, i): return self._inputs[i]
 	def get_outputs  (self   ): return self._outputs
 	def getOutput   (self, i): return self._outputs[i]
+
+	def is_virtual(self): return self._execution == 'virtual'
+	def get_execution(self): return self._execution
 
 	def addProgramToControllerHost(self, controller):
 		i = 0
@@ -69,6 +93,10 @@ class ProgramPreset(object):
 				value.write()
 				
 	def loadPreset(self, controller):
+		if self.is_virtual():
+			validate_program_presets([self])
+			controller.addProgramFromPreset(self)
+			return True
 		programAddOk = self.addProgramToControllerHost(controller)
 		
 		if not programAddOk:

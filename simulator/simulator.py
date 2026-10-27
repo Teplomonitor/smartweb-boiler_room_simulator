@@ -62,6 +62,10 @@ class sensor_report_thread(threading.Thread):
 		self.start()
 	
 	def reportSensorsValues(self):
+		with self._simulator._state_lock:
+			self._report_sensors_values()
+
+	def _report_sensors_values(self):
 		ctrlIO = self._simulator.getControllersIOList()
 		
 		selfIdList = []
@@ -71,6 +75,8 @@ class sensor_report_thread(threading.Thread):
 		
 		for sim in self._simulator._simList:
 			program = sim._program
+			if program.get_preset().is_virtual():
+				continue
 			for programInput in program.get_inputs().values():
 				if programInput.is_mapped() and programInput.get_mapping().get_host_id() in selfIdList:
 					if ssr.reportSensorValue(programInput):
@@ -98,6 +104,7 @@ class Simulator(threading.Thread):
 		if hasattr(self, '_initDone'):
 			return
 		
+		self._state_lock = threading.RLock()
 		self.clear()
 		
 		threading.Thread.__init__(self, name = thread_name)
@@ -113,6 +120,13 @@ class Simulator(threading.Thread):
 		self.start()
 	
 	def clear(self):
+		with self._state_lock:
+			for sim in getattr(self, '_simList', []):
+				if sim._program.get_preset().is_virtual():
+					sim._program.clear()
+			self._clear_state()
+
+	def _clear_state(self):
 		self._simulator_ready = False
 		self._controllerHost = None
 		self._controllerIo   = []
@@ -128,6 +142,10 @@ class Simulator(threading.Thread):
 #		time.sleep(2)
 		
 	def reloadConfig(self, controllerHost, controllerIo):
+		with self._state_lock:
+			self._reload_config(controllerHost, controllerIo)
+
+	def _reload_config(self, controllerHost, controllerIo):
 		self.clear()
 		
 		self._controllerHost = controllerHost
@@ -136,6 +154,8 @@ class Simulator(threading.Thread):
 		programsList = self._controllerHost.get_program_list()
 		
 		for program in programsList:
+			if program.get_preset().is_virtual():
+				continue
 			programId = program.get_id()
 			for program_input in program.get_inputs().values():
 				mapping = program_input.get_mapping()
@@ -206,11 +226,18 @@ class Simulator(threading.Thread):
 	
 	
 	def runProgramSimulators(self):
-		try:
-			for sim in self._simList:
+		with self._state_lock:
+			if self._simulator_ready:
+				self._run_program_simulators()
+
+	def _run_program_simulators(self):
+		for sim in self._simList:
+			try:
 				sim.run()
-		except:
-			print('prg sim fault')
+			except Exception:
+				if sim._program.get_preset().is_virtual():
+					raise
+				print('prg sim fault')
 			
 	def runVirtualControllers(self):
 		for ctrlIo in self._controllerIo:

@@ -16,6 +16,7 @@ from programs.fillingLoop     import FillingLoop     as ProgramFillingLoop
 from programs.tptValve        import TptValve        as ProgramTptValve
 from programs.swimmingPool    import SwimmingPool    as ProgramSwimmingPool
 from programs.virtualController import VirtualController as ProgramVirtualController
+from programs.virtual_outdoor import VirtualOutdoor
 
 import smartnet.constants as snc
 
@@ -36,6 +37,10 @@ programCreator = {
 
 def createProgram(preset):
 	programType = preset.get_type()
+	if preset.is_virtual():
+		if programType != snc.ProgramType.OUTDOOR_SENSOR:
+			raise ValueError(f'Unsupported virtual program type: {programType}')
+		return VirtualOutdoor(preset)
 	
 	if programType in programCreator:
 		prg = programCreator[programType](preset)

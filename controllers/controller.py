@@ -10,6 +10,7 @@ import smartnet.remoteControl as sr
 
 import smartnet.constants as snc
 import programs.factory   as pf
+from presets.preset import validate_program_presets
 
 from smartnet.message_log import MessageLogReader
 
@@ -52,6 +53,7 @@ class Controller(object):
 			self._gui.clear()
 			
 	def initController(self, resetConfig, programPresetList):
+		validate_program_presets(programPresetList)
 		self.clear()
 			
 		if resetConfig:
@@ -68,11 +70,17 @@ class Controller(object):
 			if len(programPresetList) == 0:
 				return
 			
+			real_programs = [program for program in programPresetList if not program.is_virtual()]
 			activeProgramList = []
+			programFound = not real_programs
 			i = 0
 			while i < 3:
 				activeProgramList.extend(self.readControllerProgramList())
-				for program in programPresetList:
+				if any(program.is_virtual() for program in programPresetList) and any(
+					program['type'] == snc.ProgramType.OUTDOOR_SENSOR for program in activeProgramList
+				):
+					raise ValueError('Remove the real outdoor program before using a virtual outdoor source')
+				for program in real_programs:
 					programFound = self.searchProgramInActiveProgramList(program.get_id(), program.get_type(), activeProgramList)
 					if not programFound:
 						print_error(f'program {program.get_id()}.{program.get_type()} not found')
