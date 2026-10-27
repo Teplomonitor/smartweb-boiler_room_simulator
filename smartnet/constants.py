@@ -165,6 +165,18 @@ class RoomDeviceParameterId(IntEnum):
 	POOL_TEMPERATURE_OFFSET = 34
 	SCHEDULE_2_0 = 35
 	LOCATION = 36
+	GROUP = 40
+
+
+class RoomWorkMode(IntEnum):
+	COMFORT = 0
+	ECONOM = 1
+	PROGRAM = 2
+	OFF = 3
+
+
+class RoomDeviceFunction(IntEnum):
+	SET_WORK_MODE = 2
 
 # Placeholder - will be populated from parameter_info
 # ... existing code ...
