@@ -40,4 +40,5 @@ PARAMETER_INFO = {
 	RoomDeviceParameterId.POOL_TEMPERATURE_OFFSET:            {'type': 'TEMPERATURE'},
 	RoomDeviceParameterId.SCHEDULE_2_0:                       {'type': 'UINT8_T'},
 	RoomDeviceParameterId.LOCATION:                           {'type': 'UINT8_T'},
+	RoomDeviceParameterId.GROUP:                              {'type': 'UINT8_T'},
 }
