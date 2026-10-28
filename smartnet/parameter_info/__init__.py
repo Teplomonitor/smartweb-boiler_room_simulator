@@ -8,6 +8,7 @@ from smartnet.constants     import ProgramType
 from .common                import CASCADE_SOURCES_MAX_NUM, SCHEDULE_ARRAY_SIZE
 
 from .cascade_manager       import PARAMETER_INFO as CASCADE_MANAGER_PARAMETER_INFO
+from .alarm                 import PARAMETER_INFO as ALARM_PARAMETER_INFO
 from .circuit               import PARAMETER_INFO as CIRCUIT_PARAMETER_INFO
 from .consumer              import PARAMETER_INFO as CONSUMER_PARAMETER_INFO
 from .controller            import PARAMETER_INFO as CONTROLLER_PARAMETER_INFO
@@ -28,6 +29,7 @@ from .temperature_generator import PARAMETER_INFO as TEMPERATURE_GENERATOR_PARAM
 
 ParameterDict = {
 	ProgramType.PROGRAM:            PROGRAM_PARAMETER_INFO,
+	ProgramType.ALARM:              ALARM_PARAMETER_INFO,
 	ProgramType.BOILER:             BOILER_PARAMETER_INFO,
 	ProgramType.DHW:                DHW_PARAMETER_INFO,
 	ProgramType.FILLING_LOOP:       FILLING_LOOP_PARAMETER_INFO,
