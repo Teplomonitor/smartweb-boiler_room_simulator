@@ -113,6 +113,13 @@ class ProgramType(IntEnum):
     MSGLOG = 0x93
     CHARLIE = 0xC0
 
+class AlarmParameterId(IntEnum):
+	INPUT_TYPE = 1
+	INPUT_CONTROL = 4
+	ALARM_DELAY = 15
+	AUTO_RESET = 16
+	ENABLE_LOG = 17
+
 SCHEDULE_ARRAY_SIZE = 7*3*2
 
 class ProgramParameterId(IntEnum):
