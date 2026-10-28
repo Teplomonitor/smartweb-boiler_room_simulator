@@ -121,6 +121,13 @@ class InputChannel(Channel):
 		self.setMin(minValue)
 		self.setMax(maxValue)
 		self.setUnits(units)
+
+	def init_gui(self):
+		super().init_gui()
+		if self.isShort():
+			self.setShort(True)
+		elif self.isOpen():
+			self.setOpen(True)
 		
 	def set_value  (self, value, manual = False  ):
 		if self.isManual():
