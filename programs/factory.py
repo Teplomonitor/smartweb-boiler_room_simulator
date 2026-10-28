@@ -17,6 +17,7 @@ from programs.tptValve        import TptValve        as ProgramTptValve
 from programs.swimmingPool    import SwimmingPool    as ProgramSwimmingPool
 from programs.virtualController import VirtualController as ProgramVirtualController
 from programs.virtual_outdoor import VirtualOutdoor
+from programs.alarm           import Alarm           as ProgramAlarm
 
 import smartnet.constants as snc
 
@@ -33,6 +34,7 @@ programCreator = {
 		snc.ProgramType.TPT_VALVE_ADAPTER  : ProgramTptValve       ,
 		snc.ProgramType.POOL               : ProgramSwimmingPool   ,
 		snc.ProgramType.VIRTUAL_CONTROLLER : ProgramVirtualController,
+		snc.ProgramType.ALARM              : ProgramAlarm,
 }
 
 def createProgram(preset):

@@ -20,6 +20,7 @@ import simulator.collector
 import simulator.tptValve
 import simulator.swimmingPool
 import simulator.virtualController
+import simulator.alarm
 import smartnet.constants as snc
 
 BROADCAST_ID = 0
@@ -37,6 +38,7 @@ simulatorType = {
 	snc.ProgramType.TPT_VALVE_ADAPTER: simulator.tptValve        .Simulator,
 	snc.ProgramType.POOL             : simulator.swimmingPool    .Simulator,
 	snc.ProgramType.VIRTUAL_CONTROLLER: simulator.virtualController.Simulator,
+	snc.ProgramType.ALARM            : simulator.alarm           .Simulator,
 }
 
 consumerTypesList = [
