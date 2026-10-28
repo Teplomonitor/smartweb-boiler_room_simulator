@@ -11,6 +11,8 @@ from scenario.list.journal.scenario_journal_9_4 import Scenario as DisinfectionS
 from scenario.list.journal.scenario_journal_9_5 import Scenario as DisinfectionEndScenario
 from scenario.list.journal.scenario_journal_9_6 import Scenario as WarmupStartScenario
 from scenario.list.journal.scenario_journal_9_7 import Scenario as WarmupEndScenario
+from scenario.list.journal.scenario_journal_9_9 import Scenario as AlarmEndedScenario
+from scenario.list.journal.scenario_journal_9_10 import Scenario as AlarmResetScenario
 from scenario.list.journal.scenario_journal_9_11 import Scenario as LowPressureScenario
 from scenario.list.journal.scenario_journal_9_12 import Scenario as PressureRestoredScenario
 from scenario.list.journal.scenario_journal_9_13 import Scenario as AutoFillScenario
@@ -21,7 +23,10 @@ from scenario.list.journal.scenario_journal_9_32 import Scenario as BoilerErrorS
 from presets.list.boiler_journal_error import get_presets_list
 from presets.list.journal_outdoor import get_presets_list as get_outdoor_preset
 from presets.list.journal_pool_flow import get_presets_list as get_pool_flow_preset
+from presets.list.alarm import get_presets_list as get_alarm_preset
+from programs.alarm import Alarm
 import smartnet.constants as snc
+from smartnet.parameter_registry import get_parameter
 from smartnet.message_log_constants import MessageLogCode, SeverityCode
 from smartnet.message import Message
 
@@ -400,6 +405,109 @@ class TestNewJournalScenarios(unittest.TestCase):
 		self.assertEqual(scenario._status, 'FAIL')
 		scenario._controllerHost.write_time.assert_any_call((12, 1, 0, 0))
 		self.assertEqual(scenario._write_antilegion.call_args_list[-1].args, (1,))
+
+
+class TestAlarmJournalScenarios(unittest.TestCase):
+	def make_scenario(self, scenario_class):
+		scenario = scenario_class.__new__(scenario_class)
+		sensor = Mock()
+		sensor.is_mapped.return_value = True
+		sensor.isShort.return_value = False
+		sensor.isOpen.return_value = True
+		alarm = Mock()
+		alarm.get_id.return_value = 101
+		alarm.get_alarm_input.return_value = sensor
+		alarm.read_parameter_value.side_effect = [0, 5, 1, 0]
+		alarm.write_parameter.return_value = True
+		alarm.reset_alarm_input.return_value = True
+		scenario._programList = {'alarm': alarm}
+		scenario.set_sensor_value = Mock()
+		scenario.wait = Mock()
+		scenario.simple_wait = Mock()
+		scenario.snapshot_journal = Mock(return_value=True)
+		scenario.wait_journal_entry = Mock(return_value=True)
+		return scenario, alarm, sensor
+
+	def test_alarm_preset_and_indexed_protocol(self):
+		programs, _ = get_alarm_preset()
+		alarm = Alarm(programs[0])
+		self.addCleanup(alarm.clear)
+		self.assertEqual(alarm.get_type(), snc.ProgramType.ALARM)
+		self.assertTrue(alarm.get_alarm_input(0).is_mapped())
+		for name, parameter_id, parameter_type in (
+			('input_type', snc.AlarmParameterId.INPUT_TYPE, 'UINT8_T'),
+			('input_control', snc.AlarmParameterId.INPUT_CONTROL, 'UINT8_T'),
+			('alarm_delay', snc.AlarmParameterId.ALARM_DELAY, 'TIME_MS'),
+			('auto_reset', snc.AlarmParameterId.AUTO_RESET, 'UINT8_T'),
+			('enable_log', snc.AlarmParameterId.ENABLE_LOG, 'UINT8_T'),
+		):
+			with self.subTest(name=name):
+				self.assertEqual(alarm.get_parameter_code(name), (snc.ProgramType.ALARM, parameter_id))
+				definition = get_parameter(snc.ProgramType.ALARM, parameter_id)
+				self.assertEqual((definition.type, definition.array_size), (parameter_type, 8))
+		with patch.object(alarm, 'write_parameter', return_value=True) as write:
+			self.assertTrue(alarm.reset_alarm_input(0))
+			write.assert_called_once_with('input_control', 1, index=0)
+
+	def test_9_9_waits_for_alarm_then_ended_message(self):
+		scenario, alarm, sensor = self.make_scenario(AlarmEndedScenario)
+		scenario.run()
+		self.assertEqual(scenario._status, 'OK')
+		self.assertEqual(scenario.snapshot_journal.call_count, 2)
+		self.assertEqual(scenario.wait_journal_entry.call_args_list[0].args[:3],
+			(MessageLogCode.MLC_ALARM_STARTED, SeverityCode.SC_EMERGENCY, 101))
+		scenario.wait_journal_entry.assert_any_call(
+			MessageLogCode.MLC_ALARM_ENDED, SeverityCode.SC_WARNING,
+			101, scenario.ALARM_TIMEOUT, param_ex=[0])
+		alarm.write_parameter.assert_any_call('auto_reset', 1, index=0)
+		self.assertEqual(alarm.write_parameter.call_args_list[-1].args, ('enable_log', 0))
+		alarm.reset_alarm_input.assert_not_called()
+		sensor.set_manual.assert_called_once_with(False)
+
+	def test_9_10_resets_only_individual_input_after_condition_clears(self):
+		scenario, alarm, sensor = self.make_scenario(AlarmResetScenario)
+		events = []
+		scenario.set_sensor_value.side_effect = lambda _, value: events.append(value)
+		alarm.reset_alarm_input.side_effect = lambda index: events.append('reset') or True
+		scenario.run()
+		self.assertEqual(scenario._status, 'OK')
+		self.assertEqual(events[:5], ['open', 'reset', 'short', 'open', 'reset'])
+		self.assertEqual(alarm.reset_alarm_input.call_count, 2)  # initial cleanup and tested reset
+		scenario.wait_journal_entry.assert_any_call(
+			MessageLogCode.MLC_ALARM_RESET, SeverityCode.SC_NOTICE,
+			101, scenario.ALARM_TIMEOUT, param_ex=[0])
+		alarm.write_parameter.assert_any_call('auto_reset', 0, index=0)
+		sensor.set_manual.assert_called_once_with(False)
+
+	def test_preexisting_short_input_is_not_modified(self):
+		scenario, alarm, sensor = self.make_scenario(AlarmResetScenario)
+		sensor.isShort.return_value = True
+		scenario.run()
+		self.assertEqual(scenario._status, 'FAIL')
+		scenario.set_sensor_value.assert_not_called()
+		alarm.write_parameter.assert_not_called()
+		alarm.reset_alarm_input.assert_not_called()
+
+	def test_parameter_read_failure_does_not_change_alarm(self):
+		scenario, alarm, sensor = self.make_scenario(AlarmResetScenario)
+		alarm.read_parameter_value.side_effect = [0, None]
+		scenario.run()
+		self.assertEqual(scenario._status, 'FAIL')
+		scenario.set_sensor_value.assert_not_called()
+		alarm.write_parameter.assert_not_called()
+		alarm.reset_alarm_input.assert_not_called()
+		sensor.set_manual.assert_not_called()
+
+	def test_failure_restores_input_and_original_parameters(self):
+		scenario, alarm, sensor = self.make_scenario(AlarmResetScenario)
+		scenario.wait_journal_entry.return_value = False
+		scenario.run()
+		self.assertEqual(scenario._status, 'FAIL')
+		self.assertEqual(scenario.snapshot_journal.call_count, 1)
+		for name, value in (('input_type', 0), ('alarm_delay', 5), ('auto_reset', 1), ('enable_log', 0)):
+			alarm.write_parameter.assert_any_call(name, value, index=0)
+		self.assertEqual(scenario.set_sensor_value.call_args.args, (sensor, 'open'))
+		sensor.set_manual.assert_called_once_with(False)
 
 
 if __name__ == '__main__':
