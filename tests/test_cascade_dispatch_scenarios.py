@@ -26,7 +26,7 @@ main_thread = ModuleType('mainThread')
 main_thread.taskEnable = lambda: True
 with patch.dict(sys.modules, {'scenario.scenario': parent, 'mainThread': main_thread}):
 	from smartnet.message import Message, CanListener
-	from smartnet.cascade_monitor import CascadeMonitor, PowerCommand
+	from smartnet.cascade_monitor import CascadeMonitor, PowerCommand, OutputReport
 	from smartnet.channelMapping import InputChannel, OutputChannel, ChannelMapping
 	from presets.cascade_test import build_cascade_test
 	base = load_module('dispatch_parent', 'scenario/base/cascade_manager.py')
@@ -56,15 +56,39 @@ class TestCascadeMonitor(unittest.TestCase):
 		self.monitor.on_can_message_received(command_message(boiler_id=199))
 		self.assertEqual(self.monitor.snapshot()[0], [PowerCommand(123, 103, 50, -12.3)])
 
+	def test_zero_padded_request_power(self):
+		message = command_message(boiler_id=104, power=0)
+		message.setData(b'\x00\x02\x80\x66\x00\x00\x00\x00')
+		self.monitor.on_can_message_received(message)
+		self.assertEqual(self.monitor.snapshot()[0], [PowerCommand(123, 104, 0, -3276.6)])
+
+	def test_off_command_with_undefined_temperature(self):
+		message = command_message(power=0)
+		message.setData([0, 2, 128, 102])
+		self.monitor.on_can_message_received(message)
+		self.assertEqual(self.monitor.snapshot()[0], [PowerCommand(123, 103, 0, -3276.6)])
+
 	def test_wrong_requester_and_bad_frames_fail_without_callback_exception(self):
-		for data in ([50], [101, 0, 0, 102], [50, 0, 0, 99], None):
+		for data in ([50], [50, 0, 0, 102, 0], [101, 0, 0, 102],
+			[50, 0, 0, 99], [50, 0, 0, 102, 0, 0, 0, 1], None):
 			with self.subTest(data=data):
 				monitor = CascadeMonitor(102, (103,))
 				message = command_message()
 				message.setData(data)
 				monitor.on_can_message_received(message)
-				with self.assertRaises(RuntimeError):
-					monitor.snapshot()
+				self.assertIsNotNone(monitor.command_error)
+				self.assertEqual(monitor.snapshot()[0], [])
+
+	def test_output_reports_are_observed_independently_of_commands(self):
+		self.monitor.on_can_message_received(Message(snc.ProgramType.REMOTE_CONTROL, 103,
+			snc.RemoteControlFunction.GET_PARAMETER_VALUE, snc.RequestFlag.RESPONSE,
+			[snc.ProgramType.PROGRAM, snc.ProgramParameterId.OUTPUT, 3, 0]))
+		self.assertEqual(self.monitor.output_snapshot(), [OutputReport(123, 103, 3, 0)])
+		self.assertEqual(self.monitor.snapshot()[0], [])
+		self.monitor.on_can_message_received(Message(snc.ProgramType.REMOTE_CONTROL, 199,
+			snc.RemoteControlFunction.GET_PARAMETER_VALUE, snc.RequestFlag.RESPONSE,
+			[snc.ProgramType.PROGRAM, snc.ProgramParameterId.OUTPUT, 3, 255]))
+		self.assertEqual(len(self.monitor.output_snapshot()), 1)
 
 	def test_properties_decode(self):
 		message = Message(snc.ProgramType.TEMPERATURE_SOURCE, 104,
@@ -72,10 +96,16 @@ class TestCascadeMonitor(unittest.TestCase):
 			[1, 30, 0, 0, 0, 0, 1])
 		self.monitor.on_can_message_received(message)
 		self.assertEqual(self.monitor.snapshot()[1], {104: (123, 1)})
-		message.setData([1])
+		message.setData(b'\x00\x0f\x00\x00\x00\x00\x00\x00')
 		self.monitor.on_can_message_received(message)
-		with self.assertRaises(RuntimeError):
-			self.monitor.snapshot()
+		self.assertEqual(self.monitor.snapshot()[1], {104: (123, 0)})
+		for data in ([1, 30, 0, 0, 0, 0, 1, 1], [1]):
+			with self.subTest(data=data):
+				monitor = CascadeMonitor(102, (104,))
+				message.setData(data)
+				monitor.on_can_message_received(message)
+				with self.assertRaises(RuntimeError):
+					monitor.snapshot()
 
 	def test_unsubscribe_on_external_stop(self):
 		with patch.object(CanListener, 'subscribe') as subscribe, patch.object(CanListener, 'unsubscribe') as unsubscribe:
@@ -85,11 +115,19 @@ class TestCascadeMonitor(unittest.TestCase):
 			subscribe.assert_called_once_with(self.monitor)
 			unsubscribe.assert_called_once_with(self.monitor)
 
-	def test_history_overflow_is_not_silently_ignored(self):
+	def test_command_history_is_bounded_without_failing_output_checks(self):
 		for _ in range(self.monitor.HISTORY_SIZE + 1):
 			self.monitor.on_can_message_received(command_message())
+		self.assertEqual(len(self.monitor.snapshot()[0]), self.monitor.HISTORY_SIZE)
+
+	def test_output_history_overflow_is_not_silently_ignored(self):
+		message = Message(snc.ProgramType.REMOTE_CONTROL, 103,
+			snc.RemoteControlFunction.GET_PARAMETER_VALUE, snc.RequestFlag.RESPONSE,
+			[snc.ProgramType.PROGRAM, snc.ProgramParameterId.OUTPUT, 3, 0])
+		for _ in range(self.monitor.HISTORY_SIZE + 1):
+			self.monitor.on_can_message_received(message)
 		with self.assertRaises(RuntimeError):
-			self.monitor.snapshot()
+			self.monitor.output_snapshot()
 
 
 class ScriptedFeedback:
@@ -101,6 +139,7 @@ class ScriptedFeedback:
 		self.scenario.clock = lambda: self.now
 		self.scenario.wait = self.advance
 		self.scenario.set_sensor_value = self.set_sensor
+		self.scenario.request_output_states = self.request_outputs
 		self.scenario.wait_state_permanence = lambda predicate, duration, timeout: self.discover(predicate, timeout)
 		self.scenario._programList = {}
 		self.sensors = []
@@ -116,7 +155,8 @@ class ScriptedFeedback:
 				inputs['error'] = self.sensor(index, 30)
 				output = {key: OutputChannel() for key in ('burner1', 'burner2')}
 				for channel_id, key in enumerate(('power', 'pump')):
-					output[key] = OutputChannel(ChannelMapping(channel_id, 'CHANNEL_RELAY', 124 + index), 0)
+					output[key] = OutputChannel(ChannelMapping(channel_id, 'CHANNEL_RELAY', 124 + index), 0,
+						channelId=3 if key == 'power' else 0)
 				self.outputs.extend((output['power'], output['pump']))
 				program.get_input_channel.side_effect = inputs.__getitem__
 				program.get_output_channel.side_effect = output.__getitem__
@@ -141,6 +181,19 @@ class ScriptedFeedback:
 		self.defect = None
 		self.cancelled_start = None
 		self.was_running = False
+		self.pending_outputs = False
+		self.last_signals = {}
+
+	def request_outputs(self):
+		self.pending_outputs = True
+
+	def report_output(self, program, output, value):
+		if self.defect == 'no_output_reports':
+			return
+		self.scenario.monitor.on_can_message_received(Message(
+			snc.ProgramType.REMOTE_CONTROL, program.get_id(),
+			snc.RemoteControlFunction.GET_PARAMETER_VALUE, snc.RequestFlag.RESPONSE,
+			[snc.ProgramType.PROGRAM, snc.ProgramParameterId.OUTPUT, output.get_id(), value]))
 
 	def sensor(self, channel_id, value):
 		sensor = InputChannel(ChannelMapping(channel_id, 'CHANNEL_SENSOR', 123), value)
@@ -221,7 +274,7 @@ class ScriptedFeedback:
 			key = program.get_id()
 			monitor.on_can_message_received(Message(snc.ProgramType.TEMPERATURE_SOURCE, key,
 				snc.TemperatureSourceFunction['GET_PROPERTIES'], snc.RequestFlag.RESPONSE,
-				[1, 30, 0, 0, 0, 0, int(key in failed)]))
+				[1, 30, 0, 0, 0, 0, int(key in failed), 0]))
 			power = self.target[key] if self.now >= self.ready.get(key, 0) else 0
 			if self.defect == 'no_replacement' and failed:
 				power = 0
@@ -232,22 +285,32 @@ class ScriptedFeedback:
 			if (self.defect == 'transient_early' and self.target[key]
 				and self.now < self.ready.get(key, 0)):
 				monitor.on_can_message_received(command_message(key, 50))
+				self.report_output(program, program.get_power_output(), 128)
 			if (self.defect == 'cancelled_start' and key == 104
 				and self.cancelled_start is not None and self.now >= self.cancelled_start):
 				monitor.on_can_message_received(command_message(key, 50))
+				self.report_output(program, program.get_power_output(), 128)
 			missing = self.defect == 'missing' or (
 				self.defect == 'missing_stop' and self.was_running and demand == 0)
 			if not missing:
-				monitor.on_can_message_received(command_message(
+				message = command_message(
 					199 if self.defect == 'address' else key, round(power),
 					99 if self.defect == 'requester' else 102,
-					40 if self.defect == 'temperature' else 50))
+					40 if self.defect == 'temperature' else 50)
+				message.setData([*message.get_data(), 0, 0, 0, 0])
+				monitor.on_can_message_received(message)
 			self.last_power[key] = power
 			signal = 0 if power == 0 else round(1 + 253 * power / 100)
 			if self.defect == 'stuck_output' and demand == 0:
 				signal = 200
 			program.get_power_output().set_value(signal)
 			program.get_pump().set_value(0 if self.defect == 'pump' else (255 if power else 0))
+			for output in (program.get_power_output(), program.get_pump()):
+				identity = (key, output.get_id())
+				if self.pending_outputs or self.last_signals.get(identity) != output.get_value():
+					self.report_output(program, output, output.get_value())
+				self.last_signals[identity] = output.get_value()
+		self.pending_outputs = False
 		self.was_running = self.was_running or demand > 0
 
 	def run(self):
@@ -279,14 +342,48 @@ class TestDispatchScenarios(unittest.TestCase):
 				feedback.run()
 				feedback.assert_restored(self, 'OK')
 
-	def test_missing_wrong_requester_and_stuck_outputs_fail(self):
-		for defect in ('missing', 'requester', 'stuck_output', 'address',
-			'wrong_distribution', 'temperature', 'pump', 'missing_stop'):
+	def test_output_probes_do_not_wait_for_responses(self):
+		feedback = ScriptedFeedback(SCENARIOS[0])
+		sent = []
+		def capture(message, *args, **kwargs):
+			sent.append((message, args, kwargs))
+		with patch.object(Message, 'send', new=capture):
+			dispatch.CascadeDispatchScenario.request_output_states(feedback.scenario)
+		self.assertEqual([(msg.getProgramId(), msg.get_data()[-1]) for msg, _, _ in sent],
+			[(103, 3), (103, 0), (104, 3), (104, 0)])
+		self.assertTrue(all(msg.getRequestFlag() == snc.RequestFlag.REQUEST for msg, _, _ in sent))
+		self.assertTrue(all(not args and not kwargs for _, args, kwargs in sent))
+
+	def test_broken_boiler_outputs_fail(self):
+		for defect in ('stuck_output', 'wrong_distribution', 'pump', 'no_output_reports'):
 			with self.subTest(defect=defect):
 				feedback = ScriptedFeedback(SCENARIOS[0])
 				feedback.defect = defect
 				feedback.run()
 				feedback.assert_restored(self, 'FAIL')
+
+	def test_timeout_identifies_failed_dispatch_check(self):
+		for defect, reason in (('no_output_reports', 'нет подтверждения'),
+			('stuck_output', 'выход'), ('pump', 'насос')):
+			with self.subTest(defect=defect):
+				feedback = ScriptedFeedback(SCENARIOS[0])
+				feedback.defect = defect
+				with patch.object(dispatch, 'print_error') as log:
+					feedback.run()
+				feedback.assert_restored(self, 'FAIL')
+				timeouts = [str(call.args[0]) for call in log.call_args_list if 'Тайм-аут:' in str(call.args[0])]
+				self.assertEqual(len(timeouts), 1)
+				self.assertIn(reason, timeouts[0])
+				self.assertIn('коллектор=', timeouts[0])
+				self.assertIn('последние отчёты выходов', timeouts[0])
+
+	def test_command_defects_do_not_define_output_only_success(self):
+		for defect in ('missing', 'requester', 'address', 'temperature', 'missing_stop'):
+			with self.subTest(defect=defect):
+				feedback = ScriptedFeedback(SCENARIOS[0])
+				feedback.defect = defect
+				feedback.run()
+				feedback.assert_restored(self, 'OK')
 
 	def test_early_stage_is_rejected(self):
 		for scenario_type in SCENARIOS[3:6]:
@@ -316,12 +413,11 @@ class TestDispatchScenarios(unittest.TestCase):
 					feedback.run()
 				feedback.assert_restored(self, 'FAIL')
 
-	def test_stale_commands_cannot_pass_with_correct_outputs(self):
+	def test_unconfirmed_outputs_cannot_pass_with_correct_cached_values(self):
 		feedback = ScriptedFeedback(SCENARIOS[0])
 		feedback.run()
-		feedback.now += feedback.scenario.COMMAND_MAX_AGE + 1
 		self.assertFalse(feedback.scenario.commands_match(
-			feedback.scenario.expected_powers(0), 0))
+			feedback.scenario.expected_powers(0), feedback.now + 1))
 
 	def test_existing_manual_alarm_state_is_restored(self):
 		feedback = ScriptedFeedback(SCENARIOS[9])

@@ -96,6 +96,33 @@ class TestDhwPriorityScenario(unittest.TestCase):
 		self.scenario._read_consumer_temperature = Mock(side_effect=(None, 35))
 		self.assertFalse(self.scenario._required_and_generator_temperatures_match(True))
 
+	def test_priority_inputs_use_generator_sensor_not_numeric_temperature(self):
+		dhw_sensor = self.scenario._dhw.get_temperature.return_value
+		generator_sensor = Mock()
+		self.scenario._generator = Mock()
+		self.scenario._generator.get_temperature.return_value = 70.0
+		self.scenario._generator.get_input_channel.return_value = generator_sensor
+		self.scenario.set_sensor_value = Mock()
+
+		self.assertEqual(self.scenario._get_test_sensors(False), [dhw_sensor, generator_sensor])
+		self.scenario._set_priority_test_inputs(False)
+		self.scenario.set_sensor_value.assert_any_call(dhw_sensor, self.scenario.DHW_COLD_TEMPERATURE)
+		self.scenario.set_sensor_value.assert_any_call(generator_sensor, self.scenario.GENERATOR_TEMPERATURE)
+		self.scenario._generator.get_temperature.assert_not_called()
+
+	def test_flow_through_uses_generator_sensor_and_flow_channel(self):
+		self.scenario._generator = Mock()
+		generator_sensor = self.scenario._generator.get_input_channel.return_value
+		flow_sensor = self.scenario._dhw.get_input_channel.return_value
+		self.scenario.set_sensor_value = Mock()
+
+		self.assertEqual(self.scenario._get_test_sensors(True),
+			[self.scenario._dhw.get_temperature.return_value, generator_sensor, flow_sensor])
+		self.scenario._set_priority_test_inputs(True)
+		self.scenario.set_sensor_value.assert_any_call(generator_sensor,
+			self.scenario.FLOW_THROUGH_GENERATOR_TEMPERATURE)
+		self.scenario.set_sensor_value.assert_any_call(flow_sensor, self.scenario.FLOW_RATE)
+
 
 if __name__ == '__main__':
 	unittest.main()
