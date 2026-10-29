@@ -319,8 +319,8 @@ class CascadeDispatchScenario(CascadeManagerScenario):
 			lambda: self.delay_guard(since, 1), stable=0)
 		self.hold_condition(lambda: True, self.CANCEL_PULSE_DURATION,
 			'Прерван короткий запрос', lambda: self.delay_guard(since, 1))
-		self.check_dispatch(low, guard=lambda: self.delay_guard(since, 1))
-		low_since = self.clock()
+		low_since = self.set_demand(low)
+		self.check_dispatch(low, guard=lambda: self.delay_guard(since, 1), since=low_since)
 		self.hold_condition(lambda: self.outputs_match(self.expected_powers(low), low_since),
 			self.DELAY_MINUTES * self.SECONDS_PER_MINUTE + self.TIMING_MARGIN,
 			'Отложенное включение после отмены запроса', lambda: self.delay_guard(since, 1))
