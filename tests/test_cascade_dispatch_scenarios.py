@@ -420,6 +420,26 @@ class TestDispatchScenarios(unittest.TestCase):
 					if defect == 'cancelled_start':
 						self.assertIsNotNone(feedback.cancelled_start)
 
+	def test_cancelled_stage_uses_reports_from_low_demand_change(self):
+		for scenario_type in SCENARIOS[3:6]:
+			with self.subTest(checklist=scenario_type.get_checklist_id(None)):
+				feedback = ScriptedFeedback(scenario_type)
+				check_dispatch = feedback.scenario.check_dispatch
+				confirmed_low = []
+				low = round(25 / scenario_type.BOILER_COUNT)
+
+				def confirm_with_report_gap(*args, **kwargs):
+					check_dispatch(*args, **kwargs)
+					if args[0] == low and kwargs.get('guard') is not None:
+						confirmed_low.append(feedback.now)
+						# No new CAN output report arrives between confirmation and hold.
+						feedback.now += 0.25
+
+				feedback.scenario.check_dispatch = confirm_with_report_gap
+				feedback.run()
+				self.assertEqual(len(confirmed_low), 1)
+				feedback.assert_restored(self, 'OK')
+
 	def test_broken_fault_handling_is_rejected(self):
 		for defect in ('no_replacement', 'fault_power', 'fault_delay', 'first_only_error'):
 			with self.subTest(defect=defect):
