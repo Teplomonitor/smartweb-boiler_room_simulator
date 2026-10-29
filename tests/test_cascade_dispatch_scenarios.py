@@ -26,6 +26,7 @@ main_thread = ModuleType('mainThread')
 main_thread.taskEnable = lambda: True
 with patch.dict(sys.modules, {'scenario.scenario': parent, 'mainThread': main_thread}):
 	from smartnet.message import Message, CanListener
+	from smartnet.remoteControl import RemoteControlParameter
 	from smartnet.cascade_monitor import CascadeMonitor, PowerCommand, OutputReport
 	from smartnet.channelMapping import InputChannel, OutputChannel, ChannelMapping
 	from presets.cascade_test import build_cascade_test
@@ -353,6 +354,29 @@ class TestDispatchScenarios(unittest.TestCase):
 			[(103, 3), (103, 0), (104, 3), (104, 0)])
 		self.assertTrue(all(msg.getRequestFlag() == snc.RequestFlag.REQUEST for msg, _, _ in sent))
 		self.assertTrue(all(not args and not kwargs for _, args, kwargs in sent))
+
+	def test_stage_delay_is_encoded_as_four_byte_time(self):
+		feedback = ScriptedFeedback(SCENARIOS[3])
+		delay_setting = next(value for _, kind, key, value in feedback.scenario.settings()
+			if kind == snc.ProgramType.CASCADE_MANAGER
+			and key == snc.CascadeManagerParameterId.NEXT_TEMPERATURE_SRC_ON_DELAY)
+		self.assertEqual(delay_setting, 60)
+		parameter = RemoteControlParameter(programType=snc.ProgramType.CASCADE_MANAGER,
+			parameterId=snc.CascadeManagerParameterId.NEXT_TEMPERATURE_SRC_ON_DELAY,
+			parameterValue=delay_setting, programId=102)
+		self.assertEqual(parameter.getParameterType(), 'TIME_MS')
+		self.assertEqual(parameter.getParameterSize(), 4)
+		self.assertEqual(parameter.valueToData(delay_setting), [0x60, 0xea, 0, 0])
+		self.assertEqual(parameter.dataToValue([0x60, 0xea, 0, 0]), 60)
+
+	def test_confirmed_fault_rejects_nonzero_manager_command(self):
+		feedback = ScriptedFeedback(SCENARIOS[6])
+		feedback.scenario.monitor = CascadeMonitor(102, (103, 104), feedback.scenario.clock)
+		feedback.scenario._fault_confirmations = {103: 0}
+		feedback.now = feedback.scenario.REPLACEMENT_TIMEOUT + 1
+		feedback.scenario.monitor.on_can_message_received(command_message(103, 50))
+		with self.assertRaisesRegex(RuntimeError, 'запрашивает 50% у аварийного котла 103'):
+			feedback.scenario.fault_guard()
 
 	def test_broken_boiler_outputs_fail(self):
 		for defect in ('stuck_output', 'wrong_distribution', 'pump', 'no_output_reports'):

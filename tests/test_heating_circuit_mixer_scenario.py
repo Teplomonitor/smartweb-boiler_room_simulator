@@ -179,6 +179,20 @@ class TestHeatingCircuitMixerScenario(unittest.TestCase):
 		self.assertIn((35, 40, 254), self.readings)
 		self.assertTrue(any(boiler == 70 and target == 50 for boiler, target, _ in self.readings))
 
+	def test_real_sample_near_setpoint_is_accepted(self):
+		self.scenario._boiler_sensor = self.boiler_sensor
+		self.scenario._flow_sensor = self.inputs['temperature']
+		self.scenario._pump = self.outputs['pump']
+		self.scenario._model = self.model
+		self.scenario._get_valve_channels()
+		self.boiler_sensor.value = 70
+		self.inputs['temperature'].value = 39.3
+		self.outputs['analogValve'].value = 80
+		self.model._valve_position = 0.3
+		sample = self.scenario._sample()
+		self.assertTrue(all(isinstance(value, (int, float)) for value in sample.values()))
+		self.assertTrue(self.scenario._matches(sample, 40, False, None, 0))
+
 	def test_faults_are_rejected_and_restored(self):
 		for fault in ('closed', 'open', 'pump_off', 'unknown', 'cold_source'):
 			with self.subTest(fault=fault):
