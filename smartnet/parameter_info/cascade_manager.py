@@ -15,7 +15,7 @@ PARAMETER_INFO = {
 	CascadeManagerParameterId.PARAM_D_FACTOR:                              {'type': 'UINT8_T'},
 	CascadeManagerParameterId.SCHEDULE:                                    {'type': 'SCHEDULE', 'array_size': SCHEDULE_ARRAY_SIZE},
 	CascadeManagerParameterId.REQUIRED_POWER:                              {'type': 'UINT8_T'},
-	CascadeManagerParameterId.NEXT_TEMPERATURE_SRC_ON_DELAY:               {'type': 'UINT8_T'},
+	CascadeManagerParameterId.NEXT_TEMPERATURE_SRC_ON_DELAY:               {'type': 'TIME_MS'},
 	CascadeManagerParameterId.ROTATION_TYPE:                               {'type': 'UINT8_T'},
 	CascadeManagerParameterId.TEMPERATURE_OFFSET:                          {'type': 'TEMPERATURE'},
 	CascadeManagerParameterId.MINIMUM_REQUIRED_TEMPERATURE:                {'type': 'TEMPERATURE'},
