@@ -73,7 +73,7 @@ class DhwPriorityScenario(ConsumerPriorityCapture, DhwScenario):
 	def _get_test_sensors(self, flow_through):
 		if self._generator is None:
 			raise RuntimeError('Не найдена программа-котёл, заданная источником ГВС')
-		sensors = [self._dhw.get_temperature(), self._generator.get_temperature()]
+		sensors = [self._dhw.get_temperature(), self._generator.get_input_channel('temperature')]
 		if flow_through:
 			sensors.append(self._dhw.get_input_channel('flow'))
 		if any(not sensor.is_mapped() for sensor in sensors):
@@ -92,7 +92,7 @@ class DhwPriorityScenario(ConsumerPriorityCapture, DhwScenario):
 		self.set_sensor_value(self._dhw.get_temperature(), self.DHW_COLD_TEMPERATURE)
 		generator_temperature = (self.FLOW_THROUGH_GENERATOR_TEMPERATURE if flow_through
 			else self.GENERATOR_TEMPERATURE)
-		self.set_sensor_value(self._generator.get_temperature(), generator_temperature)
+		self.set_sensor_value(self._generator.get_input_channel('temperature'), generator_temperature)
 		if flow_through:
 			self.set_sensor_value(self._dhw.get_input_channel('flow'), self.FLOW_RATE)
 
