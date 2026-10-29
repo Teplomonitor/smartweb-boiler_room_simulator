@@ -112,10 +112,10 @@ class HeatingCircuitMixerScenario(Parent):
 
 	def _sample(self):
 		return {
-			'boiler': f'{self._boiler_sensor.get_value():g}',
+			'boiler': self._boiler_sensor.get_value(),
 			'source': self._model.getSourceTemperature(),
-			'flow': f'{self._flow_sensor.get_value():g}',
-			'valve': f'{self._valve_position():g}',
+			'flow': self._flow_sensor.get_value(),
+			'valve': self._valve_position(),
 			'pump': self._pump.get_value(),
 		}
 
