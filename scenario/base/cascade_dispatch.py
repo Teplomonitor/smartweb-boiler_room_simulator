@@ -1,13 +1,13 @@
 """Black-box dispatch checks. Expected behaviour is not a firmware emulator."""
 
 from contextlib import contextmanager
-from math import isfinite
 from time import monotonic
 
 from consoleLog import print_error, print_log
 from scenario.base.cascade_manager import CascadeManagerScenario
 from smartnet.cascade_monitor import CascadeMonitor
 import smartnet.constants as snc
+from smartnet.message import Message
 
 
 class CascadeDispatchScenario(CascadeManagerScenario):
@@ -17,7 +17,7 @@ class CascadeDispatchScenario(CascadeManagerScenario):
 	SETPOINT = 50
 	PROPORTIONAL_BAND = 20
 	POWER_TOLERANCE = 3
-	COMMAND_MAX_AGE = 10
+	OUTPUT_PROBE_INTERVAL = 5
 	SETTLING_TIMEOUT = 25
 	FAULT_DETECTION_TIMEOUT = 90
 	REPLACEMENT_TIMEOUT = 15
@@ -121,11 +121,12 @@ class CascadeDispatchScenario(CascadeManagerScenario):
 					if not tracked and sensor in self._manualSensorsList:
 						self._manualSensorsList.remove(sensor)
 
-	def await_condition(self, condition, timeout, description, guard=None, stable=None):
+	def await_condition(self, condition, timeout, description, guard=None, stable=None, details=None):
 		"""Use monotonic deadlines; never hide a transient violation in a guard."""
 		deadline = self.clock() + timeout
 		stable_since = None
 		stable = self.STABILITY_DURATION if stable is None else stable
+		matched = False
 		while self.clock() <= deadline:
 			if guard:
 				guard()
@@ -141,6 +142,9 @@ class CascadeDispatchScenario(CascadeManagerScenario):
 			else:
 				stable_since = None
 			self.wait(self.POLL_PERIOD)
+		if details is not None:
+			print_error(f'Тайм-аут: {description}; условие сейчас={matched}, '
+				f'устойчиво с={stable_since}; {details()}')
 		raise RuntimeError(description)
 
 	def hold_condition(self, condition, duration, description, guard=None):
@@ -165,70 +169,122 @@ class CascadeDispatchScenario(CascadeManagerScenario):
 			remaining -= power
 		return result
 
-	def commands_match(self, expected, since):
-		self.fault_guard()
-		commands, _ = self.monitor.snapshot()
-		latest = {command.boiler_id: command for command in commands if command.time >= since}
+	def request_output_states(self):
+		"""Request current output values without waiting for any CAN response."""
+		for boiler in self.boilers():
+			for channel in ('power', 'pump'):
+				Message(snc.ProgramType.REMOTE_CONTROL, boiler.get_id(),
+					snc.RemoteControlFunction.GET_PARAMETER_VALUE, snc.RequestFlag.REQUEST,
+					[snc.ProgramType.PROGRAM, snc.ProgramParameterId.OUTPUT,
+					 boiler.get_output_channel(channel).get_id()]).send()
+
+	def probe_outputs(self):
 		now = self.clock()
+		if (getattr(self, '_last_output_probe', None) is None
+			or now - self._last_output_probe >= self.OUTPUT_PROBE_INTERVAL):
+			self._last_output_probe = now
+			self.request_output_states()
+
+	@staticmethod
+	def output_power_percent(signal):
+		return max(0.0, min(100.0, (signal - 1) * 100.0 / 253))
+
+	def outputs_match(self, expected, since):
+		self.fault_guard()
+		self.probe_outputs()
+		reports = self.monitor.output_snapshot()
+		latest = {(report.boiler_id, report.index): report for report in reports if report.time >= since}
+		self._command_mismatch = None
 		for boiler in self.boilers():
 			boiler_id = boiler.get_id()
-			command = latest.get(boiler_id)
 			power = expected[boiler_id]
-			if command is None or now - command.time > self.COMMAND_MAX_AGE:
+			output_index = boiler.get_power_output().get_id()
+			pump_index = boiler.get_pump().get_id()
+			output = latest.get((boiler_id, output_index))
+			pump = latest.get((boiler_id, pump_index))
+			if output is None or pump is None:
+				self._command_mismatch = (f'котёл {boiler_id}: нет подтверждения выходов после {since:.1f}: '
+					f'мощность={output}, насос={pump}')
 				return False
-			if power == 0:
-				if command.power != 0:
-					return False
-			elif (abs(command.power - power) > self.POWER_TOLERANCE
-				or abs(command.temperature - self.SETPOINT) > self.TEMPERATURE_TOLERANCE):
+			actual = self.output_power_percent(output.value)
+			if abs(actual - power) > self.POWER_TOLERANCE:
+				self._command_mismatch = f'котёл {boiler_id}: выход {actual:.1f}% вместо {power}%'
 				return False
-			output = boiler.get_power_output()
-			pump = boiler.get_pump()
-			if not output.valueIsUpToDate() or not pump.valueIsUpToDate():
+			if power == 0 and output.value != 0:
+				self._command_mismatch = f'котёл {boiler_id}: при 0% выходной сигнал {output.value} вместо 0'
 				return False
-			actual = boiler.get_power_output_percent()
-			if actual is None or not isfinite(actual) or abs(actual - power) > self.POWER_TOLERANCE:
-				return False
-			if power == 0 and output.get_value() != 0:
-				return False
-			if pump.get_value() != (255 if power > 0 else 0):
+			if pump.value != (255 if power > 0 else 0):
+				self._command_mismatch = (f'котёл {boiler_id}: насос {pump.value} '
+					f'вместо {255 if power > 0 else 0}')
 				return False
 		return True
 
+	def commands_match(self, expected, since):
+		"""Compatibility alias for callers of the old dispatch check."""
+		return self.outputs_match(expected, since)
+
+	def dispatch_diagnostics(self, expected, since):
+		commands, _ = self.monitor.snapshot()
+		reports = self.monitor.output_snapshot()
+		now = self.clock()
+		states = []
+		for boiler in self.boilers():
+			boiler_id = boiler.get_id()
+			recent = [command for command in commands if command.boiler_id == boiler_id]
+			command = recent[-1] if recent else None
+			output = boiler.get_power_output()
+			pump = boiler.get_pump()
+			if command is None:
+				states.append(f'{boiler_id}: ожидается {expected[boiler_id]}%, команд нет')
+			else:
+				states.append(f'{boiler_id}: ожидается {expected[boiler_id]}%, '
+					f'последняя команда={command}, возраст={now - command.time:.1f} с')
+			states.append(f'{boiler_id}: выход={output.get_value()} ({boiler.get_power_output_percent()}%), '
+				f'свежий={output.valueIsUpToDate()}; насос={pump.get_value()}, свежий={pump.valueIsUpToDate()}')
+			states.append(f'{boiler_id}: последние отчёты выходов '
+				f'{[report for report in reports if report.boiler_id == boiler_id][-6:]}')
+		return (f'последняя причина={self._command_mismatch}; коллектор={self.collector.get_value()} °C, '
+			f'начало={since:.1f}, сейчас={now:.1f}; '
+			+ '; '.join(states))
+
 	def set_demand(self, demand):
-		print_log(f'Запрос мощности каскада {demand}%')
 		started = self.clock()
 		temperature = self.SETPOINT - self.PROPORTIONAL_BAND * demand / 100
 		if demand == 0:
 			temperature = self.SETPOINT + self.TIMING_MARGIN
 		self.set_sensor_value(self.collector, temperature)
+		print_log(f'Запрос мощности каскада {demand}%: коллектор задан={temperature} °C, '
+			f'прочитан={self.collector.get_value()} °C, время={started:.1f}')
 		return started
 
 	def check_dispatch(self, demand, timeout=None, guard=None, since=None, failed=()):
 		if since is None:
 			since = self.set_demand(demand)
 		expected = self.expected_powers(demand, failed)
-		self.await_condition(lambda: self.commands_match(expected, since),
+		self.await_condition(lambda: self.outputs_match(expected, since),
 			self.SETTLING_TIMEOUT if timeout is None else timeout,
-			f'Неверные команды/выходы: запрос {demand}%, ожидается {expected}', guard)
+			f'Неверные выходы котлов: запрос {demand}%, ожидается {expected}', guard,
+			details=lambda: self.dispatch_diagnostics(expected, since))
 		if len(failed) < self.BOILER_COUNT and not self.required_temperature_is(self.SETPOINT):
 			raise RuntimeError('Пропал температурный запрос потребителя')
 		if not failed and abs(self.read_required_power() - demand) > self.POWER_TOLERANCE:
 			raise RuntimeError('Неверная требуемая мощность каскада')
 
 	def delay_guard(self, since, active_count):
-		commands, _ = self.monitor.snapshot()
+		reports = self.monitor.output_snapshot()
 		delay = self.DELAY_MINUTES * self.SECONDS_PER_MINUTE
 		ids = [boiler.get_id() for boiler in self.boilers()]
-		for command in commands:
-			if command.time < since or command.power == 0:
+		active_indices = {boiler.get_id(): (boiler.get_power_output().get_id(), boiler.get_pump().get_id())
+			for boiler in self.boilers()}
+		for report in reports:
+			if report.time < since or report.index not in active_indices.get(report.boiler_id, ()) or report.value == 0:
 				continue
-			index = ids.index(command.boiler_id)
+			index = ids.index(report.boiler_id)
 			if index >= active_count:
-				raise RuntimeError(f'Включён лишний котёл {command.boiler_id}')
+				raise RuntimeError(f'Включён лишний котёл {report.boiler_id}')
 			if index == active_count - 1 and active_count > 1:
-				if command.time < since + delay - self.TIMING_MARGIN:
-					raise RuntimeError(f'Раннее включение котла {command.boiler_id}')
+				if report.time < since + delay - self.TIMING_MARGIN:
+					raise RuntimeError(f'Раннее включение котла {report.boiler_id}')
 
 	def exercise_stages(self):
 		self.check_dispatch(0)
@@ -252,16 +308,20 @@ class CascadeDispatchScenario(CascadeManagerScenario):
 		self.check_dispatch(low)
 		since = self.set_demand(high)
 		first_id = self.boilers()[0].get_id()
+		power_index = self.boilers()[0].get_power_output().get_id()
+		def first_boiler_at_full_power():
+			self.probe_outputs()
+			return any(r.time >= since and r.boiler_id == first_id and r.index == power_index
+				and self.output_power_percent(r.value) >= 95 for r in self.monitor.output_snapshot())
 		self.await_condition(
-			lambda: any(c.time >= since and c.boiler_id == first_id and c.power >= 95
-				for c in self.monitor.snapshot()[0]),
+			first_boiler_at_full_power,
 			self.SETTLING_TIMEOUT, 'Первый котёл не вышел на полную мощность',
 			lambda: self.delay_guard(since, 1), stable=0)
 		self.hold_condition(lambda: True, self.CANCEL_PULSE_DURATION,
 			'Прерван короткий запрос', lambda: self.delay_guard(since, 1))
 		self.check_dispatch(low, guard=lambda: self.delay_guard(since, 1))
 		low_since = self.clock()
-		self.hold_condition(lambda: self.commands_match(self.expected_powers(low), low_since - self.COMMAND_MAX_AGE),
+		self.hold_condition(lambda: self.outputs_match(self.expected_powers(low), low_since),
 			self.DELAY_MINUTES * self.SECONDS_PER_MINUTE + self.TIMING_MARGIN,
 			'Отложенное включение после отмены запроса', lambda: self.delay_guard(since, 1))
 		# A new request must receive a full, fresh delay, not the old remainder.
@@ -271,11 +331,13 @@ class CascadeDispatchScenario(CascadeManagerScenario):
 		self.check_dispatch(0)
 
 	def fault_guard(self):
-		commands, _ = self.monitor.snapshot()
-		for command in commands:
-			confirmed = getattr(self, '_fault_confirmations', {}).get(command.boiler_id)
-			if confirmed is not None and command.time >= confirmed + self.REPLACEMENT_TIMEOUT and command.power:
-				raise RuntimeError(f'Команда мощности аварийному котлу {command.boiler_id}')
+		reports = self.monitor.output_snapshot()
+		power_indices = {boiler.get_id(): boiler.get_power_output().get_id() for boiler in self.boilers()}
+		for report in reports:
+			confirmed = getattr(self, '_fault_confirmations', {}).get(report.boiler_id)
+			if (confirmed is not None and report.time >= confirmed + self.REPLACEMENT_TIMEOUT
+				and report.index == power_indices.get(report.boiler_id) and report.value):
+				raise RuntimeError(f'Работает аварийный котёл {report.boiler_id}')
 
 	def set_faults(self, failed):
 		started = self.clock()
@@ -364,6 +426,8 @@ class CascadeDispatchScenario(CascadeManagerScenario):
 			print_error(str(exc))
 			try:
 				commands, properties = monitor.snapshot()
-				print_error(f'Свойства источников: {properties}; последние команды: {commands[-40:]}')
+				print_error(f'Свойства источников: {properties}; последние команды: {commands[-20:]}')
+				print_error(f'Последние выходы котлов: {monitor.output_snapshot()[-40:]}; '
+					f'ошибка разбора команды (диагностика): {monitor.command_error}')
 			except RuntimeError as monitor_error:
 				print_error(str(monitor_error))
