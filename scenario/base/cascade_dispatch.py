@@ -46,7 +46,7 @@ class CascadeDispatchScenario(CascadeManagerScenario):
 			(parameter.WORK_FUNCTION, 0), (parameter.ROTATION_TYPE, 0),
 			(parameter.TEMPERATURE_OFFSET, 0), (parameter.MINIMUM_REQUIRED_TEMPERATURE, 0),
 			(parameter.MAXIMUM_REQUIRED_TEMPERATURE, 90),
-			(parameter.NEXT_TEMPERATURE_SRC_ON_DELAY, self.DELAY_MINUTES),
+			(parameter.NEXT_TEMPERATURE_SRC_ON_DELAY, self.DELAY_MINUTES * self.SECONDS_PER_MINUTE),
 		)
 		settings = [(cascade, snc.ProgramType.CASCADE_MANAGER, key, value) for key, value in values]
 		dhw = self._programList['dhw']
@@ -332,7 +332,14 @@ class CascadeDispatchScenario(CascadeManagerScenario):
 
 	def fault_guard(self):
 		reports = self.monitor.output_snapshot()
+		commands, _ = self.monitor.snapshot()
 		power_indices = {boiler.get_id(): boiler.get_power_output().get_id() for boiler in self.boilers()}
+		for command in commands:
+			confirmed = getattr(self, '_fault_confirmations', {}).get(command.boiler_id)
+			if (confirmed is not None and command.time >= confirmed + self.REPLACEMENT_TIMEOUT
+				and command.power > 0):
+				raise RuntimeError(f'Каскад запрашивает {command.power}% у аварийного котла '
+					f'{command.boiler_id} спустя {command.time - confirmed:.1f} с после подтверждения аварии')
 		for report in reports:
 			confirmed = getattr(self, '_fault_confirmations', {}).get(report.boiler_id)
 			if (confirmed is not None and report.time >= confirmed + self.REPLACEMENT_TIMEOUT
