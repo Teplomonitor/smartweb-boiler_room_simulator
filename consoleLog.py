@@ -35,7 +35,7 @@ def print_error(log_str):
 def save_log(log_dir=None):
 	"""Save the console messages collected during the current application run."""
 	if log_dir is None:
-		log_dir = os.path.join(os.getcwd(), 'log')
+		log_dir = os.environ.get('BRS_LOG_ROOT', os.path.join(os.getcwd(), 'log'))
 
 	with _log_lock:
 		messages = list(_log_messages)

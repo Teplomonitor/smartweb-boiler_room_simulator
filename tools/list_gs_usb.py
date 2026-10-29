@@ -32,7 +32,14 @@ def main() -> int:
 	for index, device in enumerate(devices):
 		bus = getattr(device, 'bus', '?')
 		address = getattr(device, 'address', '?')
-		print(f'  index={index}: bus={bus}, address={address}, device={device!r}')
+		usb_device = getattr(device, 'gs_usb', None)
+		ports = getattr(usb_device, 'port_numbers', None)
+		try:
+			product = getattr(usb_device, 'product', None)
+		except Exception:
+			product = None
+		print(f'  index={index}: bus={bus}, address={address}, '
+			f'ports={ports}, product={product or "?"}')
 
 	print('Use the displayed index in can.ini (for example, index = 0).')
 	return 0

@@ -26,7 +26,7 @@ class ConfigParserInstance():
 		self._configParserInstance = configparser.ConfigParser()
 	
 		file_dir = os.path.dirname(__file__)
-		self._settingsPath = os.path.join(file_dir, 'settings.ini')
+		self._settingsPath = os.environ.get('BRS_SETTINGS_PATH', os.path.join(file_dir, 'settings.ini'))
 		
 		if not os.path.exists(self._settingsPath):
 			self.createConfig(self._settingsPath)

@@ -6,7 +6,7 @@ import time
 import csv
 import os
 
-logsRootDir = os.path.join(os.getcwd(), 'log')
+logsRootDir = os.environ.get('BRS_LOG_ROOT', os.path.join(os.getcwd(), 'log'))
 
 class TimestampValue(object):
 	def __init__(self, value):

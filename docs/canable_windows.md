@@ -7,6 +7,13 @@ CAN bus for 20,000 bit/s:
 - `canable0`: first GS-USB adapter (`index = 0`)
 - `canable1`: second GS-USB adapter (`index = 1`)
 
+On the current machine, `tools/list_gs_usb.py` identifies the two devices as:
+
+- `ucan`: **UCAN USB to CAN adapter**, GS-USB `index = 0`;
+- `candleLightGsUsb`: **candleLight USB to CAN adapter**, GS-USB `index = 1`.
+
+Both devices use `gs_usb` (`VID_1D50`, `PID_606F`). Check the utility output before using these named profiles: enumeration indexes can change after reconnection. These profiles are aliases for `canable0` and `canable1` respectively, not extra devices. Do not select an alias and its numbered profile together in parallel mode.
+
 ## Install software
 
 Install the project dependencies with the documented Python interpreter:
@@ -66,6 +73,7 @@ controller. The physical bus should have exactly two 120-ohm termination
 resistors, one at each end. Close other CAN tools before starting the
 simulator so they do not claim the adapter or alter bus timing.
 
-The existing `candleLight` profile is retained for a device that exposes the
-legacy `candle` backend. It is not used for an adapter identified as
-**canable gs_usb**.
+The existing `candleLight` profile is retained for a device using the legacy
+`candle` backend. It is **not** the profile for the currently connected
+"candleLight USB to CAN adapter", which enumerates as GS-USB and should use
+`candleLightGsUsb` instead.

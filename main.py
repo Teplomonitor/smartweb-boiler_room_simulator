@@ -62,7 +62,10 @@ def initArgParser(program_license, argv=None):
 	parser.add_argument(      '--no-gui'  , action='store_false'      , dest='gui'       , help='disable gui window')
 	parser.add_argument(      '--id'      , nargs='?'                 , default=0        , help='select specific controller ID address to control')
 	parser.add_argument('-s', '--scenario', nargs='?', const='all'    , default='none'   , help='enable automatic scenarion run')
+	parser.add_argument(      '--scenarios', nargs='+', metavar='PATH', help='run only these scenario files in parallel CAN mode')
 	parser.add_argument('-c', '--can'     , nargs='?', const='default', default='none'   , help='select CANBus config')
+	parser.add_argument(      '--can-ports', nargs='+', metavar='CONTEXT', help='run scenarios across distinct CAN config contexts (requires --no-gui)')
+	parser.add_argument(      '--can-worker', action='store_true', help='internal parallel CAN worker mode')
 	parser.add_argument(      '--preset'  , nargs='?'                 , default=None     , help='load specific preset on controller startup')
 	
 	return parser.parse_args(argv)
@@ -119,6 +122,16 @@ def main(argv=None): # IGNORE:C0111
 		program_license = getProgramLicense()
 		# Setup argument parser
 		args = initArgParser(program_license, argv)
+		if args.scenarios and not args.can_ports:
+			raise ValueError('--scenarios requires --can-ports')
+		if args.can_ports:
+			from parallel_can import run_coordinator
+			return run_coordinator(args)
+		if args.can_worker:
+			from parallel_can import run_worker
+			if args.gui or args.udp or args.scenario != 'none':
+				raise ValueError('CAN worker requires --no-gui and cannot use --udp or --scenario')
+			return run_worker(args)
 		application = Application(args)
 		application.start()
 		if application.gui:

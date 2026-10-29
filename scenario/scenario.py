@@ -332,6 +332,8 @@ class ScenarioThread(threading.Thread):
 		self._simulator      = simulator
 		self._newScenario    = None
 		self._scenarioResultList = []
+		self._result_callback = None
+		self._progress_callback = None
 		self._stopScenarioEvent = threading.Event()
 		self._scenarioList = get_scenario_files_list()
 		self._initDone = True
@@ -341,6 +343,12 @@ class ScenarioThread(threading.Thread):
 	
 	def getStopScenarioEvent(self):
 		return self._stopScenarioEvent
+
+	def set_result_callback(self, callback):
+		self._result_callback = callback
+
+	def set_progress_callback(self, callback):
+		self._progress_callback = callback
 
 	def set_gui_status(self, state, scenario_title = ''):
 		if self._controllerHost:
@@ -378,8 +386,14 @@ class ScenarioThread(threading.Thread):
 	def run_scenarios(self):
 		while mainThread.taskEnable():
 			if self._newScenario is not None:
-				self.start_scenario_now(self._newScenario)
+				requested = self._newScenario
 				self._newScenario = None
+				try:
+					self.start_scenario_now(requested)
+				except Exception as exc:
+					print_error(f'Scenario initialization failed: {exc!r}')
+					self.stop_scenario_now('failed')
+					self._report_failure(requested, exc)
 			
 			if self._currentScenario:
 				try:
@@ -388,11 +402,11 @@ class ScenarioThread(threading.Thread):
 						break
 					
 					if self._currentScenario.done():
-						self.append_scenario_result(self._currentScenario)
 						if self._currentScenario.get_status() != 'OK':
 							self.saveScenarioLog(self._currentScenario)
 							
 						self._currentScenario.clear()
+						self.append_scenario_result(self._currentScenario)
 						self._currentScenario = self.getNextScenario()
 						if self._currentScenario:
 							self.set_gui_status('running', self._currentScenario.get_scenario_title())
@@ -400,10 +414,15 @@ class ScenarioThread(threading.Thread):
 							self.set_gui_status('finished')
 							if len(self._scenarioResultList) > 1:
 								self.print_scenario_run_result()
+							if self._result_callback:
+								self._result_callback(self._scenarioResultList[-1])
 								
 				except Exception as e:
 					print_error(f"Scenario interrupted: {e!r}")
+					failed = self._currentScenario
 					self.stop_scenario_now('failed')
+					if failed:
+						self._report_failure(failed, e)
 					
 			if self._stopScenarioEvent.is_set():
 				self.stop_scenario_now()
@@ -418,6 +437,15 @@ class ScenarioThread(threading.Thread):
 		}
 		self.print_result(result)
 		self._scenarioResultList.append(result)
+
+	def _report_failure(self, scenario, exc):
+		if self._result_callback:
+			self._result_callback({
+				'checklistId': scenario.get_checklist_id() if isinstance(scenario, Scenario) else str(scenario),
+				'result': 'ERROR',
+				'duration': scenario.get_duration() if isinstance(scenario, Scenario) else 0,
+				'error': repr(exc),
+			})
 	
 	def print_result(self, result):
 		checklistId = result['checklistId']
@@ -458,8 +486,12 @@ class ScenarioThread(threading.Thread):
 			self.set_gui_status('failed')
 			return
 
+		if self._progress_callback:
+			self._progress_callback('starting', scenario)
 		self._currentScenario = self.getNextScenario()
 		if self._currentScenario:
+			if self._progress_callback:
+				self._progress_callback('running', scenario)
 			self.set_gui_status('running', self._currentScenario.get_scenario_title())
 		else:
 			self.set_gui_status('finished')
@@ -494,7 +526,11 @@ class ScenarioThread(threading.Thread):
 		self.set_gui_status(state)
 	
 	def get_scenario_object(self, scenarioId):
+		if self._progress_callback:
+			self._progress_callback('importing', scenarioId)
 		scenario_module = importfile(scenarioId)
+		if self._progress_callback:
+			self._progress_callback('constructing', scenarioId)
 		return scenario_module.Scenario(self._controllerHost, self._simulator)
 
 

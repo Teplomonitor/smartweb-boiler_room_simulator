@@ -84,6 +84,7 @@ class ApplicationWorker(threading.Thread):
 		self._can_listener = None
 		self._udp_bridge = None
 		self.error = None
+		self.ready_event = threading.Event()
 
 		self.configParserInstance = config.ConfigParserInstance()
 		
@@ -170,6 +171,7 @@ class ApplicationWorker(threading.Thread):
 			return
 		
 		self._scenario_thread = scenario.ScenarioThread(controllerHost, ioSimulator)
+		self.ready_event.set()
 		
 		if self._scenario != 'none':
 			scenario.start_scenario(self._scenario)
