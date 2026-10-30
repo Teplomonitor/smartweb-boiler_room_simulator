@@ -162,15 +162,19 @@ def select_scenarios(selection):
 	paths = get_scenario_files_list()
 	if selection in ('none', 'all'):
 		return paths
-	selected = str(Path(selection).resolve())
-	if selected not in paths:
-		raise ValueError(f'Scenario not found: {selection}')
-	return [selected]
+	requested = selection if isinstance(selection, (list, tuple)) else [selection]
+	selected = [str(Path(path).resolve()) for path in requested]
+	if len(set(selected)) != len(selected):
+		raise ValueError('Scenario paths must be distinct')
+	for path in selected:
+		if path not in paths:
+			raise ValueError(f'Scenario not found: {path}')
+	return selected
 
 
 def validate_contexts(contexts):
-	if len(contexts) < 2 or len(set(contexts)) != len(contexts):
-		raise ValueError('Specify at least two distinct CAN configuration contexts')
+	if not contexts or len(set(contexts)) != len(contexts):
+		raise ValueError('Specify one or more distinct CAN configuration contexts')
 	config = configparser.ConfigParser()
 	config.read(Path(__file__).with_name('can.ini'))
 	addresses = set()
@@ -193,14 +197,24 @@ def validate_contexts(contexts):
 
 def run_coordinator(args):
 	"""Dispatch the next test to the next free controller; never retry implicitly."""
+	stop_requested = threading.Event()
+	if getattr(args, 'can_gui_child', False):
+		def listen_for_stop():
+			for line in sys.stdin:
+				if line.strip() == 'stop':
+					stop_requested.set()
+					break
+		threading.Thread(target=listen_for_stop, daemon=True).start()
 	contexts = args.can_ports
 	validate_contexts(contexts)
 	if args.udp or args.debug:
 		raise ValueError('Parallel CAN mode does not support --udp or --debug')
 	if args.gui:
 		raise ValueError('Parallel CAN mode requires --no-gui')
+	if getattr(args, 'scenarios', None) and args.scenario != 'none':
+		raise ValueError('Use either --scenarios or --scenario, not both')
 	from collections import deque
-	pending = deque(select_scenarios(args.scenario))
+	pending = deque(select_scenarios(getattr(args, 'scenarios', None) or args.scenario))
 	if not pending:
 		raise ValueError('No scenarios found')
 	root = Path(__file__).with_name('log')
@@ -215,6 +229,8 @@ def run_coordinator(args):
 		for index, context in enumerate(contexts):
 			workers.append(CanWorker(context, index, args, run_dir, events))
 		while pending or any(worker.current for worker in workers):
+			if stop_requested.is_set():
+				raise KeyboardInterrupt
 			try:
 				worker, event = events.get(timeout=0.2)
 			except queue.Empty:

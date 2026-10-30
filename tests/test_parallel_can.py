@@ -90,14 +90,21 @@ class TestParallelCan(unittest.TestCase):
 			['--no-gui', '--can-ports', 'canable0', 'canable1', '--scenario', 'all'])
 		self.assertEqual(args.can_ports, ['canable0', 'canable1'])
 		self.assertFalse(args.gui)
+		self.assertEqual(initArgParser(getProgramLicense(),
+			['--no-gui', '--can-ports', 'canable0', '--scenario', 'all']).can_ports,
+			['canable0'])
 		self.assertIsNone(initArgParser(getProgramLicense(), ['--can', 'canable0']).can_ports)
+		selected = initArgParser(getProgramLicense(), ['--no-gui', '--can-ports',
+			'ucan', 'candleLightGsUsb', '--scenarios', 'a.py', 'b.py'])
+		self.assertEqual(selected.scenarios, ['a.py', 'b.py'])
 
 	def test_rejects_virtual_and_duplicate_adapter_mappings(self):
-		for contexts in (['virtual', 'canable0'], ['canable0', 'canable0'],
+		for contexts in ([], ['virtual'], ['virtual', 'canable0'], ['canable0', 'canable0'],
 			['default', 'virtual'], ['missing', 'canable0'],
 			['canable0', 'ucan'], ['canable1', 'candleLightGsUsb']):
 			with self.subTest(contexts=contexts), self.assertRaises(ValueError):
 				parallel_can.validate_contexts(contexts)
+		parallel_can.validate_contexts(['canable0'])
 		parallel_can.validate_contexts(['canable0', 'canable1'])
 		parallel_can.validate_contexts(['ucan', 'candleLightGsUsb'])
 
@@ -111,10 +118,28 @@ class TestParallelCan(unittest.TestCase):
 				self.assertEqual(config['bitrate'], 20000)
 
 	def test_only_discovered_scenarios_can_be_selected(self):
-		with patch('scenario.scenario.get_scenario_files_list', return_value=['a.py', 'b.py']):
-			self.assertEqual(parallel_can.select_scenarios('all'), ['a.py', 'b.py'])
+		paths = [str(Path('a.py').resolve()), str(Path('b.py').resolve())]
+		with patch('scenario.scenario.get_scenario_files_list', return_value=paths):
+			self.assertEqual(parallel_can.select_scenarios('all'), paths)
+			self.assertEqual(parallel_can.select_scenarios(['b.py', paths[0]]),
+				[paths[1], paths[0]])
+			with self.assertRaisesRegex(ValueError, 'distinct'):
+				parallel_can.select_scenarios(['a.py', paths[0]])
 			with self.assertRaises(ValueError):
 				parallel_can.select_scenarios('missing.py')
+			with self.assertRaises(ValueError):
+				parallel_can.select_scenarios(['a.py', 'missing.py'])
+
+	def test_coordinator_uses_explicit_subset_and_rejects_conflicting_flags(self):
+		args = SimpleNamespace(can_ports=['ucan', 'candleLightGsUsb'], udp=0,
+			debug=False, gui=False, scenario='none', scenarios=['a.py', 'b.py'])
+		with patch.object(parallel_can, 'select_scenarios', side_effect=ValueError('invalid subset')) as select:
+			with self.assertRaisesRegex(ValueError, 'invalid subset'):
+				parallel_can.run_coordinator(args)
+			select.assert_called_once_with(args.scenarios)
+		args.scenario = 'all'
+		with self.assertRaisesRegex(ValueError, 'either'):
+			parallel_can.run_coordinator(args)
 
 	def test_worker_reports_ready_and_result(self):
 		args = SimpleNamespace()
@@ -166,20 +191,22 @@ class TestParallelCan(unittest.TestCase):
 			def join(self):
 				pass
 
-		args = SimpleNamespace(can_ports=['canable0', 'canable1'], udp=0,
-			debug=False, gui=False, scenario='all')
-		with tempfile.TemporaryDirectory() as temp_dir:
-			run_dir = Path(temp_dir) / 'run'
-			run_dir.mkdir()
-			with patch.object(parallel_can, 'CanWorker', FakeWorker), \
-				patch.object(parallel_can, 'select_scenarios', return_value=['a', 'b', 'c']), \
-				patch.object(parallel_can, 'validate_contexts'), \
-				patch.object(parallel_can.tempfile, 'mkdtemp', return_value=str(run_dir)):
-				self.assertEqual(parallel_can.run_coordinator(args), 0)
-			self.assertEqual(len(json.loads((run_dir / 'results.json').read_text())), 3)
-		self.assertEqual(len(assignments), 3)
-		self.assertEqual({name for name, _ in assignments[:2]}, {'canable0', 'canable1'})
-		self.assertEqual([path for _, path in assignments], ['a', 'b', 'c'])
+		for contexts in (['canable0'], ['canable0', 'canable1']):
+			with self.subTest(contexts=contexts):
+				assignments.clear()
+				args = SimpleNamespace(can_ports=contexts, udp=0,
+					debug=False, gui=False, scenario='all')
+				with tempfile.TemporaryDirectory() as temp_dir:
+					run_dir = Path(temp_dir) / 'run'
+					run_dir.mkdir()
+					with patch.object(parallel_can, 'CanWorker', FakeWorker), \
+						patch.object(parallel_can, 'select_scenarios', return_value=['a', 'b', 'c']), \
+						patch.object(parallel_can.tempfile, 'mkdtemp', return_value=str(run_dir)):
+						self.assertEqual(parallel_can.run_coordinator(args), 0)
+					self.assertEqual(len(json.loads((run_dir / 'results.json').read_text())), 3)
+				self.assertEqual(len(assignments), 3)
+				self.assertEqual({name for name, _ in assignments[:len(contexts)]}, set(contexts))
+				self.assertEqual([path for _, path in assignments], ['a', 'b', 'c'])
 
 	def test_unacknowledged_assignment_times_out_and_remaining_tests_are_not_run(self):
 		class SilentWorker:

@@ -66,6 +66,7 @@ def initArgParser(program_license, argv=None):
 	parser.add_argument('-c', '--can'     , nargs='?', const='default', default='none'   , help='select CANBus config')
 	parser.add_argument(      '--can-ports', nargs='+', metavar='CONTEXT', help='run scenarios across distinct CAN config contexts (requires --no-gui)')
 	parser.add_argument(      '--can-worker', action='store_true', help='internal parallel CAN worker mode')
+	parser.add_argument(      '--can-gui-child', action='store_true', help='internal parallel CAN GUI coordinator mode')
 	parser.add_argument(      '--preset'  , nargs='?'                 , default=None     , help='load specific preset on controller startup')
 	
 	return parser.parse_args(argv)
