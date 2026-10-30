@@ -11,4 +11,4 @@ def read_pressure_input_type(filling_loop):
 
 
 def write_pressure_input_type(filling_loop, value):
-	return filling_loop.write_parameter_value('pressureInputType', value) is not None
+	return filling_loop.write_parameter('pressureInputType', value)

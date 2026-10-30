@@ -34,7 +34,10 @@ class Scenario(FillingLoopScenario):
 					self._status = 'FAIL'
 					return
 
-				self.set_normal_pressure()
+				if not self.set_normal_pressure():
+					print_error('Не удалось установить нормальное давление подпитки')
+					self._status = 'FAIL'
+					return
 				if not self.wait_state_permanence(
 					self.filling_is_off,
 					self.STABILIZATION_DURATION,
@@ -44,10 +47,16 @@ class Scenario(FillingLoopScenario):
 					self._status = 'FAIL'
 					return
 				if pulse_number < self.PULSES_TO_ALARM:
-					self.set_low_pressure()
+					if not self.set_low_pressure():
+						print_error('Не удалось установить низкое давление подпитки')
+						self._status = 'FAIL'
+						return
 
 			print_log('Проверяем, что четвёртая автоматическая подпитка заблокирована')
-			self.set_low_pressure()
+			if not self.set_low_pressure():
+				print_error('Не удалось установить низкое давление подпитки')
+				self._status = 'FAIL'
+				return
 			if self.wait_event(self.filling_is_on, self.PULSE_TIMEOUT):
 				print_error('Четвёртая автоматическая подпитка включилась после аварии')
 				self._status = 'FAIL'

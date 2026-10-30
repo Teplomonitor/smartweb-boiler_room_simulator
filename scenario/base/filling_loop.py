@@ -1,3 +1,4 @@
+from consoleLog import print_error
 from scenario.scenario import Scenario as Parent
 import smartnet.constants as snc
 
@@ -38,8 +39,7 @@ class FillingLoopScenario(Parent):
 		return self._filling_loop.read_parameter_value(parameter)
 
 	def write_parameter(self, parameter, value):
-		result = self._filling_loop.write_parameter_value(parameter, value)
-		return result is not None
+		return self._filling_loop.write_parameter(parameter, value)
 
 	def read_filling_duration(self):
 		return self.read_parameter('fillingDuration')
@@ -161,15 +161,21 @@ class FillingLoopScenario(Parent):
 		return self.set_low_pressure()
 
 	def finish_test(self, original_duration=None):
-		self.write_parameter('singleFill', 0)
-		self.write_parameter('autoFill', 0)
-		self.write_parameter('pressureLossAlarmReset', 0)
-		self.write_parameter('autoFillCounter', 0)
+		for parameter in ('singleFill', 'autoFill', 'pressureLossAlarmReset', 'autoFillCounter'):
+			if not self.write_parameter(parameter, 0):
+				print_error(f'Не удалось сбросить параметр подпитки {parameter}')
+				self._status = 'FAIL'
 		if original_duration is not None:
-			self.write_parameter('fillingDuration', original_duration)
+			if not self.write_parameter('fillingDuration', original_duration):
+				print_error('Не удалось восстановить время подпитки')
+				self._status = 'FAIL'
 		if self._original_pressure_input_type is not None:
-			write_pressure_input_type(self._filling_loop, self._original_pressure_input_type)
+			if not write_pressure_input_type(self._filling_loop, self._original_pressure_input_type):
+				print_error('Не удалось восстановить тип сигнала давления подпитки')
+				self._status = 'FAIL'
 			self._test_pressure_input_type = self._original_pressure_input_type
 			self._original_pressure_input_type = None
-		self.set_normal_pressure()
+		if not self.set_normal_pressure():
+			print_error('Не удалось восстановить нормальное давление подпитки')
+			self._status = 'FAIL'
 		self._test_pressure_input_type = None
