@@ -38,10 +38,14 @@ def main() -> int:
 			product = getattr(usb_device, 'product', None)
 		except Exception:
 			product = None
+		try:
+			serial = getattr(device, 'serial_number', None)
+		except Exception:
+			serial = None
 		print(f'  index={index}: bus={bus}, address={address}, '
-			f'ports={ports}, product={product or "?"}')
+			f'ports={ports}, product={product or "?"}, serial={serial or "?"}')
 
-	print('Use the displayed index in can.ini (for example, index = 0).')
+	print('Prefer product/serial selectors in can.ini; indexes can change after reconnection.')
 	return 0
 
 

@@ -40,7 +40,7 @@ class TestCanLink(unittest.TestCase):
 			response(96, snc.ControllerFunction.GET_ACTIVE_PROGRAMS_LIST, [99, 16]),
 			response(209, snc.ControllerFunction.GET_ACTIVE_PROGRAMS_LIST, [101, 16, 102, 23]),
 		])
-		with patch.object(check_can_link, 'load_config', return_value={
+		with patch.object(check_can_link, 'resolve_bus_config', return_value={
 			'interface': 'gs_usb', 'channel': 0, 'index': 0, 'bitrate': 20000
 		}):
 			self.assertEqual(check_can_link.check_bus('ucan',
@@ -57,7 +57,7 @@ class TestCanLink(unittest.TestCase):
 
 	def test_timeout_still_closes_bus_and_does_not_send_mutations(self):
 		bus = FakeBus([response(209, snc.ControllerFunction.I_AM_HERE, [10])])
-		with patch.object(check_can_link, 'load_config', return_value={'interface': 'gs_usb'}):
+		with patch.object(check_can_link, 'resolve_bus_config', return_value={'interface': 'gs_usb'}):
 			with self.assertRaises(TimeoutError):
 				check_can_link.check_bus('ucan', bus_factory=lambda **_kwargs: bus,
 					response_timeout=0.01)
@@ -65,7 +65,7 @@ class TestCanLink(unittest.TestCase):
 		self.assertEqual(len(bus.sent), 1)
 
 	def test_virtual_interface_is_rejected_without_opening_bus(self):
-		with patch.object(check_can_link, 'load_config', return_value={'interface': 'virtual'}):
+		with patch.object(check_can_link, 'resolve_bus_config', return_value={'interface': 'virtual'}):
 			with self.assertRaises(ValueError):
 				check_can_link.check_bus('virtual', bus_factory=lambda **_kwargs:
 					self.fail('opened a virtual bus'))

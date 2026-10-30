@@ -9,12 +9,12 @@ import sys
 import time
 
 import can
-from can.util import load_config
 
 CAN_CONFIG = Path(__file__).resolve().parents[1] / 'can.ini'
 sys.path.insert(0, str(CAN_CONFIG.parent))
 
 import smartnet.constants as snc
+from smartnet.can_adapter import resolve_bus_config
 
 
 ANNOUNCEMENT_TIMEOUT = 15
@@ -41,7 +41,7 @@ def receive_controller_message(bus, function, controller_id, timeout):
 
 def check_bus(context, bus_factory=can.Bus, announcement_timeout=ANNOUNCEMENT_TIMEOUT,
 		response_timeout=RESPONSE_TIMEOUT):
-	config = load_config(path=CAN_CONFIG, context=context)
+	config = resolve_bus_config(context)
 	if config['interface'] in (None, 'virtual'):
 		raise ValueError(f'{context}: select a physical CAN interface from can.ini')
 	with bus_factory(**config) as bus:

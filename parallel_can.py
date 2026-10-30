@@ -14,6 +14,7 @@ import threading
 import time
 
 from application import Application
+from smartnet.can_adapter import resolve_bus_config
 
 
 PROTOCOL_PREFIX = '@@BRS_CAN@@'
@@ -189,7 +190,11 @@ def validate_contexts(contexts):
 		interface = config.get(context, 'interface', fallback='').lower()
 		if not interface or interface == 'virtual':
 			raise ValueError(f'Parallel CAN requires a physical bus: {context}')
-		if interface == 'gs_usb' and config.has_option(context, 'index'):
+		if interface == 'gs_usb' and (config.get(context, 'product', fallback='')
+				or config.get(context, 'serial', fallback='')):
+			address = (interface, config.get(context, 'product', fallback=''),
+				config.get(context, 'serial', fallback=''))
+		elif interface == 'gs_usb' and config.has_option(context, 'index'):
 			address = (interface, config.get(context, 'index'))
 		else:
 			address = (interface, config.get(context, 'channel', fallback=''),
@@ -198,6 +203,28 @@ def validate_contexts(contexts):
 		if address in addresses:
 			raise ValueError(f'CAN contexts refer to the same adapter: {context}')
 		addresses.add(address)
+
+
+def resolve_contexts(contexts):
+	"""Check physical GS-USB assignments before any worker is started."""
+	from can.interfaces.gs_usb import GsUsb
+	config = configparser.ConfigParser()
+	config.read(Path(__file__).with_name('can.ini'))
+	devices = GsUsb.scan() if any(config.get(name, 'product', fallback='')
+		or config.get(name, 'serial', fallback='') for name in contexts) else None
+	used = set()
+	for context in contexts:
+		options = resolve_bus_config(context, devices=devices)
+		if options['interface'] != 'gs_usb':
+			continue
+		index = options.get('index', options.get('channel'))
+		if index in used:
+			raise ValueError(f'CAN contexts refer to the same adapter: {context}')
+		used.add(index)
+		if devices is not None and (not isinstance(index, int) or index < 0
+				or index >= len(devices)):
+			raise ValueError(f'{context}: GS-USB adapter index {index!r} is unavailable')
+		print(f'[{context}] GS-USB index={index}', flush=True)
 
 
 def validate_udp_ports(ports):
@@ -247,6 +274,8 @@ def run_coordinator(args):
 	pending = deque(select_scenarios(getattr(args, 'scenarios', None) or args.scenario))
 	if not pending:
 		raise ValueError('No scenarios found')
+	if can_contexts:
+		resolve_contexts(can_contexts)
 	root = Path(__file__).with_name('log')
 	root.mkdir(exist_ok=True)
 	run_dir = Path(tempfile.mkdtemp(prefix='parallel_can_', dir=root))

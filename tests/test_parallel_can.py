@@ -15,6 +15,7 @@ from unittest.mock import Mock, patch
 
 from can.util import load_config
 import parallel_can
+from smartnet.can_adapter import resolve_bus_config
 from main import initArgParser, getProgramLicense, main
 from scenario.scenario import ScenarioThread
 
@@ -126,7 +127,7 @@ class TestParallelCan(unittest.TestCase):
 	def test_rejects_virtual_and_duplicate_adapter_mappings(self):
 		for contexts in ([], ['virtual'], ['virtual', 'canable0'], ['canable0', 'canable0'],
 			['default', 'virtual'], ['missing', 'canable0'],
-			['canable0', 'ucan'], ['canable1', 'candleLightGsUsb']):
+			['ucan', 'ucan']):
 			with self.subTest(contexts=contexts), self.assertRaises(ValueError):
 				parallel_can.validate_contexts(contexts)
 		parallel_can.validate_contexts(['canable0'])
@@ -134,13 +135,26 @@ class TestParallelCan(unittest.TestCase):
 		parallel_can.validate_contexts(['ucan', 'candleLightGsUsb'])
 
 	def test_named_profiles_are_read_by_python_can(self):
-		for context, index in (('ucan', 0), ('candleLightGsUsb', 1)):
+		for context, product in (('ucan', 'UCAN USB to CAN adapter'),
+			('candleLightGsUsb', 'candleLight USB to CAN adapter')):
 			with self.subTest(context=context):
 				config = load_config(
 					path=Path(__file__).resolve().parents[1] / 'can.ini', context=context)
 				self.assertEqual(config['interface'], 'gs_usb')
-				self.assertEqual(config['index'], index)
+				self.assertEqual(config['product'], product)
+				self.assertNotIn('index', config)
 				self.assertEqual(config['bitrate'], 20000)
+
+	def test_parallel_resolution_handles_reversed_indexes_and_aliases(self):
+		devices = [SimpleNamespace(gs_usb=SimpleNamespace(product=name), serial_number=serial)
+			for name, serial in [('candleLight USB to CAN adapter', 'light'),
+				('UCAN USB to CAN adapter', 'ucan')]]
+		with patch('can.interfaces.gs_usb.GsUsb.scan', return_value=devices):
+			self.assertEqual(resolve_bus_config('ucan')['index'], 1)
+			self.assertEqual(resolve_bus_config('candleLightGsUsb')['index'], 0)
+			parallel_can.resolve_contexts(['ucan', 'candleLightGsUsb'])
+			with self.assertRaisesRegex(ValueError, 'same adapter'):
+				parallel_can.resolve_contexts(['canable1', 'ucan'])
 
 	def test_only_discovered_scenarios_can_be_selected(self):
 		paths = [str(Path('a.py').resolve()), str(Path('b.py').resolve())]

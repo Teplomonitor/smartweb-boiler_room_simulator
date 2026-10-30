@@ -35,7 +35,7 @@ class TestParallelCanGui(unittest.TestCase):
 		with self.assertRaises(ValueError):
 			build_command([], ['a.py'])
 		with self.assertRaises(ValueError):
-			build_command(['canable0', 'ucan'], ['a.py'])
+			build_command(['ucan', 'ucan'], ['a.py'])
 		with patch('gui.parallel_can.select_scenarios', return_value=[]):
 			with self.assertRaises(ValueError):
 				build_command(['canable0', 'canable1'], [])

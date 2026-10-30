@@ -108,13 +108,13 @@ Set-Location C:\development\BoilerRoomSimulator
 C:\Tools\Python311\python.exe main.py --no-gui --can-ports canable0 canable1 --scenario all
 ```
 
-Для двух обнаруженных сейчас адаптеров (`UCAN USB to CAN adapter` и `candleLight USB to CAN adapter`) добавлены понятные профили `ucan` и `candleLightGsUsb`. **Оба** используют `gs_usb`, несмотря на название второго устройства. Сейчас утилита `tools\list_gs_usb.py` показывает `ucan` как `index=0` и `candleLightGsUsb` как `index=1`. Команда для этой пары:
+Для двух адаптеров (`UCAN USB to CAN adapter` и `candleLight USB to CAN adapter`) добавлены профили `ucan` и `candleLightGsUsb`. **Оба** используют `gs_usb`, несмотря на название второго устройства. Их текущие индексы определяются автоматически при запуске. Команда для этой пары:
 
 ```powershell
 C:\Tools\Python311\python.exe main.py --no-gui --can-ports ucan candleLightGsUsb --scenario all
 ```
 
-Перед запуском проверьте индексы командой `C:\Tools\Python311\python.exe tools\list_gs_usb.py`: порядок устройств может измениться после переподключения. Если он изменился, поменяйте `index` и соответствующий `channel` местами в профилях `can.ini`. Профиль `candleLight` с интерфейсом `candle` — отдельная старая конфигурация, **не** используйте его для данного группового запуска.
+После переподключения можно проверить обнаружение командой `C:\Tools\Python311\python.exe tools\list_gs_usb.py`. Менять индексы у именованных профилей не нужно. Если несколько устройств имеют одинаковое название, добавьте `serial` в соответствующие профили `can.ini`; при отсутствии однозначного совпадения запуск остановится с ошибкой. Профили `canable0` и `canable1` остаются позиционными. Профиль `candleLight` с интерфейсом `candle` — отдельная старая конфигурация, **не** используйте его для данного группового запуска.
 
 Сначала можно проверить **обе** шины без сценариев, загрузки пресетов и изменения программ на контроллерах:
 

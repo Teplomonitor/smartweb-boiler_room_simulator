@@ -7,6 +7,7 @@ import time
 import threading
 
 import mainThread
+from smartnet.can_adapter import resolve_bus_config
 
 
 
@@ -27,12 +28,12 @@ except:
 
 def createBus(canConfig = None):
 	if canConfig:
-		return can.Bus(config_context=canConfig)
+		return can.Bus(**resolve_bus_config(canConfig))
 
 	canConfig = mainThread.MainThread().getCANBusConfig()
 	
 	if canConfig != 'none':
-		return can.Bus(config_context=canConfig)
+		return can.Bus(**resolve_bus_config(canConfig))
 	
 	return can.Bus()
 

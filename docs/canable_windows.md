@@ -4,15 +4,15 @@ The simulator uses `python-can`'s `gs_usb` backend for adapters shown by
 Device Manager as **canable gs_usb**. The profiles in `can.ini` configure the
 CAN bus for 20,000 bit/s:
 
-- `canable0`: first GS-USB adapter (`index = 0`)
-- `canable1`: second GS-USB adapter (`index = 1`)
+- `canable0`: first GS-USB adapter (`index = 0`, legacy positional profile)
+- `canable1`: second GS-USB adapter (`index = 1`, legacy positional profile)
 
 On the current machine, `tools/list_gs_usb.py` identifies the two devices as:
 
 - `ucan`: **UCAN USB to CAN adapter**, GS-USB `index = 0`;
 - `candleLightGsUsb`: **candleLight USB to CAN adapter**, GS-USB `index = 1`.
 
-Both devices use `gs_usb` (`VID_1D50`, `PID_606F`). Check the utility output before using these named profiles: enumeration indexes can change after reconnection. These profiles are aliases for `canable0` and `canable1` respectively, not extra devices. Do not select an alias and its numbered profile together in parallel mode.
+Both devices use `gs_usb` (`VID_1D50`, `PID_606F`). The named profiles match the USB product name at startup and resolve the current index automatically. They are not additional devices: the parallel coordinator rejects two profiles that currently select the same adapter. If multiple identical adapters share a product name, set `serial = ...` in each named profile to disambiguate them. Missing or ambiguous matches prevent startup.
 
 ## Install software
 
@@ -35,8 +35,9 @@ Set-Location C:\development\BoilerRoomSimulator
 C:\Tools\Python311\python.exe tools\list_gs_usb.py
 ```
 
-The utility only enumerates devices and does not transmit CAN frames. The
-reported indexes correspond to the `index` values in `can.ini`.
+The utility only enumerates devices and does not transmit CAN frames. It shows
+product, serial number, USB path and current index. Named profiles do not need
+index edits after reconnecting adapters; numbered profiles remain positional.
 
 ## Start the simulator
 
@@ -56,9 +57,8 @@ C:\Tools\Python311\python.exe main.py --can canable1
 
 The current application creates one CAN bus per process, so separate
 processes can use separate adapters. Do not start both processes with the
-same profile. GS-USB indexes are enumeration order and can change after
-disconnecting or reconnecting devices; run the discovery utility again if
-the adapters are re-enumerated.
+same profile. Use `ucan` and `candleLightGsUsb` for stable device selection;
+the numbered profiles depend on enumeration order after reconnection.
 
 ## Bitrate and wiring
 
