@@ -62,9 +62,10 @@ def initArgParser(program_license, argv=None):
 	parser.add_argument(      '--no-gui'  , action='store_false'      , dest='gui'       , help='disable gui window')
 	parser.add_argument(      '--id'      , nargs='?'                 , default=0        , help='select specific controller ID address to control')
 	parser.add_argument('-s', '--scenario', nargs='?', const='all'    , default='none'   , help='enable automatic scenarion run')
-	parser.add_argument(      '--scenarios', nargs='+', metavar='PATH', help='run only these scenario files in parallel CAN mode')
+	parser.add_argument(      '--scenarios', nargs='+', metavar='PATH', help='run only these scenario files in parallel mode')
 	parser.add_argument('-c', '--can'     , nargs='?', const='default', default='none'   , help='select CANBus config')
 	parser.add_argument(      '--can-ports', nargs='+', metavar='CONTEXT', help='run scenarios across distinct CAN config contexts (requires --no-gui)')
+	parser.add_argument(      '--udp-ports', nargs='+', metavar='PORT', help='run scenarios across distinct controller UDP bridge ports (requires --no-gui)')
 	parser.add_argument(      '--can-worker', action='store_true', help='internal parallel CAN worker mode')
 	parser.add_argument(      '--can-gui-child', action='store_true', help='internal parallel CAN GUI coordinator mode')
 	parser.add_argument(      '--preset'  , nargs='?'                 , default=None     , help='load specific preset on controller startup')
@@ -123,15 +124,15 @@ def main(argv=None): # IGNORE:C0111
 		program_license = getProgramLicense()
 		# Setup argument parser
 		args = initArgParser(program_license, argv)
-		if args.scenarios and not args.can_ports:
-			raise ValueError('--scenarios requires --can-ports')
-		if args.can_ports:
+		if args.scenarios and not (args.can_ports or args.udp_ports):
+			raise ValueError('--scenarios requires --can-ports or --udp-ports')
+		if args.can_ports or args.udp_ports:
 			from parallel_can import run_coordinator
 			return run_coordinator(args)
 		if args.can_worker:
 			from parallel_can import run_worker
-			if args.gui or args.udp or args.scenario != 'none':
-				raise ValueError('CAN worker requires --no-gui and cannot use --udp or --scenario')
+			if args.gui or args.scenario != 'none' or (args.udp and args.can != 'virtual'):
+				raise ValueError('Parallel worker requires --no-gui; UDP workers require --can virtual')
 			return run_worker(args)
 		application = Application(args)
 		application.start()

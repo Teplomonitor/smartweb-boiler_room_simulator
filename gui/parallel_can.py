@@ -1,4 +1,4 @@
-"""Standalone dashboard for parallel CAN scenario runs (no controller in the GUI)."""
+"""Standalone dashboard for parallel CAN/UDP scenario runs."""
 
 import configparser
 import os
@@ -10,7 +10,7 @@ import threading
 
 import wx
 
-from parallel_can import select_scenarios, validate_contexts
+from parallel_can import select_scenarios, validate_contexts, validate_udp_ports
 from scenario.scenario import get_scenario_dir
 
 
@@ -25,14 +25,24 @@ def can_contexts():
 		and config.get(name, 'interface', fallback='').lower() not in ('', 'virtual')]
 
 
-def build_command(contexts, scenarios):
+def build_command(contexts, scenarios, udp_ports=None):
 	"""Use exactly the same validation and dispatch path as the CLI."""
-	validate_contexts(contexts)
+	ports = validate_udp_ports(udp_ports)
+	if contexts:
+		validate_contexts(contexts)
+	if not contexts and not ports:
+		raise ValueError('Select at least one CAN context or UDP port')
+	if set(contexts) & {f'udp_{port}' for port in ports}:
+		raise ValueError('CAN context conflicts with UDP connection name')
 	selected = select_scenarios(scenarios)
 	if not selected:
 		raise ValueError('Select at least one scenario')
-	return [sys.executable, '-u', str(ROOT / 'main.py'), '--no-gui',
-		'--can-gui-child', '--can-ports', *contexts, '--scenarios', *selected]
+	command = [sys.executable, '-u', str(ROOT / 'main.py'), '--no-gui', '--can-gui-child']
+	if contexts:
+		command.extend(['--can-ports', *contexts])
+	if ports:
+		command.extend(['--udp-ports', *(str(port) for port in ports)])
+	return [*command, '--scenarios', *selected]
 
 
 def append_console(control, text):
@@ -43,7 +53,8 @@ def append_console(control, text):
 
 class WorkerConsole(wx.Frame):
 	def __init__(self, parent, context, index):
-		super().__init__(parent, title=f'CAN: {context}', size=(760, 420))
+		super().__init__(parent, title=f'UDP: {context[4:]}' if context.startswith('udp_')
+			else f'CAN: {context}', size=(760, 420))
 		self.context = context
 		self.index = index
 		self.offset = 0
@@ -72,7 +83,7 @@ class WorkerConsole(wx.Frame):
 
 class ParallelCanFrame(wx.Frame):
 	def __init__(self):
-		super().__init__(None, title='Parallel CAN scenarios', size=(900, 720))
+		super().__init__(None, title='Parallel CAN/UDP scenarios', size=(900, 720))
 		self.process = None
 		self.running = False
 		self.stopping = False
@@ -89,6 +100,10 @@ class ParallelCanFrame(wx.Frame):
 		self.context_names = can_contexts()
 		self.context_list = wx.CheckListBox(panel, choices=self.context_names)
 		sizer.Add(self.context_list, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 6)
+		sizer.Add(wx.StaticText(panel, label='UDP bridge ports (space or comma separated; optional):'),
+			0, wx.ALL, 6)
+		self.udp_ports_input = wx.TextCtrl(panel)
+		sizer.Add(self.udp_ports_input, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 6)
 		sizer.Add(wx.StaticText(panel, label='Scenarios (one, several, or all):'), 0, wx.ALL, 6)
 		self.scenario_paths = select_scenarios('all')
 		base = get_scenario_dir()
@@ -135,17 +150,18 @@ class ParallelCanFrame(wx.Frame):
 			return
 		contexts = [name for index, name in enumerate(self.context_names)
 			if self.context_list.IsChecked(index)]
+		ports = self.udp_ports_input.GetValue().replace(',', ' ').split()
 		scenarios = [path for index, path in enumerate(self.scenario_paths)
 			if self.scenario_list.IsChecked(index)]
 		try:
-			command = build_command(contexts, scenarios)
+			command = build_command(contexts, scenarios, ports)
 			env = os.environ.copy()
 			env['PYTHONIOENCODING'] = 'utf-8:backslashreplace'
 			process = subprocess.Popen(command, cwd=ROOT, stdin=subprocess.PIPE,
 				stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
 				encoding='utf-8', errors='replace', bufsize=1, env=env)
 		except (ValueError, OSError) as exc:
-			wx.MessageBox(str(exc), 'Cannot start parallel CAN', wx.OK | wx.ICON_ERROR, parent=self)
+			wx.MessageBox(str(exc), 'Cannot start parallel run', wx.OK | wx.ICON_ERROR, parent=self)
 			return
 		self.process = process
 		self.running = True
@@ -155,11 +171,13 @@ class ParallelCanFrame(wx.Frame):
 		for monitor in self.monitors:
 			monitor.Destroy()
 		self.monitors = [WorkerConsole(self, context, index)
-			for index, context in enumerate(contexts)]
+			for index, context in enumerate([*contexts, *(f'udp_{port}' for port in
+				validate_udp_ports(ports))])]
 		self.show_consoles(None)
 		self.start_button.Disable()
 		self.stop_button.Enable()
 		self.context_list.Disable()
+		self.udp_ports_input.Disable()
 		self.scenario_list.Disable()
 		self.reader = threading.Thread(target=self.read_output, daemon=True)
 		self.reader.start()
@@ -210,6 +228,7 @@ class ParallelCanFrame(wx.Frame):
 			self.start_button.Enable()
 			self.stop_button.Disable()
 			self.context_list.Enable()
+			self.udp_ports_input.Enable()
 			self.scenario_list.Enable()
 
 	def on_close(self, event):
@@ -217,7 +236,7 @@ class ParallelCanFrame(wx.Frame):
 			self.stop(None)
 			if event.CanVeto():
 				wx.MessageBox('Waiting for workers to stop. Close again after cleanup.',
-					'Parallel CAN', wx.OK | wx.ICON_INFORMATION, parent=self)
+					'Parallel CAN/UDP', wx.OK | wx.ICON_INFORMATION, parent=self)
 				event.Veto()
 				return
 		self.timer.Stop()

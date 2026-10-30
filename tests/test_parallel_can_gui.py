@@ -40,6 +40,18 @@ class TestParallelCanGui(unittest.TestCase):
 			with self.assertRaises(ValueError):
 				build_command(['canable0', 'canable1'], [])
 
+	def test_udp_only_and_mixed_commands(self):
+		with patch('gui.parallel_can.select_scenarios', return_value=['a.py']):
+			udp = build_command([], ['a.py'], ['31987', '31988'])
+			self.assertNotIn('--can-ports', udp)
+			self.assertEqual(udp[udp.index('--udp-ports') + 1:udp.index('--scenarios')],
+				['31987', '31988'])
+			mixed = build_command(['canable0'], ['a.py'], ['31987'])
+			self.assertEqual(mixed[mixed.index('--can-ports') + 1], 'canable0')
+			self.assertEqual(mixed[mixed.index('--udp-ports') + 1], '31987')
+			with self.assertRaises(ValueError):
+				build_command([], ['a.py'], ['31987', '31987'])
+
 	def test_window_follows_worker_log_and_coordinator_output(self):
 		app = wx.App(False)
 		frame = ParallelCanFrame()
@@ -81,6 +93,25 @@ class TestParallelCanGui(unittest.TestCase):
 				frame.start(None)
 			self.assertEqual([monitor.context for monitor in frame.monitors], ['canable0'])
 			self.assertEqual(len(frame.monitors), 1)
+		finally:
+			frame.timer.Stop()
+			frame.running = False
+			frame.Destroy()
+
+	def test_udp_only_start_opens_port_monitors(self):
+		app = wx.App(False)
+		frame = ParallelCanFrame()
+		try:
+			frame.udp_ports_input.SetValue('31987, 31988')
+			frame.scenario_list.Check(0, True)
+			process = Mock()
+			process.stdout = io.StringIO('')
+			process.stdin = io.StringIO()
+			with patch('gui.parallel_can.subprocess.Popen', return_value=process) as popen:
+				frame.start(None)
+			self.assertEqual([monitor.context for monitor in frame.monitors],
+				['udp_31987', 'udp_31988'])
+			self.assertIn('--udp-ports', popen.call_args.args[0])
 		finally:
 			frame.timer.Stop()
 			frame.running = False

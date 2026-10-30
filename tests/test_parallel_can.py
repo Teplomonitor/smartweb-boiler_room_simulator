@@ -15,7 +15,7 @@ from unittest.mock import Mock, patch
 
 from can.util import load_config
 import parallel_can
-from main import initArgParser, getProgramLicense
+from main import initArgParser, getProgramLicense, main
 from scenario.scenario import ScenarioThread
 
 
@@ -97,6 +97,31 @@ class TestParallelCan(unittest.TestCase):
 		selected = initArgParser(getProgramLicense(), ['--no-gui', '--can-ports',
 			'ucan', 'candleLightGsUsb', '--scenarios', 'a.py', 'b.py'])
 		self.assertEqual(selected.scenarios, ['a.py', 'b.py'])
+		self.assertEqual(initArgParser(getProgramLicense(),
+			['--no-gui', '--udp-ports', '31987', '31988', '--scenario', 'all']).udp_ports,
+			['31987', '31988'])
+		self.assertEqual(initArgParser(getProgramLicense(),
+			['--no-gui', '--can-ports', 'ucan', '--udp-ports', '31987']).can_ports,
+			['ucan'])
+
+	def test_udp_port_validation(self):
+		self.assertEqual(parallel_can.validate_udp_ports(['31987', '31988']), [31987, 31988])
+		for ports in (['0'], ['65536'], ['abc'], ['31987', '31987'],
+			['031987'], ['-1'], ['31987;rm'], [None]):
+			with self.subTest(ports=ports), self.assertRaises(ValueError):
+				parallel_can.validate_udp_ports(ports)
+
+	def test_main_routes_udp_ports_and_accepts_only_virtual_udp_worker(self):
+		with patch.object(parallel_can, 'run_coordinator', return_value=0) as coordinator:
+			self.assertEqual(main(['--no-gui', '--udp-ports', '31987', '31988']), 0)
+			self.assertEqual(coordinator.call_args.args[0].udp_ports, ['31987', '31988'])
+		with patch.object(parallel_can, 'run_worker', return_value=0) as worker:
+			self.assertEqual(main(['--no-gui', '--can-worker', '--can', 'virtual',
+				'--udp', '31987']), 0)
+			self.assertEqual(worker.call_args.args[0].can, 'virtual')
+			self.assertEqual(main(['--no-gui', '--can-worker', '--can', 'ucan',
+				'--udp', '31987']), 2)
+			worker.assert_called_once()
 
 	def test_rejects_virtual_and_duplicate_adapter_mappings(self):
 		for contexts in ([], ['virtual'], ['virtual', 'canable0'], ['canable0', 'canable0'],
@@ -139,6 +164,15 @@ class TestParallelCan(unittest.TestCase):
 			select.assert_called_once_with(args.scenarios)
 		args.scenario = 'all'
 		with self.assertRaisesRegex(ValueError, 'either'):
+			parallel_can.run_coordinator(args)
+		args.scenario = 'none'
+		args.udp_ports = ['31987']
+		args.udp = '31988'
+		with self.assertRaisesRegex(ValueError, '--udp-ports'):
+			parallel_can.run_coordinator(args)
+		args.udp = 0
+		args.can_ports = ['udp_31987']
+		with self.assertRaises(ValueError):
 			parallel_can.run_coordinator(args)
 
 	def test_worker_reports_ready_and_result(self):
@@ -208,6 +242,46 @@ class TestParallelCan(unittest.TestCase):
 				self.assertEqual({name for name, _ in assignments[:len(contexts)]}, set(contexts))
 				self.assertEqual([path for _, path in assignments], ['a', 'b', 'c'])
 
+	def test_udp_and_mixed_dispatch_record_connection_type(self):
+		class FakeWorker:
+			def __init__(self, context, index, args, run_dir, events):
+				self.context = context
+				self.current = None
+				self.ready = False
+				self.retiring = False
+				self.process = Mock()
+				self.process.poll.return_value = None
+				self.events = events
+				events.put((self, {'type': 'ready'}))
+
+			def send(self, command):
+				self.events.put((self, {'type': 'result', 'result': 'OK',
+					'checklistId': command['scenario'], 'duration': 1.0}))
+
+			def stop(self):
+				pass
+
+			def join(self):
+				pass
+
+		for can_contexts, ports in (([], ['31987', '31988']),
+			(['canable0'], ['31987'])):
+			with self.subTest(can_contexts=can_contexts, ports=ports):
+				args = SimpleNamespace(can_ports=can_contexts, udp_ports=ports,
+					udp=0, debug=False, gui=False, scenario='all')
+				with tempfile.TemporaryDirectory() as temp_dir:
+					run_dir = Path(temp_dir) / 'run'
+					run_dir.mkdir()
+					with patch.object(parallel_can, 'CanWorker', FakeWorker), \
+						patch.object(parallel_can, 'select_scenarios', return_value=['a', 'b']), \
+						patch.object(parallel_can.tempfile, 'mkdtemp', return_value=str(run_dir)):
+						self.assertEqual(parallel_can.run_coordinator(args), 0)
+					results = json.loads((run_dir / 'results.json').read_text(encoding='utf-8'))
+				self.assertEqual([r['scenario'] for r in results], ['a', 'b'])
+				self.assertEqual({tuple(parallel_can.result_target(c).items()) for c in
+					[*can_contexts, *(f'udp_{p}' for p in ports)]},
+					{tuple((k, v) for k, v in r.items() if k in ('can', 'udp')) for r in results})
+
 	def test_unacknowledged_assignment_times_out_and_remaining_tests_are_not_run(self):
 		class SilentWorker:
 			def __init__(self, context, index, args, run_dir, events):
@@ -268,6 +342,24 @@ class TestParallelCan(unittest.TestCase):
 				self.assertIn('--no-gui', popen.call_args.args[0])
 				self.assertEqual(env['PYTHONIOENCODING'], 'utf-8:backslashreplace')
 				self.assertEqual(popen.call_args.kwargs['errors'], 'replace')
+
+	def test_udp_worker_uses_virtual_can_and_its_own_udp_port(self):
+		with tempfile.TemporaryDirectory() as temp_dir:
+			process = Mock()
+			process.stdout = io.StringIO('')
+			process.stdin = io.StringIO()
+			process.poll.return_value = None
+			process.wait.return_value = 0
+			with patch.object(parallel_can.subprocess, 'Popen', return_value=process) as popen:
+				worker = parallel_can.CanWorker('udp_31987', 1,
+					SimpleNamespace(id=0, profile='main', preset=None),
+					Path(temp_dir), queue.Queue())
+				worker.stop()
+				worker.join()
+			command = popen.call_args.args[0]
+			self.assertEqual(command[command.index('--can') + 1], 'virtual')
+			self.assertEqual(command[command.index('--udp') + 1], '31987')
+			self.assertEqual(worker.log_dir.name, 'worker_1_udp_31987')
 
 	def test_bad_console_encoding_does_not_hide_worker_events(self):
 		script = "import sys; sys.stdout.buffer.write(b'\\xcd\\n@@BRS_CAN@@{\"type\":\"ready\"}\\n'); sys.stdout.buffer.flush()"

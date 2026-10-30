@@ -1,4 +1,4 @@
-"""Headless CAN scenario coordinator. Each CAN context has its own process."""
+"""Headless CAN/UDP scenario coordinator. Each connection has its own process."""
 
 import configparser
 import json
@@ -96,8 +96,11 @@ class CanWorker:
 		env['BRS_LOG_ROOT'] = str(self.log_dir / 'log')
 		env['PYTHONIOENCODING'] = 'utf-8:backslashreplace'
 		command = [sys.executable, '-u', str(Path(__file__).with_name('main.py')),
-			'--no-gui', '--can-worker', '--can', context, '--id', str(args.id),
+			'--no-gui', '--can-worker', '--can', 'virtual' if context.startswith('udp_') else context,
+			'--id', str(args.id),
 			'--profile', args.profile]
+		if context.startswith('udp_'):
+			command.extend(['--udp', context.removeprefix('udp_')])
 		if args.preset:
 			command.extend(['--preset', args.preset])
 		self.log = (self.log_dir / 'console.txt').open('w', encoding='utf-8')
@@ -181,6 +184,8 @@ def validate_contexts(contexts):
 	for context in contexts:
 		if context not in config.sections() or not context.isidentifier():
 			raise ValueError(f'Unknown or unsafe CAN context in can.ini: {context}')
+		if context.startswith('udp_'):
+			raise ValueError(f'CAN context name reserved for UDP connections: {context}')
 		interface = config.get(context, 'interface', fallback='').lower()
 		if not interface or interface == 'virtual':
 			raise ValueError(f'Parallel CAN requires a physical bus: {context}')
@@ -195,6 +200,26 @@ def validate_contexts(contexts):
 		addresses.add(address)
 
 
+def validate_udp_ports(ports):
+	"""Return canonical port numbers; one listening socket per controller."""
+	validated = []
+	for port in ports or []:
+		try:
+			value = int(port)
+		except (TypeError, ValueError):
+			raise ValueError(f'Invalid UDP port: {port}') from None
+		if str(port) != str(value) or not 1 <= value <= 65535:
+			raise ValueError(f'Invalid UDP port: {port} (expected 1..65535)')
+		validated.append(value)
+	if len(validated) != len(set(validated)):
+		raise ValueError('Specify distinct UDP ports for parallel controllers')
+	return validated
+
+
+def result_target(context):
+	return {'udp': int(context[4:])} if context.startswith('udp_') else {'can': context}
+
+
 def run_coordinator(args):
 	"""Dispatch the next test to the next free controller; never retry implicitly."""
 	stop_requested = threading.Event()
@@ -205,12 +230,17 @@ def run_coordinator(args):
 					stop_requested.set()
 					break
 		threading.Thread(target=listen_for_stop, daemon=True).start()
-	contexts = args.can_ports
-	validate_contexts(contexts)
+	can_contexts = getattr(args, 'can_ports', None) or []
+	udp_ports = validate_udp_ports(getattr(args, 'udp_ports', None))
+	if can_contexts:
+		validate_contexts(can_contexts)
+	if not can_contexts and not udp_ports:
+		raise ValueError('Specify --can-ports and/or --udp-ports')
 	if args.udp or args.debug:
-		raise ValueError('Parallel CAN mode does not support --udp or --debug')
+		raise ValueError('Parallel mode does not support --udp or --debug; use --udp-ports')
 	if args.gui:
-		raise ValueError('Parallel CAN mode requires --no-gui')
+		raise ValueError('Parallel mode requires --no-gui')
+	contexts = list(can_contexts) + [f'udp_{port}' for port in udp_ports]
 	if getattr(args, 'scenarios', None) and args.scenario != 'none':
 		raise ValueError('Use either --scenarios or --scenario, not both')
 	from collections import deque
@@ -248,7 +278,7 @@ def run_coordinator(args):
 						if limit is not None and elapsed > limit:
 							message = f'{w.phase} timed out after {elapsed:.0f}s'
 							print(f'[{w.context}] {message}', flush=True)
-							results.append({'can': w.context, 'scenario': w.current,
+							results.append({**result_target(w.context), 'scenario': w.current,
 								'result': 'ERROR', 'error': message})
 							w.current = None
 							w.retiring = True
@@ -268,7 +298,7 @@ def run_coordinator(args):
 				worker.last_notice = worker.phase_started_at
 				print(f'[{worker.context}] {worker.phase}: {Path(worker.current).name}', flush=True)
 			elif event['type'] == 'result' and worker.current:
-				result = {'can': worker.context, 'scenario': worker.current, **event}
+				result = {**result_target(worker.context), 'scenario': worker.current, **event}
 				results.append(result)
 				print(f"[{worker.context}] {event['result']} {event['checklistId']} ({event['duration']:.1f}s)", flush=True)
 				worker.current = None
@@ -276,7 +306,7 @@ def run_coordinator(args):
 				worker.ready = False
 				worker.retiring = True
 				if worker.current:
-					results.append({'can': worker.context, 'scenario': worker.current,
+					results.append({**result_target(worker.context), 'scenario': worker.current,
 						'result': 'ERROR', 'error': f"Worker exited ({event['code']})"})
 					worker.current = None
 				print(f"[{worker.context}] worker exited ({event['code']})", flush=True)
@@ -286,7 +316,7 @@ def run_coordinator(args):
 					worker.retiring = True
 					worker.ready = False
 					if worker.current:
-						results.append({'can': worker.context, 'scenario': worker.current,
+						results.append({**result_target(worker.context), 'scenario': worker.current,
 							'result': 'ERROR', 'error': event['error']})
 						worker.current = None
 					worker.stop()
@@ -302,7 +332,7 @@ def run_coordinator(args):
 						free.send({'type': 'run', 'scenario': path})
 					except (BrokenPipeError, OSError) as exc:
 						free.ready = False
-						results.append({'can': free.context, 'scenario': path,
+						results.append({**result_target(free.context), 'scenario': path,
 							'result': 'ERROR', 'error': repr(exc)})
 						free.current = None
 		unassigned = list(pending)
@@ -314,7 +344,7 @@ def run_coordinator(args):
 	except KeyboardInterrupt:
 		for worker in workers:
 			if worker.current:
-				results.append({'can': worker.context, 'scenario': worker.current,
+				results.append({**result_target(worker.context), 'scenario': worker.current,
 					'result': 'INTERRUPTED'})
 		for path in pending:
 			results.append({'scenario': path, 'result': 'NOT_RUN'})
@@ -322,7 +352,7 @@ def run_coordinator(args):
 	except Exception:
 		for worker in workers:
 			if worker.current:
-				results.append({'can': worker.context, 'scenario': worker.current,
+				results.append({**result_target(worker.context), 'scenario': worker.current,
 					'result': 'ERROR', 'error': 'Coordinator failed'})
 		for path in pending:
 			results.append({'scenario': path, 'result': 'NOT_RUN'})
@@ -331,7 +361,7 @@ def run_coordinator(args):
 		# A second Ctrl+C must not abandon non-daemon pipe readers mid-shutdown.
 		previous_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
 		try:
-			print('Stopping CAN workers and writing results; please wait...', flush=True)
+			print('Stopping workers and writing results; please wait...', flush=True)
 			for worker in workers:
 				worker.stop()
 			for worker in workers:
