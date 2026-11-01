@@ -5,7 +5,7 @@ import smartnet.constants as snc
 
 class HeatingCircuitLineScenario(CascadeManagerScenario):
 	PUMP_ALWAYS_ON = 2
-	PUMP_ALWAYS_OFF = 3
+	PUMP_ALWAYS_OFF = 4  # HeatingCircuitProgram::PUMP_MODE_ALWAYS_OFF
 	DHW_COMFORT = 0
 	DHW_OFF = 3
 	OUTDOOR_TEMPERATURE = 15

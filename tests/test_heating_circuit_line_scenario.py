@@ -90,7 +90,10 @@ class LineScenarioHarness(unittest.TestCase):
 		self.original_sensors = [(sensor, sensor.get_value(), sensor.isManual()) for sensor in self.sensors]
 		self.settings = self.scenario._settings()
 		self.initial = {
-			(program.get_id(), program_type, parameter_id, None): value + 1
+			(program.get_id(), program_type, parameter_id, None): (
+				3 if program_type == snc.ProgramType.HEATING_CIRCUIT
+				and parameter_id == snc.HeatingCircuitParameterId.PUMP_MODE else value + 1
+			)
 			for program, program_type, parameter_id, value in self.settings
 		}
 		self.values = self.initial.copy()
@@ -142,7 +145,7 @@ class LineScenarioHarness(unittest.TestCase):
 		self.phases.append(active)
 		for circuit, enabled in zip(self.scenario._circuits(), active[:2]):
 			self.assertEqual(self.values[circuit.get_id(), snc.ProgramType.HEATING_CIRCUIT,
-				snc.HeatingCircuitParameterId.PUMP_MODE, None], 2 if enabled else 3)
+				snc.HeatingCircuitParameterId.PUMP_MODE, None], 2 if enabled else 4)
 		self.assertEqual(self.values[preset.DHW_ID, snc.ProgramType.DHW,
 			snc.DhwParameterId.WORK_MODE, None], 0 if active[2] else 3)
 		# Fixed reference replies: no regulation or CAN timing is emulated here.
@@ -200,6 +203,13 @@ class LineScenarioHarness(unittest.TestCase):
 
 
 class TestHeatingCircuitLineScenario(LineScenarioHarness):
+	def test_initial_pump_modes_use_firmware_off_value(self):
+		pump_settings = [(program.get_id(), value) for program, program_type, parameter_id, value in self.settings
+			if program_type == snc.ProgramType.HEATING_CIRCUIT
+			and parameter_id == snc.HeatingCircuitParameterId.PUMP_MODE]
+		self.assertEqual(pump_settings, [(preset.HEATING_LINE_ID, 4),
+			(preset.CIRCUIT_IDS[0], 4), (preset.CIRCUIT_IDS[1], 4)])
+
 	def test_preset_topology_and_unique_channels(self):
 		self.assertEqual(len(self.programs), 8)
 		self.assertEqual(self.controllers[0].get_id(), preset.HOST_ID)
@@ -327,7 +337,7 @@ class TestHeatingCircuitLineTemperatureScenario(LineScenarioHarness):
 			self.assertEqual(self.values[circuit.get_id(), snc.ProgramType.CIRCUIT,
 				snc.CircuitParameterId.REQUIRED_CONSTANT_FLOW_TEMPERATURE, None], request)
 			self.assertEqual(self.values[circuit.get_id(), snc.ProgramType.HEATING_CIRCUIT,
-				snc.HeatingCircuitParameterId.PUMP_MODE, None], 2 if enabled else 3)
+				snc.HeatingCircuitParameterId.PUMP_MODE, None], 2 if enabled else 4)
 			self.replies[circuit.get_id(), snc.ProgramType.CONSUMER,
 				snc.ConsumerParameterId.REQUIRED_TEMPERATURE, None] = reply
 		self.assertEqual(self.values[preset.HEATING_LINE_ID, snc.ProgramType.HEATING_CIRCUIT,
