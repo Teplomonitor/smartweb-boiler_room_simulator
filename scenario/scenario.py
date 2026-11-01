@@ -16,6 +16,7 @@ import main
 import mainThread
 import programs.factory as program_factory
 import smartnet.constants as snc
+from scenario.metadata import format_estimated_duration, get_estimated_duration
 
 from functions.limit import limit
 from functions.timeOnDelay  import TimeOnDelay
@@ -57,6 +58,7 @@ class Scenario(object):
 		print_log(f'starting   : {self.get_checklist_id()}')
 		print_log(f'title      : {self.get_scenario_title()}')
 		print_log(f'description: {self.get_scenario_description()}')
+		print_log(f'estimated  : {format_estimated_duration(self.get_estimated_duration())}')
 		
 		self._manualSensorsList = []
 		self._virtual_outdoor = None
@@ -74,6 +76,10 @@ class Scenario(object):
 	
 	def get_checklist_id(self):
 		return '--'
+
+	def get_estimated_duration(self):
+		"""Estimated total seconds including preset loading, or None if unknown."""
+		return get_estimated_duration(self.get_checklist_id())
 	
 	def get_duration(self):
 		return time.time() - self._startTime

@@ -37,6 +37,8 @@ class TestScenarioValidator(unittest.TestCase):
 		self.root = Path(self.directory.name)
 		(self.root / 'scenario' / 'list').mkdir(parents=True)
 		(self.root / 'presets' / 'list').mkdir(parents=True)
+		(self.root / 'scenario' / 'metadata.py').write_text(
+			"SCENARIO_RUN_ESTIMATES = {'1.2.3': 60}\n", encoding='utf-8')
 
 	def tearDown(self):
 		self.directory.cleanup()
@@ -158,6 +160,24 @@ class Dispatch(Again):
 
 		self.assertEqual(validator.validate(), 1)
 		self.assertTrue(any('duplicate checklist ID 1.2.3' in error for error in validator.errors))
+
+	def test_missing_estimate_is_reported(self):
+		self._write_preset()
+		self._write_scenario('scenario_1_2_3.py')
+		(self.root / 'scenario' / 'metadata.py').write_text('SCENARIO_RUN_ESTIMATES = {}', encoding='utf-8')
+		validator = ScenarioValidator(self.root)
+		self.assertEqual(validator.validate(), 1)
+		self.assertTrue(any('missing duration estimate' in error for error in validator.errors))
+
+	def test_invalid_and_duplicate_estimates_are_reported(self):
+		self._write_preset()
+		self._write_scenario('scenario_1_2_3.py')
+		(self.root / 'scenario' / 'metadata.py').write_text(
+			"SCENARIO_RUN_ESTIMATES = {'1.2.3': 60, '1.2.3': 30, 'bad': True}", encoding='utf-8')
+		validator = ScenarioValidator(self.root)
+		self.assertEqual(validator.validate(), 1)
+		self.assertTrue(any('duplicate estimate' in error for error in validator.errors))
+		self.assertTrue(any('positive integer seconds' in error for error in validator.errors))
 
 	def test_missing_scenario_directory_is_reported(self):
 		root = self.root / 'empty'

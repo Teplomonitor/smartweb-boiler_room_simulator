@@ -21,6 +21,19 @@ class TestParallelCanGui(unittest.TestCase):
 		self.assertIn('canable0', can_contexts())
 		self.assertNotIn('virtual', can_contexts())
 
+	def test_scenario_list_displays_estimate_without_changing_path(self):
+		app = wx.GetApp() or wx.App(False)
+		frame = ParallelCanFrame()
+		try:
+			index = next(index for index, path in enumerate(frame.scenario_paths)
+				if path.endswith('scenario_heating_circuit_external_priority_5_2_3_3.py'))
+			self.assertIn('≈ 3 мин 10 с', frame.scenario_list.GetString(index))
+			self.assertTrue(frame.scenario_paths[index].endswith('.py'))
+		finally:
+			frame.timer.Stop()
+			frame.Destroy()
+			self.assertIsNotNone(app)
+
 	def test_command_uses_existing_cli_dispatch(self):
 		with patch('gui.parallel_can.select_scenarios', return_value=['a.py']):
 			command = build_command(['canable0', 'canable1'], ['a.py'])

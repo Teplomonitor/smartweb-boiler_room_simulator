@@ -11,6 +11,7 @@ import threading
 import wx
 
 from parallel_can import select_scenarios, validate_contexts, validate_udp_ports
+from scenario.metadata import scenario_label
 from scenario.scenario import get_scenario_dir
 
 
@@ -107,9 +108,9 @@ class ParallelCanFrame(wx.Frame):
 		sizer.Add(wx.StaticText(panel, label='Scenarios (one, several, or all):'), 0, wx.ALL, 6)
 		self.scenario_paths = select_scenarios('all')
 		base = get_scenario_dir()
-		labels = [os.path.relpath(path, base).replace(os.sep, '/')
+		labels = [scenario_label(path, include_path=True, scenario_dir=base)
 			for path in self.scenario_paths]
-		self.scenario_list = wx.CheckListBox(panel, choices=labels)
+		self.scenario_list = wx.CheckListBox(panel, choices=labels, style=wx.LB_HSCROLL)
 		sizer.Add(self.scenario_list, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 6)
 		buttons = wx.BoxSizer(wx.HORIZONTAL)
 		for label, handler in (('Select all', self.select_all),

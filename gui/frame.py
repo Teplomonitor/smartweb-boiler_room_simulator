@@ -19,6 +19,7 @@ from gui.parameter import GuiOutputChannel as GuiOutputChannel
 from presets.preset import get_presetFilesList   as get_presetFilesList
 
 import scenario.scenario as sc
+from scenario.metadata import scenario_label
 
 guiThreadSingleton = None
 
@@ -63,17 +64,17 @@ class ScenarioItem(object):
 
 class ScenarioSelectionDialog(wx.Dialog):
 	def __init__(self, parent, scenario_paths, selected_scenarios):
-		wx.Dialog.__init__(self, parent, wx.ID_ANY, _(u"Select scenarios"), wx.DefaultPosition, wx.Size(520, 600))
+		wx.Dialog.__init__(self, parent, wx.ID_ANY, _(u"Select scenarios"), wx.DefaultPosition, wx.Size(900, 600))
 		self._scenario_paths = list(scenario_paths)
 		self.selected_scenarios = []
 
 		scenario_dir = sc.get_scenario_dir()
 		labels = [
-			os.path.relpath(path, scenario_dir).replace(os.sep, '/')
+			scenario_label(path, include_path=True, scenario_dir=scenario_dir)
 			for path in self._scenario_paths
 		]
 		self._scenario_check_list = wx.CheckListBox(
-			self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, labels)
+			self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, labels, style=wx.LB_HSCROLL)
 		selected_scenarios = set(selected_scenarios)
 		for index, path in enumerate(self._scenario_paths):
 			self._scenario_check_list.Check(index, path in selected_scenarios)
@@ -138,9 +139,10 @@ class MainFrame ( wx.Frame ):
 		self.m_menu1.AppendSubMenu( loadPresetSubmenu, _(u"Load preset") )
 		
 	def addScenarioMenu(self):
-		def addScenarioItem(submenu, scenarioTitle, scenarioDir = None):
+		def addScenarioItem(submenu, scenarioTitle, scenarioDir = None, label = None):
 			scenarioItem = ScenarioItem(scenarioTitle, scenarioDir)
-			scenarioMenuItem = wx.MenuItem( submenu, wx.ID_ANY, _(scenarioTitle), wx.EmptyString, wx.ITEM_NORMAL )
+			menuLabel = _(label or scenarioTitle).replace('&', '&&')
+			scenarioMenuItem = wx.MenuItem( submenu, wx.ID_ANY, menuLabel, wx.EmptyString, wx.ITEM_NORMAL )
 			submenu.Append( scenarioMenuItem )
 			self.Bind( wx.EVT_MENU, scenarioItem.onScenarioSelect, id = scenarioMenuItem.GetId() )
 		
@@ -167,7 +169,8 @@ class MainFrame ( wx.Frame ):
 				filter_scenario_items()
 				
 				for scenarioFile in sorted(files, key=sc.natural_sort_key):
-					addScenarioItem(subMenu, scenarioFile, scenarioDir)
+					path = os.path.join(scenarioDir, scenarioFile)
+					addScenarioItem(subMenu, scenarioFile, scenarioDir, scenario_label(path))
 					
 				for scenarioSubDir in sorted(dirs, key=sc.natural_sort_key):
 					scenarioSubmenu = wx.Menu()
