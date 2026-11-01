@@ -59,6 +59,54 @@ class HeatDumpTests(unittest.TestCase):
 		self.assertEqual(rooms[0].getSettings().getSourceList()[0], self.presets.CIRCUIT_ID)
 		self.assertEqual(rooms[1].getSettings().getSourceList()[1], self.presets.CIRCUIT_ID)
 
+	def test_room_scenarios_drive_normally_open_valve(self):
+		for checklist, states, allowed in (
+			('6_5_1', (255, 0), 1),
+			('6_5_2', (255, 255, 0, 255), 0),
+		):
+			with self.subTest(checklist=checklist):
+				module = importlib.import_module(f'scenario.list.room.scenario_room_{checklist}')
+				scenario = object.__new__(module.Scenario)
+				circuit = Mock()
+				room = Mock()
+				valve = room.get_output_channel.return_value
+				valve.is_mapped.return_value = True
+				valve.get_value.side_effect = states
+				scenario._programList = {'circuit': circuit, 'room_1': room}
+				scenario.wait_state_permanence = lambda predicate, duration, timeout: predicate()
+				def run(settings, sensors, baseline, active):
+					self.assertEqual(settings[-1], (room, self.constants.ProgramType.ROOM_DEVICE,
+						self.constants.RoomDeviceParameterId.ROOM_DEVICE_VALVE_STATE, 0, None))
+					self.assertIn((room, self.constants.ProgramType.ROOM_DEVICE,
+						self.constants.RoomDeviceParameterId.HEAT_EXTRICATION, allowed, 0), settings)
+					baseline()
+					active()
+				scenario.run_heat_dump = run
+				scenario.run()
+				self.assertEqual(valve.get_value.call_count, len(states))
+				if checklist == '6_5_2':
+					self.assertEqual(room.get_temperature.return_value.set_value.call_count, 2)
+
+	def test_room_valve_setting_restored_on_success_and_failure(self):
+		for fail in (False, True):
+			with self.subTest(fail=fail):
+				scenario = object.__new__(self.scenarios.HeatDumpScenario)
+				room = Mock()
+				room.get_id.return_value = 105
+				scenario._programList = {'room_1': room}
+				value = [1]  # Initial valve is normally closed.
+				scenario._read = lambda p, t, i, index=None: value[0]
+				scenario._put = lambda p, t, i, new_value, index=None: value.__setitem__(0, new_value)
+				def active():
+					self.assertEqual(value[0], scenario.NORMALLY_OPEN_VALVE_STATE)
+					if fail:
+						raise self.scenarios.HeatDumpFailed('expected failure')
+				with patch.object(self.scenarios, 'send_cooling_request'):
+					scenario.run_heat_dump([scenario.room_valve_setting('room_1')], [],
+						lambda: None, active)
+				self.assertEqual(value[0], 1)
+				self.assertEqual(scenario._status, 'FAIL' if fail else 'OK')
+
 	def test_success_and_failure_always_restore_inputs_and_cancel_cooling(self):
 		for fail in (False, True):
 			with self.subTest(fail=fail):

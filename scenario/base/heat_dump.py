@@ -37,6 +37,7 @@ class HeatDumpScenario(Parent):
 	REPORT_INTERVAL = 10  # Firmware forgets an unrefreshed request after 30 seconds.
 	ROOM_TEMPERATURE = 35
 	ROOM_SETPOINT = 20
+	NORMALLY_OPEN_VALVE_STATE = 0
 
 	def get_default_preset(self):
 		return 'heat_dump'
@@ -77,6 +78,11 @@ class HeatDumpScenario(Parent):
 			self.setting(key, snc.ProgramType.ROOM_DEVICE, room.ROOM_COMFORT_TEMPERATURE, self.ROOM_SETPOINT),
 			self.setting(key, snc.ProgramType.ROOM_DEVICE, room.HEAT_EXTRICATION, int(allowed), slot),
 		]
+
+	def room_valve_setting(self, key):
+		# A normally open valve needs an energized relay to close.
+		return self.setting(key, snc.ProgramType.ROOM_DEVICE,
+			snc.RoomDeviceParameterId.ROOM_DEVICE_VALVE_STATE, self.NORMALLY_OPEN_VALVE_STATE)
 
 	def _parameter(self, program, program_type, parameter_id, value=None, index=None):
 		return RemoteControlParameter(programType=program_type, parameterId=parameter_id,

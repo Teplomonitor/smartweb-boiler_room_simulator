@@ -15,12 +15,13 @@ class Scenario(HeatDumpScenario):
 		circuit = self._programList['circuit']
 		room = self._programList['room_1']
 		valve = room.get_output_channel('valve1')
-		settings = self.circuit_settings() + self.room_settings('room_1', 0, True)
+		settings = (self.circuit_settings() + self.room_settings('room_1', 0, True)
+			+ [self.room_valve_setting('room_1')])
 		sensors = [(circuit.get_input_channel('temperature'), 30),
 			(room.get_temperature(), self.ROOM_TEMPERATURE)]
 		def baseline():
-			self.expect(valve, self.RELAY_OFF, 'Клапан горячей комнаты до сброса', self.ROOM_TIMEOUT)
+			self.expect(valve, self.RELAY_ON, 'Клапан горячей комнаты до сброса', self.ROOM_TIMEOUT)
 		def active():
-			self.expect(valve, lambda value: value != self.RELAY_OFF,
+			self.expect(valve, self.RELAY_OFF,
 				'Клапан горячей комнаты после сброса', self.ROOM_TIMEOUT)
 		self.run_heat_dump(settings, sensors, baseline, active)
