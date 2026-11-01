@@ -1,10 +1,16 @@
 """Service shutdown tests with fake resources, not physical CAN or network devices."""
 
 import threading
+import subprocess
+import sys
+import textwrap
+from pathlib import Path
+from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
 import debug
+from scenario import scenario as scenarios
 from scenario.scenario import ScenarioThread
 from smartnet import message
 from udp import udp
@@ -92,6 +98,104 @@ class TestUdpLifecycle(unittest.TestCase):
 
 
 class TestScenarioLifecycle(unittest.TestCase):
+	def test_scenario_thread_requires_dependencies_on_first_creation(self):
+		# A fresh process prevents an existing singleton from masking the first call.
+		script = textwrap.dedent('''\
+			import threading
+			from types import SimpleNamespace
+			from unittest.mock import Mock, patch
+			from scenario import scenario as scenarios
+			ScenarioThread = scenarios.ScenarioThread
+			worker = SimpleNamespace(ready_event=threading.Event(), taskEnable=lambda: True,
+			    _scenario_thread=None)
+			with patch.object(scenarios.mainThread, 'MainThread', return_value=worker):
+			    scenarios.start_scenario('test.py')
+			    scenarios.stop_scenario()
+			assert not hasattr(ScenarioThread, 'instance')
+			for args in ((), (Mock(), None), (None, Mock())):
+			    try:
+			        ScenarioThread(*args)
+			    except RuntimeError:
+			        pass
+			    else:
+			        raise AssertionError('Created scenario thread without dependencies')
+			    assert not hasattr(ScenarioThread, 'instance')
+			controller, simulator = Mock(), Mock()
+			with patch.object(ScenarioThread, 'start') as start:
+			    thread = ScenarioThread(controller, simulator)
+			    assert ScenarioThread() is thread
+			    assert thread._controllerHost is controller
+			    assert thread._simulator is simulator
+			    start.assert_called_once()
+			    worker._scenario_thread = thread
+			    worker.ready_event.set()
+			    with patch.object(scenarios.mainThread, 'MainThread', return_value=worker), \\
+			            patch.object(thread, 'is_alive', return_value=True):
+			        scenarios.start_scenario('test.py')
+			        assert thread._newScenario == 'test.py'
+			''')
+		result = subprocess.run([sys.executable, '-c', script],
+			cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True, timeout=15)
+		self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+	def test_gui_commands_reject_unavailable_worker_without_creating_thread(self):
+		thread = Mock()
+		thread.is_alive.return_value = True
+		worker = SimpleNamespace(ready_event=threading.Event(), taskEnable=Mock(return_value=True),
+			_scenario_thread=thread)
+		with (patch.object(scenarios.mainThread, 'MainThread', return_value=worker),
+				patch.object(scenarios, 'ScenarioThread') as factory,
+				patch.object(scenarios, 'print_error') as log):
+			scenarios.start_scenario('test.py')
+			scenarios.stop_scenario()
+			self.assertEqual(log.call_count, 2)
+			factory.assert_not_called()
+			thread.start_scenario.assert_not_called()
+			thread._stopScenarioEvent.set.assert_not_called()
+			worker.ready_event.set()
+			scenarios.start_scenario('test.py')
+			scenarios.stop_scenario()
+			thread.start_scenario.assert_called_once_with('test.py')
+			thread._stopScenarioEvent.set.assert_called_once()
+			factory.assert_not_called()
+
+	def test_gui_commands_reject_stopped_or_missing_worker(self):
+		thread = Mock()
+		worker = SimpleNamespace(ready_event=threading.Event(), taskEnable=Mock(return_value=True),
+			_scenario_thread=thread)
+		worker.ready_event.set()
+		with patch.object(scenarios, 'print_error') as log:
+			with patch.object(scenarios.mainThread, 'MainThread', side_effect=RuntimeError('not started')):
+				scenarios.start_scenario('test.py')
+			with patch.object(scenarios.mainThread, 'MainThread', return_value=worker):
+				worker.taskEnable.return_value = False
+				scenarios.start_scenario('test.py')
+				worker.taskEnable.return_value = True
+				thread.is_alive.return_value = False
+				scenarios.start_scenario('test.py')
+				worker._scenario_thread = None
+				scenarios.start_scenario('test.py')
+		self.assertEqual(log.call_count, 4)
+		thread.start_scenario.assert_not_called()
+
+	def test_initialization_failure_logs_traceback(self):
+		thread = object.__new__(ScenarioThread)
+		thread._newScenario = 'test.py'
+		thread._currentScenario = None
+		thread._stopScenarioEvent = threading.Event()
+		thread.start_scenario_now = Mock(side_effect=AttributeError('missing controller'))
+		thread.stop_scenario_now = Mock()
+		thread._report_failure = Mock()
+		with (patch.object(scenarios.mainThread, 'taskEnable', side_effect=[True, False]),
+				patch.object(scenarios.time, 'sleep'), patch.object(scenarios, 'print_error') as log):
+			thread.run_scenarios()
+		messages = '\n'.join(call.args[0] for call in log.call_args_list)
+		self.assertIn('Scenario initialization failed', messages)
+		self.assertIn('Traceback (most recent call last)', messages)
+		self.assertIn('AttributeError: missing controller', messages)
+		thread.stop_scenario_now.assert_called_once_with('failed')
+		thread._report_failure.assert_called_once()
+
 	def test_exit_always_runs_scenario_cleanup(self):
 		thread = object.__new__(ScenarioThread)
 		thread.run_scenarios = Mock(side_effect=RuntimeError('unexpected failure'))

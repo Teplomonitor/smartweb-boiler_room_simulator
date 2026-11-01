@@ -9,7 +9,11 @@ from unittest.mock import Mock, patch
 
 from presets.preset import ProgramPreset
 from scenario import scenario as scenarios
+from presets.list import heating_circuit_3_3_6
+from presets.settings import DefaultSettings
 import smartnet.constants as snc
+from smartnet.remoteControl import RemoteControlParameter
+from smartnet.message import Message
 
 
 class PresetInitializationTests(unittest.TestCase):
@@ -30,6 +34,55 @@ class PresetInitializationTests(unittest.TestCase):
 				instance.bind_output.return_value = stage != 'output'
 				with self.assertRaisesRegex(RuntimeError, stage):
 					program.loadPreset(controller)
+
+	def test_heating_line_preset_writes_defined_settings_only(self):
+		programs, _ = heating_circuit_3_3_6.get_presets_list()
+		controller = Mock()
+		controller.sendProgramAddRequest.return_value = True
+		sent = []
+
+		def send(request, response_filter, timeout):
+			sent.append((request.getProgramId(), request.get_data()))
+			return SimpleNamespace(get_data=lambda: [snc.RemoteControlSetParameterResult.SET_PARAMETER_STATUS_OK])
+
+		with patch.object(Message, 'send', autospec=True, side_effect=send):
+			for program in programs:
+				self.assertTrue(program.loadPreset(controller))
+
+		expected = []
+		for program in programs:
+			settings = program.getSettings()
+			if settings is None:
+				continue
+			for parameter in settings.get():
+				if parameter.get_value() is None:
+					continue
+				data = [parameter.get_program_type(), parameter.get_parameter_id()]
+				if parameter.getParameterIndex() is not None:
+					data.append(parameter.getParameterIndex())
+				data.extend(parameter.valueToData(parameter.get_value()))
+				expected.append((program.get_id(), data))
+		self.assertEqual(sent, expected)
+		self.assertIn((heating_circuit_3_3_6.HEATING_LINE_ID, [
+			snc.ProgramType.CONSUMER, snc.ConsumerParameterId.TEMPERATURE_COMPENSATION, 0, 0,
+		]), sent)
+
+	def test_parameter_failure_reports_type_index_and_value(self):
+		parameter = RemoteControlParameter(
+			snc.ProgramType.CASCADE_MANAGER,
+			snc.CascadeManagerParameterId.PARAM_TEMPERATURE_SOURCE_ID, 0, 1,
+		)
+		program = ProgramPreset(snc.ProgramType.CASCADE_MANAGER, 'DEFAULT', 105, 'cascade',
+			DefaultSettings([parameter]), [], [])
+		response = SimpleNamespace(get_data=lambda: [snc.RemoteControlSetParameterResult.SET_PARAMETER_STATUS_ERROR])
+		with patch.object(Message, 'send', return_value=response) as send:
+			with self.assertRaises(RuntimeError) as failure:
+				program.loadSettings()
+		self.assertEqual(send.call_count, 3)
+		self.assertIn('program 105', str(failure.exception))
+		self.assertIn(f'type={parameter.get_program_type()}', str(failure.exception))
+		self.assertIn(f'parameter={parameter.get_parameter_id()}', str(failure.exception))
+		self.assertIn('index=1, value=0', str(failure.exception))
 
 	def test_unconfirmed_controller_reset_rejects_preset(self):
 		from controllers.controller import Controller

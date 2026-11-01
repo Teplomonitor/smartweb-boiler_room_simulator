@@ -10,6 +10,7 @@ from pydoc import importfile
 import time
 import threading
 import datetime
+import traceback
 
 import main
 import mainThread
@@ -317,8 +318,10 @@ def get_scenario_files_list():
 	return sorted(__all__, key=natural_sort_key)
 
 class ScenarioThread(threading.Thread):
-	def __new__(cls, *args, **kwargs):
+	def __new__(cls, controllerHost = None, simulator = None):
 		if not hasattr(cls, 'instance'):
+			if controllerHost is None or simulator is None:
+				raise RuntimeError('Cannot create scenario thread without controller and simulator')
 			cls.instance = super(threading.Thread, cls).__new__(cls)
 		return cls.instance
 
@@ -394,6 +397,7 @@ class ScenarioThread(threading.Thread):
 					self.start_scenario_now(requested)
 				except Exception as exc:
 					print_error(f'Scenario initialization failed: {exc!r}')
+					print_error(traceback.format_exc().rstrip())
 					self.stop_scenario_now('failed')
 					self._report_failure(requested, exc)
 			
@@ -543,9 +547,28 @@ class ScenarioThread(threading.Thread):
 			raise
 
 
+def _ready_scenario_thread():
+	try:
+		worker = mainThread.MainThread()
+	except RuntimeError:
+		return None
+	if not worker.ready_event.is_set() or not worker.taskEnable():
+		return None
+	thread = worker._scenario_thread
+	return thread if thread is not None and thread.is_alive() else None
+
+
 def start_scenario(scenario):
-	ScenarioThread().start_scenario(scenario)
+	thread = _ready_scenario_thread()
+	if thread is None:
+		print_error('Scenario unavailable: controller and simulator are not ready')
+		return
+	thread.start_scenario(scenario)
 	
 
 def stop_scenario():
-	ScenarioThread()._stopScenarioEvent.set()
+	thread = _ready_scenario_thread()
+	if thread is None:
+		print_error('Scenario unavailable: controller and simulator are not ready')
+		return
+	thread._stopScenarioEvent.set()

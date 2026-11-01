@@ -110,6 +110,27 @@ class TestApplicationLifecycle(unittest.TestCase):
 		self.assertIsNone(worker.ident)
 		self.assertFalse(worker.is_alive())
 
+	def test_command_line_scenario_starts_after_worker_is_ready(self):
+		self.args.scenario = 'test.py'
+		worker = self.make_worker()
+		thread = Mock()
+		thread.is_alive.return_value = True
+
+		def check_ready(path):
+			self.assertTrue(worker.ready_event.is_set())
+			self.assertEqual(path, 'test.py')
+
+		thread.start_scenario.side_effect = check_ready
+		with (patch.object(self.runtime.sm, 'CanListener'),
+				patch.object(self.runtime.ctrlSearch, 'findOnlineController', return_value=123),
+				patch.object(self.runtime.ss, 'Simulator'),
+				patch.object(self.runtime.cc, 'Controller'),
+				patch.object(self.runtime.ccio, 'initVirtualControllers'),
+				patch.object(self.runtime.scenario, 'ScenarioThread', return_value=thread),
+				patch.object(self.runtime.scenario.mainThread, 'MainThread', return_value=worker)):
+			worker.initSimulator()
+		thread.start_scenario.assert_called_once_with('test.py')
+
 	def test_startup_failure_still_releases_owned_services(self):
 		worker = self.make_worker()
 		listener = Mock()

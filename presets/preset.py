@@ -91,9 +91,15 @@ class ProgramPreset(object):
 	def loadSettings(self):
 		if self._settings:
 			for value in self._settings.get():
+				if value.get_value() is None:
+					continue
 				value.setProgramId(self._id)
 				if not value.write():
-					raise RuntimeError(f'Preset parameter write failed for program {self._id}')
+					raise RuntimeError(
+						f'Preset parameter write failed for program {self._id}: '
+						f'type={value.get_program_type()}, parameter={value.get_parameter_id()}, '
+						f'index={value.getParameterIndex()}, value={value.get_value()!r}'
+					)
 				
 	def loadPreset(self, controller):
 		if self.is_virtual():
