@@ -34,6 +34,16 @@ def unregister_application(application):
 		_application = None
 
 
+def report_can_failure(error):
+	"""Stop the active session without joining from the CAN receive thread."""
+	print_error(str(error))
+	application = _application
+	if application is not None:
+		if application.worker is not None:
+			application.worker.error = application.worker.error or error
+		application.request_stop()
+
+
 def MainThread(args=None):
 	"""Compatibility accessor; no-argument calls never create services."""
 	if _application is None:

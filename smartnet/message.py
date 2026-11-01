@@ -7,7 +7,7 @@ import time
 import threading
 
 import mainThread
-from smartnet.can_adapter import resolve_bus_config
+from smartnet.can_adapter import protect_gs_usb_receive, resolve_bus_config
 
 
 
@@ -27,15 +27,21 @@ except:
 
 
 def createBus(canConfig = None):
-	if canConfig:
-		return can.Bus(**resolve_bus_config(canConfig))
+	if not canConfig:
+		canConfig = mainThread.MainThread().getCANBusConfig()
 
-	canConfig = mainThread.MainThread().getCANBusConfig()
-	
-	if canConfig != 'none':
-		return can.Bus(**resolve_bus_config(canConfig))
-	
-	return can.Bus()
+	if canConfig == 'none':
+		return can.Bus()
+
+	config = resolve_bus_config(canConfig)
+	bus = can.Bus(**config)
+	if config.get('interface') == 'gs_usb':
+		try:
+			protect_gs_usb_receive(bus, canConfig, mainThread.report_can_failure)
+		except BaseException:
+			bus.shutdown()
+			raise
+	return bus
 
 
 class CanBusInterface(object):
