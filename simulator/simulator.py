@@ -126,6 +126,8 @@ class Simulator(threading.Thread):
 			for sim in getattr(self, '_simList', []):
 				if sim._program.get_preset().is_virtual():
 					sim._program.clear()
+			for controller_io in getattr(self, '_controllerIo', []):
+				controller_io.clear()
 			self._clear_state()
 
 	def _clear_state(self):
@@ -242,8 +244,9 @@ class Simulator(threading.Thread):
 				print('prg sim fault')
 			
 	def runVirtualControllers(self):
-		for ctrlIo in self._controllerIo:
-			ctrlIo.run()
+		with self._state_lock:
+			for ctrlIo in self._controllerIo:
+				ctrlIo.run()
 			
 	def runCollector(self):
 		if self._collector:

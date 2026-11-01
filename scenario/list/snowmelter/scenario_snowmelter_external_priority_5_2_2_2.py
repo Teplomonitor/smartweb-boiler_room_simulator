@@ -6,7 +6,7 @@ class Scenario(ExternalPriorityScenario):
 	PRESET = 'snowmelter'
 
 	def get_scenario_title(self):
-		return 'Snowmelt - external priority stops circulation pump'
+		return 'Snowmelt (analog loading pump) - external priority stops circulation pump'
 
 	def get_scenario_description(self):
 		return 'Циркуляционный насос снеготайки выключается по GIVE_WAY и включается после PROCEED'

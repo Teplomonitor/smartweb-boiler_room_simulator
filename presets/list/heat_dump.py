@@ -11,8 +11,8 @@ CIRCUIT_ID = 104
 
 
 def get_presets_list():
-	def sensor(index):
-		return ChannelMapping(index, 'CHANNEL_SENSOR', 123)
+	def sensor(index, host=123):
+		return ChannelMapping(index, 'CHANNEL_SENSOR', host)
 
 	def output(index, host):
 		return ChannelMapping(index, 'CHANNEL_RELAY', host)
@@ -32,10 +32,10 @@ def get_presets_list():
 			[sensor(5)], [None, None, None, output(3, 124)]),
 		ProgramPreset(snc.ProgramType.ROOM_DEVICE, 'DEFAULT', 105, 'Heat dump room 1',
 			RoomSettings(source_1=CIRCUIT_ID, source_2=0, source_3=0),
-			[sensor(6)], [output(0, 125)]),
+			[sensor(0, 126)], [output(0, 125)]),
 		ProgramPreset(snc.ProgramType.ROOM_DEVICE, 'DEFAULT', 106, 'Heat dump room 2',
 			RoomSettings(source_1=0, source_2=CIRCUIT_ID, source_3=0),
-			[sensor(7)], [None, output(1, 125)]),
+			[sensor(1, 126)], [None, output(1, 125)]),
 	]
-	controllers = [ControllerPreset('SWK_1', host, f'SWK_{host}') for host in (123, 124, 125)]
+	controllers = [ControllerPreset('SWK_1', host, f'SWK_{host}') for host in (123, 124, 125, 126)]
 	return programs, controllers

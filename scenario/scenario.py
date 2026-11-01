@@ -231,11 +231,13 @@ class Scenario(object):
 			
 			while main.loadPresetDone() == False:
 				self.wait(1)
+			if not main.load_preset_succeeded():
+				raise RuntimeError(f'Preset {self.get_default_preset()} failed to load: {main.get_preset_error()!r}')
 			
 			self.wait(2)
 			
 			if not self.init_program_list(self.get_required_programs()):
-				print_error('fail to init program list!')
+				raise RuntimeError(f'Preset {self.get_default_preset()} is missing required programs')
 			else:
 				print_log('init ok!')
 				controller_is_configured = True
@@ -441,7 +443,7 @@ class ScenarioThread(threading.Thread):
 	def _report_failure(self, scenario, exc):
 		if self._result_callback:
 			self._result_callback({
-				'checklistId': scenario.get_checklist_id() if isinstance(scenario, Scenario) else str(scenario),
+				'checklistId': scenario.get_checklist_id() if isinstance(scenario, Scenario) else getattr(exc, 'checklist_id', str(scenario)),
 				'result': 'ERROR',
 				'duration': scenario.get_duration() if isinstance(scenario, Scenario) else 0,
 				'error': repr(exc),
@@ -531,7 +533,14 @@ class ScenarioThread(threading.Thread):
 		scenario_module = importfile(scenarioId)
 		if self._progress_callback:
 			self._progress_callback('constructing', scenarioId)
-		return scenario_module.Scenario(self._controllerHost, self._simulator)
+		try:
+			return scenario_module.Scenario(self._controllerHost, self._simulator)
+		except Exception as exc:
+			try:
+				exc.checklist_id = scenario_module.Scenario.get_checklist_id(None)
+			except Exception:
+				pass
+			raise
 
 
 def start_scenario(scenario):

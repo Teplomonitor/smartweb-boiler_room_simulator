@@ -57,12 +57,14 @@ class Controller(object):
 		self.clear()
 			
 		if resetConfig:
-			self.resetConfig()
+			if not self.resetConfig():
+				raise RuntimeError('Controller did not confirm preset reset')
 			for program in programPresetList:
 				if self.makeNewProgram(program) == False:
-					print_error(f'Preset: program {program.get_type()}_{program.get_id()} make fail!')
+					raise RuntimeError(f'Preset: program {program.get_type()}_{program.get_id()} make fail!')
 					
 				time.sleep(1)
+			return True
 		else:
 			if not programPresetList:
 				return
@@ -93,10 +95,11 @@ class Controller(object):
 				
 			if not programFound:
 				print_error('controller got wrong preset')
-				return
+				return False
 			
 			for program in programPresetList:
 				self.addProgramFromPreset(program)
+			return True
 		
 	def addProgramFromPreset(self, program):
 		prg = pf.createProgram(program)

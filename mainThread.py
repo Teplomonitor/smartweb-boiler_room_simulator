@@ -49,6 +49,8 @@ def MainThread(args=None):
 def loadPresetNow(preset):
 	main_thread = MainThread()
 	gui = main_thread._guiThread
+	ioSimulator = None
+	controllerHost = None
 	if gui:
 		gui.set_preset_loading(True)
 	try:
@@ -60,14 +62,22 @@ def loadPresetNow(preset):
 		ioSimulator.clear()
 		controllerHost.clear()
 		
-		controllerHost.initController(True, programList)
+		if not controllerHost.initController(True, programList):
+			raise RuntimeError(f'Controller rejected preset {preset}')
 		ctrlIo = ccio.initVirtualControllers(controllerIoList)
 		ioSimulator.reloadConfig(controllerHost, ctrlIo)
 		
 		main_thread.setCurrentPreset(preset)
 		return True
-	except Exception:
-		print_error('Wrong preset!!!')
+	except Exception as exc:
+		main_thread._preset_error = exc
+		print_error(f'Wrong preset {preset}: {exc!r}')
+		for service in (ioSimulator, controllerHost):
+			if service is not None:
+				try:
+					service.clear()
+				except Exception as cleanup_error:
+					print_error(f'Preset cleanup failed: {cleanup_error!r}')
 		return False
 	finally:
 		if gui:
@@ -97,6 +107,8 @@ class ApplicationWorker(threading.Thread):
 		self._controllerId                = int(args.id)
 		
 		self._lastPreset                    = None
+		self._preset_result = None
+		self._preset_error = None
 		
 		self._programPresetList = []
 		self._controllerIoList  = []
@@ -194,8 +206,11 @@ class ApplicationWorker(threading.Thread):
 				self.initSimulator()
 			while not self._taskStopEvent.wait(1):
 				if self._newPreset:
-					if loadPresetNow(self._newPreset):
+					self._preset_result = loadPresetNow(self._newPreset)
+					if self._preset_result:
 						self._lastPreset = self._newPreset
+					else:
+						self._lastPreset = None
 					self._newPreset = None
 				if self._saveProgramPlots.is_set():
 					self._saveProgramPlots.clear()
@@ -247,11 +262,21 @@ class ApplicationWorker(threading.Thread):
 	def loadPreset(self, newPreset):
 		if newPreset == self._lastPreset:
 			print('Preset is already loaded')
+			self._preset_result = True
+			self._preset_error = None
 			return
+		self._preset_result = None
+		self._preset_error = None
 		self._newPreset = newPreset
 	
 	def loadPresetDone(self):
 		return self._newPreset == None
+
+	def load_preset_succeeded(self):
+		return self._preset_result is True
+
+	def get_preset_error(self):
+		return self._preset_error
 
 def taskEnable():
 	return _application is not None and not _application.stop_event.is_set()

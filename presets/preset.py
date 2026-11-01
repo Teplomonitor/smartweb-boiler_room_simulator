@@ -75,7 +75,8 @@ class ProgramPreset(object):
 			i = 0
 			for value in self._inputs:
 				if value:
-					prg.bind_input(i, value)
+					if not prg.bind_input(i, value):
+						raise RuntimeError(f'Preset input {i} binding failed for program {self._id}')
 				i = i + 1
 
 	def bind_outputs(self, prg):
@@ -83,14 +84,16 @@ class ProgramPreset(object):
 			i = 0
 			for value in self._outputs:
 				if value:
-					prg.bind_output(i, value)
+					if not prg.bind_output(i, value):
+						raise RuntimeError(f'Preset output {i} binding failed for program {self._id}')
 				i = i + 1
 
 	def loadSettings(self):
 		if self._settings:
 			for value in self._settings.get():
 				value.setProgramId(self._id)
-				value.write()
+				if not value.write():
+					raise RuntimeError(f'Preset parameter write failed for program {self._id}')
 				
 	def loadPreset(self, controller):
 		if self.is_virtual():

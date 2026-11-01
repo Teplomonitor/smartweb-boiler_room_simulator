@@ -6,7 +6,7 @@ class Scenario(ExternalPriorityScenario):
 	PRESET = 'snowmelter'
 
 	def get_scenario_title(self):
-		return 'Snowmelt - frost protection and heat dump override priority'
+		return 'Snowmelt (analog loading pump) - frost protection and heat dump override priority'
 
 	def get_scenario_description(self):
 		return ('При замерзании теплообменника или сбросе тепла насос загрузки работает '

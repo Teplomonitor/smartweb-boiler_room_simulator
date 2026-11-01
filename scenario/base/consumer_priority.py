@@ -4,7 +4,7 @@ import threading
 import time
 
 import smartnet.constants as snc
-import smartnet.message as sm
+from smartnet.message import CanListener
 
 
 class ConsumerPriorityCapture:
@@ -25,12 +25,12 @@ class ConsumerPriorityCapture:
 
 	def _begin_priority_capture(self):
 		self._clear_priority_events()
-		sm.CanListener.subscribe(self)
+		CanListener.subscribe(self)
 		self._priority_listener_active = True
 
 	def _end_priority_capture(self):
 		if self._priority_listener_active:
-			sm.CanListener.unsubscribe(self)
+			CanListener.unsubscribe(self)
 			self._priority_listener_active = False
 
 	def on_can_message_received(self, message):

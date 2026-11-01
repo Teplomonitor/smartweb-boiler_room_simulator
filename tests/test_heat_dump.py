@@ -50,7 +50,7 @@ class HeatDumpTests(unittest.TestCase):
 		from presets.preset import validate_program_presets
 		programs, hosts = self.presets.get_presets_list()
 		validate_program_presets(programs)
-		self.assertEqual(len(hosts), 3)
+		self.assertEqual({host.get_id() for host in hosts}, {123, 124, 125, 126})
 		self.assertFalse(any(p.get_type() == self.constants.ProgramType.BOILER for p in programs))
 		rooms = [p for p in programs if p.get_type() == self.constants.ProgramType.ROOM_DEVICE]
 		self.assertEqual(len(rooms), 2)

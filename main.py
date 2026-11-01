@@ -107,6 +107,12 @@ def loadPresetDone():
 	t = mainThread.MainThread()
 	return t.loadPresetDone()
 
+def load_preset_succeeded():
+	return mainThread.MainThread().load_preset_succeeded()
+
+def get_preset_error():
+	return mainThread.MainThread().get_preset_error()
+
 def initMainThread(args):
 	mainThread.MainThread(args)
 

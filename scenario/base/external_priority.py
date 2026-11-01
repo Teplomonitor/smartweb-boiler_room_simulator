@@ -28,6 +28,7 @@ class ExternalPriorityScenario(Parent):
 	# Set by the concrete scenario: dhw, snow, mixed, direct or pool.
 	TARGET = None
 	PRESET = None
+	SNOW_PUMP = 'primaryPumpAnalogSignal'
 
 	def get_default_preset(self):
 		return self.PRESET
@@ -134,11 +135,15 @@ class ExternalPriorityScenario(Parent):
 		if (len(ids) != len(set(ids)) or self.SENDER_ID in ids
 				or self._read(snc.ProgramType.CONSUMER, snc.ConsumerParameterId.GENERATOR_ID) != self._generator_id):
 			raise RuntimeError('Некорректная топология внешнего запроса')
-		channels = {'dhw': ('supplyPump',), 'snow': ('primaryPump', 'secondaryPump'),
+		channels = {'dhw': ('supplyPump',), 'snow': (self.SNOW_PUMP, 'secondaryPump'),
 			'mixed': ('pump', 'analogValve'), 'direct': ('pump',), 'pool': ()}[self.TARGET]
 		for channel in channels:
 			if not self._consumer.get_output_channel(channel).is_mapped():
 				raise RuntimeError(f'Не назначен выход {channel}')
+		if self.TARGET == 'snow':
+			other = 'primaryPump' if self.SNOW_PUMP == 'primaryPumpAnalogSignal' else 'primaryPumpAnalogSignal'
+			if self._consumer.get_output_channel(other).is_mapped():
+				raise RuntimeError(f'Неожиданно назначен второй насос загрузки: {other}')
 		if self.TARGET in ('mixed', 'direct'):
 			scheme = 'CIRCUIT_MIXED' if self.TARGET == 'mixed' else 'CIRCUIT_DIRECT'
 			if self._read(snc.ProgramType.PROGRAM, snc.ProgramParameterId.SCHEME) != snc.ProgramScheme[scheme]:
@@ -220,7 +225,7 @@ class ExternalPriorityScenario(Parent):
 			self.PUMP_TIMEOUT)
 
 	def _check_exception(self, set_parameter, sensors):
-		channel = 'primaryPump' if self.TARGET == 'snow' else 'pump'
+		channel = self.SNOW_PUMP if self.TARGET == 'snow' else 'pump'
 		self._expect('Исходно насос работает', lambda: self._pump_on(channel))
 		self._priority(self.HIGH_PRIORITY)
 		self._expect('Контроль: запрос выключает насос', lambda: self._pump_off(channel), self.PUMP_TIMEOUT)
@@ -282,7 +287,7 @@ class ExternalPriorityScenario(Parent):
 					self._prepare(set_parameter, sensors)
 					if case in ('pump', 'pump_primary'):
 						self._check_pump('supplyPump' if self.TARGET == 'dhw' else
-							('primaryPump' if case == 'pump_primary' else 'secondaryPump')
+								(self.SNOW_PUMP if case == 'pump_primary' else 'secondaryPump')
 							if self.TARGET == 'snow' else 'pump',
 							threshold=self.TARGET in ('mixed', 'direct'))
 					elif case == 'exception':

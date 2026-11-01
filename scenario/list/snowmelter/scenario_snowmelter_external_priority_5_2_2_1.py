@@ -6,10 +6,10 @@ class Scenario(ExternalPriorityScenario):
 	PRESET = 'snowmelter'
 
 	def get_scenario_title(self):
-		return 'Snowmelt - external priority stops loading pump'
+		return 'Snowmelt - external priority stops analog loading pump'
 
 	def get_scenario_description(self):
-		return 'Насос загрузки снеготайки выключается по GIVE_WAY и включается после PROCEED'
+		return 'Аналоговый насос загрузки снеготайки выключается по GIVE_WAY и включается после PROCEED'
 
 	def get_checklist_id(self):
 		return '5.2.2.1'

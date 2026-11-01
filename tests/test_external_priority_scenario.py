@@ -2,6 +2,7 @@
 
 import importlib.util
 from pathlib import Path
+import subprocess
 import sys
 from types import ModuleType, SimpleNamespace
 import unittest
@@ -39,6 +40,26 @@ class Output:
 
 
 class ExternalPriorityTests(unittest.TestCase):
+	def test_snow_presets_and_heat_dump_channels(self):
+		script = '''import mainThread
+from presets.list import heat_dump, snowmelter, snowmelter_relay
+for preset, active in ((snowmelter, 2), (snowmelter_relay, 0)):
+    programs, _ = preset.get_presets_list()
+    outputs = programs[0].get_outputs()
+    assert outputs[active] is not None
+    assert outputs[2 if active == 0 else 0] is None
+    assert outputs[1] is not None
+programs, controllers = heat_dump.get_presets_list()
+assert {controller.get_id() for controller in controllers} == {123, 124, 125, 126}
+assert all(channel.get_channel_id() < 6 for program in programs
+    for channel in program.get_inputs() if channel)
+assert [(prg.get_inputs()[0].get_host_id(), prg.get_inputs()[0].get_channel_id())
+    for prg in programs[-2:]] == [(126, 0), (126, 1)]
+'''
+		result = subprocess.run([sys.executable, '-c', script], cwd=ROOT,
+			capture_output=True, text=True, timeout=15)
+		self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
 	def test_dedicated_presets_match_required_programs(self):
 		remote = ModuleType('smartnet.remoteControl')
 		remote.RemoteControlParameter = Mock()
@@ -129,10 +150,15 @@ class ExternalPriorityTests(unittest.TestCase):
 			self.values[(103, snc.ProgramType.CONSUMER, snc.ConsumerParameterId.GENERATOR_ID, None)] = 102
 		elif target == 'snow':
 			self.sensors = [Input(20), Input(20), Input(0), Input(5)]
+			other = Output()
+			other.mapped = False
+			outputs = {'primaryPump': other, 'primaryPumpAnalogSignal': other,
+				'secondaryPump': self.output}
+			outputs[self.scenario.SNOW_PUMP] = self.output
 			self.scenario._programList = {
 				'consumer': self.program(101, inputs=dict(zip(('directFlowTemperature',
 					'backwardTemperature', 'plateTemperature'), self.sensors)),
-					outputs={'primaryPump': self.output, 'secondaryPump': self.output}),
+					outputs=outputs),
 				'boiler': self.program(102),
 				'oat': self.program(103, inputs={'outdoorTemperature': self.sensors[3]}),
 			}
@@ -207,8 +233,14 @@ class ExternalPriorityTests(unittest.TestCase):
 				self.frames.clear()
 
 	def test_dhw_and_snow_pumps(self):
-		for target, case in (('dhw', 'pump'), ('snow', 'pump_primary'), ('snow', 'pump')):
-			with self.subTest(target=target, case=case):
+		for target, case, pump in (('dhw', 'pump', None),
+				('snow', 'pump_primary', 'primaryPumpAnalogSignal'),
+				('snow', 'pump', 'primaryPumpAnalogSignal'),
+				('snow', 'pump_primary', 'primaryPump'),
+				('snow', 'pump', 'primaryPump')):
+			with self.subTest(target=target, case=case, pump=pump):
+				if pump:
+					self.scenario.SNOW_PUMP = pump
 				self.setup_target(target)
 				self.scenario._run_external_test(case)
 				self.assertEqual(self.scenario._status, 'OK', self.errors.call_args_list)
@@ -216,8 +248,11 @@ class ExternalPriorityTests(unittest.TestCase):
 				self.frames.clear()
 
 	def test_both_frost_and_heat_dump_exceptions(self):
-		for target in ('snow', 'mixed'):
-			with self.subTest(target=target):
+		for target, pump in (('snow', 'primaryPumpAnalogSignal'),
+				('snow', 'primaryPump'), ('mixed', None)):
+			with self.subTest(target=target, pump=pump):
+				if pump:
+					self.scenario.SNOW_PUMP = pump
 				self.setup_target(target)
 				self.scenario._run_external_test('exception')
 				self.assertEqual(self.scenario._status, 'OK', self.errors.call_args_list)
