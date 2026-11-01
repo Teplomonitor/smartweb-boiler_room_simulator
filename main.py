@@ -94,9 +94,9 @@ USAGE
 ''' % (program_shortdesc, program_version_message, str(__date__))
 	return program_license
 
-def loadPreset(preset):
+def loadPreset(preset, scenario=False):
 	t = mainThread.MainThread()
-	t.loadPreset(preset)
+	t.loadPreset(preset, scenario=scenario)
 	
 
 def saveProgramPlots():

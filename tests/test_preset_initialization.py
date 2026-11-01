@@ -128,6 +128,50 @@ class PresetInitializationTests(unittest.TestCase):
 		simulator.return_value.clear.assert_called()
 		controller.return_value.clear.assert_called()
 
+	def test_scenario_load_virtualizes_outdoor_except_journal(self):
+		import mainThread as runtime
+		outdoor = ProgramPreset(snc.ProgramType.OUTDOOR_SENSOR, 'DEFAULT', 103, 'outdoor', None, [object()], [])
+		for preset_name, scenario, virtual in (('snowmelter', True, True),
+				('journal_outdoor', True, False), ('snowmelter', False, False)):
+			with self.subTest(preset=preset_name, scenario=scenario):
+				with (patch.object(runtime, 'MainThread', return_value=self.worker),
+						patch.object(runtime.presets.preset, 'get_presets_list', return_value=([outdoor], [])),
+						patch.object(runtime.cc, 'Controller') as controller,
+						patch.object(runtime.ccio, 'initVirtualControllers'),
+						patch.object(runtime.ss, 'Simulator')):
+					controller.return_value.initController.return_value = True
+					self.assertTrue(runtime.loadPresetNow(preset_name, scenario=scenario))
+					loaded = controller.return_value.initController.call_args.args[1][0]
+					self.assertEqual(loaded.is_virtual(), virtual)
+					self.assertEqual(loaded.get_id(), outdoor.get_id())
+		self.assertFalse(outdoor.is_virtual())
+
+	def test_scenario_always_reloads_same_preset(self):
+		from mainThread import ApplicationWorker
+		worker = object.__new__(ApplicationWorker)
+		worker._lastPreset = 'snowmelter'
+		worker._lastPreset_scenario = False
+		worker.loadPreset('snowmelter', scenario=True)
+		self.assertEqual(worker._newPreset, 'snowmelter')
+		self.assertTrue(worker._newPreset_scenario)
+		worker._lastPreset_scenario = True
+		worker.loadPreset('snowmelter')
+		self.assertEqual(worker._newPreset, 'snowmelter')
+		self.assertFalse(worker._newPreset_scenario)
+
+	def test_all_outdoor_presets_can_be_virtualized(self):
+		from presets.preset import get_presetFilesList, get_presets_list, with_virtual_outdoor
+		for name in get_presetFilesList():
+			if name == 'journal_outdoor':
+				continue
+			with self.subTest(preset=name):
+				programs, _ = get_presets_list(name)
+				converted = with_virtual_outdoor(programs)
+				self.assertEqual([program.get_id() for program in converted],
+					[program.get_id() for program in programs])
+				self.assertTrue(all(program.is_virtual() for program in converted
+					if program.get_type() == snc.ProgramType.OUTDOOR_SENSOR))
+
 	def test_simulator_clear_unsubscribes_virtual_controllers(self):
 		from simulator.simulator import Simulator
 		virtual_controller = Mock()
@@ -140,6 +184,8 @@ class PresetInitializationTests(unittest.TestCase):
 	def make_scenario(self):
 		obj = object.__new__(scenarios.Scenario)
 		obj._controllerHost = Mock()
+		obj._controllerHost.get_virtual_outdoor_preset.return_value = None
+		obj._virtual_outdoor = None
 		obj._EventStop = threading.Event()
 		obj._manualSensorsList = []
 		obj.get_default_preset = lambda: 'invalid'

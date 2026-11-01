@@ -173,7 +173,8 @@ class PresetExecutionTests(unittest.TestCase):
 		controller.readControllerProgramList = Mock(return_value=[{'id': 101, 'type': snc.ProgramType.SNOWMELT}])
 		controller.addProgramFromPreset = Mock()
 		controller.initController(False, [preset(snc.ProgramType.SNOWMELT, 'real', 101), preset()])
-		self.assertEqual(controller.addProgramFromPreset.call_count, 2)
+		self.assertEqual(controller.addProgramFromPreset.call_count, 1)
+		self.assertTrue(controller.get_virtual_outdoor_preset().is_virtual())
 		controller.readControllerProgramList.return_value.append({'id': 104, 'type': snc.ProgramType.OUTDOOR_SENSOR})
 		with self.assertRaisesRegex(ValueError, 'Remove the real outdoor'):
 			controller.initController(False, [preset()])

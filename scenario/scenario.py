@@ -14,6 +14,8 @@ import traceback
 
 import main
 import mainThread
+import programs.factory as program_factory
+import smartnet.constants as snc
 
 from functions.limit import limit
 from functions.timeOnDelay  import TimeOnDelay
@@ -57,8 +59,12 @@ class Scenario(object):
 		print_log(f'description: {self.get_scenario_description()}')
 		
 		self._manualSensorsList = []
-	
-		self.init_scenario()
+		self._virtual_outdoor = None
+		try:
+			self.init_scenario()
+		except BaseException:
+			self._remove_virtual_outdoor()
+			raise
 		
 	def get_scenario_title(self):
 		return 'scenario'
@@ -90,13 +96,14 @@ class Scenario(object):
 		i = 0
 		STEP = 1
 		while i < delay:
+			self._check_virtual_outdoor()
 			if self.is_stopped():
 				raise ThreadStoppedException(f"scenario {self.get_scenario_title()} was stopped")
 				return False
 		
 			i += STEP
 			time.sleep(STEP)
-		
+		self._check_virtual_outdoor()
 		return True
 	
 	# don't do anything for "delay" seconds
@@ -207,16 +214,44 @@ class Scenario(object):
 	def set_sensor_value(self, sensor, value):
 		self.set_manual(sensor, True)
 		sensor.set_value(value, True)
+		outdoor = getattr(self, '_virtual_outdoor', None)
+		if outdoor is not None and sensor is outdoor.getOutdoorTemperature():
+			outdoor.publish_temperature(force=True)
 		
 	def done(self):
 		return self._status != 'IN_PROGRESS'
 	
 	def clear(self):
-		for prg in self.get_program_list():
-			prg.enable_gui_control()
-			
-		for sensor in self._manualSensorsList:
-			sensor.set_manual(False)
+		try:
+			for prg in self.get_program_list():
+				prg.enable_gui_control()
+			for sensor in self._manualSensorsList:
+				sensor.set_manual(False)
+		finally:
+			self._remove_virtual_outdoor()
+
+	def _activate_virtual_outdoor(self):
+		preset = self._controllerHost.get_virtual_outdoor_preset()
+		if preset is None or self._virtual_outdoor is not None:
+			return
+		program = program_factory.createProgram(preset)
+		try:
+			self._sim.attach_virtual_outdoor(program)
+		except BaseException:
+			program.clear()
+			raise
+		self._virtual_outdoor = program
+
+	def _remove_virtual_outdoor(self):
+		program = getattr(self, '_virtual_outdoor', None)
+		if program is not None:
+			self._virtual_outdoor = None
+			self._sim.detach_virtual_outdoor(program)
+
+	def _check_virtual_outdoor(self):
+		program = getattr(self, '_virtual_outdoor', None)
+		if program is not None:
+			program.check_active()
 	
 	def get_status(self):
 		return self._status
@@ -225,10 +260,16 @@ class Scenario(object):
 		if self.force_preset_load():
 			controller_is_configured = False
 		else:
+			self._activate_virtual_outdoor()
 			controller_is_configured = self.init_program_list(self.get_required_programs())
+			if (controller_is_configured and self.get_default_preset() != 'journal_outdoor'
+					and any(program.get_type() == snc.ProgramType.OUTDOOR_SENSOR
+						and not program.get_preset().is_virtual() for program in self.get_program_list())):
+				controller_is_configured = False
 			
 		if not controller_is_configured:
-			main.loadPreset(self.get_default_preset())
+			self._remove_virtual_outdoor()
+			main.loadPreset(self.get_default_preset(), scenario=True)
 			
 			while main.loadPresetDone() == False:
 				self.wait(1)
@@ -236,6 +277,7 @@ class Scenario(object):
 				raise RuntimeError(f'Preset {self.get_default_preset()} failed to load: {main.get_preset_error()!r}')
 			
 			self.wait(2)
+			self._activate_virtual_outdoor()
 			
 			if not self.init_program_list(self.get_required_programs()):
 				raise RuntimeError(f'Preset {self.get_default_preset()} is missing required programs')
@@ -273,7 +315,9 @@ class Scenario(object):
 		return True
 		
 	def get_program_list(self):
-		return self._controllerHost.get_program_list()
+		programs = self._controllerHost.get_program_list()
+		virtual_outdoor = getattr(self, '_virtual_outdoor', None)
+		return programs + [virtual_outdoor] if virtual_outdoor is not None else programs
 	
 	def find_program_in_list(self, program):
 		return [_ for _, prg in self._programList.items() if prg == program]
@@ -404,6 +448,7 @@ class ScenarioThread(threading.Thread):
 			if self._currentScenario:
 				try:
 					self._currentScenario.run()
+					self._currentScenario._check_virtual_outdoor()
 					if not mainThread.taskEnable():
 						break
 					
@@ -537,9 +582,21 @@ class ScenarioThread(threading.Thread):
 		scenario_module = importfile(scenarioId)
 		if self._progress_callback:
 			self._progress_callback('constructing', scenarioId)
+		scenario = None
 		try:
-			return scenario_module.Scenario(self._controllerHost, self._simulator)
+			scenario_class = scenario_module.Scenario
+			if isinstance(scenario_class, type) and issubclass(scenario_class, Scenario):
+				scenario = scenario_class.__new__(scenario_class)
+				scenario.__init__(self._controllerHost, self._simulator)
+			else:
+				scenario = scenario_class(self._controllerHost, self._simulator)
+			return scenario
 		except Exception as exc:
+			if isinstance(scenario, Scenario):
+				try:
+					scenario._remove_virtual_outdoor()
+				except Exception as cleanup_error:
+					print_error(f'Virtual outdoor cleanup failed: {cleanup_error!r}')
 			try:
 				exc.checklist_id = scenario_module.Scenario.get_checklist_id(None)
 			except Exception:

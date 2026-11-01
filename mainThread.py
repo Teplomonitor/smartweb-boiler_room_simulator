@@ -46,7 +46,7 @@ def MainThread(args=None):
 		raise RuntimeError('Application worker has not been initialized')
 	return _application.worker
 
-def loadPresetNow(preset):
+def loadPresetNow(preset, scenario=False):
 	main_thread = MainThread()
 	gui = main_thread._guiThread
 	ioSimulator = None
@@ -55,6 +55,8 @@ def loadPresetNow(preset):
 		gui.set_preset_loading(True)
 	try:
 		programList, controllerIoList = presets.preset.get_presets_list(preset)
+		if scenario and preset != 'journal_outdoor':
+			programList = presets.preset.with_virtual_outdoor(programList)
 
 		ioSimulator    = ss.Simulator()
 		controllerHost = cc.Controller()
@@ -107,6 +109,8 @@ class ApplicationWorker(threading.Thread):
 		self._controllerId                = int(args.id)
 		
 		self._lastPreset                    = None
+		self._lastPreset_scenario = False
+		self._newPreset_scenario = False
 		self._preset_result = None
 		self._preset_error = None
 		
@@ -206,9 +210,10 @@ class ApplicationWorker(threading.Thread):
 				self.initSimulator()
 			while not self._taskStopEvent.wait(1):
 				if self._newPreset:
-					self._preset_result = loadPresetNow(self._newPreset)
+					self._preset_result = loadPresetNow(self._newPreset, scenario=self._newPreset_scenario)
 					if self._preset_result:
 						self._lastPreset = self._newPreset
+						self._lastPreset_scenario = self._newPreset_scenario
 					else:
 						self._lastPreset = None
 					self._newPreset = None
@@ -259,14 +264,15 @@ class ApplicationWorker(threading.Thread):
 		if self._guiThread:
 			cleanup('GUI', self._guiThread.stop)
 			
-	def loadPreset(self, newPreset):
-		if newPreset == self._lastPreset:
+	def loadPreset(self, newPreset, scenario=False):
+		if not scenario and not self._lastPreset_scenario and newPreset == self._lastPreset:
 			print('Preset is already loaded')
 			self._preset_result = True
 			self._preset_error = None
 			return
 		self._preset_result = None
 		self._preset_error = None
+		self._newPreset_scenario = scenario
 		self._newPreset = newPreset
 	
 	def loadPresetDone(self):

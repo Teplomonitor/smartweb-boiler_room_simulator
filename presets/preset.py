@@ -19,6 +19,20 @@ def validate_program_presets(programs):
 	if virtual_outdoor and sum(program.get_type() == snc.ProgramType.OUTDOOR_SENSOR for program in programs) != 1:
 		raise ValueError('A virtual outdoor source cannot coexist with another outdoor program')
 
+
+def with_virtual_outdoor(programs):
+	result = []
+	for program in programs:
+		if program.get_type() != snc.ProgramType.OUTDOOR_SENSOR or program.is_virtual():
+			result.append(program)
+			continue
+		if program.getSettings() is not None or any(program.get_outputs()):
+			raise ValueError('Outdoor source with controller settings or outputs cannot be virtualized')
+		result.append(ProgramPreset(program.get_type(), program.get_scheme(), program.get_id(),
+			program.get_title(), None, [], [], execution='virtual'))
+	validate_program_presets(result)
+	return result
+
 class ProgramPreset(object):
 	'''
 	classdocs

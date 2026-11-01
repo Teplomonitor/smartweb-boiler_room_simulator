@@ -36,6 +36,7 @@ class Controller(object):
 		
 		self._activeProgramsList = []
 		self._programList = []
+		self._virtual_outdoor_preset = None
 		self._controllerId = controllerId
 		self._gui = gui
 		self._last_entry = None
@@ -48,6 +49,7 @@ class Controller(object):
 			
 		self._activeProgramsList = []
 		self._programList = []
+		self._virtual_outdoor_preset = None
 		
 		if self._gui:
 			self._gui.clear()
@@ -55,11 +57,15 @@ class Controller(object):
 	def initController(self, resetConfig, programPresetList):
 		validate_program_presets(programPresetList)
 		self.clear()
+		self._virtual_outdoor_preset = next((program for program in programPresetList
+			if program.is_virtual() and program.get_type() == snc.ProgramType.OUTDOOR_SENSOR), None)
 			
 		if resetConfig:
 			if not self.resetConfig():
 				raise RuntimeError('Controller did not confirm preset reset')
 			for program in programPresetList:
+				if program.is_virtual():
+					continue
 				if self.makeNewProgram(program) == False:
 					raise RuntimeError(f'Preset: program {program.get_type()}_{program.get_id()} make fail!')
 					
@@ -98,8 +104,12 @@ class Controller(object):
 				return False
 			
 			for program in programPresetList:
-				self.addProgramFromPreset(program)
+				if not program.is_virtual():
+					self.addProgramFromPreset(program)
 			return True
+
+	def get_virtual_outdoor_preset(self):
+		return self._virtual_outdoor_preset
 		
 	def addProgramFromPreset(self, program):
 		prg = pf.createProgram(program)

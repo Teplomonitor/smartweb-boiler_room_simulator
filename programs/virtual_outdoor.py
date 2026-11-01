@@ -22,6 +22,18 @@ class VirtualOutdoor(Oat):
 		self.getOutdoorTemperature().set_mapping(ChannelMapping(0, 'CHANNEL_INPUT', self.get_id()))
 		self.getOutdoorTemperature().set_value(-10)
 
+	def check_active(self):
+		with self._publish_lock:
+			if self._closed:
+				raise RuntimeError('Virtual outdoor source was closed during the scenario')
+			if self._publish_error:
+				raise RuntimeError(self._publish_error)
+
+	def record_publish_error(self, error):
+		with self._publish_lock:
+			if not self._closed and self._publish_error is None:
+				self._publish_error = f'Virtual outdoor publication failed: {error}'
+
 	def publish_temperature(self, force=False):
 		with self._publish_lock:
 			if self._closed:

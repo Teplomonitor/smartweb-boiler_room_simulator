@@ -212,6 +212,22 @@ class Simulator(threading.Thread):
 	def getRoomList          (self): return self._roomList
 	def getCascadeList       (self): return self._cascadeList
 	def getOat               (self): return self._oat
+
+	def attach_virtual_outdoor(self, program):
+		with self._state_lock:
+			if not self._simulator_ready or self._oat is not None:
+				raise RuntimeError('Cannot attach virtual outdoor source to current simulator')
+			model = simulator.oat.Simulator(program, self)
+			self._simList.append(model)
+			self._oat = model
+
+	def detach_virtual_outdoor(self, program):
+		with self._state_lock:
+			model = self._oat
+			if model is not None and model._program is program:
+				self._simList.remove(model)
+				self._oat = None
+			program.clear()
 	
 	def get_consumer_power(self, sourceId):
 		programList = self.getConsumerList()
@@ -238,10 +254,11 @@ class Simulator(threading.Thread):
 		for sim in self._simList:
 			try:
 				sim.run()
-			except Exception:
+			except Exception as error:
 				if sim._program.get_preset().is_virtual():
-					raise
-				print('prg sim fault')
+					sim._program.record_publish_error(error)
+				else:
+					print('prg sim fault')
 			
 	def runVirtualControllers(self):
 		with self._state_lock:
