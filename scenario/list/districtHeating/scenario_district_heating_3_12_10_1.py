@@ -1,16 +1,9 @@
-from consoleLog import print_error
-from consoleLog import print_log
-from scenario.base.district_heating import DistrictHeatingScenario
-from scenario.base.filling_loop_signal import (
-	PRESSURE_INPUT_TYPE_SHORTABLE,
-	read_pressure_input_type,
-	write_pressure_input_type,
-)
+from scenario.base.district_heating_checks import DistrictHeatingChecks
 import smartnet.constants as snc
 
 
-class Scenario(DistrictHeatingScenario):
-	ESTIMATED_RUN_SECONDS = 120
+class Scenario(DistrictHeatingChecks):
+	ESTIMATED_RUN_SECONDS = 420
 	STARTUP_TIMEOUT = 2 * 60
 	STARTUP_STABILIZATION_DURATION = 20
 	ALARM_RESPONSE_TIMEOUT = 3 * 60
@@ -43,95 +36,4 @@ class Scenario(DistrictHeatingScenario):
 		}
 
 	def run(self):
-		self._boiler = self._programList['boiler']
-		self._alarm = self._programList['alarm']
-		pressure_sensor = self._alarm.getPressure()
-
-		if not pressure_sensor.is_mapped():
-			print_error('Не найден датчик давления программы подпитки')
-			self._status = 'FAIL'
-			return
-		original_pressure_input_type = read_pressure_input_type(self._alarm)
-		if original_pressure_input_type is None:
-			print_error('Не удалось прочитать тип сигнала программы подпитки')
-			self._status = 'FAIL'
-			return
-
-		initial_minimum_temperature_restriction = self.read_temperature_generator_parameter(
-			self._boiler,
-			snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
-		)
-		if initial_minimum_temperature_restriction is None:
-			print_error('Не удалось получить исходное ограничение минимальной температуры котла')
-			self._status = 'FAIL'
-			return
-
-		try:
-			if not write_pressure_input_type(self._alarm, PRESSURE_INPUT_TYPE_SHORTABLE):
-				print_error('Не удалось настроить дискретный тип сигнала подпитки')
-				self._status = 'FAIL'
-				return
-			if not self.write_temperature_generator_parameter(
-				self._boiler,
-				snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
-				0,
-			):
-				print_error('Не удалось отключить ограничение минимальной температуры котла')
-				self._status = 'FAIL'
-				return
-
-			print_log(
-				f'Ждём исходное состояние ИТП (нет запроса резервному генератору) не более '
-				f'{self.STARTUP_TIMEOUT} секунд'
-			)
-			if not self.wait_backup_generator_not_requested(
-				self._boiler,
-				self.STARTUP_STABILIZATION_DURATION,
-				self.STARTUP_TIMEOUT,
-			):
-				print_error(
-					'Резервный генератор уже запрошен до подачи сигнала аварии, '
-					'сценарий не может проверить включение по аварии'
-				)
-				self._status = 'FAIL'
-				return
-
-			print_log('Подаём сигнал аварии: низкое давление в программе подпитки')
-			self.set_sensor_value(pressure_sensor, 'open')
-
-			print_log(
-				'Ждём разрешения работы резервного генератора (требуемая температура > 0 '
-				f'и ИТП — обслуживаемый потребитель) не более {self.ALARM_RESPONSE_TIMEOUT} секунд'
-			)
-			if not self.wait_backup_generator_requested(
-				self._boiler,
-				self.ALARM_RESPONSE_STABILIZATION_DURATION,
-				self.ALARM_RESPONSE_TIMEOUT,
-			):
-				required_temperature = self.read_temperature_source_required_temperature(self._boiler)
-				consumer_id = self.read_temperature_source_consumer_id(self._boiler)
-				print_error(
-					'ИТП не разрешил работу резервного генератора по сигналу аварии: '
-					f'требуемая температура={required_temperature}, '
-					f'обслуживаемый потребитель={consumer_id}, '
-					f'ожидался ИТП с id={self._district_heating.get_id()}'
-				)
-				self._status = 'FAIL'
-				return
-
-			print_log(
-				'ИТП разрешил работу резервного генератора по сигналу аварии'
-			)
-			self._status = 'OK'
-		finally:
-			self.set_sensor_value(pressure_sensor, 'short')
-			if not write_pressure_input_type(self._alarm, original_pressure_input_type):
-				print_error('Не удалось восстановить тип сигнала программы подпитки')
-				self._status = 'FAIL'
-			if not self.write_temperature_generator_parameter(
-				self._boiler,
-				snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
-				initial_minimum_temperature_restriction,
-			):
-				print_error('Не удалось восстановить ограничение минимальной температуры котла')
-				self._status = 'FAIL'
+		self.run_pressure_alarm_check(reserve=True)

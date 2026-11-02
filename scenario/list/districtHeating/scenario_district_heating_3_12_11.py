@@ -1,21 +1,13 @@
-from consoleLog import print_error
-from consoleLog import print_log
-from scenario.base.district_heating import DistrictHeatingScenario
-from scenario.base.filling_loop_signal import (
-	PRESSURE_INPUT_TYPE_SHORTABLE,
-	read_pressure_input_type,
-	write_pressure_input_type,
-)
+from scenario.base.district_heating_checks import DistrictHeatingChecks
 import smartnet.constants as snc
 
 
-class Scenario(DistrictHeatingScenario):
-	ESTIMATED_RUN_SECONDS = 120
+class Scenario(DistrictHeatingChecks):
+	ESTIMATED_RUN_SECONDS = 420
 	STARTUP_TIMEOUT = 2 * 60
 	STARTUP_STABILIZATION_DURATION = 20
 	ALARM_RESPONSE_TIMEOUT = 3 * 60
 	ALARM_RESPONSE_STABILIZATION_DURATION = 30
-	VALVE_CLOSED_POSITION = 10
 
 	def get_scenario_title(self):
 		return 'District Heating: emergency signal switches off pumps and closes valve'
@@ -43,94 +35,5 @@ class Scenario(DistrictHeatingScenario):
 			'alarm': snc.ProgramType.FILLING_LOOP,
 		}
 
-	def valve_is_closed(self, valve):
-		value = valve.get_value()
-		return value is not None and value <= self.VALVE_CLOSED_POSITION
-
-	def outputs_are_in_emergency_state(self, loading_pump, circulation_pump, valve):
-		return (
-			loading_pump.get_value() == self.RELAY_OFF
-			and circulation_pump.get_value() == self.RELAY_OFF
-			and self.valve_is_closed(valve)
-		)
-
 	def run(self):
-		self._alarm = self._programList['alarm']
-		pressure_sensor = self._alarm.getPressure()
-		loading_pump = self._district_heating.get_output_channel('supply_pump')
-		circulation_pump = self._district_heating.get_output_channel('circulation_pump')
-		analog_valve = self._district_heating.get_output_channel('analog_valve')
-
-		if not pressure_sensor.is_mapped():
-			print_error('Не найден датчик давления программы подпитки')
-			self._status = 'FAIL'
-			return
-		original_pressure_input_type = read_pressure_input_type(self._alarm)
-		if original_pressure_input_type is None:
-			print_error('Не удалось прочитать тип сигнала программы подпитки')
-			self._status = 'FAIL'
-			return
-
-		for channel, description in (
-			(loading_pump, 'выход насоса загрузки'),
-			(circulation_pump, 'выход циркуляционного насоса'),
-			(analog_valve, 'аналоговый выход крана'),
-		):
-			if not channel.is_mapped():
-				print_error(f'Не найден {description}')
-				self._status = 'FAIL'
-				return
-
-		try:
-			if not write_pressure_input_type(self._alarm, PRESSURE_INPUT_TYPE_SHORTABLE):
-				print_error('Не удалось настроить дискретный тип сигнала подпитки')
-				self._status = 'FAIL'
-				return
-			print_log(
-				f'Ждём исходное рабочее состояние ИТП не более {self.STARTUP_TIMEOUT} секунд'
-			)
-			if not self.wait_state_permanence(
-				lambda: (
-					loading_pump.get_value() == self.RELAY_ON
-					and circulation_pump.get_value() == self.RELAY_ON
-					and not self.valve_is_closed(analog_valve)
-				),
-				self.STARTUP_STABILIZATION_DURATION,
-				self.STARTUP_TIMEOUT,
-			):
-				print_error('ИТП не перешёл в исходное рабочее состояние')
-				self._status = 'FAIL'
-				return
-
-			print_log('Подаём сигнал аварии: низкое давление в программе подпитки')
-			self.set_sensor_value(pressure_sensor, 'open')
-
-			print_log(
-				'Ждём закрытия крана и выключения насосов не более '
-				f'{self.ALARM_RESPONSE_TIMEOUT} секунд'
-			)
-			if not self.wait_state_permanence(
-				lambda: self.outputs_are_in_emergency_state(
-					loading_pump,
-					circulation_pump,
-					analog_valve,
-				),
-				self.ALARM_RESPONSE_STABILIZATION_DURATION,
-				self.ALARM_RESPONSE_TIMEOUT,
-			):
-				print_error(
-					'ИТП не выключил оба насоса и не закрыл кран после сигнала аварии: '
-					f'насос загрузки={loading_pump.get_value()}, '
-					f'циркуляционный насос={circulation_pump.get_value()}, '
-					f'кран={analog_valve.get_value()}'
-				)
-				self._status = 'FAIL'
-				return
-
-			print_log('ИТП выключил насосы и закрыл кран по сигналу аварии')
-			self._status = 'OK'
-		finally:
-			self.set_sensor_value(pressure_sensor, 'short')
-			if not write_pressure_input_type(self._alarm, original_pressure_input_type):
-				print_error('Не удалось восстановить тип сигнала программы подпитки')
-				self._status = 'FAIL'
+		self.run_pressure_alarm_check()

@@ -1,12 +1,12 @@
-from consoleLog import print_error
 from consoleLog import print_log
-from scenario.base.district_heating import DistrictHeatingScenario
+from scenario.base.district_heating_checks import DistrictHeatingChecks
 import smartnet.constants as snc
-import smartnet.units as snu
 
 
-class Scenario(DistrictHeatingScenario):
-	ESTIMATED_RUN_SECONDS = 600
+class Scenario(DistrictHeatingChecks):
+	ESTIMATED_RUN_SECONDS = 900
+	REQUIRED_TEMPERATURE = 50
+	WARM_SUPPLY_MARGIN = 5
 	COLD_SUPPLY_MARGIN = 10
 	STARTUP_TIMEOUT = 2 * 60
 	STARTUP_STABILIZATION_DURATION = 20
@@ -45,157 +45,41 @@ class Scenario(DistrictHeatingScenario):
 		}
 
 	def run(self):
-		self._boiler = self._programList['boiler']
-
-		direct_temperature_sensor = self._district_heating.get_input_channel('direct_temp')
-
-		if not direct_temperature_sensor.is_mapped():
-			print_error('Не найден датчик температуры подачи в дом')
-			self._status = 'FAIL'
-			return
-
-		initial_direct_temperature = direct_temperature_sensor.get_value()
-		initial_minimum_temperature_restriction = self.read_temperature_generator_parameter(
-			self._boiler,
-			snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
+		boiler = self._programList['boiler']
+		circuit = self._programList['circuit']
+		settings = (
+			(boiler, 'minimumTemperatureRestriction', 0),
+			(circuit, 'generatorId', self._district_heating.get_id()),
+			(circuit, 'heatCalculationMode', snc.ConsumerHeatCalculationMode.CONSTANT_TEMPERATURE),
+			(circuit, 'requiredConstantFlowTemperature', self.REQUIRED_TEMPERATURE),
+			(circuit, 'temperatureCompensation', 0),
 		)
-
-		if initial_direct_temperature is None:
-			print_error('Не удалось получить исходную температуру подачи в дом')
-			self._status = 'FAIL'
-			return
-
-		if initial_minimum_temperature_restriction is None:
-			print_error('Не удалось получить исходное ограничение минимальной температуры котла')
-			self._status = 'FAIL'
-			return
-
-		print_log('Ждём 30 секунд для стабилизации требуемой температуры подачи в дом')
-		self.wait(30)
-
-		required_temperature = self.read_temperature_source_required_temperature(self._district_heating)
-
-		if required_temperature is None or required_temperature in (0, snu.SENSOR_UNDEFINED):
-			print_error(
-				'У ИТП нет полноценного запроса на тепло от потребителя, '
-				'невозможно проверить холодную подачу в дом'
-			)
-			self._status = 'FAIL'
-			return
-
-		power_request_delay = self.read_temperature_source_power_request_delay()
-
-		if power_request_delay is None:
-			print_error('Не удалось получить параметр "Задержка" (TemperatureSourcePowerRequestDelay)')
-			self._status = 'FAIL'
-			return
-
-		try:
-			if not self.write_temperature_generator_parameter(
-				self._boiler,
-				snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
-				0,
-			):
-				print_error('Не удалось отключить ограничение минимальной температуры котла')
-				self._status = 'FAIL'
+		with self.conditions(self.temperature_sensors(), settings) as ready:
+			if not ready:
 				return
-
-			print_log(
-				f'Ждём исходное состояние ИТП (нет запроса резервному генератору) не более '
-				f'{self.STARTUP_TIMEOUT} секунд'
-			)
-			if not self.wait_backup_generator_not_requested(
-				self._boiler,
-				self.STARTUP_STABILIZATION_DURATION,
-				self.STARTUP_TIMEOUT,
-			):
-				print_error(
-					'Резервный генератор уже запрошен до создания холодной подачи в дом, '
-					'сценарий не может проверить включение по холодной подаче'
-				)
-				self._status = 'FAIL'
-				return
-
-			cold_direct_temperature = required_temperature - self.COLD_SUPPLY_MARGIN
-			print_log(
-				f'Устанавливаем температуру подачи в дом {cold_direct_temperature:.1f} C '
-				f'(требуемая температура {required_temperature:.1f} C минус '
-				f'{self.COLD_SUPPLY_MARGIN} K), чтобы подача считалась холодной'
-			)
-			self.set_sensor_value(direct_temperature_sensor, cold_direct_temperature)
-
-			on_delay_wait = power_request_delay + self.ON_DELAY_BUFFER
-			print_log(
-				f'Ждём задержку на включение "Задержка" ({power_request_delay:.0f} секунд) '
-				f'плюс запас, всего {on_delay_wait:.0f} секунд'
-			)
-			if not self.wait(on_delay_wait):
-				self._status = 'FAIL'
-				return
-
-			print_log(
-				'Ждём разрешения работы резервного генератора не более '
-				f'{self.ON_RESPONSE_TIMEOUT} секунд'
-			)
-			if not self.wait_backup_generator_requested(
-				self._boiler,
-				self.ON_RESPONSE_STABILIZATION_DURATION,
-				self.ON_RESPONSE_TIMEOUT,
-			):
-				current_required_temperature = self.read_temperature_source_required_temperature(self._boiler)
-				consumer_id = self.read_temperature_source_consumer_id(self._boiler)
-				print_error(
-					'ИТП не разрешил работу резервного генератора при холодной подаче в дом: '
-					f'требуемая температура={current_required_temperature}, '
-					f'обслуживаемый потребитель={consumer_id}'
-				)
-				self._status = 'FAIL'
-				return
-
-			print_log('Восстанавливаем нормальную температуру подачи в дом')
-			self.set_sensor_value(direct_temperature_sensor, initial_direct_temperature)
-
-			print_log(
-				'Проверяем, что резервный генератор остаётся включённым в течение '
-				f'{self.OFF_DELAY_HOLD_DURATION} секунд (меньше задержки на выключение 5 минут)'
-			)
-			if not self.wait_backup_generator_requested(
-				self._boiler,
-				self.OFF_DELAY_HOLD_DURATION,
-				self.OFF_DELAY_HOLD_DURATION,
-			):
-				print_error(
-					'Резервный генератор выключился раньше задержки на выключение (5 минут)'
-				)
-				self._status = 'FAIL'
-				return
-
-			print_log(
-				'Ждём выключения резервного генератора после задержки на выключение (5 минут) '
-				f'не более {self.OFF_RESPONSE_TIMEOUT} секунд'
-			)
-			if not self.wait_backup_generator_not_requested(
-				self._boiler,
-				self.OFF_RESPONSE_STABILIZATION_DURATION,
-				self.OFF_RESPONSE_TIMEOUT,
-			):
-				print_error(
-					'Резервный генератор не выключился после задержки на выключение (5 минут)'
-				)
-				self._status = 'FAIL'
-				return
-
-			print_log(
-				'Проверка включения/выключения резервного генератора по холодной подаче '
-				'в дом пройдена'
-			)
+			warm_supply = self.REQUIRED_TEMPERATURE + self.WARM_SUPPLY_MARGIN
+			for sensor, value in zip(self.temperature_sensors(), (
+				self.CITY_SUPPLY, self.NORMAL_CITY_RETURN, warm_supply, self.NORMAL_HOUSE_RETURN)):
+				self.set_sensor_value(sensor, value)
+			self.require(self.wait_until(lambda: self.read_temperature_source_required_temperature(
+				self._district_heating) == self.REQUIRED_TEMPERATURE, self.STARTUP_TIMEOUT),
+				'ИТП не получил заданную уставку потребителя')
+			delay = self.read_temperature_source_power_request_delay()
+			self.require(isinstance(delay, (int, float)) and 0 <= delay <= self.MAXIMUM_ON_DELAY,
+				'Не прочитана допустимая задержка включения резерва')
+			self.require(self.wait_backup_generator_not_requested(boiler,
+				self.STARTUP_STABILIZATION_DURATION, self.STARTUP_TIMEOUT), 'Резерв уже запрошен до недогрева')
+			direct = self._district_heating.get_input_channel('direct_temp')
+			self.set_sensor_value(direct, self.REQUIRED_TEMPERATURE - self.COLD_SUPPLY_MARGIN)
+			print_log(f'Создан недогрев; задержка включения резерва {delay:g} с')
+			self.require(self.wait(delay + self.ON_DELAY_BUFFER), 'Проверка прервана')
+			self.require(self.wait_backup_generator_requested(boiler,
+				self.ON_RESPONSE_STABILIZATION_DURATION, self.ON_RESPONSE_TIMEOUT), 'Резерв не включился при недогреве')
+			print_log(f'Устраняем недогрев: подача {warm_supply} C, уставка {self.REQUIRED_TEMPERATURE} C')
+			self.set_sensor_value(direct, warm_supply)
+			self.require(self.wait_backup_generator_requested(boiler,
+				self.OFF_DELAY_HOLD_DURATION, self.OFF_DELAY_HOLD_DURATION), 'Резерв отключился раньше пяти минут')
+			self.require(self.wait_backup_generator_not_requested(boiler,
+				self.OFF_RESPONSE_STABILIZATION_DURATION, self.OFF_RESPONSE_TIMEOUT),
+				'Недогрев устранён, но резерв не отключился: проверить удержание preheat в прошивке')
 			self._status = 'OK'
-		finally:
-			self.set_sensor_value(direct_temperature_sensor, initial_direct_temperature)
-			if not self.write_temperature_generator_parameter(
-				self._boiler,
-				snc.TemperatureGeneratorParameterId.MINIMUM_TEMPERATURE_RESTRICTION,
-				initial_minimum_temperature_restriction,
-			):
-				print_error('Не удалось восстановить ограничение минимальной температуры котла')
-				self._status = 'FAIL'
