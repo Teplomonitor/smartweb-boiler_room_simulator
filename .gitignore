@@ -110,3 +110,4 @@ log/
 
 # project specific settings
 settings.ini
+/parallel_can_settings.json

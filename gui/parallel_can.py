@@ -1,11 +1,13 @@
 """Standalone dashboard for parallel CAN/UDP scenario runs."""
 
 import configparser
+import json
 import os
 from pathlib import Path
 import queue
 import subprocess
 import sys
+import tempfile
 import threading
 
 import wx
@@ -16,6 +18,7 @@ from scenario.scenario import get_scenario_dir
 
 
 ROOT = Path(__file__).resolve().parents[1]
+SETTINGS_PATH = ROOT / 'parallel_can_settings.json'
 MAX_CONSOLE_CHARS = 200_000
 
 
@@ -50,6 +53,32 @@ def append_console(control, text):
 	control.AppendText(text)
 	if control.GetLastPosition() > MAX_CONSOLE_CHARS:
 		control.Remove(0, control.GetLastPosition() - MAX_CONSOLE_CHARS)
+
+
+def load_settings(path):
+	try:
+		with path.open(encoding='utf-8') as stream:
+			settings = json.load(stream)
+	except FileNotFoundError:
+		return {}
+	if not isinstance(settings, dict):
+		raise ValueError('Settings must be a JSON object')
+	return settings
+
+
+def save_settings(path, settings):
+	"""Replace the previous settings only after the new file is fully written."""
+	temp_path = None
+	try:
+		with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=path.parent,
+				prefix=f'.{path.name}.', suffix='.tmp', delete=False) as stream:
+			temp_path = Path(stream.name)
+			json.dump(settings, stream, ensure_ascii=False, indent=2)
+			stream.write('\n')
+		os.replace(temp_path, path)
+	finally:
+		if temp_path is not None:
+			temp_path.unlink(missing_ok=True)
 
 
 class WorkerConsole(wx.Frame):
@@ -132,6 +161,45 @@ class ParallelCanFrame(wx.Frame):
 		self.stop_button.Disable()
 		self.Bind(wx.EVT_TIMER, self.poll, self.timer)
 		self.Bind(wx.EVT_CLOSE, self.on_close)
+		self.restore_settings()
+
+	def restore_settings(self):
+		try:
+			settings = load_settings(SETTINGS_PATH)
+		except (OSError, UnicodeError, ValueError) as exc:
+			append_console(self.console, f'Cannot load parallel settings: {exc}\n')
+			return
+		contexts = settings.get('contexts', [])
+		if isinstance(contexts, list):
+			for index, name in enumerate(self.context_names):
+				self.context_list.Check(index, name in contexts)
+		ports = settings.get('udp_ports', '')
+		if isinstance(ports, str):
+			self.udp_ports_input.SetValue(ports)
+		scenarios = settings.get('scenarios', [])
+		if isinstance(scenarios, list):
+			base = Path(get_scenario_dir()).resolve()
+			for index, path in enumerate(self.scenario_paths):
+				relative = Path(path).resolve().relative_to(base).as_posix()
+				self.scenario_list.Check(index, relative in scenarios)
+
+	def save_settings(self):
+		base = Path(get_scenario_dir()).resolve()
+		settings = {
+			'contexts': [name for index, name in enumerate(self.context_names)
+				if self.context_list.IsChecked(index)],
+			'udp_ports': self.udp_ports_input.GetValue(),
+			'scenarios': [Path(path).resolve().relative_to(base).as_posix()
+				for index, path in enumerate(self.scenario_paths)
+				if self.scenario_list.IsChecked(index)],
+		}
+		try:
+			save_settings(SETTINGS_PATH, settings)
+		except OSError as exc:
+			message = f'Cannot save parallel settings: {exc}'
+			append_console(self.console, f'{message}\n')
+			return message
+		return None
 
 	def select_all(self, event):
 		for index in range(self.scenario_list.GetCount()):
@@ -169,6 +237,7 @@ class ParallelCanFrame(wx.Frame):
 		self.stopping = False
 		self.run_dir = None
 		self.console.Clear()
+		self.save_settings()
 		for monitor in self.monitors:
 			monitor.Destroy()
 		self.monitors = [WorkerConsole(self, context, index)
@@ -240,6 +309,9 @@ class ParallelCanFrame(wx.Frame):
 					'Parallel CAN/UDP', wx.OK | wx.ICON_INFORMATION, parent=self)
 				event.Veto()
 				return
+		error = self.save_settings()
+		if error:
+			wx.MessageBox(error, 'Parallel CAN/UDP', wx.OK | wx.ICON_WARNING, parent=self)
 		self.timer.Stop()
 		for monitor in self.monitors:
 			monitor.Destroy()

@@ -17,6 +17,14 @@ from gui.parallel_can import ParallelCanFrame, WorkerConsole, build_command, can
 
 
 class TestParallelCanGui(unittest.TestCase):
+	def setUp(self):
+		self.settings_dir = tempfile.TemporaryDirectory()
+		self.addCleanup(self.settings_dir.cleanup)
+		self.settings_path = Path(self.settings_dir.name) / 'settings.json'
+		settings_patch = patch('gui.parallel_can.SETTINGS_PATH', self.settings_path)
+		settings_patch.start()
+		self.addCleanup(settings_patch.stop)
+
 	def test_contexts_exclude_virtual_buses(self):
 		self.assertIn('canable0', can_contexts())
 		self.assertNotIn('virtual', can_contexts())
@@ -31,6 +39,107 @@ class TestParallelCanGui(unittest.TestCase):
 			self.assertTrue(frame.scenario_paths[index].endswith('.py'))
 		finally:
 			frame.timer.Stop()
+			frame.Destroy()
+			self.assertIsNotNone(app)
+
+	def test_settings_survive_close_and_restore_by_name(self):
+		app = wx.GetApp() or wx.App(False)
+		frame = ParallelCanFrame()
+		try:
+			context = frame.context_names[-1]
+			scenario = frame.scenario_paths[-1]
+			frame.context_list.Check(len(frame.context_names) - 1, True)
+			frame.udp_ports_input.SetValue('31987, 31988')
+			frame.scenario_list.Check(len(frame.scenario_paths) - 1, True)
+			frame.on_close(Mock())
+			settings = json.loads(self.settings_path.read_text(encoding='utf-8'))
+			settings['contexts'].append('removed_context')
+			settings['scenarios'].append('removed_scenario.py')
+			self.settings_path.write_text(json.dumps(settings), encoding='utf-8')
+			with patch('gui.parallel_can.can_contexts', return_value=list(reversed(frame.context_names))), \
+				patch('gui.parallel_can.select_scenarios', return_value=list(reversed(frame.scenario_paths))):
+				restored = ParallelCanFrame()
+			try:
+				self.assertEqual([name for i, name in enumerate(restored.context_names)
+					if restored.context_list.IsChecked(i)], [context])
+				self.assertEqual(restored.udp_ports_input.GetValue(), '31987, 31988')
+				self.assertEqual([path for i, path in enumerate(restored.scenario_paths)
+					if restored.scenario_list.IsChecked(i)], [scenario])
+			finally:
+				restored.Destroy()
+		finally:
+			self.assertIsNotNone(app)
+
+	def test_bad_settings_do_not_prevent_opening_or_saving(self):
+		app = wx.GetApp() or wx.App(False)
+		self.settings_path.write_text('{bad json', encoding='utf-8')
+		frame = ParallelCanFrame()
+		try:
+			self.assertIn('Cannot load parallel settings', frame.console.GetValue())
+			frame.udp_ports_input.SetValue('invalid port')
+			frame.save_settings()
+			self.assertEqual(json.loads(self.settings_path.read_text(encoding='utf-8'))['udp_ports'],
+				'invalid port')
+			with patch('gui.parallel_can.save_settings', side_effect=OSError('read only')):
+				frame.save_settings()
+			self.assertIn('Cannot save parallel settings: read only', frame.console.GetValue())
+		finally:
+			frame.Destroy()
+			self.assertIsNotNone(app)
+
+	def test_failed_replace_preserves_previous_settings(self):
+		app = wx.GetApp() or wx.App(False)
+		self.settings_path.write_text('{"udp_ports": "1234"}', encoding='utf-8')
+		frame = ParallelCanFrame()
+		try:
+			frame.udp_ports_input.SetValue('5678')
+			with patch('gui.parallel_can.os.replace', side_effect=OSError('read only')):
+				frame.save_settings()
+			self.assertEqual(json.loads(self.settings_path.read_text(encoding='utf-8'))['udp_ports'],
+				'1234')
+			self.assertEqual(list(self.settings_path.parent.iterdir()), [self.settings_path])
+		finally:
+			frame.Destroy()
+			self.assertIsNotNone(app)
+
+	def test_close_while_running_waits_before_saving(self):
+		app = wx.GetApp() or wx.App(False)
+		frame = ParallelCanFrame()
+		try:
+			frame.running = True
+			event = Mock()
+			event.CanVeto.return_value = True
+			with patch.object(frame, 'stop') as stop, patch('gui.parallel_can.wx.MessageBox'):
+				frame.on_close(event)
+			stop.assert_called_once_with(None)
+			event.Veto.assert_called_once()
+			self.assertFalse(self.settings_path.exists())
+		finally:
+			frame.running = False
+			frame.Destroy()
+			self.assertIsNotNone(app)
+
+	def test_close_reports_save_failure(self):
+		app = wx.GetApp() or wx.App(False)
+		frame = ParallelCanFrame()
+		with patch('gui.parallel_can.save_settings', side_effect=OSError('read only')), \
+			patch('gui.parallel_can.wx.MessageBox') as message_box:
+			frame.on_close(Mock())
+		self.assertIn('read only', message_box.call_args.args[0])
+		self.assertIsNotNone(app)
+
+	def test_invalid_settings_fields_are_ignored(self):
+		app = wx.GetApp() or wx.App(False)
+		self.settings_path.write_text(json.dumps({'contexts': None, 'udp_ports': [],
+			'scenarios': 'all'}), encoding='utf-8')
+		frame = ParallelCanFrame()
+		try:
+			self.assertEqual(frame.udp_ports_input.GetValue(), '')
+			self.assertFalse(any(frame.context_list.IsChecked(i)
+				for i in range(frame.context_list.GetCount())))
+			self.assertFalse(any(frame.scenario_list.IsChecked(i)
+				for i in range(frame.scenario_list.GetCount())))
+		finally:
 			frame.Destroy()
 			self.assertIsNotNone(app)
 
@@ -125,6 +234,9 @@ class TestParallelCanGui(unittest.TestCase):
 			self.assertEqual([monitor.context for monitor in frame.monitors],
 				['udp_31987', 'udp_31988'])
 			self.assertIn('--udp-ports', popen.call_args.args[0])
+			settings = json.loads(self.settings_path.read_text(encoding='utf-8'))
+			self.assertEqual(settings['udp_ports'], '31987, 31988')
+			self.assertEqual(len(settings['scenarios']), 1)
 		finally:
 			frame.timer.Stop()
 			frame.running = False
