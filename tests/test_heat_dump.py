@@ -87,6 +87,102 @@ class HeatDumpTests(unittest.TestCase):
 				if checklist == '6_5_2':
 					self.assertEqual(room.get_temperature.return_value.set_value.call_count, 2)
 
+	def test_circuit_scenario_respects_each_valve_setting(self):
+		module = importlib.import_module('scenario.list.heating_circuit.scenario_heating_circuit_6_4_2')
+		for settings in ((0, 0), (0, 1), (1, 0), (1, 1)):
+			for energized in (254, 255):
+				with self.subTest(settings=settings, energized=energized):
+					scenario = object.__new__(module.Scenario)
+					circuit, room_1, room_2 = Mock(), Mock(), Mock()
+					rooms = (room_1, room_2)
+					valves = (room_1.get_output_channel.return_value, room_2.get_output_channel.return_value)
+					for valve in valves:
+						valve.is_mapped.return_value = True
+					scenario._programList = {'circuit': circuit, 'room_1': room_1, 'room_2': room_2}
+					scenario._read = Mock(side_effect=lambda room, program_type, parameter_id:
+						settings[rooms.index(room)])
+					scenario.wait_state_permanence = lambda predicate, duration, timeout: predicate()
+					def run(config, sensors, baseline, active, observe_rooms=False):
+						self.assertTrue(observe_rooms)
+						self.assertNotIn(self.constants.RoomDeviceParameterId.ROOM_DEVICE_VALVE_STATE,
+							[parameter_id for _, program_type, parameter_id, _, _ in config
+								if program_type == self.constants.ProgramType.ROOM_DEVICE])
+						for valve, setting in zip(valves, settings):
+							valve.get_value.return_value = energized if setting == 0 else 0
+						baseline()
+						for valve, setting in zip(valves, settings):
+							valve.get_value.return_value = 0 if setting == 0 else energized
+						active()
+					scenario.run_heat_dump = run
+					scenario.run()
+					self.assertEqual(scenario._read.call_count, 2)
+					for room, call in zip(rooms, scenario._read.call_args_list):
+						self.assertEqual(call.args, (room, self.constants.ProgramType.ROOM_DEVICE,
+							self.constants.RoomDeviceParameterId.ROOM_DEVICE_VALVE_STATE))
+
+	def test_circuit_scenario_rejects_wrong_valve_values(self):
+		module = importlib.import_module('scenario.list.heating_circuit.scenario_heating_circuit_6_4_2')
+		for setting in (0, 1):
+			for opened in (False, True):
+				for invalid in (None, 1, 253, 0 if (setting == 0) != opened else 255):
+					with self.subTest(setting=setting, opened=opened, invalid=invalid):
+						scenario = object.__new__(module.Scenario)
+						circuit, room_1, room_2 = Mock(), Mock(), Mock()
+						valves = (room_1.get_output_channel.return_value, room_2.get_output_channel.return_value)
+						for valve in valves:
+							valve.is_mapped.return_value = True
+						scenario._programList = {'circuit': circuit, 'room_1': room_1, 'room_2': room_2}
+						scenario._read = Mock(return_value=setting)
+						scenario.wait_state_permanence = lambda predicate, duration, timeout: predicate()
+						def run(config, sensors, baseline, active, observe_rooms=False):
+							for valve in valves:
+								valve.get_value.return_value = 255 if setting == 0 else 0
+							if not opened:
+								valves[1].get_value.return_value = invalid
+								baseline()
+							else:
+								baseline()
+								for valve in valves:
+									valve.get_value.return_value = 0 if setting == 0 else 255
+								valves[1].get_value.return_value = invalid
+								active()
+						scenario.run_heat_dump = run
+						with self.assertRaises(self.scenarios.HeatDumpFailed):
+							scenario.run()
+
+	def test_circuit_scenario_restores_inputs_when_valve_setting_invalid(self):
+		module = importlib.import_module('scenario.list.heating_circuit.scenario_heating_circuit_6_4_2')
+		for invalid in (None, 2):
+			with self.subTest(invalid=invalid):
+				scenario = object.__new__(module.Scenario)
+				circuit, room_1, room_2 = Mock(), Mock(), Mock()
+				scenario._programList = {'circuit': circuit, 'room_1': room_1, 'room_2': room_2}
+				sensors = (circuit.get_input_channel.return_value, room_1.get_temperature.return_value,
+					room_2.get_temperature.return_value)
+				for sensor in sensors:
+					sensor.is_mapped.return_value = True
+					sensor.get_value.return_value = 17
+					sensor.isManual.return_value = False
+				values = {}
+				def read(program, program_type, parameter_id, index=None):
+					if (program_type == self.constants.ProgramType.ROOM_DEVICE
+						and parameter_id == self.constants.RoomDeviceParameterId.ROOM_DEVICE_VALVE_STATE):
+						if program is room_2 and invalid is None:
+							raise self.scenarios.HeatDumpFailed('read failed')
+						return invalid if program is room_2 else 0
+					return values.get((program, program_type, parameter_id, index), 7)
+				scenario._read = read
+				scenario._put = lambda p, t, i, value, index=None: values.__setitem__((p, t, i, index), value)
+				with patch.object(self.scenarios, 'send_cooling_request') as send:
+					scenario.run()
+				self.assertEqual(scenario._status, 'FAIL')
+				self.assertTrue(values)
+				self.assertTrue(all(value == 7 for value in values.values()))
+				self.assertEqual([call.args[1] for call in send.call_args_list], [False, False])
+				for sensor in sensors:
+					sensor.set_value.assert_called_with(17, True)
+					sensor.set_manual.assert_called_with(False)
+
 	def test_room_valve_setting_restored_on_success_and_failure(self):
 		for fail in (False, True):
 			with self.subTest(fail=fail):
