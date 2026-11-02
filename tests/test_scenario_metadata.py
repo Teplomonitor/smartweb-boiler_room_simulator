@@ -33,8 +33,8 @@ class TestScenarioMetadata(unittest.TestCase):
 
 	def test_duration_format_and_unknown(self):
 		self.assertEqual(PRESET_LOADING_ESTIMATE_SECONDS, 10)
-		self.assertEqual(get_estimated_duration('5.2.3.3'), 190)
-		self.assertEqual(format_estimated_duration(190), '≈ 3 мин 10 с')
+		self.assertEqual(get_estimated_duration('5.2.3.3'), 230)
+		self.assertEqual(format_estimated_duration(230), '≈ 3 мин 50 с')
 		self.assertEqual(format_estimated_duration(3900), '≈ 1 ч 5 мин')
 		self.assertEqual(format_estimated_duration(None), 'время неизвестно')
 		self.assertIsNone(get_estimated_duration('not-a-scenario'))
@@ -47,7 +47,7 @@ class TestScenarioMetadata(unittest.TestCase):
 				" def get_scenario_title(self): return 'Example'\n"
 				" def get_checklist_id(self): return '5.2.3.3'\n", encoding='utf-8')
 			self.assertEqual(scenario_label(path, True, directory),
-				'5.2.3.3: Example (≈ 3 мин 10 с) — scenario.py')
+				'5.2.3.3: Example (≈ 3 мин 50 с) — scenario.py')
 
 	def test_missing_invalid_and_dynamic_metadata_are_selectable(self):
 		with tempfile.TemporaryDirectory() as directory:
@@ -65,7 +65,7 @@ class TestScenarioMetadata(unittest.TestCase):
 		class Example(Scenario):
 			def get_checklist_id(self):
 				return '5.2.3.3'
-		self.assertEqual(Example.__new__(Example).get_estimated_duration(), 190)
+		self.assertEqual(Example.__new__(Example).get_estimated_duration(), 230)
 
 	@unittest.skipUnless(os.name == 'nt', 'wx GUI integration requires a Windows desktop')
 	def test_selection_dialog_keeps_paths_separate_from_labels(self):
@@ -76,7 +76,7 @@ class TestScenarioMetadata(unittest.TestCase):
 			'scenario_heating_circuit_external_priority_5_2_3_3.py')
 		dialog = ScenarioSelectionDialog(None, [path], [path])
 		try:
-			self.assertIn('≈ 3 мин 10 с', dialog._scenario_check_list.GetString(0))
+			self.assertIn('≈ 3 мин 50 с', dialog._scenario_check_list.GetString(0))
 			self.assertTrue(dialog._scenario_check_list.IsChecked(0))
 			wx.CallAfter(dialog.on_run, None)
 			self.assertEqual(dialog.ShowModal(), wx.ID_OK)
@@ -102,7 +102,7 @@ class TestScenarioMetadata(unittest.TestCase):
 						yield from all_items(item.GetSubMenu())
 			items = list(all_items(frame.m_menu1))
 			item = next(item for item in items if item.GetItemLabelText().startswith('5.2.3.3:'))
-			self.assertIn('≈ 3 мин 10 с', item.GetItemLabelText())
+			self.assertIn('≈ 3 мин 50 с', item.GetItemLabelText())
 			self.assertTrue(any('3.11.7 & 3.11.9:' in item.GetItemLabelText() for item in items))
 			with patch('scenario.scenario.start_scenario') as start:
 				event = wx.CommandEvent(wx.EVT_MENU.typeId, item.GetId())
