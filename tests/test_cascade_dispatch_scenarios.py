@@ -314,8 +314,9 @@ class ScriptedFeedback:
 		self.pending_outputs = False
 		self.was_running = self.was_running or demand > 0
 
-	def run(self):
-		with patch.object(CanListener, 'subscribe'), patch.object(CanListener, 'unsubscribe') as unsubscribe:
+	def run(self, send=None):
+		with patch.object(CanListener, 'subscribe'), patch.object(CanListener, 'unsubscribe') as unsubscribe, \
+			patch.object(Message, 'send', new=send or (lambda message: None)):
 			try:
 				self.scenario.run()
 			finally:
@@ -349,11 +350,105 @@ class TestDispatchScenarios(unittest.TestCase):
 		def capture(message, *args, **kwargs):
 			sent.append((message, args, kwargs))
 		with patch.object(Message, 'send', new=capture):
-			dispatch.CascadeDispatchScenario.request_output_states(feedback.scenario)
+			for _ in range(5):
+				dispatch.CascadeDispatchScenario.request_output_states(feedback.scenario)
 		self.assertEqual([(msg.getProgramId(), msg.get_data()[-1]) for msg, _, _ in sent],
-			[(103, 3), (103, 0), (104, 3), (104, 0)])
+			[(103, 3), (103, 0), (104, 3), (104, 0), (103, 3)])
 		self.assertTrue(all(msg.getRequestFlag() == snc.RequestFlag.REQUEST for msg, _, _ in sent))
 		self.assertTrue(all(not args and not kwargs for _, args, kwargs in sent))
+
+	def test_output_probes_are_spaced_and_visit_each_channel(self):
+		feedback = ScriptedFeedback(SCENARIOS[2])
+		scenario = feedback.scenario
+		scenario.request_output_states = dispatch.CascadeDispatchScenario.request_output_states.__get__(scenario)
+		sent = []
+		with patch.object(Message, 'send', new=lambda msg: sent.append((feedback.now, msg))):
+			for _ in range(9):
+				scenario.probe_outputs()
+				scenario.probe_outputs()
+				feedback.now += 1
+		self.assertEqual([(time, msg.getProgramId(), msg.get_data()[-1]) for time, msg in sent],
+			[(0, 103, 3), (1, 103, 0), (2, 104, 3), (3, 104, 0),
+			 (4, 105, 3), (5, 105, 0), (6, 106, 3), (7, 106, 0), (8, 103, 3)])
+
+	def test_four_boilers_retry_lost_output_responses(self):
+		feedback = ScriptedFeedback(SCENARIOS[2])
+		scenario = feedback.scenario
+		scenario.request_output_states = dispatch.CascadeDispatchScenario.request_output_states.__get__(scenario)
+		feedback.defect = 'no_output_reports'
+		attempts = {}
+		def respond(message):
+			if message.get_program_type() != snc.ProgramType.REMOTE_CONTROL:
+				return
+			boiler_id, index = message.getProgramId(), message.get_data()[-1]
+			key = (boiler_id, index)
+			attempts[key] = attempts.get(key, 0) + 1
+			if attempts[key] == 1:
+				return
+			program = feedback.programs[boiler_id - 103]
+			output = program.get_power_output() if index == 3 else program.get_pump()
+			scenario.monitor.on_can_message_received(Message(snc.ProgramType.REMOTE_CONTROL, boiler_id,
+				snc.RemoteControlFunction.GET_PARAMETER_VALUE, snc.RequestFlag.RESPONSE,
+				[snc.ProgramType.PROGRAM, snc.ProgramParameterId.OUTPUT, index, output.get_value()]))
+		feedback.run(respond)
+		feedback.assert_restored(self, 'OK')
+		self.assertEqual(len(attempts), 8)
+		self.assertTrue(all(count >= 2 for count in attempts.values()))
+
+	def test_four_boiler_fault_checks_with_spaced_output_responses(self):
+		feedback = ScriptedFeedback(SCENARIOS[11])
+		scenario = feedback.scenario
+		scenario.request_output_states = dispatch.CascadeDispatchScenario.request_output_states.__get__(scenario)
+		feedback.defect = 'no_output_reports'
+		def respond(message):
+			if message.get_program_type() != snc.ProgramType.REMOTE_CONTROL:
+				return
+			boiler_id, index = message.getProgramId(), message.get_data()[-1]
+			program = feedback.programs[boiler_id - 103]
+			output = program.get_power_output() if index == 3 else program.get_pump()
+			scenario.monitor.on_can_message_received(Message(snc.ProgramType.REMOTE_CONTROL, boiler_id,
+				snc.RemoteControlFunction.GET_PARAMETER_VALUE, snc.RequestFlag.RESPONSE,
+				[snc.ProgramType.PROGRAM, snc.ProgramParameterId.OUTPUT, index, output.get_value()]))
+		feedback.run(respond)
+		feedback.assert_restored(self, 'OK')
+
+	def test_fault_properties_are_requested_and_retried_after_loss(self):
+		feedback = ScriptedFeedback(SCENARIOS[2])
+		scenario = feedback.scenario
+		scenario.monitor = CascadeMonitor(102, (103, 104, 105, 106), scenario.clock)
+		scenario.wait = lambda seconds: setattr(feedback, 'now', feedback.now + seconds)
+		attempts = {}
+		sent = []
+		def respond(message):
+			boiler_id = message.getProgramId()
+			sent.append((feedback.now, boiler_id))
+			attempts[boiler_id] = attempts.get(boiler_id, 0) + 1
+			self.assertEqual(message.get_program_type(), snc.ProgramType.TEMPERATURE_SOURCE)
+			self.assertEqual(message.getFunctionId(), snc.TemperatureSourceFunction['GET_PROPERTIES'])
+			self.assertEqual(message.getRequestFlag(), snc.RequestFlag.REQUEST)
+			if attempts[boiler_id] > 1:
+				scenario.monitor.on_can_message_received(Message(snc.ProgramType.TEMPERATURE_SOURCE,
+					boiler_id, snc.TemperatureSourceFunction['GET_PROPERTIES'], snc.RequestFlag.RESPONSE,
+					[1, 30, 0, 0, 0, 0, int(boiler_id == 103)]))
+		with patch.object(Message, 'send', new=respond):
+			scenario.set_faults({103})
+		self.assertEqual(set(attempts), {103, 104, 105, 106})
+		self.assertTrue(all(count >= 2 for count in attempts.values()))
+		self.assertTrue(all(right[0] - left[0] >= 1 for left, right in zip(sent, sent[1:])))
+		self.assertEqual(scenario._failed, {103})
+		self.assertIn(103, scenario._fault_confirmations)
+
+	def test_missing_fault_property_still_fails_with_diagnostics(self):
+		feedback = ScriptedFeedback(SCENARIOS[0])
+		scenario = feedback.scenario
+		scenario.monitor = CascadeMonitor(102, (103, 104), scenario.clock)
+		scenario.FAULT_DETECTION_TIMEOUT = 3
+		scenario.wait = lambda seconds: setattr(feedback, 'now', feedback.now + seconds)
+		with patch.object(Message, 'send'), patch.object(dispatch, 'print_error') as log:
+			with self.assertRaisesRegex(RuntimeError, 'Не получены свойства котлов'):
+				scenario.set_faults(set())
+		self.assertIn('нет подтверждения: [103, 104]', str(log.call_args))
+		self.assertFalse(hasattr(scenario, '_failed'))
 
 	def test_stage_delay_is_encoded_as_four_byte_time(self):
 		feedback = ScriptedFeedback(SCENARIOS[3])

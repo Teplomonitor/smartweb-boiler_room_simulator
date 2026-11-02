@@ -17,7 +17,8 @@ class CascadeDispatchScenario(CascadeManagerScenario):
 	SETPOINT = 50
 	PROPORTIONAL_BAND = 20
 	POWER_TOLERANCE = 3
-	OUTPUT_PROBE_INTERVAL = 5
+	OUTPUT_PROBE_INTERVAL = 1
+	PROPERTY_PROBE_INTERVAL = 1
 	SETTLING_TIMEOUT = 25
 	FAULT_DETECTION_TIMEOUT = 90
 	REPLACEMENT_TIMEOUT = 15
@@ -170,13 +171,15 @@ class CascadeDispatchScenario(CascadeManagerScenario):
 		return result
 
 	def request_output_states(self):
-		"""Request current output values without waiting for any CAN response."""
-		for boiler in self.boilers():
-			for channel in ('power', 'pump'):
-				Message(snc.ProgramType.REMOTE_CONTROL, boiler.get_id(),
-					snc.RemoteControlFunction.GET_PARAMETER_VALUE, snc.RequestFlag.REQUEST,
-					[snc.ProgramType.PROGRAM, snc.ProgramParameterId.OUTPUT,
-					 boiler.get_output_channel(channel).get_id()]).send()
+		"""Request one output at a time to avoid bursts on a physical CAN bus."""
+		outputs = [(boiler, channel) for boiler in self.boilers() for channel in ('power', 'pump')]
+		index = getattr(self, '_output_probe_index', 0) % len(outputs)
+		boiler, channel = outputs[index]
+		self._output_probe_index = (index + 1) % len(outputs)
+		Message(snc.ProgramType.REMOTE_CONTROL, boiler.get_id(),
+			snc.RemoteControlFunction.GET_PARAMETER_VALUE, snc.RequestFlag.REQUEST,
+			[snc.ProgramType.PROGRAM, snc.ProgramParameterId.OUTPUT,
+			 boiler.get_output_channel(channel).get_id()]).send()
 
 	def probe_outputs(self):
 		now = self.clock()
@@ -357,7 +360,10 @@ class CascadeDispatchScenario(CascadeManagerScenario):
 		for boiler in self.boilers():
 			self.set_sensor_value(boiler.get_input_channel('error'),
 				'short' if boiler.get_id() in failed else 'open')
+		last_probe = None
+		probe_index = 0
 		def reported():
+			nonlocal last_probe, probe_index
 			properties = self.monitor.snapshot()[1]
 			for boiler_id in changed:
 				entry = properties.get(boiler_id)
@@ -366,9 +372,19 @@ class CascadeDispatchScenario(CascadeManagerScenario):
 					if boiler_id in failed:
 						self._fault_confirmations.setdefault(boiler_id, entry[0])
 			self.fault_guard()
+			pending = sorted(changed.difference(reports))
+			now = self.clock()
+			if pending and (last_probe is None or now - last_probe >= self.PROPERTY_PROBE_INTERVAL):
+				boiler_id = pending[probe_index % len(pending)]
+				probe_index += 1
+				last_probe = now
+				Message(snc.ProgramType.TEMPERATURE_SOURCE, boiler_id,
+					snc.TemperatureSourceFunction['GET_PROPERTIES'], snc.RequestFlag.REQUEST).send()
 			return changed.issubset(reports)
 		self.await_condition(reported, self.FAULT_DETECTION_TIMEOUT,
-			f'Не получены свойства котлов после смены аварий: {failed}', stable=0)
+			f'Не получены свойства котлов после смены аварий: {failed}', stable=0,
+			details=lambda: f'нет подтверждения: {sorted(changed.difference(reports))}; '
+				f'последние свойства: {self.monitor.snapshot()[1]}')
 		self._failed = set(failed)
 		# Every property frame was visible to the manager on the same bus.
 		return max(reports.values(), default=started)
