@@ -9,10 +9,13 @@ Based on MessageLogCan.cc protocol:
 - CRC16 CCITT is used for integrity verification
 '''
 
+import os
 import struct
 import time
 import threading
 from collections import deque
+from itertools import product
+from consoleLog import print_log
 from smartnet.message import Message
 from smartnet.message import CanListener
 from smartnet.constants import RequestFlag
@@ -128,6 +131,9 @@ class MLCDataParser:
 
 class MessageLogReader:
     """Reads and parses error log messages from the controller"""
+
+    INCOMPLETE_REQUEST_RETRIES = 2
+    MAX_FRAGMENT_CANDIDATES = 8
     
     # Default program IDs for message log communication
     PROGRAM_TYPE  = ProgramType.CONTROLLER             # Controller
@@ -150,7 +156,22 @@ class MessageLogReader:
         self._response_filter = None
         self._captured_messages = deque()
         self._capture_lock = threading.Lock()
+        self._last_sequence_silent = False
+        self._last_sequence_has_chunks = False
+        self.status_received = False
+        self._trace_enabled = os.environ.get('BRS_JOURNAL_TRACE') == '1'
         CanListener.subscribe(self)
+
+    def _trace(self, message):
+        if self._trace_enabled:
+            print_log(f'JOURNAL_TRACE time={time.time():.6f} {message}')
+
+    def _trace_frame(self, direction, msg):
+        if self._trace_enabled:
+            data = msg.get_data()
+            payload = bytes(data) if data is not None else b''
+            self._trace(f'{direction} id={msg.generateHeader():08X} dlc={len(payload)} '
+                        f'data={payload.hex(" ").upper()}')
     
     def __del__(self):
         CanListener.unsubscribe(self)
@@ -166,12 +187,19 @@ class MessageLogReader:
             return
 
         if not msg.compare(response_filter):
+            if (self._trace_enabled and msg.get_program_type() == self.PROGRAM_TYPE
+                    and msg.getFunctionId() == self.FUNCTION_ID
+                    and msg.getRequestFlag() == self.RESPONSE_FLAG):
+                self._trace_frame('RX_UNMATCHED', msg)
             return
 
         with self._capture_lock:
             # Append only while the same capture session is active.
             if self._response_filter is response_filter:
                 self._captured_messages.append(msg)
+            else:
+                return
+        self._trace_frame('RX', msg)
 
     def _build_response_filter(self, controller_id):
         return Message(
@@ -192,7 +220,7 @@ class MessageLogReader:
             self._captured_messages.clear()
 
     def _pop_captured_message(self, deadline):
-        while time.time() < deadline:
+        while time.monotonic() < deadline:
             with self._capture_lock:
                 if self._captured_messages:
                     return self._captured_messages.popleft()
@@ -232,7 +260,8 @@ class MessageLogReader:
             request=self.REQUEST_FLAG,
             data=request_data
         )
-        
+
+        self._trace_frame('TX_ATTEMPT', msg)
         msg.send()
     
     def read_entries(self, controller_id=None, max_entries=100, last_entry = None):
@@ -254,15 +283,13 @@ class MessageLogReader:
         
         if last_entry:
             self._last_entry = last_entry
-        
+
+        self._trace(f'read_start controller={controller_id} max_entries={max_entries} '
+                    f'cursor={self._last_entry!r}')
         self._start_capture(controller_id)
         try:
             while entries_read < max_entries:
-                # Capture is already active here, so fast responses are not lost.
-                self.request_log(controller_id)
-
-                # Try to read MESSAGE1/2/3 sequence
-                entry = self._read_entry_sequence()
+                entry = self._read_entry_sequence(controller_id)
                 if entry is None:
                     break
 
@@ -271,76 +298,93 @@ class MessageLogReader:
                 entries_read += 1
         finally:
             self._stop_capture()
+            self._trace(f'read_end entries={entries_read} limit_reached={entries_read >= max_entries}')
         
         return self.entries
     
-    def _read_entry_sequence(self):
+    def _read_entry_sequence(self, controller_id):
         """
         Read a single entry (MESSAGE1/MESSAGE2/MESSAGE3 sequence)
         
         Returns:
             LogEntry if successful, None if failed or no new entries
         """
-        entry = LogEntry()
-        deadline = time.time() + self.timeout
-        messages = {}  # Store messages by operation type
+        fragments = {OP_MESSAGE1: [], OP_MESSAGE2: [], OP_MESSAGE3: []}
+        cursor_crc = self._calc_entry_crc(self._last_entry) if self._last_entry else 0
+        cursor_timestamp = self._last_entry.timestamp if self._last_entry else 0
+        expected_status = MLCDataParser.pack_status(cursor_timestamp, cursor_crc)
+        self.status_received = False
 
-        # Collect up to 3 messages (MESSAGE1, MESSAGE2, MESSAGE3)
-        while len(messages) < 3 and time.time() < deadline:
-            response = self._pop_captured_message(deadline)
+        for attempt in range(self.INCOMPLETE_REQUEST_RETRIES + 1):
+            self._last_sequence_silent = True
+            saw_fragment = False
+            matching_status = False
+            self.request_log(controller_id)
+            deadline = time.monotonic() + self.timeout
+            while time.monotonic() < deadline:
+                response = self._pop_captured_message(deadline)
+                if response is None:
+                    break
+                self._last_sequence_silent = False
+                data = bytes(response.get_data() or b'')
+                if not data:
+                    continue
+                op = MLCDataParser.parse_operation(data[0])
+                if op == OP_STATUS:
+                    # The legacy wire layout has a padding byte at offset 1.
+                    if len(data) == 8 and data[2:8] == expected_status[2:8]:
+                        matching_status = True
+                    continue
+                if op not in fragments or len(data) != 8:
+                    continue
+                saw_fragment = True
+                if data not in fragments[op]:
+                    if len(fragments[op]) >= self.MAX_FRAGMENT_CANDIDATES:
+                        self._trace(f'fragment_limit op={op}')
+                        self._last_sequence_has_chunks = True
+                        return None
+                    fragments[op].append(data)
 
-            if response is None:
-                break
+                matches = {}
+                duplicate_headers = set()
+                for first, second, third in product(fragments[OP_MESSAGE1],
+                                                     fragments[OP_MESSAGE2], fragments[OP_MESSAGE3]):
+                    entry = LogEntry()
+                    entry.timestamp, entry.severity, entry.crc16 = MLCDataParser.unpack_message1(first)
+                    entry.code, entry.param, param_ex = MLCDataParser.unpack_message2(second)
+                    entry.param_ex[:2] = bytes(param_ex)
+                    entry.param_ex[2:] = MLCDataParser.unpack_message3(third)
+                    if self._calc_entry_crc(entry) != entry.crc16:
+                        continue
+                    if self._last_entry and (entry.timestamp, entry.crc16) == (cursor_timestamp, cursor_crc):
+                        duplicate_headers.add(first)
+                        continue
+                    key = (entry.timestamp, entry.severity, entry.code, entry.param, bytes(entry.param_ex))
+                    matches[key] = entry
+                for first in duplicate_headers:
+                    fragments[OP_MESSAGE1].remove(first)
+                    self._trace('duplicate_entry ignored')
+                if len(matches) > 1:
+                    self._trace('ambiguous_entry multiple CRC-valid combinations')
+                    self._last_sequence_has_chunks = True
+                    return None
+                if matches:
+                    entry = next(iter(matches.values()))
+                    self._last_sequence_has_chunks = True
+                    self._trace(f'entry_ok {entry!r} param_ex={bytes(entry.param_ex).hex(" ").upper()}')
+                    return entry
 
-            # Parse the response
-            data = response.get_data()
-            if not data:
-                continue
-            
-#            print(f"found: {response.generateHeader():08X} - {' '.join(format(x, '02x') for x in response._data)}")
-            
-            op = MLCDataParser.parse_operation(data[0])
-            
-            if op == OP_STATUS:
-                timestamp, crc16_value = MLCDataParser.unpack_status(data)
-                if timestamp is not None:
-                    entry.timestamp = timestamp
-                    entry.crc16 = crc16_value
-                    # STATUS without message chunks means journal has no newer entries.
-#                    if not messages:
-#                        return None
-            elif op == OP_MESSAGE1:
-                timestamp, severity, crc16_value = MLCDataParser.unpack_message1(data)
-                if timestamp is not None:
-                    entry.timestamp = timestamp
-                    entry.severity = severity
-                    entry.crc16 = crc16_value
-                    messages[OP_MESSAGE1] = True
-            elif op == OP_MESSAGE2:
-                code, param, param_ex = MLCDataParser.unpack_message2(data)
-                if code is not None:
-                    param_ex0, param_ex1 = param_ex
-                    entry.code = code
-                    entry.param = param
-                    entry.param_ex[0] = param_ex0
-                    entry.param_ex[1] = param_ex1
-                    messages[OP_MESSAGE2] = True
-            elif op == OP_MESSAGE3:
-                param_ex = MLCDataParser.unpack_message3(data)
-                if param_ex is not None:
-                    entry.param_ex[2:8] = param_ex
-                    messages[OP_MESSAGE3] = True
-        
-        # Check if we got all required messages
-        if OP_MESSAGE1 not in messages or OP_MESSAGE2 not in messages or OP_MESSAGE3 not in messages:
-            return None
-        
-        # Verify CRC
-        calculated_crc = self._calc_entry_crc(entry)
-        if calculated_crc != entry.crc16:
-            return None  # CRC mismatch
-        
-        return entry
+            # A matching STATUS confirms the cursor only when no potentially new
+            # record header remains. Retry once more if this attempt had fragments.
+            if matching_status and not saw_fragment and not fragments[OP_MESSAGE1]:
+                self.status_received = True
+                self._last_sequence_has_chunks = False
+                return None
+            self._last_sequence_has_chunks = any(fragments.values())
+            self._trace(f'incomplete_entry chunks={[op for op, values in fragments.items() if values]}')
+            if attempt < self.INCOMPLETE_REQUEST_RETRIES:
+                self._trace(f'retry_incomplete attempt={attempt + 2} cursor={self._last_entry!r}')
+        return None
     
     @staticmethod
     def _calc_entry_crc(entry):

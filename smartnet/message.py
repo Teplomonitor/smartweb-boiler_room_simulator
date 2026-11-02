@@ -3,6 +3,8 @@
 '''
 
 import can
+import json
+import os
 import time
 import threading
 
@@ -33,7 +35,17 @@ def createBus(canConfig = None):
 	if canConfig == 'none':
 		return can.Bus()
 
-	config = resolve_bus_config(canConfig)
+	location = os.environ.get('BRS_GS_USB_LOCATION')
+	if location:
+		try:
+			location = json.loads(location)
+		except (TypeError, ValueError) as exc:
+			raise ValueError(f'{canConfig}: invalid assigned GS-USB location') from exc
+		if not isinstance(location, dict):
+			raise ValueError(f'{canConfig}: invalid assigned GS-USB location')
+		config = resolve_bus_config(canConfig, location=location)
+	else:
+		config = resolve_bus_config(canConfig)
 	bus = can.Bus(**config)
 	if config.get('interface') == 'gs_usb':
 		try:

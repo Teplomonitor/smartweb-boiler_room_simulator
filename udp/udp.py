@@ -2,6 +2,7 @@
 @author: admin
 '''
 
+import os
 import uuid
 import time
 import threading
@@ -10,6 +11,7 @@ import socket
 import mainThread
 from udp.message import udp_to_can, can_to_udp, make_scan_message, udp_msg_is_scan, get_scan_id
 import smartnet.message as sm
+from smartnet.constants import ControllerFunction, ProgramType, RequestFlag
 
 from consoleLog import print_log   as print_log
 from consoleLog import print_error as print_error
@@ -30,6 +32,20 @@ scan_msg = make_scan_message(self_id_bytes)
 DATA_PACKET_SIZE = 24
 RECEIVE_TIMEOUT = 0.2
 THREAD_JOIN_TIMEOUT = 5.0
+
+
+def trace_journal_udp(direction, messages, peer):
+	if os.environ.get('BRS_JOURNAL_TRACE') != '1':
+		return
+	for message in messages:
+		header = message.arbitration_id
+		if (message.is_extended_id and not message.is_remote_frame
+				and header & 0xFF == ProgramType.CONTROLLER
+				and (header >> 16) & 0xFF == ControllerFunction['JOURNAL']
+				and (header >> 24) & 0xFF in (RequestFlag['REQUEST'], RequestFlag['RESPONSE'])):
+			payload = bytes(message.data[:message.dlc])
+			print_log(f'JOURNAL_TRACE time={time.time():.6f} UDP_{direction} peer={peer} '
+				f'id={header:08X} dlc={message.dlc} data={payload.hex(" ").upper()}')
 
 class UdpCanBusInterface(object):
 	def __new__(cls, *args, **kwargs):
@@ -168,8 +184,16 @@ class can_thread(threading.Thread):
 #				print(f'udp_tx data {queue_size}')
 				with ip_list_lock:
 					destination_ips = tuple(ip_list)
+				trace_messages = udp_to_can(bytes(messages)) if os.environ.get('BRS_JOURNAL_TRACE') == '1' else ()
+				if not destination_ips:
+					trace_journal_udp('NO_DESTINATION', trace_messages, f'*:{self._port}')
 				for ip in destination_ips:
-					self.send_udp_packet(bytes(messages), ip, self._port)
+					try:
+						self.send_udp_packet(bytes(messages), ip, self._port)
+					except OSError:
+						trace_journal_udp('TX_ERROR', trace_messages, f'{ip}:{self._port}')
+						raise
+					trace_journal_udp('TX', trace_messages, f'{ip}:{self._port}')
 					
 				self.clear_send_queue()
 		
@@ -251,6 +275,7 @@ class udp_listen_thread(threading.Thread):
 			return
 		
 		messages = udp_to_can(data)
+		trace_journal_udp('RX', messages, f'{addr[0]}:{addr[1]}')
 		
 		for msg in messages:
 #			print(f'udp_rx {msg}')

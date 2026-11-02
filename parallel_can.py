@@ -96,6 +96,10 @@ class CanWorker:
 		env['BRS_SETTINGS_PATH'] = str(settings)
 		env['BRS_LOG_ROOT'] = str(self.log_dir / 'log')
 		env['PYTHONIOENCODING'] = 'utf-8:backslashreplace'
+		env.pop('BRS_GS_USB_LOCATION', None)
+		location = getattr(args, '_can_locations', {}).get(context)
+		if location is not None:
+			env['BRS_GS_USB_LOCATION'] = json.dumps(location)
 		command = [sys.executable, '-u', str(Path(__file__).with_name('main.py')),
 			'--no-gui', '--can-worker', '--can', 'virtual' if context.startswith('udp_') else context,
 			'--id', str(args.id),
@@ -208,23 +212,38 @@ def validate_contexts(contexts):
 def resolve_contexts(contexts):
 	"""Check physical GS-USB assignments before any worker is started."""
 	from can.interfaces.gs_usb import GsUsb
+	from usb.util import dispose_resources
 	config = configparser.ConfigParser()
 	config.read(Path(__file__).with_name('can.ini'))
 	devices = GsUsb.scan() if any(config.get(name, 'product', fallback='')
 		or config.get(name, 'serial', fallback='') for name in contexts) else None
 	used = set()
-	for context in contexts:
-		options = resolve_bus_config(context, devices=devices)
-		if options['interface'] != 'gs_usb':
-			continue
-		index = options.get('index', options.get('channel'))
-		if index in used:
-			raise ValueError(f'CAN contexts refer to the same adapter: {context}')
-		used.add(index)
-		if devices is not None and (not isinstance(index, int) or index < 0
-				or index >= len(devices)):
-			raise ValueError(f'{context}: GS-USB adapter index {index!r} is unavailable')
-		print(f'[{context}] GS-USB index={index}', flush=True)
+	locations = {}
+	try:
+		for context in contexts:
+			options = resolve_bus_config(context, devices=devices)
+			if options['interface'] != 'gs_usb':
+				continue
+			index = options.get('index', options.get('channel'))
+			if index in used:
+				raise ValueError(f'CAN contexts refer to the same adapter: {context}')
+			used.add(index)
+			if devices is not None and (not isinstance(index, int) or index < 0
+					or index >= len(devices)):
+				raise ValueError(f'{context}: GS-USB adapter index {index!r} is unavailable')
+			if (config.get(context, 'product', fallback='')
+					or config.get(context, 'serial', fallback='')):
+				device = devices[index]
+				bus, address = device.bus, device.address
+				if type(bus) is not int or type(address) is not int or bus < 0 or address < 0:
+					raise ValueError(f'{context}: GS-USB adapter has no usable USB bus/address')
+				locations[context] = {'context': context, 'bus': bus, 'address': address}
+			print(f'[{context}] GS-USB index={index}', flush=True)
+	finally:
+		if devices is not None:
+			for device in devices:
+				dispose_resources(device.gs_usb)
+	return locations
 
 
 def validate_udp_ports(ports):
@@ -274,8 +293,7 @@ def run_coordinator(args):
 	pending = deque(select_scenarios(getattr(args, 'scenarios', None) or args.scenario))
 	if not pending:
 		raise ValueError('No scenarios found')
-	if can_contexts:
-		resolve_contexts(can_contexts)
+	args._can_locations = resolve_contexts(can_contexts) if can_contexts else {}
 	root = Path(__file__).with_name('log')
 	root.mkdir(exist_ok=True)
 	run_dir = Path(tempfile.mkdtemp(prefix='parallel_can_', dir=root))

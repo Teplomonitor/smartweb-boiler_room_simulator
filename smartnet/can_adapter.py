@@ -73,7 +73,7 @@ def protect_gs_usb_receive(bus, profile, on_failure):
 	device.read = guarded_read
 
 
-def matching_indexes(devices, product, serial):
+def matching_indexes(devices, product, serial, errors=None):
 	matches = []
 	for index, device in enumerate(devices):
 		usb_device = device.gs_usb
@@ -82,34 +82,65 @@ def matching_indexes(devices, product, serial):
 				continue
 			if serial and device.serial_number != serial:
 				continue
-		except (OSError, ValueError):
+		except (OSError, ValueError) as exc:
+			if errors is not None:
+				errors.append(f'index={index}: {exc!r}')
 			continue
 		matches.append(index)
 	return matches
 
 
-def resolve_bus_config(context, devices=None):
+def resolve_bus_config(context, devices=None, location=None):
 	"""Return python-can options for a profile; fail closed on ambiguous matches."""
 	config = load_config(path=CAN_CONFIG, context=context)
 	product = config.pop('product', None)
 	serial = config.pop('serial', None)
 	if not product and not serial:
+		if location is not None:
+			raise ValueError(f'{context}: assigned GS-USB location requires product/serial selectors')
 		return config
 	if config.get('interface') != 'gs_usb':
 		raise ValueError(f'{context}: product/serial selectors require gs_usb')
+	if location is not None:
+		from can.interfaces.gs_usb import GsUsb
+		from usb.util import dispose_resources
+		if (not isinstance(location, dict) or location.get('context') != context
+				or type(location.get('bus')) is not int or location['bus'] < 0
+				or type(location.get('address')) is not int or location['address'] < 0):
+			raise ValueError(f'{context}: invalid assigned GS-USB location')
+		bus, address = location['bus'], location['address']
+		device = GsUsb.find(bus=bus, address=address)
+		if device is None:
+			raise ValueError(f'{context}: assigned GS-USB adapter at bus={bus}, address={address} is unavailable')
+		try:
+			errors = []
+			matches = matching_indexes([device], product, serial, errors)
+			if not matches:
+				detail = f'; descriptor errors: {", ".join(errors)}' if errors else ''
+				raise ValueError(f'{context}: assigned GS-USB adapter at bus={bus}, address={address} '
+					f'does not match product={product!r}, serial={serial!r}{detail}')
+		finally:
+			dispose_resources(device.gs_usb)
+		config.pop('index', None)
+		config.update(bus=bus, address=address, channel=f'{bus}:{address}')
+		return config
+	errors = []
 	if devices is None:
 		from can.interfaces.gs_usb import GsUsb
 		for attempt in range(SCAN_ATTEMPTS):
 			devices = GsUsb.scan()
-			matches = matching_indexes(devices, product, serial)
-			if matches or attempt == SCAN_ATTEMPTS - 1:
+			errors = []
+			matches = matching_indexes(devices, product, serial, errors)
+			if (matches and not errors) or attempt == SCAN_ATTEMPTS - 1:
 				break
 			time.sleep(SCAN_RETRY_DELAY)
 	else:
-		matches = matching_indexes(devices, product, serial)
-	if len(matches) != 1:
+		matches = matching_indexes(devices, product, serial, errors)
+	if len(matches) != 1 or errors:
+		detail = f'; descriptor errors: {", ".join(errors)}' if errors else ''
 		raise ValueError(f'{context}: expected exactly one GS-USB adapter matching '
-			f'product={product!r}, serial={serial!r}; found {len(matches)}')
+			f'product={product!r}, serial={serial!r}; found {len(matches)} '
+			f'among {len(devices)} device(s){detail}')
 	config.pop('bus', None)
 	config.pop('address', None)
 	config['index'] = matches[0]

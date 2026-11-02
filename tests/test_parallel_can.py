@@ -146,15 +146,21 @@ class TestParallelCan(unittest.TestCase):
 				self.assertEqual(config['bitrate'], 20000)
 
 	def test_parallel_resolution_handles_reversed_indexes_and_aliases(self):
-		devices = [SimpleNamespace(gs_usb=SimpleNamespace(product=name), serial_number=serial)
-			for name, serial in [('candleLight USB to CAN adapter', 'light'),
-				('UCAN USB to CAN adapter', 'ucan')]]
-		with patch('can.interfaces.gs_usb.GsUsb.scan', return_value=devices):
+		devices = [SimpleNamespace(gs_usb=SimpleNamespace(product=name), serial_number=serial,
+			bus=2, address=index + 1)
+			for index, (name, serial) in enumerate([('candleLight USB to CAN adapter', 'light'),
+				('UCAN USB to CAN adapter', 'ucan')])]
+		with patch('can.interfaces.gs_usb.GsUsb.scan', return_value=devices), \
+				patch('usb.util.dispose_resources') as dispose:
 			self.assertEqual(resolve_bus_config('ucan')['index'], 1)
 			self.assertEqual(resolve_bus_config('candleLightGsUsb')['index'], 0)
-			parallel_can.resolve_contexts(['ucan', 'candleLightGsUsb'])
+			locations = parallel_can.resolve_contexts(['ucan', 'candleLightGsUsb'])
+			self.assertEqual(locations['ucan'], {'context': 'ucan', 'bus': 2, 'address': 2})
+			self.assertEqual(locations['candleLightGsUsb'],
+				{'context': 'candleLightGsUsb', 'bus': 2, 'address': 1})
 			with self.assertRaisesRegex(ValueError, 'same adapter'):
 				parallel_can.resolve_contexts(['canable1', 'ucan'])
+			self.assertEqual(dispose.call_count, 4)
 
 	def test_only_discovered_scenarios_can_be_selected(self):
 		paths = [str(Path('a.py').resolve()), str(Path('b.py').resolve())]
@@ -356,6 +362,20 @@ class TestParallelCan(unittest.TestCase):
 				self.assertIn('--no-gui', popen.call_args.args[0])
 				self.assertEqual(env['PYTHONIOENCODING'], 'utf-8:backslashreplace')
 				self.assertEqual(popen.call_args.kwargs['errors'], 'replace')
+
+	def test_worker_receives_only_its_assigned_usb_location(self):
+		location = {'context': 'ucan', 'bus': 2, 'address': 3}
+		with tempfile.TemporaryDirectory() as temp_dir:
+			process = Mock(stdout=io.StringIO(''), stdin=io.StringIO())
+			process.wait.return_value = 0
+			args = SimpleNamespace(id=0, profile='main', preset=None,
+				_can_locations={'ucan': location})
+			with patch.dict('os.environ', {'BRS_GS_USB_LOCATION': 'stale'}), \
+					patch.object(parallel_can.subprocess, 'Popen', return_value=process) as popen:
+				worker = parallel_can.CanWorker('ucan', 0, args, Path(temp_dir), queue.Queue())
+				worker.join()
+				self.assertEqual(json.loads(popen.call_args.kwargs['env']['BRS_GS_USB_LOCATION']),
+					location)
 
 	def test_udp_worker_uses_virtual_can_and_its_own_udp_port(self):
 		with tempfile.TemporaryDirectory() as temp_dir:

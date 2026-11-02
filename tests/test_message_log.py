@@ -8,6 +8,8 @@ import unittest
 import struct
 import sys
 import types
+from itertools import permutations
+from unittest.mock import patch
 
 
 main_thread_stub = types.ModuleType('mainThread')
@@ -15,6 +17,7 @@ main_thread_stub.taskEnable = lambda: True
 sys.modules.setdefault('mainThread', main_thread_stub)
 
 from smartnet.constants import ControllerFunction
+from smartnet.message import Message
 from smartnet.message_log import (
     CRC16, MLCDataParser, LogEntry, MessageLogReader,
     OP_STATUS, OP_MESSAGE1, OP_MESSAGE2, OP_MESSAGE3
@@ -327,6 +330,264 @@ class TestMessageLogIntegration(unittest.TestCase):
         # Verify CRC and timestamp occupy bytes 2..3 and 4..7.
         self.assertEqual(struct.unpack_from('<H', packed, 2)[0], crc16_value)
         self.assertEqual(struct.unpack_from('<I', packed, 4)[0], timestamp)
+
+
+class TestJournalTrace(unittest.TestCase):
+    def test_trace_records_attempt_and_matching_response_without_changing_frames(self):
+        with patch.dict('os.environ', {'BRS_JOURNAL_TRACE': '1'}), \
+                patch('smartnet.message_log.CanListener.subscribe'), \
+                patch('smartnet.message_log.CanListener.unsubscribe'), \
+                patch('smartnet.message_log.print_log') as log, \
+                patch.object(Message, 'send') as send:
+            reader = MessageLogReader(controller_id=123, timeout=1)
+            reader._start_capture(123)
+            try:
+                reader.request_log()
+                other = Message(reader.PROGRAM_TYPE, 124, reader.FUNCTION_ID,
+                                reader.RESPONSE_FLAG, bytes(8))
+                response = Message(reader.PROGRAM_TYPE, 123, reader.FUNCTION_ID,
+                                   reader.RESPONSE_FLAG, bytes.fromhex('60 01 02 03 04 05 06 00'))
+                reader.on_can_message_received(other)
+                reader.on_can_message_received(response)
+                self.assertIs(reader._captured_messages.popleft(), response)
+                self.assertEqual(len(reader._captured_messages), 0)
+            finally:
+                reader._stop_capture()
+            send.assert_called_once_with()
+            lines = [call.args[0] for call in log.call_args_list]
+            self.assertEqual(len(lines), 3)
+            self.assertIn('TX_ATTEMPT', lines[0])
+            self.assertIn('dlc=8 data=00 00 00 00 00 00 00 00', lines[0])
+            self.assertIn(f'RX_UNMATCHED id={other.generateHeader():08X}', lines[1])
+            self.assertIn(f'RX id={response.generateHeader():08X}', lines[2])
+            self.assertIn('dlc=8 data=60 01 02 03 04 05 06 00', lines[2])
+
+    def test_trace_disabled_by_default(self):
+        with patch.dict('os.environ', {'BRS_JOURNAL_TRACE': '0'}), \
+                patch('smartnet.message_log.CanListener.subscribe'), \
+                patch('smartnet.message_log.CanListener.unsubscribe'), \
+                patch('smartnet.message_log.print_log') as log, \
+                patch.object(Message, 'send'):
+            reader = MessageLogReader(controller_id=123)
+            reader.request_log()
+            log.assert_not_called()
+
+    def test_trace_complete_exchange_with_two_entries(self):
+        entries = []
+        for timestamp, code in ((0x12345678, 4), (0x12345679, 5)):
+            entry = LogEntry()
+            entry.timestamp = timestamp
+            entry.severity = 2
+            entry.code = code
+            entry.param = 101
+            entry.param_ex = bytearray(range(8))
+            entry.crc16 = MessageLogReader._calc_entry_crc(entry)
+            entries.append(entry)
+
+        with patch.dict('os.environ', {'BRS_JOURNAL_TRACE': '1'}), \
+                patch('smartnet.message_log.CanListener.subscribe'), \
+                patch('smartnet.message_log.CanListener.unsubscribe'), \
+                patch('smartnet.message_log.print_log') as log:
+            reader = MessageLogReader(controller_id=123, timeout=0.02)
+            requests = []
+
+            def send_request(message):
+                requests.append(bytes(message.get_data()))
+                index = len(requests) - 1
+                if index == len(entries):
+                    payloads = [MLCDataParser.pack_status(entries[-1].timestamp, entries[-1].crc16)]
+                else:
+                    entry = entries[index]
+                    payloads = [
+                        bytes([0x60]) + bytes(entry.param_ex[2:]) + b'\x00',
+                        bytes([0x40, entry.code]) + bytes(entry.param_ex[:2]) + struct.pack('<I', entry.param),
+                        bytes([0x20, entry.severity]) + struct.pack('<HI', entry.crc16, entry.timestamp),
+                    ]
+                for payload in payloads:
+                    reader.on_can_message_received(Message(reader.PROGRAM_TYPE, 123,
+                        reader.FUNCTION_ID, reader.RESPONSE_FLAG, payload))
+
+            with patch.object(Message, 'send', autospec=True, side_effect=send_request):
+                result = reader.read_entries(max_entries=3)
+            self.assertEqual([entry.code for entry in result], [4, 5])
+            self.assertEqual(requests[0], bytes(8))
+            self.assertEqual(requests[1:], [struct.pack('<BBHI', 0, 0, entry.crc16, entry.timestamp)
+                                          for entry in entries])
+            lines = [call.args[0] for call in log.call_args_list]
+            self.assertEqual(sum('TX_ATTEMPT' in line for line in lines), 3)
+            self.assertEqual(sum(' RX id=' in line for line in lines), 7)
+            self.assertEqual(sum('entry_ok' in line for line in lines), 2)
+            self.assertTrue(any('read_end entries=2 limit_reached=False' in line for line in lines))
+
+
+class TestJournalRetries(unittest.TestCase):
+    def run_exchange(self, responses, cursor=None):
+        requests = []
+        with patch('smartnet.message_log.CanListener.subscribe'), \
+                patch('smartnet.message_log.CanListener.unsubscribe'):
+            reader = MessageLogReader(controller_id=209, timeout=0.001)
+
+            def send(message):
+                requests.append(bytes(message.get_data()))
+                index = len(requests) - 1
+                for payload in responses[index] if index < len(responses) else []:
+                    reader.on_can_message_received(Message(reader.PROGRAM_TYPE, 209,
+                        reader.FUNCTION_ID, reader.RESPONSE_FLAG, payload))
+
+            with patch.object(Message, 'send', autospec=True, side_effect=send):
+                entries = reader.read_entries(max_entries=10, last_entry=cursor)
+        return requests, entries, reader
+
+    def test_silent_request_retries_same_captured_cursor_until_status(self):
+        cursor = LogEntry()
+        cursor.timestamp = 1793563620
+        cursor.severity = 3
+        cursor.code = 63
+        cursor.param = 123
+        requests, entries, reader = self.run_exchange([[], [], [bytes.fromhex('00 00 95 9E E4 9B E7 6A')]], cursor)
+        self.assertEqual(requests, [bytes.fromhex('00 00 95 9E E4 9B E7 6A')] * 3)
+        self.assertEqual(entries, [])
+        self.assertFalse(reader._last_sequence_silent)
+
+    def test_silent_exhaustion_is_not_a_status(self):
+        requests, entries, reader = self.run_exchange([[], [], []])
+        self.assertEqual(requests, [bytes(8)] * 3)
+        self.assertEqual(entries, [])
+        self.assertTrue(reader._last_sequence_silent)
+
+    def test_status_is_not_retried(self):
+        requests, entries, reader = self.run_exchange([[bytes(8)]])
+        self.assertEqual(len(requests), 1)
+        self.assertEqual(entries, [])
+        self.assertFalse(reader._last_sequence_silent)
+
+    def test_partial_response_is_retried_without_accepting_silence(self):
+        requests, entries, reader = self.run_exchange([[bytes.fromhex('60 00 00 00 00 00 00 00')]])
+        self.assertEqual(len(requests), 3)
+        self.assertEqual(entries, [])
+        self.assertTrue(reader._last_sequence_has_chunks)
+        self.assertFalse(reader.status_received)
+
+    def test_crc_failure_is_retried_without_accepting_bad_entry(self):
+        requests, entries, reader = self.run_exchange([[bytes.fromhex('60 00 00 00 00 00 00 00'),
+            bytes.fromhex('40 3F 00 00 7B 00 00 00'),
+            bytes.fromhex('20 03 00 00 E4 9B E7 6A')]])
+        self.assertEqual(len(requests), 3)
+        self.assertEqual(entries, [])
+        self.assertTrue(reader._last_sequence_has_chunks)
+        self.assertFalse(reader.status_received)
+
+    def test_all_fragment_orders(self):
+        frames = [bytes.fromhex('60 00 00 00 00 00 00 00'),
+                  bytes.fromhex('40 3F 00 00 7B 00 00 00'),
+                  bytes.fromhex('20 03 95 9E E4 9B E7 6A')]
+        status = bytes.fromhex('00 00 95 9E E4 9B E7 6A')
+        for order in permutations(frames):
+            with self.subTest(order=order):
+                requests, entries, reader = self.run_exchange([order, [status]])
+                self.assertEqual(len(requests), 2)
+                self.assertEqual([(entry.code, entry.param, entry.crc16) for entry in entries], [(63, 123, 0x9E95)])
+                self.assertTrue(reader.status_received)
+
+    def test_late_fragments_are_combined_across_retry(self):
+        requests, entries, reader = self.run_exchange([
+            [bytes.fromhex('60 00 00 00 00 00 00 00')],
+            [bytes.fromhex('20 03 95 9E E4 9B E7 6A'), bytes.fromhex('40 3F 00 00 7B 00 00 00')],
+            [bytes.fromhex('00 00 95 9E E4 9B E7 6A')],
+        ])
+        self.assertEqual(requests[:2], [bytes(8), bytes(8)])
+        self.assertEqual([(entry.code, entry.crc16) for entry in entries], [(63, 0x9E95)])
+        self.assertTrue(reader.status_received)
+
+    def test_log_9_11_delayed_fragments(self):
+        requests, entries, reader = self.run_exchange([
+            [bytes.fromhex('60 00 00 00 00 00 00 00')],
+            [bytes.fromhex('40 09 01 01 66 00 00 00'), bytes.fromhex('20 85 81 D3 53 89 E7 6A')],
+            [bytes.fromhex('00 00 81 D3 53 89 E7 6A')],
+        ])
+        self.assertEqual(requests[:2], [bytes(8)] * 2)
+        self.assertEqual([(entry.code, entry.param, entry.crc16) for entry in entries], [(9, 102, 0xD381)])
+        self.assertTrue(reader.status_received)
+
+    def test_matching_status_before_new_fragments_does_not_hide_entry(self):
+        requests, entries, reader = self.run_exchange([
+            [bytes(8), bytes.fromhex('60 00 00 00 00 00 00 00'),
+             bytes.fromhex('40 3F 00 00 7B 00 00 00'), bytes.fromhex('20 03 95 9E E4 9B E7 6A')],
+            [bytes.fromhex('00 00 95 9E E4 9B E7 6A')],
+        ])
+        self.assertEqual([(entry.code, entry.crc16) for entry in entries], [(63, 0x9E95)])
+        self.assertTrue(reader.status_received)
+
+    def test_duplicate_and_orphan_do_not_advance_cursor(self):
+        cursor = LogEntry()
+        cursor.timestamp, cursor.severity, cursor.code, cursor.param = 1793563620, 3, 63, 123
+        requests, entries, reader = self.run_exchange([
+            [bytes.fromhex('60 00 00 00 00 00 00 00'), bytes.fromhex('40 3F 00 00 7B 00 00 00'),
+             bytes.fromhex('20 03 95 9E E4 9B E7 6A'), bytes.fromhex('60 00 00 00 00 00 00 00')],
+            [bytes.fromhex('40 09 00 00 66 00 00 00'), bytes.fromhex('20 85 EF FF 18 A7 E7 6A')],
+            [bytes.fromhex('00 00 EF FF 18 A7 E7 6A')],
+        ], cursor)
+        self.assertEqual(requests[:2], [bytes.fromhex('00 00 95 9E E4 9B E7 6A')] * 2)
+        self.assertEqual([(entry.code, entry.crc16) for entry in entries], [(9, 0xFFEF)])
+        self.assertTrue(reader.status_received)
+
+    def test_log_9_3_duplicate_fragments_then_status(self):
+        cursor = LogEntry()
+        cursor.timestamp, cursor.severity, cursor.code, cursor.param = 1793567594, 5, 8, 102
+        cursor.param_ex[:2] = bytes.fromhex('D1 66')
+        first = bytes.fromhex('20 86 89 A6 6E AB E7 6A')
+        second = bytes.fromhex('40 04 66 66 00 00 00 00')
+        third = bytes.fromhex('60 00 00 00 00 00 00 00')
+        requests, entries, reader = self.run_exchange([
+            [third, second, first, third],
+            [second, first],
+            [bytes.fromhex('00 00 89 A6 6E AB E7 6A')],
+        ], cursor)
+        self.assertEqual([(entry.timestamp, entry.crc16) for entry in entries], [(1793567598, 0xA689)])
+        self.assertEqual(requests[1:], [bytes.fromhex('00 00 89 A6 6E AB E7 6A')] * 2)
+        self.assertTrue(reader.status_received)
+
+    def test_status_for_another_cursor_does_not_confirm_end(self):
+        cursor = LogEntry()
+        cursor.timestamp, cursor.severity, cursor.code, cursor.param = 1793563620, 3, 63, 123
+        requests, entries, reader = self.run_exchange([[bytes(8)], [], []], cursor)
+        self.assertEqual(len(requests), 3)
+        self.assertEqual(entries, [])
+        self.assertFalse(reader.status_received)
+
+    def test_selects_crc_valid_combination_from_mixed_fragments(self):
+        requests, entries, reader = self.run_exchange([
+            [bytes.fromhex('40 09 00 00 66 00 00 00'), bytes.fromhex('20 03 95 9E E4 9B E7 6A'),
+             bytes.fromhex('40 3F 00 00 7B 00 00 00'), bytes.fromhex('60 00 00 00 00 00 00 00')],
+            [bytes.fromhex('00 00 95 9E E4 9B E7 6A')],
+        ])
+        self.assertEqual([(entry.code, entry.param, entry.crc16) for entry in entries], [(63, 123, 0x9E95)])
+        self.assertTrue(reader.status_received)
+
+    def test_multiple_crc_valid_combinations_fail_closed(self):
+        with patch('smartnet.message_log.CanListener.subscribe'), \
+                patch('smartnet.message_log.CanListener.unsubscribe'):
+            reader = MessageLogReader(controller_id=209, timeout=0.01)
+            def send(message):
+                for payload in (bytes.fromhex('20 03 95 9E E4 9B E7 6A'),
+                                bytes.fromhex('40 3F 00 00 7B 00 00 00'),
+                                bytes.fromhex('40 09 00 00 66 00 00 00'),
+                                bytes.fromhex('60 00 00 00 00 00 00 00')):
+                    reader.on_can_message_received(Message(reader.PROGRAM_TYPE, 209,
+                        reader.FUNCTION_ID, reader.RESPONSE_FLAG, payload))
+            with patch.object(Message, 'send', autospec=True, side_effect=send), \
+                    patch.object(reader, '_calc_entry_crc', return_value=0x9E95):
+                self.assertEqual(reader.read_entries(), [])
+            self.assertFalse(reader.status_received)
+            self.assertTrue(reader._last_sequence_has_chunks)
+
+    def test_fragment_buffer_limit_fails_closed(self):
+        payloads = [bytes([0x40, value]) + bytes(6) for value in range(9)]
+        requests, entries, reader = self.run_exchange([payloads])
+        self.assertEqual(len(requests), 1)
+        self.assertEqual(entries, [])
+        self.assertFalse(reader.status_received)
+        self.assertTrue(reader._last_sequence_has_chunks)
 
 
 class TestCRC16EdgeCases(unittest.TestCase):

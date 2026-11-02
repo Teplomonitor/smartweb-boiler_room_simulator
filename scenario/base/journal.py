@@ -4,24 +4,11 @@ import threading
 from consoleLog import print_error
 from scenario.base.filling_loop import FillingLoopScenario
 from smartnet.message import CanListener
-from smartnet.message_log import MLCDataParser, MessageLogReader, OP_STATUS
+from smartnet.message_log import MessageLogReader
 
 
 class ScenarioJournalReader(MessageLogReader):
-	"""Observe end-of-journal without reinterpreting legacy STATUS bytes."""
-
-	def __init__(self, *args, **kwargs):
-		self.status_received = False
-		super().__init__(*args, **kwargs)
-
-	def on_can_message_received(self, msg):
-		with self._capture_lock:
-			response_filter = self._response_filter
-		if msg is not None and response_filter is not None and msg.compare(response_filter):
-			data = msg.get_data()
-			if data and len(data) == 8 and MLCDataParser.parse_operation(data[0]) == OP_STATUS:
-				self.status_received = True
-		super().on_can_message_received(msg)
+	"""Read scenario journal entries with cursor-validated completion."""
 
 
 class JournalCanEmitter:
@@ -59,7 +46,7 @@ class JournalScenarioMixin:
 		)
 		try:
 			entries = reader.read_entries(max_entries=self.JOURNAL_MAX_ENTRIES, last_entry=cursor)
-			return entries if reader.status_received else None
+			return entries if reader.status_received and not reader._last_sequence_has_chunks else None
 		finally:
 			CanListener.unsubscribe(reader)
 

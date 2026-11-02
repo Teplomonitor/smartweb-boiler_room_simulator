@@ -63,12 +63,49 @@ class TestJournalCursor(unittest.TestCase):
 			reader.assert_called_once_with(controller_id=123, timeout=3)
 			unsubscribe.assert_called_once_with(reader.return_value)
 
-	def test_status_is_recognized_without_decoding_legacy_bytes(self):
+	def test_silent_retries_do_not_validate_snapshot(self):
+		self.scenario.JOURNAL_READ_TIMEOUT = 0.001
+		with patch('smartnet.message_log.CanListener.subscribe'), \
+				patch('smartnet.message_log.CanListener.unsubscribe'), \
+				patch.object(Message, 'send') as send:
+			self.assertFalse(self.scenario.snapshot_journal())
+			self.assertEqual(send.call_count, 3)
+
+	def test_status_followed_by_partial_entry_does_not_validate_snapshot(self):
+		with patch('smartnet.message_log.CanListener.subscribe'), \
+				patch('smartnet.message_log.CanListener.unsubscribe'):
+			reader = ScenarioJournalReader(controller_id=123, timeout=0.001)
+			def send(message):
+				for data in (bytes(8), bytes.fromhex('60 00 00 00 00 00 00 00')):
+					reader.on_can_message_received(Message(reader.PROGRAM_TYPE, 123, reader.FUNCTION_ID,
+						reader.RESPONSE_FLAG, data))
+			with patch('scenario.base.journal.ScenarioJournalReader', return_value=reader), \
+					patch.object(Message, 'send', autospec=True, side_effect=send):
+				self.assertFalse(self.scenario.snapshot_journal())
+
+	def test_status_before_entry_does_not_validate_later_silent_request(self):
+		with patch('smartnet.message_log.CanListener.subscribe'), \
+				patch('smartnet.message_log.CanListener.unsubscribe'):
+			reader = ScenarioJournalReader(controller_id=123, timeout=0.001)
+			requests = []
+			def send(message):
+				requests.append(bytes(message.get_data()))
+				if len(requests) == 1:
+					for data in (bytes(8), bytes.fromhex('60 00 00 00 00 00 00 00'),
+							bytes.fromhex('40 3F 00 00 7B 00 00 00'),
+							bytes.fromhex('20 03 95 9E E4 9B E7 6A')):
+						reader.on_can_message_received(Message(reader.PROGRAM_TYPE, 123, reader.FUNCTION_ID,
+							reader.RESPONSE_FLAG, data))
+			with patch('scenario.base.journal.ScenarioJournalReader', return_value=reader), \
+					patch.object(Message, 'send', autospec=True, side_effect=send):
+				self.assertFalse(self.scenario.snapshot_journal())
+			self.assertEqual(len(requests), 4)
+
+	def test_status_is_recognized_for_current_cursor(self):
 		with patch('scenario.base.journal.CanListener.subscribe'), \
 				patch('scenario.base.journal.CanListener.unsubscribe'):
-			reader = ScenarioJournalReader(controller_id=123, timeout=0)
-			reader._start_capture(123)
-			try:
+			reader = ScenarioJournalReader(controller_id=123, timeout=0.001)
+			def send(message):
 				other = Message(reader.PROGRAM_TYPE, 124, reader.FUNCTION_ID,
 					reader.RESPONSE_FLAG, bytes(8))
 				reader.on_can_message_received(other)
@@ -76,9 +113,9 @@ class TestJournalCursor(unittest.TestCase):
 				status = Message(reader.PROGRAM_TYPE, 123, reader.FUNCTION_ID,
 					reader.RESPONSE_FLAG, bytes(8))
 				reader.on_can_message_received(status)
-				self.assertTrue(reader.status_received)
-			finally:
-				reader._stop_capture()
+			with patch.object(Message, 'send', autospec=True, side_effect=send):
+				self.assertEqual(reader.read_entries(), [])
+			self.assertTrue(reader.status_received)
 
 
 class TestJournalFillingLoopScenarios(unittest.TestCase):
