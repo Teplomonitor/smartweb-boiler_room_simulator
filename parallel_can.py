@@ -18,6 +18,7 @@ from smartnet.can_adapter import resolve_bus_config
 
 
 PROTOCOL_PREFIX = '@@BRS_CAN@@'
+COORDINATOR_STATE_PREFIX = '@@BRS_COORDINATOR@@'
 STARTUP_TIMEOUT = 180
 SHUTDOWN_TIMEOUT = 70
 COMMAND_TIMEOUT = 15
@@ -302,9 +303,24 @@ def run_coordinator(args):
 	workers = []
 	results = []
 	start = time.monotonic()
+	def send_state():
+		if not getattr(args, 'can_gui_child', False):
+			return
+		now = time.monotonic()
+		state = {
+			'pending': list(pending),
+			'results': list(results),
+			'workers': [{'context': worker.context, 'ready': worker.ready,
+				'retiring': worker.retiring, 'scenario': worker.current,
+				'elapsed': max(0, now - getattr(worker, 'scenario_started_at', now))}
+				for worker in workers],
+		}
+		print(COORDINATOR_STATE_PREFIX + json.dumps(state, ensure_ascii=False), flush=True)
+
 	try:
 		for index, context in enumerate(contexts):
 			workers.append(CanWorker(context, index, args, run_dir, events))
+		send_state()
 		while pending or any(worker.current for worker in workers):
 			if stop_requested.is_set():
 				raise KeyboardInterrupt
@@ -314,11 +330,13 @@ def run_coordinator(args):
 				if workers and all(w.retiring or w.process.poll() is not None for w in workers):
 					break
 				now = time.monotonic()
+				changed = False
 				for w in workers:
 					if not w.ready and not w.retiring and w.process.poll() is None and now - start > STARTUP_TIMEOUT:
 						print(f'[{w.context}] startup timed out', flush=True)
 						w.retiring = True
 						w.process.kill()
+						changed = True
 					if w.current and not w.retiring:
 						elapsed = now - w.phase_started_at
 						limit = COMMAND_TIMEOUT if w.phase == 'sent' else SCENARIO_INIT_TIMEOUT if w.phase in ('accepted', 'starting', 'importing', 'constructing') else None
@@ -330,9 +348,12 @@ def run_coordinator(args):
 							w.current = None
 							w.retiring = True
 							w.ready = False
+							changed = True
 						elif now - w.last_notice >= PROGRESS_INTERVAL:
 							print(f'[{w.context}] {w.phase}: {Path(w.current).name} ({now - w.phase_started_at:.0f}s in phase)', flush=True)
 							w.last_notice = now
+				if changed:
+					send_state()
 				continue
 			if event['type'] == 'ready':
 				worker.ready = True
@@ -373,6 +394,7 @@ def run_coordinator(args):
 					free.current = path
 					free.phase = 'sent'
 					free.phase_started_at = time.monotonic()
+					free.scenario_started_at = free.phase_started_at
 					free.last_notice = free.phase_started_at
 					print(f'[{free.context}] starting {Path(path).name}', flush=True)
 					try:
@@ -382,6 +404,7 @@ def run_coordinator(args):
 						results.append({**result_target(free.context), 'scenario': path,
 							'result': 'ERROR', 'error': repr(exc)})
 						free.current = None
+			send_state()
 		unassigned = list(pending)
 		for path in unassigned:
 			results.append({'scenario': path, 'result': 'NOT_RUN'})
@@ -416,4 +439,5 @@ def run_coordinator(args):
 		finally:
 			(run_dir / 'results.json').write_text(
 				json.dumps(results, ensure_ascii=False, indent=2), encoding='utf-8')
+			send_state()
 			signal.signal(signal.SIGINT, previous_handler)

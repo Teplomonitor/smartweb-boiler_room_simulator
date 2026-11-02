@@ -13,10 +13,17 @@ from unittest.mock import Mock, patch
 import wx
 
 import parallel_can
-from gui.parallel_can import ParallelCanFrame, WorkerConsole, build_command, can_contexts
+from gui.parallel_can import (ParallelCanFrame, WorkerConsole, build_command, can_contexts,
+	estimate_remaining, result_counts)
+from scenario.metadata import (PRESET_LOADING_ESTIMATE_SECONDS, format_estimated_duration,
+	read_scenario_details)
 
 
 class TestParallelCanGui(unittest.TestCase):
+	@classmethod
+	def setUpClass(cls):
+		cls.app = wx.GetApp() or wx.App(False)
+
 	def setUp(self):
 		self.settings_dir = tempfile.TemporaryDirectory()
 		self.addCleanup(self.settings_dir.cleanup)
@@ -29,13 +36,121 @@ class TestParallelCanGui(unittest.TestCase):
 		self.assertIn('canable0', can_contexts())
 		self.assertNotIn('virtual', can_contexts())
 
+	def test_result_counts_separate_failure_from_unfinished(self):
+		results = [{'result': value} for value in
+			('OK', 'FAIL', 'FAIL', 'ERROR', 'INTERRUPTED', 'NOT_RUN')]
+		self.assertEqual(result_counts(results), {'OK': 1, 'FAIL': 2, 'ERROR': 1,
+			'INTERRUPTED': 1, 'NOT_RUN': 1})
+
+	def test_remaining_time_accounts_for_busy_parallel_workers(self):
+		state = {'workers': [
+			{'ready': True, 'scenario': 'a', 'elapsed': 20},
+			{'ready': True, 'scenario': None},
+			{'ready': True, 'retiring': True, 'scenario': None},
+		], 'pending': ['b', 'c']}
+		estimates = {'a': 100, 'b': 50, 'c': 70}
+		self.assertEqual(estimate_remaining(state, estimates, age=10), 120)
+		self.assertIsNone(estimate_remaining(state, {'a': 100, 'b': 50}))
+		self.assertIsNone(estimate_remaining({'workers': [], 'pending': ['b']}, estimates))
+		self.assertEqual(estimate_remaining({'workers': [state['workers'][0]], 'pending': []},
+			estimates, age=100), 20)
+
+	def test_progress_reconciles_final_results_after_stop(self):
+		app = wx.GetApp() or wx.App(False)
+		frame = ParallelCanFrame()
+		try:
+			with tempfile.TemporaryDirectory() as temp_dir:
+				root = Path(temp_dir)
+				results = [{'result': value} for value in
+					('OK', 'FAIL', 'ERROR', 'INTERRUPTED', 'NOT_RUN')]
+				(root / 'results.json').write_text(json.dumps(results), encoding='utf-8')
+				frame.run_total = 5
+				frame.run_dir = root
+				frame.running = True
+				frame.stopping = True
+				frame.process = Mock(returncode=2, stdin=io.StringIO())
+				frame.process.poll.return_value = 2
+				frame.reader = Mock()
+				frame.reader.is_alive.return_value = False
+				state = {'results': results[:2], 'workers': [], 'pending': []}
+				frame.lines.put(parallel_can.COORDINATOR_STATE_PREFIX + json.dumps(state) + '\n')
+				frame.poll(None)
+				self.assertEqual(frame.progress_label.GetLabel(), 'Завершено: 3 из 5')
+				self.assertEqual(frame.progress_gauge.GetValue(), 3)
+				self.assertIn('Неудачно: 2 (FAIL: 1, ERROR: 1)', frame.summary_label.GetLabel())
+				self.assertIn('Прервано: 1 | Не выполнено: 1', frame.summary_label.GetLabel())
+				self.assertNotIn(parallel_can.COORDINATOR_STATE_PREFIX, frame.console.GetValue())
+				self.assertFalse(frame.running)
+		finally:
+			frame.Destroy()
+			self.assertIsNotNone(app)
+
+	def test_live_progress_and_missing_final_file(self):
+		frame = ParallelCanFrame()
+		try:
+			frame.run_total = 3
+			frame.run_estimates = {'running': 100, 'pending': 50}
+			frame.running = True
+			frame.process = Mock(stdin=io.StringIO(), returncode=2)
+			frame.process.poll.return_value = None
+			frame.reader = Mock()
+			state = {'results': [{'result': 'FAIL'}], 'pending': ['pending'],
+				'workers': [{'ready': True, 'scenario': 'running', 'elapsed': 20}]}
+			frame.lines.put(parallel_can.COORDINATOR_STATE_PREFIX + json.dumps(state) + '\n')
+			frame.poll(None)
+			self.assertEqual(frame.progress_gauge.GetValue(), 1)
+			self.assertEqual(frame.progress_label.GetLabel(), 'Завершено: 1 из 3')
+			self.assertIn('Примерное окончание:', frame.eta_label.GetLabel())
+			frame.process.poll.return_value = 2
+			frame.reader.is_alive.return_value = False
+			frame.poll(None)
+			self.assertIn('Итоговый файл недоступен', frame.eta_label.GetLabel())
+			self.assertIn('Неудачно: 1', frame.summary_label.GetLabel())
+		finally:
+			frame.running = False
+			frame.Destroy()
+
+	def test_selection_and_repeat_start_reset_progress(self):
+		app = wx.GetApp() or wx.App(False)
+		frame = ParallelCanFrame()
+		try:
+			frame.udp_ports_input.SetValue('31987')
+			frame.scenario_list.Check(0, True)
+			frame.update_selection()
+			self.assertIn('1', frame.selection_label.GetLabel())
+			process = Mock()
+			process.stdout = io.StringIO('')
+			process.stdin = io.StringIO()
+			with patch('gui.parallel_can.subprocess.Popen', return_value=process):
+				frame.start(None)
+			self.assertEqual(frame.progress_label.GetLabel(), 'Завершено: 0 из 1')
+			self.assertFalse(frame.select_all_button.IsEnabled())
+			frame.state = {'results': [{'result': 'FAIL'}]}
+			frame.update_progress()
+			self.assertEqual(frame.progress_gauge.GetValue(), 1)
+			frame.timer.Stop()
+			frame.reader.join()
+			frame.running = False
+			second = Mock(stdout=io.StringIO(''), stdin=io.StringIO())
+			with patch('gui.parallel_can.subprocess.Popen', return_value=second):
+				frame.start(None)
+			self.assertEqual(frame.progress_gauge.GetValue(), 0)
+			self.assertIn('Неудачно: 0', frame.summary_label.GetLabel())
+		finally:
+			frame.timer.Stop()
+			frame.running = False
+			frame.Destroy()
+			self.assertIsNotNone(app)
+
 	def test_scenario_list_displays_estimate_without_changing_path(self):
 		app = wx.GetApp() or wx.App(False)
 		frame = ParallelCanFrame()
 		try:
 			index = next(index for index, path in enumerate(frame.scenario_paths)
 				if path.endswith('scenario_heating_circuit_external_priority_5_2_3_3.py'))
-			self.assertIn('≈ 3 мин 10 с', frame.scenario_list.GetString(index))
+			_, _, estimate = read_scenario_details(frame.scenario_paths[index])
+			self.assertIn(format_estimated_duration(estimate + PRESET_LOADING_ESTIMATE_SECONDS),
+				frame.scenario_list.GetString(index))
 			self.assertTrue(frame.scenario_paths[index].endswith('.py'))
 		finally:
 			frame.timer.Stop()
@@ -175,7 +290,7 @@ class TestParallelCanGui(unittest.TestCase):
 				build_command([], ['a.py'], ['31987', '31987'])
 
 	def test_window_follows_worker_log_and_coordinator_output(self):
-		app = wx.App(False)
+		app = wx.GetApp() or wx.App(False)
 		frame = ParallelCanFrame()
 		try:
 			with tempfile.TemporaryDirectory() as temp_dir:
@@ -202,7 +317,7 @@ class TestParallelCanGui(unittest.TestCase):
 			frame.Destroy()
 
 	def test_start_with_one_context_opens_one_worker_window(self):
-		app = wx.App(False)
+		app = wx.GetApp() or wx.App(False)
 		frame = ParallelCanFrame()
 		try:
 			index = frame.context_names.index('canable0')
@@ -221,7 +336,7 @@ class TestParallelCanGui(unittest.TestCase):
 			frame.Destroy()
 
 	def test_udp_only_start_opens_port_monitors(self):
-		app = wx.App(False)
+		app = wx.GetApp() or wx.App(False)
 		frame = ParallelCanFrame()
 		try:
 			frame.udp_ports_input.SetValue('31987, 31988')
@@ -277,17 +392,25 @@ class TestParallelCanGui(unittest.TestCase):
 		with tempfile.TemporaryDirectory() as temp_dir:
 			run_dir = Path(temp_dir) / 'run'
 			run_dir.mkdir()
+			output = io.StringIO()
 			with patch.object(parallel_can, 'CanWorker', FakeWorker), \
 				patch.object(parallel_can, 'select_scenarios', return_value=['a', 'b', 'c']), \
 				patch.object(parallel_can, 'validate_contexts'), \
+				patch.object(parallel_can, 'resolve_contexts', return_value={}), \
 				patch.object(parallel_can.tempfile, 'mkdtemp', return_value=str(run_dir)), \
-				patch('sys.stdin', Input()), patch('sys.stdout', io.StringIO()):
+				patch('sys.stdin', Input()), patch('sys.stdout', output):
 				with self.assertRaises(KeyboardInterrupt):
 					parallel_can.run_coordinator(args)
 			results = json.loads((run_dir / 'results.json').read_text(encoding='utf-8'))
 		self.assertTrue(stopped.is_set())
 		self.assertEqual(sorted(result['result'] for result in results),
 			['INTERRUPTED', 'INTERRUPTED', 'NOT_RUN'])
+		states = [json.loads(line[len(parallel_can.COORDINATOR_STATE_PREFIX):])
+			for line in output.getvalue().splitlines()
+			if line.startswith(parallel_can.COORDINATOR_STATE_PREFIX)]
+		self.assertTrue(any(len([worker for worker in state['workers'] if worker['scenario']]) == 2
+			for state in states))
+		self.assertEqual(states[-1]['results'], results)
 
 
 if __name__ == '__main__':

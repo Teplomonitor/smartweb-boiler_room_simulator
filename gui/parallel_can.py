@@ -1,6 +1,8 @@
 """Standalone dashboard for parallel CAN/UDP scenario runs."""
 
 import configparser
+from datetime import datetime, timedelta
+import heapq
 import json
 import os
 from pathlib import Path
@@ -9,17 +11,55 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 
 import wx
 
-from parallel_can import select_scenarios, validate_contexts, validate_udp_ports
-from scenario.metadata import scenario_label
+from parallel_can import (COORDINATOR_STATE_PREFIX, select_scenarios, validate_contexts,
+	validate_udp_ports)
+from scenario.metadata import PRESET_LOADING_ESTIMATE_SECONDS, read_scenario_details, scenario_label
 from scenario.scenario import get_scenario_dir
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SETTINGS_PATH = ROOT / 'parallel_can_settings.json'
 MAX_CONSOLE_CHARS = 200_000
+
+
+def result_counts(results):
+	"""Count completed failures separately from interrupted and unassigned tests."""
+	counts = {name: 0 for name in ('OK', 'FAIL', 'ERROR', 'INTERRUPTED', 'NOT_RUN')}
+	for result in results:
+		status = result.get('result')
+		if status in counts:
+			counts[status] += 1
+	return counts
+
+
+def estimate_remaining(state, estimates, age=0):
+	"""Simulate dispatch to currently available workers; unknown durations stay unknown."""
+	workers = [worker for worker in state.get('workers', [])
+		if worker.get('ready') and not worker.get('retiring')]
+	pending = state.get('pending', [])
+	if not workers:
+		return None
+	loads = []
+	for worker in workers:
+		path = worker.get('scenario')
+		if path:
+			duration = estimates.get(path)
+			if duration is None:
+				return None
+			loads.append(max(duration * 0.2, duration - worker.get('elapsed', 0) - age))
+		else:
+			loads.append(0)
+	heapq.heapify(loads)
+	for path in pending:
+		duration = estimates.get(path)
+		if duration is None:
+			return None
+		heapq.heapreplace(loads, loads[0] + duration)
+	return max(loads)
 
 
 def can_contexts():
@@ -121,6 +161,10 @@ class ParallelCanFrame(wx.Frame):
 		self.lines = queue.Queue()
 		self.monitors = []
 		self.run_dir = None
+		self.run_total = 0
+		self.run_estimates = {}
+		self.state = None
+		self.state_received_at = None
 		self.timer = wx.Timer(self)
 
 		panel = wx.Panel(self)
@@ -141,6 +185,9 @@ class ParallelCanFrame(wx.Frame):
 			for path in self.scenario_paths]
 		self.scenario_list = wx.CheckListBox(panel, choices=labels, style=wx.LB_HSCROLL)
 		sizer.Add(self.scenario_list, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 6)
+		self.scenario_list.Bind(wx.EVT_CHECKLISTBOX, self.update_selection)
+		self.selection_label = wx.StaticText(panel, label='')
+		sizer.Add(self.selection_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 6)
 		buttons = wx.BoxSizer(wx.HORIZONTAL)
 		for label, handler in (('Select all', self.select_all),
 			('Clear all', self.clear_all), ('Start', self.start),
@@ -152,8 +199,20 @@ class ParallelCanFrame(wx.Frame):
 				self.start_button = button
 			if label == 'Stop':
 				self.stop_button = button
+			if label == 'Select all':
+				self.select_all_button = button
+			if label == 'Clear all':
+				self.clear_all_button = button
 		buttons.AddStretchSpacer()
 		sizer.Add(buttons, 0, wx.EXPAND | wx.ALL, 4)
+		self.progress_label = wx.StaticText(panel, label='Завершено: 0 из 0')
+		sizer.Add(self.progress_label, 0, wx.LEFT | wx.RIGHT, 6)
+		self.progress_gauge = wx.Gauge(panel, range=1)
+		sizer.Add(self.progress_gauge, 0, wx.EXPAND | wx.ALL, 6)
+		self.eta_label = wx.StaticText(panel, label='Окончание: неизвестно')
+		sizer.Add(self.eta_label, 0, wx.LEFT | wx.RIGHT, 6)
+		self.summary_label = wx.StaticText(panel, label='')
+		sizer.Add(self.summary_label, 0, wx.ALL, 6)
 		sizer.Add(wx.StaticText(panel, label='Coordinator / results:'), 0, wx.ALL, 6)
 		self.console = wx.TextCtrl(panel, style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
 		sizer.Add(self.console, 1, wx.EXPAND | wx.ALL, 6)
@@ -162,6 +221,7 @@ class ParallelCanFrame(wx.Frame):
 		self.Bind(wx.EVT_TIMER, self.poll, self.timer)
 		self.Bind(wx.EVT_CLOSE, self.on_close)
 		self.restore_settings()
+		self.update_selection()
 
 	def restore_settings(self):
 		try:
@@ -204,10 +264,46 @@ class ParallelCanFrame(wx.Frame):
 	def select_all(self, event):
 		for index in range(self.scenario_list.GetCount()):
 			self.scenario_list.Check(index, True)
+		self.update_selection()
 
 	def clear_all(self, event):
 		for index in range(self.scenario_list.GetCount()):
 			self.scenario_list.Check(index, False)
+		self.update_selection()
+
+	def update_selection(self, event=None):
+		selected = sum(self.scenario_list.IsChecked(index)
+			for index in range(self.scenario_list.GetCount()))
+		self.selection_label.SetLabel(f'Выбрано сценариев: {selected}')
+
+	def update_progress(self, final=False, results=None):
+		if results is None:
+			results = self.state.get('results', []) if self.state else []
+		counts = result_counts(results)
+		completed = counts['OK'] + counts['FAIL'] + counts['ERROR']
+		self.progress_gauge.SetRange(max(1, self.run_total))
+		self.progress_gauge.SetValue(min(completed, self.run_total))
+		self.progress_label.SetLabel(f'Завершено: {completed} из {self.run_total}')
+		self.summary_label.SetLabel(f"Успешно: {counts['OK']} | Неудачно: "
+			f"{counts['FAIL'] + counts['ERROR']} (FAIL: {counts['FAIL']}, ERROR: {counts['ERROR']})"
+			f" | Прервано: {counts['INTERRUPTED']} | Не выполнено: {counts['NOT_RUN']}")
+		if final:
+			self.eta_label.SetLabel('Проверка завершена' if completed == self.run_total
+				else 'Проверка остановлена или завершилась с ошибкой')
+		elif self.stopping:
+			self.eta_label.SetLabel('Остановка и очистка...')
+		elif not self.state or self.state_received_at is None:
+			self.eta_label.SetLabel('Окончание: неизвестно')
+		else:
+			remaining = estimate_remaining(self.state, self.run_estimates,
+				time.monotonic() - self.state_received_at)
+			if remaining is None:
+				self.eta_label.SetLabel('Окончание: неизвестно')
+			elif not remaining and completed == self.run_total:
+				self.eta_label.SetLabel('Завершение и очистка...')
+			else:
+				end = datetime.now() + timedelta(seconds=remaining)
+				self.eta_label.SetLabel(f'Примерное окончание: {end:%d.%m.%Y %H:%M:%S}')
 
 	def show_consoles(self, event):
 		for monitor in self.monitors:
@@ -236,6 +332,15 @@ class ParallelCanFrame(wx.Frame):
 		self.running = True
 		self.stopping = False
 		self.run_dir = None
+		self.run_total = len(scenarios)
+		self.run_estimates = {}
+		for path in scenarios:
+			_, _, estimate = read_scenario_details(path)
+			self.run_estimates[path] = (estimate + PRESET_LOADING_ESTIMATE_SECONDS
+				if estimate is not None else None)
+		self.state = None
+		self.state_received_at = None
+		self.update_progress()
 		self.console.Clear()
 		self.save_settings()
 		for monitor in self.monitors:
@@ -249,6 +354,8 @@ class ParallelCanFrame(wx.Frame):
 		self.context_list.Disable()
 		self.udp_ports_input.Disable()
 		self.scenario_list.Disable()
+		self.select_all_button.Disable()
+		self.clear_all_button.Disable()
 		self.reader = threading.Thread(target=self.read_output, daemon=True)
 		self.reader.start()
 		self.timer.Start(200)
@@ -265,6 +372,7 @@ class ParallelCanFrame(wx.Frame):
 			return
 		self.stopping = True
 		self.stop_button.Disable()
+		self.update_progress()
 		append_console(self.console, 'Stopping workers; waiting for cleanup...\n')
 		try:
 			self.process.stdin.write('stop\n')
@@ -278,6 +386,16 @@ class ParallelCanFrame(wx.Frame):
 				line = self.lines.get_nowait()
 			except queue.Empty:
 				break
+			if line.startswith(COORDINATOR_STATE_PREFIX):
+				try:
+					state = json.loads(line[len(COORDINATOR_STATE_PREFIX):])
+					if not isinstance(state, dict):
+						raise ValueError('State must be an object')
+					self.state = state
+					self.state_received_at = time.monotonic()
+				except (ValueError, TypeError) as exc:
+					append_console(self.console, f'Invalid coordinator state: {exc}\n')
+				continue
 			append_console(self.console, line)
 			if line.startswith('Parallel CAN run: '):
 				self.run_dir = Path(line.removeprefix('Parallel CAN run: ').strip())
@@ -289,17 +407,34 @@ class ParallelCanFrame(wx.Frame):
 				monitor.read_log()
 			except OSError as exc:
 				append_console(self.console, f'[{monitor.context}] Cannot read log: {exc}\n')
+		self.update_progress()
 		if self.process.poll() is not None and not self.reader.is_alive() and self.lines.empty():
 			self.timer.Stop()
 			self.running = False
 			self.process.stdin.close()
+			results = None
+			if self.run_dir:
+				try:
+					with (self.run_dir / 'results.json').open(encoding='utf-8') as stream:
+						results = json.load(stream)
+					if not isinstance(results, list) or not all(isinstance(item, dict) for item in results):
+						raise ValueError('Results must be a list of objects')
+				except (OSError, UnicodeError, ValueError) as exc:
+					results = None
+					append_console(self.console, f'Cannot read final results: {exc}\n')
+			self.update_progress(final=True, results=results)
+			if results is None:
+				self.eta_label.SetLabel('Итоговый файл недоступен; показаны последние полученные данные')
 			append_console(self.console, f'Finished (exit code {self.process.returncode}). '
 				f'Results: {self.run_dir / "results.json" if self.run_dir else "not available"}\n')
+			append_console(self.console, self.summary_label.GetLabel() + '\n')
 			self.start_button.Enable()
 			self.stop_button.Disable()
 			self.context_list.Enable()
 			self.udp_ports_input.Enable()
 			self.scenario_list.Enable()
+			self.select_all_button.Enable()
+			self.clear_all_button.Enable()
 
 	def on_close(self, event):
 		if self.running:
