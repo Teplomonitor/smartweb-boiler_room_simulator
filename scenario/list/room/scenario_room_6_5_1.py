@@ -2,6 +2,8 @@ from scenario.base.heat_dump import HeatDumpScenario
 
 
 class Scenario(HeatDumpScenario):
+	ESTIMATED_RUN_SECONDS = 80
+
 	def get_scenario_title(self):
 		return '6.5.1 Комната: открытие клапана при разрешённом сбросе'
 

@@ -4,6 +4,7 @@ import smartnet.constants as snc
 
 
 class Scenario(HeatingCircuitLineScenario):
+	ESTIMATED_RUN_SECONDS = 2270
 	LINE_BASE_SETPOINT = 45
 	CIRCUIT_REQUESTS = (35, 40)
 	# Explicit reference points: (setpoints, enabled circuits, line request).

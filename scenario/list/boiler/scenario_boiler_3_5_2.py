@@ -5,6 +5,7 @@ import smartnet.remoteControl as sr
 
 
 class Scenario(Parent):
+	ESTIMATED_RUN_SECONDS = 80
 	DHW_TEST_SETPOINTS = (40, 50)
 	DHW_TEST_TEMPERATURE = 20
 	BOILER_HOT_TEMPERATURE = 80

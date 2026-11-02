@@ -3,6 +3,7 @@ from scenario.base.dhw import DhwScenario
 
 
 class Scenario(DhwScenario):
+	ESTIMATED_RUN_SECONDS = 10
 	TEMPERATURE_TOLERANCE = 0.2
 	TIMEOUT = 60
 

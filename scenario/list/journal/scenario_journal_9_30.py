@@ -3,6 +3,8 @@ from smartnet.message_log_constants import MessageLogCode, SeverityCode
 
 
 class Scenario(JournalPoolFlowScenario):
+	ESTIMATED_RUN_SECONDS = 70
+
 	def get_scenario_title(self):
 		return 'Journal: pool circulation restored'
 

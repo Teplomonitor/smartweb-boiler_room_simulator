@@ -3,6 +3,7 @@ import smartnet.constants as snc
 
 
 class Scenario(HeatingCircuitDemandScenario):
+	ESTIMATED_RUN_SECONDS = 1180
 	LIMITED_ROOM_SHIFT = 2
 	LIMITED_MINIMUM_FLOW = 35
 	LIMITED_MAXIMUM_FLOW = 40

@@ -5,6 +5,7 @@ from scenario.base.filling_loop_alarm import FillingLoopAlarmScenario
 
 
 class Scenario(FillingLoopAlarmScenario):
+	ESTIMATED_RUN_SECONDS = 50
 	MODE_COMFORT = 0
 	CIRCULATION_ON = 0
 	COLD_TEMPERATURE = 20

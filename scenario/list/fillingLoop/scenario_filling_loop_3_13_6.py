@@ -3,6 +3,7 @@ from scenario.base.filling_loop import FillingLoopScenario
 
 
 class Scenario(FillingLoopScenario):
+	ESTIMATED_RUN_SECONDS = 30
 	TEST_DURATION = 5
 	ALARM_TIMEOUT = 30
 	RESET_TIMEOUT = 30

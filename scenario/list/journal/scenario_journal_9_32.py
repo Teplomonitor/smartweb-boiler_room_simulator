@@ -6,6 +6,7 @@ import smartnet.constants as snc
 
 
 class Scenario(JournalScenarioMixin, Parent):
+	ESTIMATED_RUN_SECONDS = 30
 	INITIAL_STATE_DELAY = 12
 	ALARM_TIMEOUT = 50
 

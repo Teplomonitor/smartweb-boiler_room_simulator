@@ -2,6 +2,7 @@ from scenario.base.cascade_dispatch import CascadeDispatchScenario
 
 
 class Scenario(CascadeDispatchScenario):
+	ESTIMATED_RUN_SECONDS = 1130
 	BOILER_COUNT = 2
 	TEST_FAULTS = True
 

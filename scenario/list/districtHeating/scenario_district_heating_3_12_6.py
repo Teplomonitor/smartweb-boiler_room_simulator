@@ -6,6 +6,7 @@ import smartnet.remoteControl as sr
 
 
 class Scenario(DistrictHeatingScenario):
+	ESTIMATED_RUN_SECONDS = 910
 	STABILIZATION_DURATION = 60
 	FLOW_CONTROL_DURATION = 10 * 60
 	FLOW_CONTROL_TIMEOUT = 30 * 60

@@ -7,6 +7,7 @@ import smartnet.remoteControl as sr
 
 
 class Scenario(Parent):
+	ESTIMATED_RUN_SECONDS = 610
 	TEST_SETPOINTS = (45, 60, 45)
 	REQUEST_TIMEOUT = 90
 	SETTLING_TIMEOUT = 15 * 60

@@ -4,6 +4,7 @@ import smartnet.constants as snc
 
 
 class Scenario(FillingLoopAlarmScenario):
+	ESTIMATED_RUN_SECONDS = 140
 	PUMP_ALWAYS_ON = 2  # HeatingCircuitProgram::PUMP_MODE_ALWAYS_ON
 	FLOW_TEMPERATURE = 30
 	BOILER_TEMPERATURE = 60

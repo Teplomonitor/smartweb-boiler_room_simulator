@@ -4,6 +4,8 @@ from smartnet.message_log_constants import MessageLogCode, SeverityCode
 
 
 class Scenario(JournalFillingLoopScenario):
+	ESTIMATED_RUN_SECONDS = 40
+
 	def get_scenario_title(self):
 		return 'Journal: pressure returns to normal'
 

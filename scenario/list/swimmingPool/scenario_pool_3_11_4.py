@@ -10,6 +10,7 @@ from scenario.base.swimming_pool import PoolScenario
 
 
 class Scenario(PoolScenario):
+	ESTIMATED_RUN_SECONDS = 20
 	MODE_COMFORT = 0
 	MODE_ECONOM = 1
 	MODE_PROGRAM = 2

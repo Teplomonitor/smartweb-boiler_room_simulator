@@ -3,6 +3,7 @@ from smartnet.message_log_constants import MessageLogCode, SeverityCode
 
 
 class Scenario(JournalCollisionScenario):
+	ESTIMATED_RUN_SECONDS = 70
 	RESOLUTION_TIMEOUT = 35
 
 	def get_scenario_title(self):

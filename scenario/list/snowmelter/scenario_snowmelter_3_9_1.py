@@ -9,6 +9,8 @@ from scenario.base.snowmelter import SnowmelterScenario   as Parent
 
 
 class Scenario(Parent):
+	ESTIMATED_RUN_SECONDS = 420
+
 	def get_scenario_title(self): return 'scenario 1'
 
 	def get_scenario_description(self):

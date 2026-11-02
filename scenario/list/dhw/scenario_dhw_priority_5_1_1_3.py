@@ -2,6 +2,9 @@ from scenario.base.dhw_priority import DhwPriorityScenario
 
 
 class Scenario(DhwPriorityScenario):
+	# Cold-fault suppression waits for the real one-hour delay.
+	ESTIMATED_RUN_SECONDS = 3900
+
 	def get_scenario_title(self):
 		return 'DHW priority request disabled after prolonged underheating'
 

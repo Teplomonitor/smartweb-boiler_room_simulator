@@ -7,6 +7,7 @@ from smartnet.remoteControl import bytesToTemp
 
 
 class Scenario(DistrictHeatingScenario):
+	ESTIMATED_RUN_SECONDS = 1060
 	OUTDOOR_TEMPERATURE_POINT_I = 10
 	OUTDOOR_TEMPERATURE_OFFSET = 5
 	OUTDOOR_TEMPERATURE_SETTLING_TIMEOUT = 300

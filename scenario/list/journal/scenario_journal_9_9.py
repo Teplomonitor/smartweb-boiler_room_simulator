@@ -3,6 +3,8 @@ from smartnet.message_log_constants import MessageLogCode, SeverityCode
 
 
 class Scenario(JournalAlarmScenario):
+	ESTIMATED_RUN_SECONDS = 40
+
 	def get_scenario_title(self):
 		return 'Journal: alarm input condition ended'
 

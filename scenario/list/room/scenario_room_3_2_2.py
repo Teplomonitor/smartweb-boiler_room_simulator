@@ -2,6 +2,8 @@ from scenario.base.room import RoomScenario
 
 
 class Scenario(RoomScenario):
+	# Schedule checks wait for the real controller clock.
+	ESTIMATED_RUN_SECONDS = 530
 	TEST_SCHEDULE = True
 
 	def get_checklist_id(self):

@@ -15,6 +15,8 @@ def approx_equal(x, y, tolerance=0.1):
 	return abs(x-y) <= tolerance * (x + y) * 0.5
 
 class Scenario(PoolScenario):
+	# Six five-minute holds and three three-minute cycles.
+	ESTIMATED_RUN_SECONDS = 2580
 
 	def get_scenario_title(self): return 'pool test 2'
 	

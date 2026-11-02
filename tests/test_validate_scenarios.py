@@ -10,6 +10,8 @@ from scenario.scenario import Scenario as Parent
 
 
 class Scenario(Parent):
+	ESTIMATED_RUN_SECONDS = 60
+
 	def get_scenario_title(self):
 		return 'Valid scenario'
 
@@ -37,8 +39,6 @@ class TestScenarioValidator(unittest.TestCase):
 		self.root = Path(self.directory.name)
 		(self.root / 'scenario' / 'list').mkdir(parents=True)
 		(self.root / 'presets' / 'list').mkdir(parents=True)
-		(self.root / 'scenario' / 'metadata.py').write_text(
-			"SCENARIO_RUN_ESTIMATES = {'1.2.3': 60}\n", encoding='utf-8')
 
 	def tearDown(self):
 		self.directory.cleanup()
@@ -163,21 +163,39 @@ class Dispatch(Again):
 
 	def test_missing_estimate_is_reported(self):
 		self._write_preset()
-		self._write_scenario('scenario_1_2_3.py')
-		(self.root / 'scenario' / 'metadata.py').write_text('SCENARIO_RUN_ESTIMATES = {}', encoding='utf-8')
+		self._write_scenario('scenario_1_2_3.py', VALID_SCENARIO.replace(
+			'\tESTIMATED_RUN_SECONDS = 60\n', ''))
 		validator = ScenarioValidator(self.root)
 		self.assertEqual(validator.validate(), 1)
 		self.assertTrue(any('missing duration estimate' in error for error in validator.errors))
 
-	def test_invalid_and_duplicate_estimates_are_reported(self):
+	def test_scenario_local_estimate_is_accepted(self):
 		self._write_preset()
-		self._write_scenario('scenario_1_2_3.py')
-		(self.root / 'scenario' / 'metadata.py').write_text(
-			"SCENARIO_RUN_ESTIMATES = {'1.2.3': 60, '1.2.3': 30, 'bad': True}", encoding='utf-8')
+		self._write_scenario('scenario_1_2_3.py', VALID_SCENARIO.replace(
+			'ESTIMATED_RUN_SECONDS = 60', 'ESTIMATED_RUN_SECONDS = 40'))
 		validator = ScenarioValidator(self.root)
-		self.assertEqual(validator.validate(), 1)
-		self.assertTrue(any('duplicate estimate' in error for error in validator.errors))
-		self.assertTrue(any('positive integer seconds' in error for error in validator.errors))
+		self.assertEqual(validator.validate(), 0)
+
+	def test_invalid_scenario_local_estimates_are_reported(self):
+		self._write_preset()
+		for value in ('0', '-1', 'True', '2.5', 'unknown'):
+			with self.subTest(value=value):
+				self._write_scenario('scenario_1_2_3.py', VALID_SCENARIO.replace(
+					'ESTIMATED_RUN_SECONDS = 60', f'ESTIMATED_RUN_SECONDS = {value}'))
+				validator = ScenarioValidator(self.root)
+				self.assertEqual(validator.validate(), 1)
+				self.assertTrue(any('ESTIMATED_RUN_SECONDS' in error for error in validator.errors))
+
+	def test_duplicate_and_annotated_estimates_are_reported(self):
+		self._write_preset()
+		for extra in ('ESTIMATED_RUN_SECONDS = 30', 'ESTIMATED_RUN_SECONDS: int = 30',
+				'ESTIMATED_RUN_SECONDS += 30'):
+			with self.subTest(extra=extra):
+				self._write_scenario('scenario_1_2_3.py', VALID_SCENARIO.replace(
+					'\tESTIMATED_RUN_SECONDS = 60', f'\tESTIMATED_RUN_SECONDS = 60\n\t{extra}'))
+				validator = ScenarioValidator(self.root)
+				self.assertEqual(validator.validate(), 1)
+				self.assertTrue(any('ESTIMATED_RUN_SECONDS' in error for error in validator.errors))
 
 	def test_missing_scenario_directory_is_reported(self):
 		root = self.root / 'empty'

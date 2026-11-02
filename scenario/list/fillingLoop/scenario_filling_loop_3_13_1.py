@@ -3,6 +3,7 @@ from scenario.base.filling_loop import FillingLoopScenario
 
 
 class Scenario(FillingLoopScenario):
+	ESTIMATED_RUN_SECONDS = 40
 	START_TIMEOUT = 30
 	STABILIZATION_DURATION = 3
 

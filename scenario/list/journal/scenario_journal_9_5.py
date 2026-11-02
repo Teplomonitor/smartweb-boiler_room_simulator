@@ -3,6 +3,9 @@ from smartnet.message_log_constants import MessageLogCode, SeverityCode
 
 
 class Scenario(JournalDhwDisinfectionScenario):
+	# Includes the real one-hour disinfection cycle.
+	ESTIMATED_RUN_SECONDS = 3900
+
 	def get_scenario_title(self):
 		return 'Journal: DHW disinfection ends'
 

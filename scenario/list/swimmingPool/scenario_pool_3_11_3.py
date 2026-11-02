@@ -3,6 +3,7 @@ from scenario.base.swimming_pool import PoolScenario
 
 
 class Scenario(PoolScenario):
+	ESTIMATED_RUN_SECONDS = 70
 	MODE_COMFORT = 0
 	CIRCULATION_ON = 0
 	TEST_TEMPERATURE = 28

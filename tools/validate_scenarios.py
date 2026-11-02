@@ -35,7 +35,6 @@ class ScenarioValidator:
 		self.errors: list[str] = []
 		self.warnings: list[str] = []
 		self.checklist_ids: dict[str, Path] = {}
-		self.estimates: dict[str, int] = {}
 
 	def error(self, path: Path, message: str):
 		self.errors.append(f'{self.relative(path)}: error: {message}')
@@ -45,29 +44,6 @@ class ScenarioValidator:
 
 	def relative(self, path: Path) -> str:
 		return str(path.relative_to(self.repository_root)).replace('\\', '/')
-
-	def read_estimates(self):
-		path = self.repository_root / 'scenario' / 'metadata.py'
-		try:
-			tree = ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
-		except (OSError, SyntaxError, UnicodeError) as exc:
-			self.error(path, f'cannot parse estimate catalog: {exc}')
-			return
-		assignments = [node for node in tree.body if isinstance(node, ast.Assign)
-			and any(isinstance(target, ast.Name) and target.id == 'SCENARIO_RUN_ESTIMATES'
-				for target in node.targets)]
-		if len(assignments) != 1 or not isinstance(assignments[0].value, ast.Dict):
-			self.error(path, 'SCENARIO_RUN_ESTIMATES must be a single dictionary literal')
-			return
-		for key, value in zip(assignments[0].value.keys, assignments[0].value.values):
-			if (not isinstance(key, ast.Constant) or not isinstance(key.value, str) or not key.value
-					or not isinstance(value, ast.Constant) or type(value.value) is not int or value.value <= 0):
-				self.error(path, 'estimate entries must have a non-empty ID and positive integer seconds')
-				continue
-			if key.value in self.estimates:
-				self.error(path, f'duplicate estimate for checklist ID {key.value}')
-			else:
-				self.estimates[key.value] = value.value
 
 	@staticmethod
 	def get_class(tree: ast.Module) -> ast.ClassDef | None:
@@ -199,6 +175,20 @@ class ScenarioValidator:
 			self.error(path, 'missing class Scenario')
 			return
 
+		estimate_nodes = [node for node in class_node.body
+			if ((isinstance(node, ast.Assign) and any(
+				isinstance(target, ast.Name) and target.id == 'ESTIMATED_RUN_SECONDS'
+				for target in node.targets)) or (isinstance(node, (ast.AnnAssign, ast.AugAssign))
+				and isinstance(node.target, ast.Name) and node.target.id == 'ESTIMATED_RUN_SECONDS'))]
+		if not estimate_nodes:
+			self.error(path, 'missing duration estimate ESTIMATED_RUN_SECONDS')
+		elif (len(estimate_nodes) != 1 or not isinstance(estimate_nodes[0], ast.Assign)
+				or len(estimate_nodes[0].targets) != 1
+				or not isinstance(estimate_nodes[0].value, ast.Constant)
+				or type(estimate_nodes[0].value.value) is not int
+				or estimate_nodes[0].value.value <= 0):
+			self.error(path, 'ESTIMATED_RUN_SECONDS must be a single positive integer literal')
+
 		methods = {node.name for node in class_node.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
 		base_names = {
 			base.id for base in class_node.bases if isinstance(base, ast.Name)
@@ -227,8 +217,6 @@ class ScenarioValidator:
 				self.error(path, f'duplicate checklist ID {checklist_id}; already used by {self.relative(previous)}')
 			else:
 				self.checklist_ids[checklist_id] = path
-			if checklist_id not in self.estimates:
-				self.error(path, f'missing duration estimate for checklist ID {checklist_id}')
 
 		preset = self.get_string_return(self.get_method(class_node, 'get_default_preset'))
 		if not preset:
@@ -262,12 +250,8 @@ class ScenarioValidator:
 			self.errors.append(f'{self.relative(self.scenario_root)}: error: no scenario files found')
 			return 1
 
-		self.read_estimates()
 		for path in files:
 			self.validate_file(path)
-		for checklist_id in sorted(self.estimates.keys() - self.checklist_ids.keys()):
-			self.warning(self.repository_root / 'scenario' / 'metadata.py',
-				f'estimate has no scenario with checklist ID {checklist_id}')
 
 		for message in self.warnings:
 			print(message)

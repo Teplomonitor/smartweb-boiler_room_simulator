@@ -5,6 +5,8 @@ import smartnet.constants as snc
 
 
 class Scenario(DistrictHeatingScenario):
+	# Periodic valve opening occurs once every three hours.
+	ESTIMATED_RUN_SECONDS = 11400
 	OVER_TEMPERATURE_MARGIN = 5
 	VALVE_RUNNING_TIME = 30
 	VALVE_CLOSE_TRIGGER_DURATION = 2 * 60

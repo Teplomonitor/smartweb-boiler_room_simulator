@@ -13,6 +13,8 @@ from functions.limit import limit
 
 
 class Scenario(Parent):
+	ESTIMATED_RUN_SECONDS = 580
+
 	def __init__(self, controllerHost, sim):
 		super().__init__(controllerHost, sim)
 		

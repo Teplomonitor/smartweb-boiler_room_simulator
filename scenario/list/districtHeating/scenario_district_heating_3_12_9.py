@@ -7,6 +7,7 @@ import smartnet.units as snu
 
 
 class Scenario(DistrictHeatingScenario):
+	ESTIMATED_RUN_SECONDS = 500
 	OUTDOOR_TEMPERATURE_MARGIN = 5
 	OUTDOOR_TEMPERATURE_TOLERANCE = 1
 	OUTDOOR_TEMPERATURE_TIMEOUT = 6 * 60

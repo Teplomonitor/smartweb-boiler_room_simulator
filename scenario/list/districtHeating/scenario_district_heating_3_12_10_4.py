@@ -5,6 +5,7 @@ import smartnet.constants as snc
 
 
 class Scenario(DistrictHeatingScenario):
+	ESTIMATED_RUN_SECONDS = 180
 	REQUESTING_CIRCUIT_TEMPERATURE = 45
 	TEMPERATURE_COMPENSATION = 5
 	CONSTANT_TEMPERATURE_MODE = snc.ConsumerHeatCalculationMode.CONSTANT_TEMPERATURE

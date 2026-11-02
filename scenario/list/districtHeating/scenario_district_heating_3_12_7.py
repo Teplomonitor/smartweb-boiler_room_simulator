@@ -5,6 +5,7 @@ import smartnet.constants as snc
 
 
 class Scenario(DistrictHeatingScenario):
+	ESTIMATED_RUN_SECONDS = 280
 	OVER_TEMPERATURE_MARGIN = 5
 	VALVE_CLOSE_TRIGGER_DURATION = 2 * 60
 	VALVE_CLOSE_TIMEOUT = 3 * 60

@@ -2,6 +2,7 @@ from scenario.base.cascade_dispatch import CascadeDispatchScenario
 
 
 class Scenario(CascadeDispatchScenario):
+	ESTIMATED_RUN_SECONDS = 180
 	BOILER_COUNT = 4
 
 	def get_checklist_id(self):

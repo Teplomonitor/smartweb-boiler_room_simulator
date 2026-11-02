@@ -3,6 +3,8 @@ from scenario.base.dhw_priority import DhwPriorityScenario
 
 
 class Scenario(DhwPriorityScenario):
+	ESTIMATED_RUN_SECONDS = 40
+
 	def get_scenario_title(self):
 		return 'DHW priority request - standard scheme'
 

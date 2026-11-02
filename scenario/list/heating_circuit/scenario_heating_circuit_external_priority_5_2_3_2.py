@@ -2,6 +2,7 @@ from scenario.base.external_priority import ExternalPriorityScenario
 
 
 class Scenario(ExternalPriorityScenario):
+	ESTIMATED_RUN_SECONDS = 280
 	TARGET = 'direct'
 	PRESET = 'heating_circuit_external_priority'
 

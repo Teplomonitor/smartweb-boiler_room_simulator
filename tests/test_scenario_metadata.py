@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 from scenario.metadata import (
 	PRESET_LOADING_ESTIMATE_SECONDS, SCENARIO_RUN_ESTIMATES,
-	format_estimated_duration, get_estimated_duration, read_scenario_metadata, scenario_label,
+	format_estimated_duration, get_estimated_duration, read_scenario_details, read_scenario_metadata, scenario_label,
 )
 
 
@@ -21,14 +21,15 @@ class TestScenarioMetadata(unittest.TestCase):
 			if path.name == '__init__.py':
 				continue
 			with self.subTest(path=path):
-				title, checklist_id = read_scenario_metadata(path)
+				title, checklist_id, estimate = read_scenario_details(path)
 				self.assertTrue(title)
 				self.assertTrue(checklist_id)
-				self.assertIn(checklist_id, SCENARIO_RUN_ESTIMATES)
+				self.assertIsNotNone(estimate)
+				self.assertEqual(SCENARIO_RUN_ESTIMATES[checklist_id], estimate)
 				self.assertEqual(get_estimated_duration(checklist_id),
-					SCENARIO_RUN_ESTIMATES[checklist_id] + PRESET_LOADING_ESTIMATE_SECONDS)
+					estimate + PRESET_LOADING_ESTIMATE_SECONDS)
 				ids.append(checklist_id)
-		self.assertEqual(set(ids), set(SCENARIO_RUN_ESTIMATES))
+		self.assertEqual(set(SCENARIO_RUN_ESTIMATES), set(ids))
 		self.assertEqual(len(ids), len(set(ids)))
 
 	def test_duration_format_and_unknown(self):
@@ -44,10 +45,46 @@ class TestScenarioMetadata(unittest.TestCase):
 			path = Path(directory) / 'scenario.py'
 			path.write_text("raise RuntimeError('must not execute')\n"
 				"class Scenario:\n"
+				" ESTIMATED_RUN_SECONDS = 220\n"
 				" def get_scenario_title(self): return 'Example'\n"
 				" def get_checklist_id(self): return '5.2.3.3'\n", encoding='utf-8')
 			self.assertEqual(scenario_label(path, True, directory),
 				'5.2.3.3: Example (≈ 3 мин 50 с) — scenario.py')
+
+	def test_local_estimate_takes_precedence_without_importing(self):
+		with tempfile.TemporaryDirectory() as directory:
+			path = Path(directory) / 'scenario.py'
+			path.write_text("raise RuntimeError('must not execute')\n"
+				"class Scenario:\n"
+				" ESTIMATED_RUN_SECONDS = 40\n"
+				" def get_scenario_title(self): return 'Example'\n"
+				" def get_checklist_id(self): return '5.2.3.3'\n", encoding='utf-8')
+			self.assertEqual(read_scenario_details(path), ('Example', '5.2.3.3', 40))
+			self.assertEqual(scenario_label(path), '5.2.3.3: Example (≈ 50 с)')
+
+	def test_compatibility_index_reads_scenarios_without_importing(self):
+		from scenario import metadata
+		with tempfile.TemporaryDirectory() as directory:
+			root = Path(directory)
+			(root / 'list').mkdir()
+			(root / 'list' / 'scenario.py').write_text(
+				"raise RuntimeError('must not execute')\n"
+				"class Scenario:\n"
+				" ESTIMATED_RUN_SECONDS = 40\n"
+				" def get_checklist_id(self): return '3.11.7 & 3.11.9'\n", encoding='utf-8')
+			(root / 'list' / 'invalid.py').write_text(
+				"class Scenario:\n ESTIMATED_RUN_SECONDS = True\n"
+				" def get_checklist_id(self): return 'invalid'\n", encoding='utf-8')
+			with patch.object(metadata, '__file__', str(root / 'metadata.py')):
+				self.assertEqual(metadata._read_estimates(), {'3.11.7 & 3.11.9': 40})
+
+	def test_missing_local_estimate_does_not_use_another_scenario(self):
+		with tempfile.TemporaryDirectory() as directory:
+			path = Path(directory) / 'scenario.py'
+			path.write_text("class Scenario:\n"
+				" def get_scenario_title(self): return 'Example'\n"
+				" def get_checklist_id(self): return '5.2.3.3'\n", encoding='utf-8')
+			self.assertEqual(scenario_label(path), '5.2.3.3: Example (время неизвестно)')
 
 	def test_missing_invalid_and_dynamic_metadata_are_selectable(self):
 		with tempfile.TemporaryDirectory() as directory:
@@ -66,6 +103,8 @@ class TestScenarioMetadata(unittest.TestCase):
 			def get_checklist_id(self):
 				return '5.2.3.3'
 		self.assertEqual(Example.__new__(Example).get_estimated_duration(), 230)
+		Example.ESTIMATED_RUN_SECONDS = 40
+		self.assertEqual(Example.__new__(Example).get_estimated_duration(), 50)
 
 	@unittest.skipUnless(os.name == 'nt', 'wx GUI integration requires a Windows desktop')
 	def test_selection_dialog_keeps_paths_separate_from_labels(self):

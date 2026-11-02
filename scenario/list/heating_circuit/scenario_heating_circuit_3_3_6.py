@@ -4,6 +4,7 @@ import smartnet.constants as snc
 
 
 class Scenario(HeatingCircuitLineScenario):
+	ESTIMATED_RUN_SECONDS = 2610
 	PHASES = (
 		(False, False, False),
 		(True, False, False),

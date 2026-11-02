@@ -7,6 +7,7 @@ from consoleLog import print_error as print_error
 from scenario.base.swimming_pool import PoolScenario
 
 class Scenario(PoolScenario):
+	ESTIMATED_RUN_SECONDS = 80
 
 	def get_scenario_title(self): return 'pool test 3'
 	

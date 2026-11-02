@@ -4,6 +4,7 @@ import smartnet.constants as snc
 
 
 class Scenario(CascadeManagerScenario):
+	ESTIMATED_RUN_SECONDS = 50
 	REQUEST_CASES = ((40, 50), (60, 50), (40, 50))
 	TEST_SENSOR_TEMPERATURE = 30
 	MINIMUM_FLOW_TEMPERATURE = 5

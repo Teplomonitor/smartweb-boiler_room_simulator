@@ -2,6 +2,7 @@ from scenario.base.external_priority import ExternalPriorityScenario
 
 
 class Scenario(ExternalPriorityScenario):
+	ESTIMATED_RUN_SECONDS = 40
 	TARGET = 'snow'
 	PRESET = 'snowmelter'
 

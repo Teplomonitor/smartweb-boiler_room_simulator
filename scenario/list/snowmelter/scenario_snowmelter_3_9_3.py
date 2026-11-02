@@ -9,6 +9,8 @@ from scenario.steps import ScenarioSteps, preserved_inputs
 from math import isfinite
 
 class Scenario(Parent):
+	# Tests both limits with two five-minute delays and holds.
+	ESTIMATED_RUN_SECONDS = 1470
 	SWITCH_OFF_DELAY = 5 * 60
 	EARLY_TOLERANCE = 5  # Polling, CAN delivery and the 2-second firmware control period.
 	LATE_TOLERANCE = 10

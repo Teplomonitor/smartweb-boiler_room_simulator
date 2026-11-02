@@ -4,6 +4,8 @@ from smartnet.message_log_constants import MessageLogCode, SeverityCode
 
 
 class Scenario(JournalFillingLoopScenario):
+	ESTIMATED_RUN_SECONDS = 20
+
 	def get_scenario_title(self):
 		return 'Journal: automatic filling starts'
 

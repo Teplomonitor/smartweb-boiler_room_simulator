@@ -2,6 +2,7 @@ from scenario.base.heating_circuit_demand import HeatingCircuitDemandScenario
 
 
 class Scenario(HeatingCircuitDemandScenario):
+	ESTIMATED_RUN_SECONDS = 400
 	TEST_ROOM = False
 
 	def get_checklist_id(self):

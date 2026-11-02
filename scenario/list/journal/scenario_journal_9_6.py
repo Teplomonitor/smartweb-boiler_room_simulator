@@ -3,6 +3,8 @@ from smartnet.message_log_constants import MessageLogCode, SeverityCode
 
 
 class Scenario(JournalBoilerWarmupScenario):
+	ESTIMATED_RUN_SECONDS = 80
+
 	def get_scenario_title(self):
 		return 'Journal: boiler warm-up starts'
 

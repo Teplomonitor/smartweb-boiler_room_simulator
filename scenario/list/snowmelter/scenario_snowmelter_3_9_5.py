@@ -13,6 +13,8 @@ from scenario.base.filling_loop_signal import (
 import smartnet.constants as snc
 
 class Scenario(Parent):
+	ESTIMATED_RUN_SECONDS = 480
+
 	def __init__(self, controllerHost, sim):
 		super().__init__(controllerHost, sim)
 		# additional program required by this scenario

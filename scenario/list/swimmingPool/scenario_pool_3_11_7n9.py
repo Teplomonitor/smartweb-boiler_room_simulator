@@ -10,6 +10,7 @@ import smartnet.constants as snc
 from smartnet.message_log_constants import MessageLogCode
 
 class Scenario(PoolScenario):
+	ESTIMATED_RUN_SECONDS = 480
 
 	def get_scenario_title(self): return 'pool test 4 - filling duration timeout and pumps shutdown'
 	

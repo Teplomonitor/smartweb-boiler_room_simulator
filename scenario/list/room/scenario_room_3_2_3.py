@@ -2,6 +2,8 @@ from scenario.base.room import RoomScenario
 
 
 class Scenario(RoomScenario):
+	ESTIMATED_RUN_SECONDS = 120
+
 	def get_checklist_id(self):
 		return '3.2.3'
 

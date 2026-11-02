@@ -4,6 +4,7 @@ import smartnet.constants as snc
 
 
 class Scenario(CascadeManagerScenario):
+	ESTIMATED_RUN_SECONDS = 300
 	PROPORTIONAL_BAND = 20
 	INTEGRAL_FACTOR = 100
 	DHW_TEMPERATURE = 20

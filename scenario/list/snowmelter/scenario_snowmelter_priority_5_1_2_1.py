@@ -2,6 +2,8 @@ from scenario.base.snowmelter_priority import SnowmelterPriorityScenario
 
 
 class Scenario(SnowmelterPriorityScenario):
+	ESTIMATED_RUN_SECONDS = 60
+
 	def get_scenario_title(self):
 		return 'Snowmelter priority request - flow temperature deficit'
 

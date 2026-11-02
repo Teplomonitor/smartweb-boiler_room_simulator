@@ -4,6 +4,7 @@ from scenario.base.district_heating import DistrictHeatingScenario
 
 
 class Scenario(DistrictHeatingScenario):
+	ESTIMATED_RUN_SECONDS = 420
 	OVER_TEMPERATURE_MARGIN = 5
 	OVER_TEMPERATURE_DURATION = 60
 	MIN_VALVE_MOVEMENT = 10

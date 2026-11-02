@@ -4,6 +4,7 @@ import smartnet.constants as snc
 
 
 class Scenario(FillingLoopAlarmScenario):
+	ESTIMATED_RUN_SECONDS = 60
 	COLD_TEMPERATURE = 20
 	DHW_COMFORT_TEMPERATURE = 60
 	DHW_MODE_COMFORT = 0

@@ -7,6 +7,8 @@ from consoleLog import print_error as print_error
 from scenario.base.snowmelter import SnowmelterScenario   as Parent
 
 class Scenario(Parent):
+	ESTIMATED_RUN_SECONDS = 410
+
 	def get_scenario_title(self):
 		return 'scenario 2'
 

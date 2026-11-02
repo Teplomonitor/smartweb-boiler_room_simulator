@@ -3,6 +3,8 @@ import smartnet.constants as snc
 
 
 class Scenario(HeatDumpScenario):
+	ESTIMATED_RUN_SECONDS = 20
+
 	def get_scenario_title(self):
 		return '6.2.2 Снеготайка: циркуляционный насос'
 

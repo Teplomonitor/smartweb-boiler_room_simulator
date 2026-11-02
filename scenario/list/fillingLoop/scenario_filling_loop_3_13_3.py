@@ -3,6 +3,7 @@ from scenario.base.filling_loop import FillingLoopScenario
 
 
 class Scenario(FillingLoopScenario):
+	ESTIMATED_RUN_SECONDS = 120
 	PULSE_TIMEOUT = 30
 	STABILIZATION_DURATION = 2
 	PULSES_TO_ALARM = 3

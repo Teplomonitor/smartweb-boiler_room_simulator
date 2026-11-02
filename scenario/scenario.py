@@ -16,7 +16,7 @@ import main
 import mainThread
 import programs.factory as program_factory
 import smartnet.constants as snc
-from scenario.metadata import format_estimated_duration, get_estimated_duration
+from scenario.metadata import PRESET_LOADING_ESTIMATE_SECONDS, format_estimated_duration, get_estimated_duration
 
 from functions.limit import limit
 from functions.timeOnDelay  import TimeOnDelay
@@ -79,6 +79,9 @@ class Scenario(object):
 
 	def get_estimated_duration(self):
 		"""Estimated total seconds including preset loading, or None if unknown."""
+		estimate = getattr(self, 'ESTIMATED_RUN_SECONDS', None)
+		if type(estimate) is int and estimate > 0:
+			return estimate + PRESET_LOADING_ESTIMATE_SECONDS
 		return get_estimated_duration(self.get_checklist_id())
 	
 	def get_duration(self):

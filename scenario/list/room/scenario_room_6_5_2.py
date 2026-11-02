@@ -2,6 +2,8 @@ from scenario.base.heat_dump import HeatDumpScenario
 
 
 class Scenario(HeatDumpScenario):
+	ESTIMATED_RUN_SECONDS = 150
+
 	def get_scenario_title(self):
 		return '6.5.2 Комната: температурное управление при запрете сброса'
 

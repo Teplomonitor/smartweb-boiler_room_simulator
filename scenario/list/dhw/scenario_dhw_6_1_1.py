@@ -3,6 +3,8 @@ import smartnet.constants as snc
 
 
 class Scenario(HeatDumpScenario):
+	ESTIMATED_RUN_SECONDS = 50
+
 	def get_scenario_title(self):
 		return '6.1.1 ГВС: насос загрузки на максимальной мощности'
 

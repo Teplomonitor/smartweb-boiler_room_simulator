@@ -8,6 +8,7 @@ from smartnet.units import SENSOR_UNDEFINED
 
 
 class Scenario(Parent):
+	ESTIMATED_RUN_SECONDS = 160
 	PUMP_MODE_STANDARD = 0  # HeatingCircuitProgram::PUMP_MODE_STANDARD
 	PUMP_OFF_TEMPERATURE = 20
 	OUTDOOR_MARGIN = 5  # Outside the controller's 1 C hysteresis band.

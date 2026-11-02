@@ -2,6 +2,8 @@ from scenario.base.heating_circuit_priority import HeatingCircuitPriorityScenari
 
 
 class Scenario(HeatingCircuitPriorityScenario):
+	ESTIMATED_RUN_SECONDS = 420
+
 	def get_scenario_title(self):
 		return 'Heating circuit priority request - no flow sensor'
 

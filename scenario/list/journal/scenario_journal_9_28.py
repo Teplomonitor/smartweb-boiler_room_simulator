@@ -5,6 +5,7 @@ from smartnet.message_log_constants import MessageLogCode, SeverityCode
 
 
 class Scenario(JournalScenarioMixin, PoolScenario):
+	ESTIMATED_RUN_SECONDS = 100
 	FILLING_DURATION = 60
 	REFILL_TIMEOUT = 30
 	ALARM_TIMEOUT_MARGIN = 45

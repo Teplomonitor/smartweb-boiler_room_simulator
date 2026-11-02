@@ -6,6 +6,7 @@ import smartnet.units as snu
 
 
 class Scenario(DistrictHeatingScenario):
+	ESTIMATED_RUN_SECONDS = 540
 	COLD_SUPPLY_MARGIN = 10
 	HOT_CITY_SUPPLY_TEMPERATURE = 50
 	HOT_HOUSE_RETURN_MARGIN = 2

@@ -2,6 +2,8 @@ from scenario.base.heating_circuit_mixer import HeatingCircuitMixerScenario
 
 
 class Scenario(HeatingCircuitMixerScenario):
+	ESTIMATED_RUN_SECONDS = 610
+
 	def get_checklist_id(self):
 		return '3.3.2'
 

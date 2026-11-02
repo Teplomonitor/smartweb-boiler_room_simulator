@@ -6,6 +6,8 @@ import smartnet.constants as snc
 
 
 class Scenario(HeatingCircuitMixerScenario):
+	ESTIMATED_RUN_SECONDS = 1300
+
 	def get_checklist_id(self):
 		return '3.3.3'
 

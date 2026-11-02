@@ -10,6 +10,7 @@ import smartnet.constants as snc
 
 
 class Scenario(DistrictHeatingScenario):
+	ESTIMATED_RUN_SECONDS = 120
 	STARTUP_TIMEOUT = 2 * 60
 	STARTUP_STABILIZATION_DURATION = 20
 	ALARM_RESPONSE_TIMEOUT = 3 * 60

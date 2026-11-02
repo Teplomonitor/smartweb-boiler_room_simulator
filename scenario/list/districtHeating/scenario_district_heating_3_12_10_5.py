@@ -6,6 +6,7 @@ import smartnet.units as snu
 
 
 class Scenario(DistrictHeatingScenario):
+	ESTIMATED_RUN_SECONDS = 600
 	COLD_SUPPLY_MARGIN = 10
 	STARTUP_TIMEOUT = 2 * 60
 	STARTUP_STABILIZATION_DURATION = 20

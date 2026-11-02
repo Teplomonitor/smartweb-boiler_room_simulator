@@ -3,6 +3,7 @@ from scenario.base.dhw import DhwScenario
 
 
 class Scenario(DhwScenario):
+	ESTIMATED_RUN_SECONDS = 20
 	HYSTERESIS_MARGIN = 0.5
 	TIMEOUT = 60
 	CHECK_DURATION = 10

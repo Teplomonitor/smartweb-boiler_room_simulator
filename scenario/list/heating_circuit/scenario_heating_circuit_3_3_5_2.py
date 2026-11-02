@@ -2,6 +2,8 @@ from scenario.base.heating_circuit_demand import HeatingCircuitDemandScenario
 
 
 class Scenario(HeatingCircuitDemandScenario):
+	ESTIMATED_RUN_SECONDS = 880
+
 	def get_checklist_id(self):
 		return '3.3.5.2'
 

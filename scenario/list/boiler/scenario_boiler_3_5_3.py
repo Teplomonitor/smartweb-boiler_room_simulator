@@ -4,6 +4,7 @@ import smartnet.constants as snc
 
 
 class Scenario(Parent):
+	ESTIMATED_RUN_SECONDS = 160
 	PUMP_OFF_DELAY = 2*60
 	PUMP_OFF_MARGIN = 5
 	PUMP_OFF_CONFIRMATION_TIMEOUT = 5

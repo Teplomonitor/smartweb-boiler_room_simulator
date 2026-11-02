@@ -4,6 +4,8 @@ from scenario.base.district_heating import DistrictHeatingScenario
 
 
 class Scenario(DistrictHeatingScenario):
+	ESTIMATED_RUN_SECONDS = 30
+
 	def get_scenario_title(self):
 		return 'District Heating: constant maximum backward temperature'
 

@@ -14,6 +14,8 @@ import smartnet.constants as snc
 
 
 class Scenario(PoolScenario):
+	ESTIMATED_RUN_SECONDS = 50
+
 	def __init__(self, controllerHost, sim):
 		super().__init__(controllerHost, sim)
 		self._pressure = self._programList['pressure']

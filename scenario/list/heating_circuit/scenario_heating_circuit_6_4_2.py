@@ -2,6 +2,8 @@ from scenario.base.heat_dump import HeatDumpScenario
 
 
 class Scenario(HeatDumpScenario):
+	ESTIMATED_RUN_SECONDS = 120
+
 	def get_scenario_title(self):
 		return '6.4.2 Отопительный контур: запрос охлаждения всем комнатам'
 

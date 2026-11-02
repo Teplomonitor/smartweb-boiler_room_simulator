@@ -7,6 +7,7 @@ import smartnet.constants as snc
 
 
 class Scenario(JournalScenarioMixin, Parent):
+	ESTIMATED_RUN_SECONDS = 10
 	JOURNAL_TIMEOUT = 45
 	SECOND_OUTDOOR_ID = 102
 
