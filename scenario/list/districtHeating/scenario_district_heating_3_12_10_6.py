@@ -17,7 +17,6 @@ class Scenario(DistrictHeatingScenario):
 	ON_RESPONSE_TIMEOUT = 3 * 60
 	OVERRIDE_RESPONSE_STABILIZATION_DURATION = 10
 	OVERRIDE_RESPONSE_TIMEOUT = 90
-	OFF_DELAY = 5 * 60
 
 	def get_scenario_title(self):
 		return 'District Heating: reserve generator work is disabled when house return is hot'
@@ -25,8 +24,9 @@ class Scenario(DistrictHeatingScenario):
 	def get_scenario_description(self):
 		return (
 			'Резервный генератор: запрещена работа, если температура обратки из дома '
-			'выше "ТподачиГорода - 3К" (при подаче из города выше 35 C). Отключение '
-			'происходит немедленно, минуя пятиминутную задержку на выключение'
+			'не ниже "ТподачиГорода - 3К" (при подаче из города выше 35 C). '
+			'В режиме совместимости запрос подогрева снимается без дополнительной '
+			'задержки; получение результата котлом учитывает время истечения CAN-запроса'
 		)
 
 	def get_checklist_id(self):
@@ -177,8 +177,8 @@ class Scenario(DistrictHeatingScenario):
 			self.set_sensor_value(house_return_sensor, house_return_temperature)
 
 			print_log(
-				'Ждём немедленного запрета работы резервного генератора (минуя пятиминутную '
-				f'задержку на выключение) не более {self.OVERRIDE_RESPONSE_TIMEOUT} секунд'
+				'Ждём снятия запроса подогрева по горячей обратке с учётом CAN timeout '
+				f'не более {self.OVERRIDE_RESPONSE_TIMEOUT} секунд'
 			)
 			if not self.wait_backup_generator_not_requested(
 				self._boiler,
@@ -196,9 +196,8 @@ class Scenario(DistrictHeatingScenario):
 				return
 
 			print_log(
-				f'Резервный генератор отключился менее чем за {self.OVERRIDE_RESPONSE_TIMEOUT} '
-				f'секунд, что значительно быстрее пятиминутной ({self.OFF_DELAY} секунд) '
-				'обычной задержки на выключение'
+				f'Запрос резервному генератору снят по горячей обратке менее чем за '
+				f'{self.OVERRIDE_RESPONSE_TIMEOUT} секунд'
 			)
 			self._status = 'OK'
 		finally:

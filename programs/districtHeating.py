@@ -17,6 +17,7 @@ class DistrictHeating(Program):
 	def get_type(): return snc.ProgramType.DISTRICT_HEATING
 
 	_remoteControlParameters = {
+		'reserveMode': (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_RESERVE_MODE),
 		'alarmProgramId'                 : (snc.ProgramType.TEMPERATURE_SOURCE, snc.TemperatureSourceParameterId.ALARM_PROGRAM_ID),
 		'backwardControlType'            : (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_BACKWARD_CONTROL_TYPE),
 		'maximumBackwardTemperature'     : (snc.ProgramType.DISTRICT_HEATING, snc.DistrictHeatingParameterId.PARAM_MAXIMUM_BACKWARD_TEMPERATURE),
@@ -38,12 +39,14 @@ class DistrictHeating(Program):
 		self._inputs['thermal_output'      ] = input_info(4, 'Теплосчётчик'    )
 		self._inputs['volume_flow'         ] = input_info(5, 'Расход'          )
 		self._inputs['outside_request'     ] = input_info(6, 'Внешний запрос'  )
+		self._inputs['city_alarm'          ] = input_info(7, 'Авария города'   )
 		
 	def init_outputs(self):
 		self._outputs['supply_pump'     ] = output_info(0, 'Насос загрузки')
 		self._outputs['circulation_pump'] = output_info(1, 'Цирк. насос'   )
 		self._outputs['valve'           ] = output_info(2, 'Клапан'        )
 		self._outputs['analog_valve'    ] = output_info(3, 'А. клапан'     )
+		self._outputs['reserve_valves'  ] = output_info(4, 'Краны резерва' )
 
 	def init_gui_parameters(self):
 		self._parameters['max_flow_rate1'] = GuiParameter(3000, 'Расход в доме', 100, 6000, 1, 'кг/ч')

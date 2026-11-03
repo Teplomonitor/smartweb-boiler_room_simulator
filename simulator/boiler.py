@@ -1,5 +1,6 @@
 
 import time
+import smartnet.constants as snc
 from functions.timeOnOffDelay import TimeOnOffDelay as TimeOnOffDelay
 from functions.limit import limit
 
@@ -98,9 +99,25 @@ class Simulator(object):
 		return self._program.get_max_flow_rate()
 	
 	def get_flow(self):
+		if not self.reserve_branch_allows_flow():
+			return 0
 		if self.get_pump_state():
 			return self.get_max_flow_rate() / 1000 # cube per hour
 		return 0
+
+	def reserve_branch_allows_flow(self):
+		if self._preset is None:
+			return True
+		branches = []
+		for source in self._control.getSourceList():
+			if source._program.get_type() != snc.ProgramType.DISTRICT_HEATING:
+				continue
+			settings = source._program.get_preset().getSettings()
+			if settings is not None and settings.getSource() == self._program.get_id():
+				state = source.get_reserve_branch_open()
+				if state is not None:
+					branches.append(state)
+		return not branches or any(branches)
 		
 	def get_cooldown_power(self):
 		dt = self.get_temperature() - self._tMin

@@ -101,6 +101,7 @@ class Simulator(object):
 		self.setThermalOutputSensor(0)
 		self.setVolumeFlowSensor(0)
 		self.setOutsideRequestSensor(0)
+		self._program.get_input_channel('city_alarm').set_value('open')
 		
 		self.tintown    = self.get_supply_direct_temperature()
 		self.t_rethouse = self.get_backward_temperature()
@@ -187,6 +188,14 @@ class Simulator(object):
 	
 	def getCirculationPumpState(self):
 		return self.get_pump_state('circulation_pump')
+
+	def get_reserve_branch_open(self):
+		"""None means no simulated isolation valve (legacy hydraulic scheme)."""
+		valves = self._program.get_output_channel('reserve_valves')
+		if valves.get_mapping() is None:
+			return None
+		value = valves.get_value()
+		return value is not None and value > 0
 
 	def get_max_power(self):
 		return self._program.get_max_power()

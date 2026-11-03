@@ -167,9 +167,11 @@ class DistrictHeatingSettings(object):
 	def __init__(self,
 			source         = None,
 			alarm_program  = None,
+			reserve_mode   = None,
 			):
 		self._source         = source
 		self._alarm_program  = alarm_program
+		self._reserve_mode   = reserve_mode
 
 	def get(self):
 		parameters = [
@@ -180,6 +182,12 @@ class DistrictHeatingSettings(object):
 				snc.ProgramType.TEMPERATURE_SOURCE,
 				snc.TemperatureSourceParameterId.ALARM_PROGRAM_ID,
 				self._alarm_program,
+			))
+		if self._reserve_mode is not None:
+			parameters.append(RemoteControlParameter(
+				snc.ProgramType.DISTRICT_HEATING,
+				snc.DistrictHeatingParameterId.PARAM_RESERVE_MODE,
+				self._reserve_mode,
 			))
 		return parameters
 	def getSource    (self): return  self._source

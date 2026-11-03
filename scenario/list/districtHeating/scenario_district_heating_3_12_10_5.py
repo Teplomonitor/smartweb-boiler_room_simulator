@@ -4,7 +4,7 @@ import smartnet.constants as snc
 
 
 class Scenario(DistrictHeatingChecks):
-	ESTIMATED_RUN_SECONDS = 900
+	ESTIMATED_RUN_SECONDS = 840
 	REQUIRED_TEMPERATURE = 50
 	WARM_SUPPLY_MARGIN = 5
 	COLD_SUPPLY_MARGIN = 10
@@ -13,19 +13,19 @@ class Scenario(DistrictHeatingChecks):
 	ON_DELAY_BUFFER = 30
 	ON_RESPONSE_STABILIZATION_DURATION = 20
 	ON_RESPONSE_TIMEOUT = 3 * 60
-	OFF_DELAY_HOLD_DURATION = 4 * 60
-	OFF_RESPONSE_STABILIZATION_DURATION = 20
-	OFF_RESPONSE_TIMEOUT = 3 * 60
+	PREHEAT_HOLD_DURATION = 6 * 60
 
 	def get_scenario_title(self):
-		return 'District Heating: reserve generator work is enabled when house supply is cold'
+		return 'District Heating: compatibility preheat starts on cold supply and remains enabled after recovery'
 
 	def get_scenario_description(self):
 		return (
-			'Резервный генератор: разрешена работа, если подача в дом холодная '
+			'Совместимость: разрешена работа резерва, если подача в дом холодная '
 			'(температура подачи в дом меньше требуемой более чем на 5К). '
 			'Задержка на включение резервного генератора равна параметру "Задержка" '
-			'(TemperatureSourcePowerRequestDelay), задержка на выключение — 5 минут'
+			'(TemperatureSourcePowerRequestDelay). При исправных датчиках устранение '
+			'недогрева не снимает запрос: подогрев сохраняется более пяти минут, '
+			'пока обратка дома ниже температуры подачи города минус 3 K'
 		)
 
 	def get_checklist_id(self):
@@ -48,6 +48,7 @@ class Scenario(DistrictHeatingChecks):
 		boiler = self._programList['boiler']
 		circuit = self._programList['circuit']
 		settings = (
+			(self._district_heating, 'reserveMode', snc.DistrictHeatingReserveMode.COMPATIBILITY),
 			(boiler, 'minimumTemperatureRestriction', 0),
 			(circuit, 'generatorId', self._district_heating.get_id()),
 			(circuit, 'heatCalculationMode', snc.ConsumerHeatCalculationMode.CONSTANT_TEMPERATURE),
@@ -77,9 +78,10 @@ class Scenario(DistrictHeatingChecks):
 				self.ON_RESPONSE_STABILIZATION_DURATION, self.ON_RESPONSE_TIMEOUT), 'Резерв не включился при недогреве')
 			print_log(f'Устраняем недогрев: подача {warm_supply} C, уставка {self.REQUIRED_TEMPERATURE} C')
 			self.set_sensor_value(direct, warm_supply)
+			print_log(f'Проверяем сохранение запроса подогрева {self.PREHEAT_HOLD_DURATION} с '
+				'при исправных датчиках и низкой обратке дома')
+			# No acquisition timeout: a lost request must fail, not be reacquired.
 			self.require(self.wait_backup_generator_requested(boiler,
-				self.OFF_DELAY_HOLD_DURATION, self.OFF_DELAY_HOLD_DURATION), 'Резерв отключился раньше пяти минут')
-			self.require(self.wait_backup_generator_not_requested(boiler,
-				self.OFF_RESPONSE_STABILIZATION_DURATION, self.OFF_RESPONSE_TIMEOUT),
-				'Недогрев устранён, но резерв не отключился: проверить удержание preheat в прошивке')
+				self.PREHEAT_HOLD_DURATION, 0),
+				'Совместимость: запрос подогрева снят после устранения недогрева при низкой обратке дома')
 			self._status = 'OK'

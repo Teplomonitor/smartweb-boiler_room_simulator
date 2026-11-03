@@ -57,7 +57,8 @@ class TestDistrictHeatingScenarios(unittest.TestCase):
 				'pressureInputType': 2, 'autoFill': 1, 'fillingDuration': 60,
 				'temperatureSourcePowerRequestDelay': 300, 'minimumTemperatureRestriction': 55,
 				'generatorId': 108, 'heatCalculationMode': 0,
-				'requiredConstantFlowTemperature': 45, 'temperatureCompensation': 5}
+				'requiredConstantFlowTemperature': 45, 'temperatureCompensation': 5,
+				'reserveMode': 2}
 			self.values[name] = parameters
 			program.read_parameter_value.side_effect = lambda key, p=parameters: p.get(key)
 			def write(key, value, p=parameters, n=name):
@@ -242,20 +243,52 @@ class TestDistrictHeatingScenarios(unittest.TestCase):
 	def test_cold_house_check_restores_warm_not_initial_temperature(self):
 		scenario = self.scenario('10_5')
 		scenario.read_temperature_source_required_temperature = Mock(return_value=50)
+		def requested(boiler, duration, timeout):
+			self.assertEqual(self.values['districtHeating']['reserveMode'], 0)
+			if duration == scenario.PREHEAT_HOLD_DURATION:
+				self.assertGreater(duration, 5 * 60)
+				self.assertEqual(timeout, 0)
+				self.assertEqual(self.sensors['direct_temp'].get_value(), 55)
+				self.assertEqual(self.sensors['backward_temp'].get_value(), 30)
+				self.assertEqual(self.values['circuit']['requiredConstantFlowTemperature'], 50)
+			return True
+		scenario.wait_backup_generator_requested.side_effect = requested
 		scenario.run()
 		self.assertEqual(scenario._status, 'OK')
+		scenario.wait_backup_generator_requested.assert_has_calls([
+			call(self.programs['boiler'], scenario.ON_RESPONSE_STABILIZATION_DURATION,
+				scenario.ON_RESPONSE_TIMEOUT),
+			call(self.programs['boiler'], scenario.PREHEAT_HOLD_DURATION, 0),
+		])
+		scenario.wait_backup_generator_not_requested.assert_called_once()
 		calls = self.sensors['direct_temp'].set_value.call_args_list
 		self.assertLess(calls.index(call(40, True)), len(calls) - 2)
 		self.assertEqual(calls[-2], call(55, True))
 		self.assert_restored(('supply_direct_temp', 'supply_backward_temp', 'direct_temp', 'backward_temp'))
 
-	def test_retained_reserve_remains_a_failure(self):
+	def test_lost_preheat_request_fails_and_restores_conditions(self):
 		scenario = self.scenario('10_5')
 		scenario.read_temperature_source_required_temperature = Mock(return_value=50)
-		scenario.wait_backup_generator_not_requested.side_effect = [True, False]
+		scenario.wait_backup_generator_requested.side_effect = [True, False]
 		scenario.run()
 		self.assertEqual(scenario._status, 'FAIL')
-		self.assert_restored(('direct_temp',))
+		self.assert_restored(('supply_direct_temp', 'supply_backward_temp', 'direct_temp', 'backward_temp'))
+
+	def test_cold_house_cancellation_restores_compatibility_setting(self):
+		scenario = self.scenario('10_5')
+		scenario.read_temperature_source_required_temperature = Mock(return_value=50)
+		scenario.wait.return_value = False
+		scenario.run()
+		self.assertEqual(scenario._status, 'FAIL')
+		scenario.wait_backup_generator_requested.assert_not_called()
+		self.assert_restored(('direct_temp', 'backward_temp'))
+
+	def test_missing_reserve_mode_prevents_cold_house_check_writes(self):
+		self.values['districtHeating']['reserveMode'] = None
+		scenario = self.scenario('10_5')
+		scenario.run()
+		self.assertEqual(scenario._status, 'FAIL')
+		self.assertFalse(self.writes)
 
 	def test_weather_reads_receiver_parameter_without_echo(self):
 		parameter = Mock()

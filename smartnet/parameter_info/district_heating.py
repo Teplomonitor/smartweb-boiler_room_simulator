@@ -3,6 +3,7 @@
 from smartnet.constants import DistrictHeatingParameterId
 
 PARAMETER_INFO = {
+	DistrictHeatingParameterId.PARAM_RESERVE_MODE: {'type': 'UINT8_T'},
 	DistrictHeatingParameterId.PARAM_VALVE_MIN:                              {'type': 'UINT8_T'},
 	DistrictHeatingParameterId.PARAM_VALVE_RUNNING_TIME:                     {'type': 'TIME_MS'},
 	DistrictHeatingParameterId.PARAM_P_FACTOR:                               {'type': 'UINT8_T'},
