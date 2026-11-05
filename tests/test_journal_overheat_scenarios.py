@@ -2,10 +2,11 @@ import unittest
 from unittest.mock import Mock, patch
 
 from scenario.list.journal.scenario_journal_9_20 import Scenario as CircuitScenario
-from scenario.list.journal.scenario_journal_9_21 import Scenario as BoilerScenario
+from scenario.list.journal.scenario_journal_9_21_and_9_22 import Scenario as BoilerScenario
 from scenario.scenario import ThreadStoppedException
 from presets.list.journal_low_temperature import get_presets_list
 import smartnet.constants as snc
+from smartnet.message_log_constants import SeverityCode as Severity
 from smartnet.parameter_registry import get_parameter
 from tests.test_journal_temperature_scenarios import TemperatureRun, make_programs
 
@@ -15,7 +16,7 @@ class TestOverheatScenarios(unittest.TestCase):
 		for cls, delay in ((CircuitScenario, 120), (BoilerScenario, 300)):
 			with self.subTest(scenario=cls):
 				run = TemperatureRun(cls)
-				self.assertEqual(run.run(), {run.scenario.get_checklist_id(): 'OK'})
+				self.assertEqual(run.run(), dict.fromkeys(run.scenario.get_checklist_id().split(', '), 'OK'))
 				self.assertEqual(cls.OVERHEAT_DELAY, delay)
 				self.assertGreaterEqual(run.now - 100, delay + cls.BASELINE_HOLD)
 				self.assertTrue(run.cleaned)
@@ -27,8 +28,60 @@ class TestOverheatScenarios(unittest.TestCase):
 					{'wrong_severity': {cls.TARGET}}, {'cleanup_error': True}):
 				with self.subTest(scenario=cls, options=options):
 					run = TemperatureRun(cls, **options)
-					self.assertEqual(run.run(), {run.scenario.get_checklist_id(): 'FAIL'})
+					self.assertEqual(run.run(), dict.fromkeys(run.scenario.get_checklist_id().split(', '), 'FAIL'))
 					self.assertTrue(run.cleaned)
+
+	def test_recovery_checks_boundary_before_cooling(self):
+		run = TemperatureRun(BoilerScenario)
+		self.assertEqual(run.run(), {'9.21': 'OK', '9.22': 'OK'})
+		check = run.checks[0]
+		self.assertEqual([value for _, value, _ in run.changes], [85, 75, 74])
+		self.assertGreaterEqual(run.changes[2][2] - run.changes[1][2], BoilerScenario.INTERMEDIATE_HOLD)
+		self.assertEqual(check.recovery_delay, 30)
+		self.assertEqual(check.recovery_severity, Severity.SC_INFORMATIONAL)
+
+	def test_missing_and_boundary_recovery_preserve_overheat_result(self):
+		for options in ({'omitted': {('boiler', 'recovery')}}, {'intermediate_recovery': True}):
+			with self.subTest(options=options):
+				run = TemperatureRun(BoilerScenario, **options)
+				self.assertEqual(run.run(), {'9.21': 'OK', '9.22': 'FAIL'})
+				self.assertEqual(run.scenario._status, 'FAIL')
+				self.assertTrue(run.cleaned)
+
+	def test_invalid_recovery_time_severity_and_program_id(self):
+		for fault in ('early', 'severity', 'program_id', 'transport'):
+			with self.subTest(fault=fault):
+				run = TemperatureRun(BoilerScenario)
+				check = run.checks[0]
+				original_read = run.scenario._read_journal
+				def read(cursor):
+					if fault == 'transport' and check.phase == 'recovery':
+						return None
+					if (fault == 'early' and check.phase == 'recovery'
+							and run.now >= check.changed_at + check.recovery_delay - 10):
+						return [run.entry(check, check.recovery_code, check.recovery_severity)]
+					entries = original_read(cursor)
+					for entry in entries:
+						if entry.code == check.recovery_code:
+							if fault == 'severity':
+								entry.severity = check.severity
+							elif fault == 'program_id':
+								entry.param += 1
+					return entries
+				run.scenario._read_journal = read
+				self.assertEqual(run.run(), {'9.21': 'OK', '9.22': 'FAIL'})
+				self.assertTrue(run.cleaned)
+
+	def test_cancellation_after_overheat_preserves_first_result(self):
+		run = TemperatureRun(BoilerScenario)
+		def wait(seconds):
+			return False if run.checks[0].phase == 'intermediate' else run.wait(seconds)
+		run.scenario.wait = wait
+		with self.assertRaises(ThreadStoppedException):
+			run.run()
+		self.assertEqual(run.scenario.get_checklist_results(), {'9.21': 'OK', '9.22': 'FAIL'})
+		self.assertEqual(run.scenario._status, 'FAIL')
+		self.assertTrue(run.cleaned)
 
 	def test_cancellation_restores_and_does_not_succeed(self):
 		run = TemperatureRun(CircuitScenario)
