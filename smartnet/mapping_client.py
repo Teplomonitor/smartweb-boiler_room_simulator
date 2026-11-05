@@ -116,6 +116,10 @@ class MappingCanClient:
 		return tuple(self._exchange(snc.ProgramType.CONTROLLER, controller_id,
 			snc.ControllerFunction.GET_CHANNEL_NUMBER, [], 2))
 
+	def read_controller_type(self, controller_id):
+		return self._exchange(snc.ProgramType.CONTROLLER, controller_id,
+			snc.ControllerFunction.GET_CONTROLLER_TYPE, [], 1)[0]
+
 	def restore_relay(self, controller_id, index, raw):
 		self._validate_index(index)
 		if type(raw) is not int or not 0 <= raw <= 0xFFFF:

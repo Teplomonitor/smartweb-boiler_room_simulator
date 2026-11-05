@@ -117,13 +117,16 @@ class ApplicationWorker(threading.Thread):
 		self._canConfig                   = args.can
 		self._debug_thread                = None
 		self._controllerId                = int(args.id)
+		self.bench_settings = getattr(args, 'bench_settings', None)
+		self.bench_confirmed = getattr(args, 'confirm_web_bench', False)
 		self.web_client = None
 		if getattr(args, 'web_url', None):
 			import os
 			from webapi.client import ControllerWebClient
 			self.web_client = ControllerWebClient(args.web_url,
 				login=args.web_login,
-				password=os.environ.get(args.web_password_env, 'admin'),
+				password=(self.bench_settings['web']['password'] if self.bench_settings is not None
+					else os.environ.get(args.web_password_env, 'admin')),
 				timeout=args.web_timeout)
 		
 		self._lastPreset                    = None
@@ -135,7 +138,10 @@ class ApplicationWorker(threading.Thread):
 		self._programPresetList = []
 		self._controllerIoList  = []
 		
-		if args.preset:
+		if self.bench_settings is not None:
+			# Never apply an old/default preset before bench discovery and confirmation.
+			self._newPreset = None
+		elif args.preset:
 			self._newPreset = args.preset
 		else:
 			self._newPreset = None

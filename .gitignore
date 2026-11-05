@@ -111,3 +111,4 @@ log/
 # project specific settings
 settings.ini
 /parallel_can_settings.json
+/web_binding_bench_settings.json

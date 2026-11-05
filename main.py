@@ -73,7 +73,32 @@ def initArgParser(program_license, argv=None):
 	parser.add_argument('--web-login', default='admin', help='embedded web login (default: admin)')
 	parser.add_argument('--web-password-env', default='BRS_WEB_PASSWORD', help='password environment variable (fallback: admin)')
 	parser.add_argument('--web-timeout', type=float, default=10.0, help='HTTP timeout in seconds (default: 10)')
+	parser.add_argument('--web-bench', help='dedicated binding bench JSON profile')
+	parser.add_argument('--confirm-web-bench', action='store_true', help='confirm destructive tests on a dedicated bench')
 	args = parser.parse_args(argv)
+	if args.web_bench:
+		from pathlib import Path
+		from web_binding_bench import ROOT, discover_scenarios, load_settings, validate_settings
+		try:
+			bench = validate_settings(load_settings(args.web_bench), require_ready=True)
+		except (ValueError, OSError, UnicodeError) as error:
+			parser.error(str(error))
+		if args.preset or args.gui or args.debug or args.can_ports or args.udp_ports or args.can_worker or args.can_gui_child or args.scenarios:
+			parser.error('Bench profiles require --no-gui, no startup preset, no debug or parallel workers')
+		if args.scenario != 'none' and not args.confirm_web_bench:
+			parser.error('Bench scenarios require --confirm-web-bench')
+		if args.scenario != 'none' and Path(args.scenario).resolve() not in {
+				(ROOT / item['path']).resolve() for item in discover_scenarios()}:
+			parser.error('Only an explicit implemented binding scenario path is allowed with --web-bench')
+		if int(args.id) not in (0, bench['devices']['dut_controller']):
+			parser.error('--id conflicts with the bench DUT ID')
+		args.id = bench['devices']['dut_controller']
+		args.web_url = bench['web']['url']
+		args.web_login = bench['web']['login']
+		args.web_timeout = bench['web']['timeout']
+		args.can = bench['transport']['can_context'] if bench['transport']['mode'] == 'can' else 'virtual'
+		args.udp = bench['transport']['udp_port'] if bench['transport']['mode'] == 'udp' else 0
+		args.bench_settings = bench
 	if args.web_url:
 		if args.can_ports or args.udp_ports or args.can_worker or args.can_gui_child:
 			parser.error('Web tests currently support only a single controller session')

@@ -45,6 +45,14 @@ class WebBindingScenario(Parent):
 		while not main.loadPresetDone():
 			self.wait(self.POLL_INTERVAL)
 		self._can = MappingCanClient()
+		self._bench = getattr(worker, 'bench_settings', None)
+		if self._bench is not None:
+			from web_binding_bench import preflight
+			if not worker.bench_confirmed:
+				raise RuntimeError('Dedicated bench confirmation is required before loading the preset')
+			if self._controller_id != self._bench['devices']['dut_controller']:
+				raise RuntimeError('Selected controller does not match the bench DUT')
+			preflight(self._bench, self._can, self._web, print_log, self.is_stopped)
 		self._channel_counts = self._can.read_channel_counts(self._controller_id)
 		input_count, relay_count = self._channel_counts
 		print_log(f'CAN target {self._controller_id}: inputs={input_count}, relays={relay_count}')

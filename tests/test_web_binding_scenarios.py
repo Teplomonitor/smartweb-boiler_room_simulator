@@ -234,7 +234,8 @@ class WebBindingScenarioTests(unittest.TestCase):
 			self.assertEqual(preset, 'web_bindings')
 			self.assertTrue(options['scenario'])
 			scenario._controllerHost.get_program_list.return_value = [program]
-		services = SimpleNamespace(worker=Mock(web_client=Mock(), _debug=False), program=program)
+		services = SimpleNamespace(worker=Mock(web_client=Mock(), _debug=False,
+			bench_settings=None, bench_confirmed=False), program=program)
 		services.worker.web_client.config.return_value = {'controllers': [{'id': 7, 'programs': []}]}
 		for name, target, options in (
 			('worker_accessor', 'mainThread.MainThread', {'return_value': services.worker}),
@@ -249,6 +250,18 @@ class WebBindingScenarioTests(unittest.TestCase):
 			self.addCleanup(patcher.stop)
 		services.can_factory.return_value.read_channel_counts.return_value = (18, 11)
 		return scenario, services
+
+	def test_bench_confirmation_and_discovery_precede_reset(self):
+		scenario, services = self.make_initializing_scenario()
+		services.worker.bench_settings = {'devices': {'dut_controller': 7}}
+		with self.assertRaisesRegex(RuntimeError, 'confirmation'):
+			scenario.init_scenario()
+		services.load_preset.assert_not_called()
+		services.worker.bench_confirmed = True
+		with patch('web_binding_bench.preflight', side_effect=ValueError('bench offline')):
+			with self.assertRaisesRegex(ValueError, 'bench offline'):
+				scenario.init_scenario()
+		services.load_preset.assert_not_called()
 
 	def test_preparation_automatically_loads_preset_without_selected_profile(self):
 		scenario, services = self.make_initializing_scenario()
