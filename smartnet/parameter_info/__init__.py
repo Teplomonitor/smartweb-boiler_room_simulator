@@ -15,6 +15,7 @@ from .controller            import PARAMETER_INFO as CONTROLLER_PARAMETER_INFO
 from .district_heating      import PARAMETER_INFO as DISTRICT_HEATING_PARAMETER_INFO
 from .boiler                import PARAMETER_INFO as BOILER_PARAMETER_INFO
 from .dhw                   import PARAMETER_INFO as DHW_PARAMETER_INFO
+from .double_pump           import PARAMETER_INFO as DOUBLE_PUMP_PARAMETER_INFO
 from .filling_loop          import PARAMETER_INFO as FILLING_LOOP_PARAMETER_INFO
 from .heating_circuit       import PARAMETER_INFO as HEATING_CIRCUIT_PARAMETER_INFO
 from .outdoor_sensor        import PARAMETER_INFO as OUTDOOR_SENSOR_PARAMETER_INFO
@@ -32,6 +33,7 @@ ParameterDict = {
 	ProgramType.ALARM:              ALARM_PARAMETER_INFO,
 	ProgramType.BOILER:             BOILER_PARAMETER_INFO,
 	ProgramType.DHW:                DHW_PARAMETER_INFO,
+	ProgramType.DOUBLE_PUMP:        DOUBLE_PUMP_PARAMETER_INFO,
 	ProgramType.FILLING_LOOP:       FILLING_LOOP_PARAMETER_INFO,
 	ProgramType.ROOM_DEVICE:        ROOM_DEVICE_PARAMETER_INFO,
 	ProgramType.CONTROLLER:         CONTROLLER_PARAMETER_INFO,
