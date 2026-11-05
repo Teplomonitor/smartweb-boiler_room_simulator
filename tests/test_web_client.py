@@ -49,10 +49,49 @@ class WebClientTests(unittest.TestCase):
 				self.assertNotIn('private-password', str(error.exception))
 
 	def test_invalid_login_session_is_rejected(self):
-		for session in (0, -1, True, '42', None, 2 ** 32):
-			self.client._request.return_value = json.dumps({'session_id': session, 'status': 'ok'})
-			with self.assertRaises(WebApiError):
+		for session in (0, -(2 ** 31) - 1, True, False, '42', None, 42.0, [], {}, 2 ** 32):
+			with self.subTest(session=session):
+				self.client._session = 42
+				self.client._request.return_value = json.dumps({'session_id': session, 'status': 'ok'})
+				with self.assertRaises(WebApiError):
+					self.client.login()
+				self.assertIsNone(self.client._session)
+
+	def test_signed_and_unsigned_login_sessions_are_preserved(self):
+		for session in (-(2 ** 31), -1073741824, -1, 1, 2 ** 31 - 1, 2 ** 31, 2 ** 32 - 1):
+			with self.subTest(session=session):
+				self.client._request.return_value = json.dumps({'session_id': session, 'status': 'ok'})
 				self.client.login()
+				self.assertEqual(self.client._session, session)
+				self.client._request.return_value = b'{"controllers":[]}'
+				operations = [
+					('config', self.client.config),
+					('bind_input', lambda: self.client.bind_input(101, 0, 7, 1)),
+					('unbind_input', lambda: self.client.unbind_input(101, 0)),
+					('bind_relay', lambda: self.client.bind_relay(7, 0, 101, 1)),
+					('unbind_relay', lambda: self.client.unbind_relay(7, 0)),
+					('logout', self.client.logout),
+				]
+				for mode, operation in operations:
+					operation()
+					payload = self.client._request.call_args.args[2]
+					self.assertEqual(payload['mode'], mode)
+					self.assertEqual(payload['session'], session)
+				self.assertIsNone(self.client._session)
+
+	def test_login_diagnostics_do_not_expose_response_values(self):
+		for response, reason in (
+				({'session_id': 42}, 'missing ok status'),
+				({'status': 'ok'}, 'missing session_id'),
+				({'status': 'ok', 'session_id': 'private-password'}, 'must be an integer'),
+				({'status': 'ok', 'session_id': 2 ** 32}, 'zero or out of range')):
+			with self.subTest(reason=reason):
+				self.client._request.return_value = json.dumps(response)
+				with self.assertRaisesRegex(WebApiError, reason) as error:
+					self.client.login()
+				self.assertNotIn('private-password', str(error.exception))
+				self.assertNotIn(str(response.get('session_id')), str(error.exception))
+				self.assertIsNone(self.client._session)
 
 	def test_session_expiration_does_not_retry_or_reauthenticate(self):
 		self.client._request.return_value = b'{"status":"not logged in"}'
@@ -110,7 +149,7 @@ class WebClientTests(unittest.TestCase):
 				requests.append(('POST', self.path, payload))
 				self.send_response(200)
 				self.end_headers()
-				self.wfile.write(b'{"status":"ok","session_id":42}')
+				self.wfile.write(b'{"status":"ok","session_id":-1073741824}')
 		server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
 		thread = threading.Thread(target=server.serve_forever, daemon=True)
 		thread.start()
@@ -118,6 +157,7 @@ class WebClientTests(unittest.TestCase):
 			client = ControllerWebClient(f'http://127.0.0.1:{server.server_port}')
 			self.assertEqual(client.get(), b'controller page')
 			client.login()
+			self.assertEqual(client._session, -1073741824)
 			self.assertEqual(requests[1][1], '/rest.php')
 			self.assertEqual(requests[1][2]['password'], 'admin')
 			with self.assertRaisesRegex(WebApiError, 'HTTP 302'):
