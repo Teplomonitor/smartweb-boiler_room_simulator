@@ -63,12 +63,18 @@ def udp_to_can(data):
 		
 		if action == BridgeAction['SEND_CAN']:
 			body = struct.unpack(BODY_STRUCT, data[(offset + HEADER_SIZE) : (offset + PACKET_SIZE)])
+			dlc = body[3]
+			if dlc > len(body[4]):
+				# The bridge format carries classic CAN frames, never CAN FD.
+				offset += PACKET_SIZE
+				continue
 			msg = can.Message(
 				arbitration_id  = body[0],
 				is_remote_frame = body[1],
 				is_extended_id  = body[2],
-				dlc             = body[3],
-				data            = body[4],
+				dlc             = dlc,
+				# The fixed eight-byte UDP field includes transport padding.
+				data            = body[4][:dlc],
 			)
 			messages.append(msg)
 		else:

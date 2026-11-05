@@ -42,9 +42,10 @@ class WebBindingScenarioTests(unittest.TestCase):
 			patcher.start()
 			self.addCleanup(patcher.stop)
 
-	def make_scenario(self, scenario_type=InputScenario):
+	def make_scenario(self, scenario_type=InputScenario, channel_counts=(18, 11)):
 		scenario = scenario_type.__new__(scenario_type)
 		scenario._controller_id = 7
+		scenario._channel_counts = channel_counts
 		scenario._can = Mock()
 		scenario._web = Mock()
 		scenario._web.config.return_value = {'controllers': [{'id': 7, 'programs': [
@@ -53,15 +54,15 @@ class WebBindingScenarioTests(unittest.TestCase):
 		scenario.wait = Mock()
 		scenario.APPLY_TIMEOUT = 0  # Immediate mismatch, no wall-clock waits.
 		state = {(kind, index): UNDEFINED_MAPPING for kind, count in (
-			('input', 4), ('output', 5), ('relay', 11)) for index in range(count)}
+			('input', 4), ('output', 5), ('relay', channel_counts[1])) for index in range(count)}
 		# Preserve non-default state on untouched channels and the tested input.
 		state['input', 0] = pack_mapping(7, 3, 0)
 		state['input', 1] = pack_mapping(7, 2, 0)
-		state['relay', 10] = pack_mapping(200, 1, 5)
+		if channel_counts[1] > 1:
+			state['relay', channel_counts[1] - 1] = pack_mapping(200, 1, 5)
 		for kind in ('input', 'output', 'relay'):
 			getattr(scenario._can, f'read_{kind}').side_effect = lambda host, index, kind=kind: state[kind, index]
-			getattr(scenario._can, f'restore_{kind}').side_effect = (
-				lambda host, index, raw, kind=kind: state.__setitem__((kind, index), raw))
+			self.addCleanup(getattr(scenario._can, f'restore_{kind}').assert_not_called)
 		def bind_input(program_id, input_id, controller_id, sensor_id):
 			state['input', input_id] = pack_mapping(controller_id, sensor_id, 0)
 			return {'partial': True, 'controllers': []}
@@ -85,11 +86,13 @@ class WebBindingScenarioTests(unittest.TestCase):
 		scenario._web.unbind_relay.side_effect = unbind_relay
 		return scenario, state
 
-	def test_both_sequences_and_restoration(self):
+	def test_both_sequences_end_unbound_without_restoration(self):
 		for scenario_type in (InputScenario, RelayScenario):
 			with self.subTest(scenario=scenario_type.__name__):
 				scenario, state = self.make_scenario(scenario_type)
 				before = dict(state)
+				if scenario_type is InputScenario:
+					before['input', 0] = UNDEFINED_MAPPING
 				scenario.run()
 				self.assertEqual(scenario._status, 'OK')
 				self.assertEqual(state, before)
@@ -99,11 +102,16 @@ class WebBindingScenarioTests(unittest.TestCase):
 				self.assertEqual(getattr(scenario._web, f'bind_{kind}').call_count, 3)
 				self.assertEqual(getattr(scenario._web, f'unbind_{kind}').call_count, 2)
 
-	def test_http_timeout_after_application_restores_without_retry(self):
+	def test_http_timeout_leaves_applied_state_without_retry_or_restoration(self):
 		for scenario_type, method in ((InputScenario, 'bind_input'), (RelayScenario, 'bind_relay')):
 			with self.subTest(method=method):
 				scenario, state = self.make_scenario(scenario_type)
 				before = dict(state)
+				if scenario_type is InputScenario:
+					before['input', 0] = pack_mapping(7, 0, 0)
+				else:
+					before['relay', 0] = pack_mapping(101, 0, 5)
+					before['output', 0] = pack_mapping(7, 0, 1)
 				operation = getattr(scenario._web, method)
 				apply = operation.side_effect
 				def fail(*args):
@@ -114,8 +122,9 @@ class WebBindingScenarioTests(unittest.TestCase):
 				self.assertEqual(scenario._status, 'FAIL')
 				self.assertEqual(state, before)
 				operation.assert_called_once()
+				scenario._web.logout.assert_called_once()
 
-	def test_unexpected_changes_fail_and_are_restored(self):
+	def test_unexpected_changes_fail_and_are_not_restored(self):
 		scenario, state = self.make_scenario()
 		before = dict(state)
 		apply = scenario._web.bind_input.side_effect
@@ -126,7 +135,9 @@ class WebBindingScenarioTests(unittest.TestCase):
 		scenario._web.bind_input.side_effect = corrupt
 		scenario.run()
 		self.assertEqual(scenario._status, 'FAIL')
-		self.assertEqual(state, before)
+		self.assertNotEqual(state, before)
+		self.assertEqual(state['input', 1], UNDEFINED_MAPPING)
+		scenario._web.bind_input.assert_called_once()
 
 	def test_reverse_output_mapping_is_checked(self):
 		scenario, state = self.make_scenario(RelayScenario)
@@ -137,25 +148,32 @@ class WebBindingScenarioTests(unittest.TestCase):
 		scenario._web.bind_relay.side_effect = missing_reverse
 		scenario.run()
 		self.assertEqual(scenario._status, 'FAIL')
+		before['relay', 0] = pack_mapping(101, 0, 5)
 		self.assertEqual(state, before)
 
-	def test_cancellation_restores_and_propagates(self):
+	def test_cancellation_leaves_applied_state_and_propagates(self):
 		scenario, state = self.make_scenario()
 		before = dict(state)
 		scenario.is_stopped.side_effect = [False, True]
 		with self.assertRaises(ThreadStoppedException):
 			scenario.run()
 		self.assertEqual(scenario._status, 'FAIL')
+		before['input', 0] = pack_mapping(7, 0, 0)
 		self.assertEqual(state, before)
 		scenario._web.logout.assert_called_once()
 
-	def test_restoration_failure_never_reports_ok_and_continues_other_endpoints(self):
-		scenario, state = self.make_scenario(RelayScenario)
-		scenario._can.restore_output.side_effect = RuntimeError('CAN offline')
+	def test_can_failure_after_http_mutation_marks_failed_without_retry(self):
+		scenario, state = self.make_scenario()
+		apply = scenario._web.bind_input.side_effect
+		def disconnect(*args):
+			result = apply(*args)
+			scenario._can.read_input.side_effect = RuntimeError('CAN offline')
+			return result
+		scenario._web.bind_input.side_effect = disconnect
 		scenario.run()
 		self.assertEqual(scenario._status, 'FAIL')
-		self.assertEqual(scenario._can.restore_output.call_count, 2)
-		scenario._can.restore_relay.assert_called_once()
+		self.assertEqual(state['input', 0], pack_mapping(7, 0, 0))
+		scenario._web.bind_input.assert_called_once()
 		scenario._web.logout.assert_called_once()
 
 	def test_unsafe_initial_state_or_wrong_http_target_never_mutates(self):
@@ -165,6 +183,7 @@ class WebBindingScenarioTests(unittest.TestCase):
 				if problem == 'output':
 					state['output', 0] = pack_mapping(7, 1, 1)
 				elif problem == 'relay':
+					scenario, state = self.make_scenario(RelayScenario)
 					state['relay', 0] = pack_mapping(200, 1, 5)
 				elif problem == 'input':
 					state['input', 0] = pack_mapping(200, 1, 5)
@@ -186,6 +205,7 @@ class WebBindingScenarioTests(unittest.TestCase):
 	def test_logout_failure_marks_test_failed(self):
 		scenario, state = self.make_scenario()
 		before = dict(state)
+		before['input', 0] = UNDEFINED_MAPPING
 		scenario._web.logout.side_effect = WebApiError('offline')
 		scenario.run()
 		self.assertEqual(scenario._status, 'FAIL')
@@ -199,8 +219,8 @@ class WebBindingScenarioTests(unittest.TestCase):
 				scenario.init_scenario()
 			load_preset.assert_not_called()
 
-	def make_initializing_scenario(self):
-		scenario = WebBindingScenario.__new__(WebBindingScenario)
+	def make_initializing_scenario(self, scenario_type=InputScenario):
+		scenario = scenario_type.__new__(scenario_type)
 		scenario._controllerHost = Mock()
 		scenario._controllerHost.get_controller_id.return_value = 7
 		scenario._controllerHost.get_virtual_outdoor_preset.return_value = None
@@ -215,6 +235,7 @@ class WebBindingScenarioTests(unittest.TestCase):
 			self.assertTrue(options['scenario'])
 			scenario._controllerHost.get_program_list.return_value = [program]
 		services = SimpleNamespace(worker=Mock(web_client=Mock(), _debug=False), program=program)
+		services.worker.web_client.config.return_value = {'controllers': [{'id': 7, 'programs': []}]}
 		for name, target, options in (
 			('worker_accessor', 'mainThread.MainThread', {'return_value': services.worker}),
 			('load_preset', 'main.loadPreset', {'side_effect': load_preset}),
@@ -247,13 +268,88 @@ class WebBindingScenarioTests(unittest.TestCase):
 		self.assertEqual(services.load_preset.call_count, 2)
 		self.assertEqual(services.load_succeeded.call_count, 2)
 
-	def test_wrong_channel_counts_are_rejected_before_reset(self):
+	def test_supported_channel_counts_do_not_depend_on_controller_model(self):
+		for scenario_type, counts in ((InputScenario, (6, 8)), (InputScenario, (2, 0)),
+				(RelayScenario, (0, 1)), (RelayScenario, (32, 32))):
+			with self.subTest(scenario=scenario_type, counts=counts):
+				scenario, services = self.make_initializing_scenario(scenario_type)
+				services.can_factory.return_value.read_channel_counts.return_value = counts
+				scenario.init_scenario()
+				self.assertEqual(scenario._channel_counts, counts)
+				services.load_preset.assert_called_once()
+
+	def test_insufficient_or_unsupported_channels_are_rejected_before_reset(self):
+		for scenario_type, counts, error in ((InputScenario, (1, 8), 'requires at least'),
+				(RelayScenario, (6, 0), 'requires at least'),
+				(InputScenario, (33, 8), 'Unsupported'),
+				(InputScenario, (6, -1), 'Unsupported')):
+			with self.subTest(scenario=scenario_type, counts=counts):
+				scenario, services = self.make_initializing_scenario(scenario_type)
+				services.can_factory.return_value.read_channel_counts.return_value = counts
+				with self.assertRaisesRegex(RuntimeError, error):
+					scenario.init_scenario()
+				services.load_preset.assert_not_called()
+				services.program.disable_gui_control.assert_not_called()
+
+	def test_web_preflight_failure_prevents_reset_and_logs_out(self):
+		for problem in ('missing_target', 'duplicate_target', 'program_conflict', 'login', 'config', 'logout'):
+			with self.subTest(problem=problem):
+				scenario, services = self.make_initializing_scenario()
+				web = services.worker.web_client
+				if problem == 'missing_target':
+					web.config.return_value = {'controllers': [{'id': 8, 'programs': []}]}
+				elif problem == 'duplicate_target':
+					web.config.return_value['controllers'].append({'id': 7, 'programs': []})
+				elif problem == 'program_conflict':
+					web.config.return_value['controllers'].append({'id': 8, 'programs': [{'id': 101}]})
+				else:
+					getattr(web, problem).side_effect = WebApiError('offline')
+				with self.assertRaises(RuntimeError):
+					scenario.init_scenario()
+				services.load_preset.assert_not_called()
+				web.logout.assert_called_once()
+
+	def test_http_preflight_precedes_preset_reset(self):
 		scenario, services = self.make_initializing_scenario()
-		services.can_factory.return_value.read_channel_counts.return_value = (6, 8)
-		with self.assertRaisesRegex(RuntimeError, 'Expected xhcc_s62'):
-			scenario.init_scenario()
-		services.load_preset.assert_not_called()
-		services.program.disable_gui_control.assert_not_called()
+		load = services.load_preset.side_effect
+		def checked_load(*args, **kwargs):
+			services.worker.web_client.login.assert_called_once()
+			services.worker.web_client.config.assert_called_once()
+			services.worker.web_client.logout.assert_called_once()
+			return load(*args, **kwargs)
+		services.load_preset.side_effect = checked_load
+		scenario.init_scenario()
+
+	def test_network_gateway_and_other_programs_are_allowed(self):
+		for scenario_type in (InputScenario, RelayScenario):
+			with self.subTest(scenario=scenario_type):
+				scenario, _ = self.make_scenario(scenario_type)
+				config = scenario._web.config.return_value
+				config['controllers'].insert(0, {'id': 8, 'programs': [{'id': 200, 'type': 2}]})
+				config['controllers'][1]['programs'].append({'id': 102, 'type': 2})
+				scenario.run()
+				self.assertEqual(scenario._status, 'OK')
+				if scenario_type is InputScenario:
+					scenario._web.bind_input.assert_any_call(101, 0, 7, 1)
+				else:
+					scenario._web.bind_relay.assert_any_call(7, 0, 101, 1)
+
+	def test_program_conflict_is_also_checked_before_mutations(self):
+		scenario, _ = self.make_scenario()
+		scenario._web.config.return_value['controllers'].append({'id': 8, 'programs': [{'id': 101}]})
+		scenario.run()
+		self.assertEqual(scenario._status, 'FAIL')
+		scenario._web.bind_input.assert_not_called()
+
+	def test_snapshot_uses_actual_relay_count_including_zero(self):
+		for scenario_type, counts in ((InputScenario, (2, 0)), (InputScenario, (6, 8)),
+				(RelayScenario, (0, 1)), (RelayScenario, (18, 11))):
+			with self.subTest(scenario=scenario_type, counts=counts):
+				scenario, state = self.make_scenario(scenario_type, counts)
+				self.assertEqual(scenario._snapshot(), state)
+				self.assertEqual(scenario._can.read_relay.call_count, counts[1])
+				scenario.run()
+				self.assertEqual(scenario._status, 'OK')
 
 	def test_waits_for_startup_and_scenario_preset_loading(self):
 		scenario, services = self.make_initializing_scenario()

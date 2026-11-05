@@ -1,4 +1,4 @@
-"""Web mapping tests with automatic xhcc_s62 preset preparation."""
+"""Web mapping tests with automatic preparation of the selected CAN target."""
 
 import time
 
@@ -17,7 +17,8 @@ class WebBindingScenario(Parent):
 	PROGRAM_ID = 101
 	INPUT_COUNT = 4
 	OUTPUT_COUNT = 5
-	XHCC_CHANNEL_COUNTS = (18, 11)
+	REQUIRED_INPUT_COUNT = 0
+	REQUIRED_RELAY_COUNT = 0
 	APPLY_TIMEOUT = 15
 	POLL_INTERVAL = 1
 
@@ -44,22 +45,42 @@ class WebBindingScenario(Parent):
 		while not main.loadPresetDone():
 			self.wait(self.POLL_INTERVAL)
 		self._can = MappingCanClient()
-		if self._can.read_channel_counts(self._controller_id) != self.XHCC_CHANNEL_COUNTS:
-			raise RuntimeError('Expected xhcc_s62 with 18 inputs and 11 outputs')
+		self._channel_counts = self._can.read_channel_counts(self._controller_id)
+		input_count, relay_count = self._channel_counts
+		print_log(f'CAN target {self._controller_id}: inputs={input_count}, relays={relay_count}')
+		if any(type(count) is not int or not 0 <= count <= 32 for count in self._channel_counts):
+			raise RuntimeError(f'Unsupported CAN channel counts: {self._channel_counts}')
+		if input_count < self.REQUIRED_INPUT_COUNT or relay_count < self.REQUIRED_RELAY_COUNT:
+			raise RuntimeError(f'CAN target {self._controller_id}: requires at least '
+				f'{self.REQUIRED_INPUT_COUNT} inputs and {self.REQUIRED_RELAY_COUNT} relays; '
+				f'got {input_count} inputs and {relay_count} relays')
+		# The HTTP endpoint is a gateway; it need not belong to the CAN target.
+		try:
+			self._web.login()
+			self._check_web_target(require_program=False)
+		finally:
+			self._web.logout()
 		super().init_scenario()
 		if self._programList['test_program'].get_id() != self.PROGRAM_ID:
 			raise RuntimeError('Unexpected web test program ID')
 
-	def _check_web_target(self):
+	def _check_web_target(self, require_program=True):
 		config = self._web.config()
 		controllers = [item for item in config['controllers']
 			if item.get('id') == self._controller_id]
 		if len(controllers) != 1:
 			raise RuntimeError('HTTP server does not expose the selected CAN controller ID')
+		for controller in config['controllers']:
+			if controller.get('id') != self._controller_id and any(
+					program.get('id') == self.PROGRAM_ID for program in controller.get('programs', [])):
+				raise RuntimeError(f'Test program ID {self.PROGRAM_ID} is already used by '
+					f'CAN controller {controller.get("id")}')
+		if not require_program:
+			return
 		programs = controllers[0].get('programs', [])
-		if (len(programs) != 1 or programs[0].get('id') != self.PROGRAM_ID
-				or programs[0].get('type') != int(snc.ProgramType.DOUBLE_PUMP)):
-			raise RuntimeError('HTTP configuration must contain only the web test double-pump program')
+		matches = [program for program in programs if program.get('id') == self.PROGRAM_ID]
+		if len(matches) != 1 or matches[0].get('type') != int(snc.ProgramType.DOUBLE_PUMP):
+			raise RuntimeError('HTTP configuration must expose the web test double-pump program on the selected controller')
 
 	def _read(self, key):
 		kind, index = key
@@ -69,13 +90,13 @@ class WebBindingScenario(Parent):
 	def _snapshot(self):
 		return {(kind, index): self._read((kind, index))
 			for kind, count in (('input', self.INPUT_COUNT), ('output', self.OUTPUT_COUNT),
-				('relay', self.XHCC_CHANNEL_COUNTS[1])) for index in range(count)}
+				('relay', self._channel_counts[1])) for index in range(count)}
 
 	def _check_initial_state(self, saved):
 		# Avoid altering other programs through forward/reverse mapping propagation.
 		if any(not is_undefined(saved['output', i]) for i in range(self.OUTPUT_COUNT)):
 			raise RuntimeError('Test program outputs must initially be unbound')
-		if not is_undefined(saved['relay', 0]):
+		if self.REQUIRED_RELAY_COUNT and not is_undefined(saved['relay', 0]):
 			raise RuntimeError('Test relay 0 must initially be unbound')
 		if any(raw >> 13 not in (0, 2, 7) for (kind, _), raw in saved.items() if kind == 'input'):
 			raise RuntimeError('Test inputs must not be bound to other programs')
@@ -88,16 +109,10 @@ class WebBindingScenario(Parent):
 			for (kind, index), value in expected.items()
 			if not mappings_equal(value, actual[kind, index])]
 
-	def _observe_changes(self, actual):
-		self._restore_keys.update(key for key, raw in actual.items()
-			if not mappings_equal(raw, self._saved[key]))
-
 	def _command_and_check(self, description, command, changes):
 		if self.is_stopped():
 			raise ThreadStoppedException('Web binding test cancelled')
 		print_log(description)
-		# Record before HTTP: a timeout can occur after the mutation was applied.
-		self._restore_keys.update(changes)
 		expected = dict(self._saved)
 		expected.update(changes)
 		try:
@@ -107,7 +122,6 @@ class WebBindingScenario(Parent):
 			# Report actual CAN state but never retry an uncertain web mutation.
 			try:
 				actual = self._snapshot()
-				self._observe_changes(actual)
 				print_error('HTTP failed; CAN readback: ' + ('; '.join(self._differences(expected, actual))
 					or 'requested mapping is present (HTTP step still failed)'))
 			except Exception as error:
@@ -116,7 +130,6 @@ class WebBindingScenario(Parent):
 		deadline = time.monotonic() + self.APPLY_TIMEOUT
 		while True:
 			actual = self._snapshot()
-			self._observe_changes(actual)
 			differences = self._differences(expected, actual)
 			if not differences:
 				print_log('CAN: requested bindings confirmed; other bindings unchanged')
@@ -125,22 +138,6 @@ class WebBindingScenario(Parent):
 				raise RuntimeError('; '.join(differences))
 			self.wait(self.POLL_INTERVAL)
 
-	def _restore(self):
-		errors = []
-		for kind, index in sorted(self._restore_keys):
-			try:
-				host_id = self._controller_id if kind == 'relay' else self.PROGRAM_ID
-				getattr(self._can, f'restore_{kind}')(host_id, index, self._saved[kind, index])
-			except Exception as error:
-				errors.append(f'{kind}[{index}]: {error}')
-		try:
-			errors.extend(self._differences(self._saved, self._snapshot()))
-		except Exception as error:
-			errors.append(str(error))
-		if errors:
-			raise RuntimeError('CAN restoration failed: ' + '; '.join(errors))
-		print_log('CAN: original mappings restored and verified')
-
 	def run_binding_test(self, sequence):
 		self._status = 'FAIL'
 		try:
@@ -148,12 +145,8 @@ class WebBindingScenario(Parent):
 			self._check_web_target()
 			self._saved = self._snapshot()
 			self._check_initial_state(self._saved)
-			self._restore_keys = set()
-			try:
-				sequence()
-				self._status = 'OK'
-			finally:
-				self._restore()
+			sequence()
+			self._status = 'OK'
 		except ThreadStoppedException:
 			self._status = 'FAIL'
 			raise

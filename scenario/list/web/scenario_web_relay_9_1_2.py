@@ -3,6 +3,7 @@ from scenario.base.web_bindings import WebBindingScenario
 
 class Scenario(WebBindingScenario):
 	ESTIMATED_RUN_SECONDS = 120
+	REQUIRED_RELAY_COUNT = 1
 
 	def get_scenario_title(self):
 		return 'Web: привязка реле контроллера'

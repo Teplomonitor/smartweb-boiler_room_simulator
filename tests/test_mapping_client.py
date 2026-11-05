@@ -7,6 +7,7 @@ from smartnet.message import CanListener, Message
 from smartnet.mapping_client import (
 	MappingCanClient, MappingCanError, UNDEFINED_MAPPING, pack_mapping, mappings_equal,
 )
+from udp.message import can_to_udp, udp_to_can
 
 
 class MappingClientTests(unittest.TestCase):
@@ -65,6 +66,38 @@ class MappingClientTests(unittest.TestCase):
 			self.reply(request, [18, 11])
 		with patch.object(Message, 'send', send):
 			self.assertEqual(self.client.read_channel_counts(7), (18, 11))
+
+	def test_short_mapping_responses_are_accepted_after_udp_round_trip(self):
+		for method, args, expected in (
+			('read_channel_counts', (173,), (18, 11)),
+			('read_relay', (173, 0), UNDEFINED_MAPPING),
+			('read_input', (101, 0), UNDEFINED_MAPPING),
+			('read_output', (101, 0), UNDEFINED_MAPPING),
+			('restore_input', (101, 0, UNDEFINED_MAPPING), UNDEFINED_MAPPING),
+			('restore_output', (101, 0, UNDEFINED_MAPPING), UNDEFINED_MAPPING),
+			('restore_relay', (173, 0, UNDEFINED_MAPPING), None),
+		):
+			with self.subTest(method=method):
+				def send(request):
+					if method == 'read_channel_counts':
+						data = [18, 11]
+					elif method.startswith('read_'):
+						data = request.get_data() + [UNDEFINED_MAPPING & 255, UNDEFINED_MAPPING >> 8]
+					elif method == 'restore_relay':
+						data = request.get_data()[:-1]
+					else:
+						data = request.get_data()[:-1] + [0]
+					response = Message(request.get_program_type(), request.getProgramId(),
+						request.getFunctionId(), snc.RequestFlag.RESPONSE, data)
+					packet = can_to_udp(response.smartNetToCanMsg())
+					decoded, = udp_to_can(packet)
+					message = Message()
+					message.parse(decoded)
+					for listener in tuple(CanListener._listeners):
+						if listener not in self.before:
+							listener.on_can_message_received(message)
+				with patch.object(Message, 'send', send):
+					self.assertEqual(getattr(self.client, method)(*args), expected)
 
 	def test_restoration_uses_explicit_no_propagation_flag(self):
 		for method in ('restore_input', 'restore_output', 'restore_relay'):
