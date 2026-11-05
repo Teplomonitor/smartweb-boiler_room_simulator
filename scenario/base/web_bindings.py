@@ -1,4 +1,4 @@
-"""Web mapping tests on an explicitly prepared xhcc_s62 simulator."""
+"""Web mapping tests with automatic xhcc_s62 preset preparation."""
 
 import time
 
@@ -27,8 +27,11 @@ class WebBindingScenario(Parent):
 	def get_default_preset(self):
 		return 'web_bindings'
 
+	def force_preset_load(self):
+		# Each run needs a clean controller, even after another web scenario.
+		return True
+
 	def init_scenario(self):
-		# Do not call Parent.init_scenario: it may replace an unrelated configuration.
 		self._programList = {}
 		worker = mainThread.MainThread()
 		self._web = worker.web_client
@@ -37,19 +40,15 @@ class WebBindingScenario(Parent):
 		self._controller_id = self._controllerHost.get_controller_id()
 		if not 1 <= self._controller_id <= 255 or worker._debug:
 			raise RuntimeError('Web tests require a real, explicitly addressed CAN target')
-		# --preset loading is owned by the application worker, not by this scenario.
+		# Let any startup preset finish before checking and resetting the target.
 		while not main.loadPresetDone():
 			self.wait(self.POLL_INTERVAL)
-		if worker.getCurrentPreset() != self.get_default_preset():
-			raise RuntimeError('Select --preset web_bindings explicitly on a disposable simulator')
-		if not self.init_program_list(self.get_required_programs()):
-			raise RuntimeError('The web_bindings preset is not loaded')
-		if self._programList['test_program'].get_id() != self.PROGRAM_ID:
-			raise RuntimeError('Unexpected web test program ID')
 		self._can = MappingCanClient()
 		if self._can.read_channel_counts(self._controller_id) != self.XHCC_CHANNEL_COUNTS:
 			raise RuntimeError('Expected xhcc_s62 with 18 inputs and 11 outputs')
-		self._programList['test_program'].disable_gui_control()
+		super().init_scenario()
+		if self._programList['test_program'].get_id() != self.PROGRAM_ID:
+			raise RuntimeError('Unexpected web test program ID')
 
 	def _check_web_target(self):
 		config = self._web.config()

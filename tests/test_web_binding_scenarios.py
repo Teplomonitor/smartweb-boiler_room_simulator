@@ -199,29 +199,97 @@ class WebBindingScenarioTests(unittest.TestCase):
 				scenario.init_scenario()
 			load_preset.assert_not_called()
 
-	def test_preflight_requires_prepared_preset_and_live_xhcc_channels(self):
-		for preset, counts, accepted in (('other', (18, 11), False),
-				('web_bindings', (6, 8), False), ('web_bindings', (18, 11), True)):
-			with self.subTest(preset=preset, counts=counts):
-				scenario = WebBindingScenario.__new__(WebBindingScenario)
-				scenario._controllerHost = Mock()
-				scenario._controllerHost.get_controller_id.return_value = 7
-				program = Mock()
-				program.get_id.return_value = 101
-				def init_programs(required):
-					scenario._programList = {'test_program': program}
-					return True
-				scenario.init_program_list = init_programs
-				worker = Mock(web_client=Mock(), _debug=False)
-				worker.getCurrentPreset.return_value = preset
-				with patch('scenario.base.web_bindings.mainThread.MainThread', return_value=worker), \
-						patch('scenario.base.web_bindings.main.loadPresetDone', return_value=True), \
-						patch('scenario.base.web_bindings.MappingCanClient') as can:
-					can.return_value.read_channel_counts.return_value = counts
-					if accepted:
-						scenario.init_scenario()
-						program.disable_gui_control.assert_called_once()
-					else:
-						with self.assertRaises(RuntimeError):
-							scenario.init_scenario()
-						program.disable_gui_control.assert_not_called()
+	def make_initializing_scenario(self):
+		scenario = WebBindingScenario.__new__(WebBindingScenario)
+		scenario._controllerHost = Mock()
+		scenario._controllerHost.get_controller_id.return_value = 7
+		scenario._controllerHost.get_virtual_outdoor_preset.return_value = None
+		scenario._virtual_outdoor = None
+		scenario.wait = Mock()
+		program = Mock()
+		program.get_id.return_value = 101
+		program.get_type.return_value = snc.ProgramType.DOUBLE_PUMP
+		scenario._controllerHost.get_program_list.return_value = []
+		def load_preset(preset, **options):
+			self.assertEqual(preset, 'web_bindings')
+			self.assertTrue(options['scenario'])
+			scenario._controllerHost.get_program_list.return_value = [program]
+		services = SimpleNamespace(worker=Mock(web_client=Mock(), _debug=False), program=program)
+		for name, target, options in (
+			('worker_accessor', 'mainThread.MainThread', {'return_value': services.worker}),
+			('load_preset', 'main.loadPreset', {'side_effect': load_preset}),
+			('load_done', 'main.loadPresetDone', {'return_value': True}),
+			('load_succeeded', 'main.load_preset_succeeded', {'return_value': True}),
+			('load_error', 'main.get_preset_error', {'return_value': 'test load rejected'}),
+			('can_factory', 'scenario.base.web_bindings.MappingCanClient', {}),
+		):
+			patcher = patch(target, **options)
+			setattr(services, name, patcher.start())
+			self.addCleanup(patcher.stop)
+		services.can_factory.return_value.read_channel_counts.return_value = (18, 11)
+		return scenario, services
+
+	def test_preparation_automatically_loads_preset_without_selected_profile(self):
+		scenario, services = self.make_initializing_scenario()
+		services.worker.getCurrentPreset.return_value = 'other'
+		scenario.init_scenario()
+		services.load_preset.assert_called_once_with('web_bindings', scenario=True)
+		services.can_factory.return_value.read_channel_counts.assert_called_once_with(7)
+		self.assertIs(scenario._programList['test_program'], services.program)
+		services.program.disable_gui_control.assert_called_once()
+		services.worker.getCurrentPreset.assert_not_called()
+
+	def test_every_run_reloads_even_if_test_program_is_already_present(self):
+		scenario, services = self.make_initializing_scenario()
+		scenario._controllerHost.get_program_list.return_value = [services.program]
+		for _ in range(2):
+			scenario.init_scenario()
+		self.assertEqual(services.load_preset.call_count, 2)
+		self.assertEqual(services.load_succeeded.call_count, 2)
+
+	def test_wrong_channel_counts_are_rejected_before_reset(self):
+		scenario, services = self.make_initializing_scenario()
+		services.can_factory.return_value.read_channel_counts.return_value = (6, 8)
+		with self.assertRaisesRegex(RuntimeError, 'Expected xhcc_s62'):
+			scenario.init_scenario()
+		services.load_preset.assert_not_called()
+		services.program.disable_gui_control.assert_not_called()
+
+	def test_waits_for_startup_and_scenario_preset_loading(self):
+		scenario, services = self.make_initializing_scenario()
+		services.load_done.side_effect = [False, True, False, True]
+		scenario.init_scenario()
+		self.assertEqual(services.load_done.call_count, 4)
+		self.assertEqual(scenario.wait.call_count, 3)  # Startup, reload, shared settle wait.
+		services.load_succeeded.assert_called_once()
+
+	def test_failed_preset_load_aborts_initialization(self):
+		scenario, services = self.make_initializing_scenario()
+		services.load_succeeded.return_value = False
+		with self.assertRaisesRegex(RuntimeError, 'test load rejected'):
+			scenario.init_scenario()
+		services.program.disable_gui_control.assert_not_called()
+		services.worker.web_client.bind_input.assert_not_called()
+
+	def test_missing_program_after_loading_is_rejected(self):
+		scenario, services = self.make_initializing_scenario()
+		services.load_preset.side_effect = None
+		with self.assertRaisesRegex(RuntimeError, 'missing required programs'):
+			scenario.init_scenario()
+		services.program.disable_gui_control.assert_not_called()
+
+	def test_unexpected_program_id_after_loading_is_rejected(self):
+		scenario, services = self.make_initializing_scenario()
+		services.program.get_id.return_value = 102
+		with self.assertRaisesRegex(RuntimeError, 'Unexpected web test program ID'):
+			scenario.init_scenario()
+		services.worker.web_client.bind_input.assert_not_called()
+
+	def test_preset_wait_is_cancellable(self):
+		scenario, services = self.make_initializing_scenario()
+		services.load_done.side_effect = [True, False]
+		scenario.wait.side_effect = ThreadStoppedException('cancelled')
+		with self.assertRaises(ThreadStoppedException):
+			scenario.init_scenario()
+		services.load_preset.assert_called_once_with('web_bindings', scenario=True)
+		services.program.disable_gui_control.assert_not_called()
