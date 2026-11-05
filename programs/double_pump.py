@@ -27,6 +27,23 @@ class DoublePump(Program):
 			channel.set_value(0)
 			channel.set_value('open')
 
+	def get_parameter_code(self, parameter):
+		parameters = {
+			'pump_1_status': snc.DoublePumpParameterId.PUMP_1_STATUS,
+			'pump_2_status': snc.DoublePumpParameterId.PUMP_2_STATUS,
+			'double_power': snc.DoublePumpParameterId.DOUBLE_POWER,
+			'alarm_status': snc.DoublePumpParameterId.ALARM_STATUS,
+		}
+		if parameter in parameters:
+			return self.get_type(), parameters[parameter]
+		common_parameters = {
+			'training_enabled': snc.ProgramParameterId.TRAINING_ENABLED,
+			'manual_mode_enabled': snc.ProgramParameterId.MANUAL_MODE_ENABLED,
+		}
+		if parameter in common_parameters:
+			return snc.ProgramType.PROGRAM, common_parameters[parameter]
+		return super().get_parameter_code(parameter)
+
 	def is_any_pump_running(self):
 		for name in ('discrete_pump_1', 'discrete_pump_2', 'analog_pump_1', 'analog_pump_2'):
 			channel = self.get_output_channel(name)
