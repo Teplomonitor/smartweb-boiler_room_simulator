@@ -238,6 +238,29 @@ class Controller(object):
 	def get_gui(self): return self._gui
 	def get_controller_id(self): return self._controllerId
 
+	def read_monitoring_enabled(self):
+		parameter = sr.RemoteControlParameter(
+			programType=snc.ProgramType.CONTROLLER,
+			parameterId=snc.ControllerParameterId.DATALOGGER_MONITORING_ENABLED,
+			programId=self._controllerId,
+		)
+		if parameter.read():
+			value = parameter.get_value()
+			if value in (0, 1):
+				return value
+		return None
+
+	def write_monitoring_enabled(self, value):
+		if value not in (0, 1):
+			return False
+		parameter = sr.RemoteControlParameter(
+			programType=snc.ProgramType.CONTROLLER,
+			parameterId=snc.ControllerParameterId.DATALOGGER_MONITORING_ENABLED,
+			parameterValue=int(value),
+			programId=self._controllerId,
+		)
+		return parameter.write() and self.read_monitoring_enabled() == int(value)
+
 	def read_date(self):
 		parameter = sr.RemoteControlParameter(
 			programType=snc.ProgramType.CONTROLLER,

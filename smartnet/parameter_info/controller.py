@@ -9,3 +9,4 @@ PARAMETER_INFO = {
 
 PARAMETER_INFO[ControllerParameterId.DATE] = {'type': 'DATE'}
 PARAMETER_INFO[ControllerParameterId.TIME] = {'type': 'TIME'}
+PARAMETER_INFO[ControllerParameterId.DATALOGGER_MONITORING_ENABLED] = {'type': 'UINT8_T'}

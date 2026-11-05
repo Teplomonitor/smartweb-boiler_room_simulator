@@ -218,10 +218,17 @@ class ScenarioValidator:
 			else:
 				self.checklist_ids[checklist_id] = path
 
-		preset = self.get_string_return(self.get_method(class_node, 'get_default_preset'))
-		if not preset:
+		preset_method = self.get_method(class_node, 'get_default_preset')
+		preset = self.get_string_return(preset_method)
+		preset_free = (preset_method is not None and len(preset_method.body) == 1
+			and isinstance(preset_method.body[0], ast.Return)
+			and isinstance(preset_method.body[0].value, ast.Constant)
+			and preset_method.body[0].value.value is None)
+		if preset_free:
+			pass
+		elif not preset:
 			if 'get_default_preset' in methods or not uses_specialized_base:
-				self.error(path, 'get_default_preset() must return a non-empty string literal')
+				self.error(path, 'get_default_preset() must return a non-empty string literal or explicit None')
 		else:
 			preset_path = self.preset_root / f'{preset}.py'
 			if not preset_path.is_file():

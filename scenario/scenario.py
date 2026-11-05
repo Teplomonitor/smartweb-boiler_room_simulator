@@ -92,7 +92,7 @@ class Scenario(object):
 		"""Estimated total seconds including preset loading, or None if unknown."""
 		estimate = getattr(self, 'ESTIMATED_RUN_SECONDS', None)
 		if type(estimate) is int and estimate > 0:
-			return estimate + PRESET_LOADING_ESTIMATE_SECONDS
+			return estimate + (PRESET_LOADING_ESTIMATE_SECONDS if self.get_default_preset() is not None else 0)
 		return get_estimated_duration(self.get_checklist_id())
 	
 	def get_duration(self):
@@ -243,8 +243,9 @@ class Scenario(object):
 	
 	def clear(self):
 		try:
-			for prg in self.get_program_list():
-				prg.enable_gui_control()
+			if self.get_default_preset() is not None:
+				for prg in self.get_program_list():
+					prg.enable_gui_control()
 			for sensor in self._manualSensorsList:
 				sensor.set_manual(False)
 		finally:
@@ -281,6 +282,12 @@ class Scenario(object):
 		return {self.get_checklist_id(): self.get_status()}
 	
 	def init_scenario(self):
+		# None explicitly selects a controller-only test without preset changes.
+		if self.get_default_preset() is None:
+			if not self.init_program_list(self.get_required_programs()):
+				raise RuntimeError('Controller is missing required programs for a preset-free scenario')
+			self._startTime = time.time()
+			return
 		if self.force_preset_load():
 			controller_is_configured = False
 		else:
