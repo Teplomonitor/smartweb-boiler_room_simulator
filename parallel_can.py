@@ -366,9 +366,10 @@ def run_coordinator(args):
 				worker.last_notice = worker.phase_started_at
 				print(f'[{worker.context}] {worker.phase}: {Path(worker.current).name}', flush=True)
 			elif event['type'] == 'result' and worker.current:
-				result = {**result_target(worker.context), 'scenario': worker.current, **event}
-				results.append(result)
-				print(f"[{worker.context}] {event['result']} {event['checklistId']} ({event['duration']:.1f}s)", flush=True)
+				for item in event.get('checklistResults', [event]):
+					result = {**result_target(worker.context), 'scenario': worker.current, **item}
+					results.append(result)
+					print(f"[{worker.context}] {item['result']} {item['checklistId']} ({item['duration']:.1f}s)", flush=True)
 				worker.current = None
 			elif event['type'] == 'exit':
 				worker.ready = False

@@ -42,6 +42,17 @@ def natural_sort_key(value):
 		for part in re.split(r'(\d+)', str(value))
 	]
 
+def checklist_completion_result(checklist_id, results):
+	"""One completion notification; individual checklist rows remain available."""
+	if len(results) == 1:
+		return results[0]
+	return {
+		'checklistId': checklist_id,
+		'result': 'OK' if all(result['result'] == 'OK' for result in results) else 'FAIL',
+		'duration': max(result['duration'] for result in results),
+		'checklistResults': results,
+	}
+
 class Scenario(object):
 	RELAY_OFF = 0
 	RELAY_ON  = 255
@@ -264,6 +275,10 @@ class Scenario(object):
 	
 	def get_status(self):
 		return self._status
+
+	def get_checklist_results(self):
+		"""One run may cover multiple independently evaluated checklist items."""
+		return {self.get_checklist_id(): self.get_status()}
 	
 	def init_scenario(self):
 		if self.force_preset_load():
@@ -466,7 +481,7 @@ class ScenarioThread(threading.Thread):
 							self.saveScenarioLog(self._currentScenario)
 							
 						self._currentScenario.clear()
-						self.append_scenario_result(self._currentScenario)
+						completion = self.append_scenario_result(self._currentScenario)
 						self._currentScenario = self.getNextScenario()
 						if self._currentScenario:
 							self.set_gui_status('running', self._currentScenario.get_scenario_title())
@@ -475,7 +490,7 @@ class ScenarioThread(threading.Thread):
 							if len(self._scenarioResultList) > 1:
 								self.print_scenario_run_result()
 							if self._result_callback:
-								self._result_callback(self._scenarioResultList[-1])
+								self._result_callback(completion)
 								
 				except Exception as e:
 					print_error(f"Scenario interrupted: {e!r}")
@@ -490,22 +505,31 @@ class ScenarioThread(threading.Thread):
 			time.sleep(1)
 			
 	def append_scenario_result(self, scenario):
-		result = {
-			'checklistId': scenario.get_checklist_id(),
-			'result'     : scenario.get_status(),
-			'duration'   : scenario.get_duration()
-		}
-		self.print_result(result)
-		self._scenarioResultList.append(result)
+		duration = scenario.get_duration()
+		results = []
+		for checklist_id, status in scenario.get_checklist_results().items():
+			result = {'checklistId': checklist_id, 'result': status, 'duration': duration}
+			self.print_result(result)
+			self._scenarioResultList.append(result)
+			results.append(result)
+		return checklist_completion_result(scenario.get_checklist_id(), results)
 
 	def _report_failure(self, scenario, exc):
 		if self._result_callback:
-			self._result_callback({
-				'checklistId': scenario.get_checklist_id() if isinstance(scenario, Scenario) else getattr(exc, 'checklist_id', str(scenario)),
-				'result': 'ERROR',
-				'duration': scenario.get_duration() if isinstance(scenario, Scenario) else 0,
-				'error': repr(exc),
-			})
+			results = scenario.get_checklist_results() if isinstance(scenario, Scenario) else {}
+			if len(results) <= 1:
+				results = {scenario.get_checklist_id() if isinstance(scenario, Scenario)
+					else getattr(exc, 'checklist_id', str(scenario)): 'ERROR'}
+			rows = []
+			for checklist_id, status in results.items():
+				rows.append({
+					'checklistId': checklist_id,
+					'result': status if status in ('OK', 'FAIL', 'ERROR') else 'ERROR',
+					'duration': scenario.get_duration() if isinstance(scenario, Scenario) else 0,
+					'error': repr(exc),
+				})
+			self._result_callback(checklist_completion_result(
+				scenario.get_checklist_id() if isinstance(scenario, Scenario) else str(scenario), rows))
 	
 	def print_result(self, result):
 		checklistId = result['checklistId']

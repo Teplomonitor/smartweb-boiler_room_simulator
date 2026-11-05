@@ -46,6 +46,10 @@ def run_session(profile_path, check_only, confirmed, stopped):
 	result_lock = threading.Lock()
 	failed = threading.Event()
 	def report(result):
+		if 'checklistResults' in result:
+			for item in result['checklistResults']:
+				report(item)
+			return
 		key = (result['checklistId'], result['result'], result['duration'])
 		with result_lock:
 			if key not in seen:
