@@ -135,6 +135,13 @@ class ProgramParameterId(IntEnum):
 	OUTPUT_MANUAL_STATE = 9
 
 
+class DoublePumpParameterId(IntEnum):
+	PUMP_1_STATUS = 1
+	PUMP_2_STATUS = 2
+	DOUBLE_POWER = 3
+	ALARM_STATUS = 7
+
+
 class RoomDeviceParameterId(IntEnum):
 	ROOM_COMFORT_TEMPERATURE = 1
 	ROOM_REDUCED_TEMPERATURE = 2
