@@ -90,8 +90,16 @@ class ControllerWebClient:
 		self._session = None
 		result = self.post('login', login=self._login, password=self._password, long=0)
 		session = result.get('session_id')
-		if result.get('status') != 'ok' or type(session) is not int or not 0 < session <= 0xFFFFFFFF:
-			raise WebApiError('login: invalid session response')
+		if result.get('status') != 'ok':
+			raise WebApiError('login: invalid session response (missing ok status)')
+		if 'session_id' not in result:
+			raise WebApiError('login: invalid session response (missing session_id)')
+		if type(session) is not int:
+			raise WebApiError('login: invalid session response (session_id must be an integer)')
+		# Firmware serializes uint32_t through signed long on 32-bit targets.
+		# Preserve the wire value, including its sign, in subsequent requests.
+		if session == 0 or not -(2 ** 31) <= session <= 0xFFFFFFFF:
+			raise WebApiError('login: invalid session response (session_id is zero or out of range)')
 		self._session = session
 
 	def logout(self):
