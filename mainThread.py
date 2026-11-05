@@ -117,6 +117,14 @@ class ApplicationWorker(threading.Thread):
 		self._canConfig                   = args.can
 		self._debug_thread                = None
 		self._controllerId                = int(args.id)
+		self.web_client = None
+		if getattr(args, 'web_url', None):
+			import os
+			from webapi.client import ControllerWebClient
+			self.web_client = ControllerWebClient(args.web_url,
+				login=args.web_login,
+				password=os.environ.get(args.web_password_env, 'admin'),
+				timeout=args.web_timeout)
 		
 		self._lastPreset                    = None
 		self._lastPreset_scenario = False

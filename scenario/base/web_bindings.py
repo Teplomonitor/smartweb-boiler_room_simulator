@@ -1,0 +1,192 @@
+"""Web mapping tests on an explicitly prepared xhcc_s62 simulator."""
+
+import time
+
+import main
+import mainThread
+import smartnet.constants as snc
+from consoleLog import print_error, print_log
+from scenario.scenario import Scenario as Parent, ThreadStoppedException
+from smartnet.mapping_client import (
+	MappingCanClient, UNDEFINED_MAPPING, SENSOR_LOCAL, RELAY_LOCAL,
+	PROGRAM_OUTPUT, is_undefined, mappings_equal, pack_mapping,
+)
+
+
+class WebBindingScenario(Parent):
+	PROGRAM_ID = 101
+	INPUT_COUNT = 4
+	OUTPUT_COUNT = 5
+	XHCC_CHANNEL_COUNTS = (18, 11)
+	APPLY_TIMEOUT = 15
+	POLL_INTERVAL = 1
+
+	def get_required_programs(self):
+		return {'test_program': snc.ProgramType.DOUBLE_PUMP}
+
+	def get_default_preset(self):
+		return 'web_bindings'
+
+	def init_scenario(self):
+		# Do not call Parent.init_scenario: it may replace an unrelated configuration.
+		self._programList = {}
+		worker = mainThread.MainThread()
+		self._web = worker.web_client
+		if self._web is None:
+			raise RuntimeError('Web scenario requires --web-url and explicit --id')
+		self._controller_id = self._controllerHost.get_controller_id()
+		if not 1 <= self._controller_id <= 255 or worker._debug:
+			raise RuntimeError('Web tests require a real, explicitly addressed CAN target')
+		# --preset loading is owned by the application worker, not by this scenario.
+		while not main.loadPresetDone():
+			self.wait(self.POLL_INTERVAL)
+		if worker.getCurrentPreset() != self.get_default_preset():
+			raise RuntimeError('Select --preset web_bindings explicitly on a disposable simulator')
+		if not self.init_program_list(self.get_required_programs()):
+			raise RuntimeError('The web_bindings preset is not loaded')
+		if self._programList['test_program'].get_id() != self.PROGRAM_ID:
+			raise RuntimeError('Unexpected web test program ID')
+		self._can = MappingCanClient()
+		if self._can.read_channel_counts(self._controller_id) != self.XHCC_CHANNEL_COUNTS:
+			raise RuntimeError('Expected xhcc_s62 with 18 inputs and 11 outputs')
+		self._programList['test_program'].disable_gui_control()
+
+	def _check_web_target(self):
+		config = self._web.config()
+		controllers = [item for item in config['controllers']
+			if item.get('id') == self._controller_id]
+		if len(controllers) != 1:
+			raise RuntimeError('HTTP server does not expose the selected CAN controller ID')
+		programs = controllers[0].get('programs', [])
+		if (len(programs) != 1 or programs[0].get('id') != self.PROGRAM_ID
+				or programs[0].get('type') != int(snc.ProgramType.DOUBLE_PUMP)):
+			raise RuntimeError('HTTP configuration must contain only the web test double-pump program')
+
+	def _read(self, key):
+		kind, index = key
+		host_id = self._controller_id if kind == 'relay' else self.PROGRAM_ID
+		return getattr(self._can, f'read_{kind}')(host_id, index)
+
+	def _snapshot(self):
+		return {(kind, index): self._read((kind, index))
+			for kind, count in (('input', self.INPUT_COUNT), ('output', self.OUTPUT_COUNT),
+				('relay', self.XHCC_CHANNEL_COUNTS[1])) for index in range(count)}
+
+	def _check_initial_state(self, saved):
+		# Avoid altering other programs through forward/reverse mapping propagation.
+		if any(not is_undefined(saved['output', i]) for i in range(self.OUTPUT_COUNT)):
+			raise RuntimeError('Test program outputs must initially be unbound')
+		if not is_undefined(saved['relay', 0]):
+			raise RuntimeError('Test relay 0 must initially be unbound')
+		if any(raw >> 13 not in (0, 2, 7) for (kind, _), raw in saved.items() if kind == 'input'):
+			raise RuntimeError('Test inputs must not be bound to other programs')
+		if any(raw >> 13 in (5, 6) and raw & 255 == self.PROGRAM_ID
+				for (kind, _), raw in saved.items() if kind == 'relay'):
+			raise RuntimeError('A relay is already bound to a test program output')
+
+	def _differences(self, expected, actual):
+		return [f'{kind}[{index}]: expected=0x{value:04X}, CAN=0x{actual[kind, index]:04X}'
+			for (kind, index), value in expected.items()
+			if not mappings_equal(value, actual[kind, index])]
+
+	def _observe_changes(self, actual):
+		self._restore_keys.update(key for key, raw in actual.items()
+			if not mappings_equal(raw, self._saved[key]))
+
+	def _command_and_check(self, description, command, changes):
+		if self.is_stopped():
+			raise ThreadStoppedException('Web binding test cancelled')
+		print_log(description)
+		# Record before HTTP: a timeout can occur after the mutation was applied.
+		self._restore_keys.update(changes)
+		expected = dict(self._saved)
+		expected.update(changes)
+		try:
+			response = command()
+			print_log(f'HTTP: partial={response.get("partial")}, error=none')
+		except Exception:
+			# Report actual CAN state but never retry an uncertain web mutation.
+			try:
+				actual = self._snapshot()
+				self._observe_changes(actual)
+				print_error('HTTP failed; CAN readback: ' + ('; '.join(self._differences(expected, actual))
+					or 'requested mapping is present (HTTP step still failed)'))
+			except Exception as error:
+				print_error(f'CAN readback after HTTP failure failed: {error}')
+			raise
+		deadline = time.monotonic() + self.APPLY_TIMEOUT
+		while True:
+			actual = self._snapshot()
+			self._observe_changes(actual)
+			differences = self._differences(expected, actual)
+			if not differences:
+				print_log('CAN: requested bindings confirmed; other bindings unchanged')
+				return
+			if time.monotonic() >= deadline:
+				raise RuntimeError('; '.join(differences))
+			self.wait(self.POLL_INTERVAL)
+
+	def _restore(self):
+		errors = []
+		for kind, index in sorted(self._restore_keys):
+			try:
+				host_id = self._controller_id if kind == 'relay' else self.PROGRAM_ID
+				getattr(self._can, f'restore_{kind}')(host_id, index, self._saved[kind, index])
+			except Exception as error:
+				errors.append(f'{kind}[{index}]: {error}')
+		try:
+			errors.extend(self._differences(self._saved, self._snapshot()))
+		except Exception as error:
+			errors.append(str(error))
+		if errors:
+			raise RuntimeError('CAN restoration failed: ' + '; '.join(errors))
+		print_log('CAN: original mappings restored and verified')
+
+	def run_binding_test(self, sequence):
+		self._status = 'FAIL'
+		try:
+			self._web.login()
+			self._check_web_target()
+			self._saved = self._snapshot()
+			self._check_initial_state(self._saved)
+			self._restore_keys = set()
+			try:
+				sequence()
+				self._status = 'OK'
+			finally:
+				self._restore()
+		except ThreadStoppedException:
+			self._status = 'FAIL'
+			raise
+		except Exception as error:
+			self._status = 'FAIL'
+			print_error(f'Web binding test failed: {error}')
+		finally:
+			try:
+				self._web.logout()
+			except Exception as error:
+				self._status = 'FAIL'
+				print_error(f'Web logout failed: {error}')
+
+	def check_input_sequence(self):
+		key = ('input', 0)
+		for sensor_id in (0, 0, 1):
+			self._command_and_check(f'Bind input 0 to local sensor {sensor_id}',
+				lambda: self._web.bind_input(self.PROGRAM_ID, 0, self._controller_id, sensor_id),
+				{key: pack_mapping(self._controller_id, sensor_id, SENSOR_LOCAL)})
+		for _ in range(2):
+			self._command_and_check('Unbind input 0',
+				lambda: self._web.unbind_input(self.PROGRAM_ID, 0), {key: UNDEFINED_MAPPING})
+
+	def check_relay_sequence(self):
+		for output_id in (0, 0, 1):
+			changes = {('relay', 0): pack_mapping(self.PROGRAM_ID, output_id, PROGRAM_OUTPUT),
+				('output', output_id): pack_mapping(self._controller_id, 0, RELAY_LOCAL),
+				('output', 1 - output_id): UNDEFINED_MAPPING}
+			self._command_and_check(f'Bind relay 0 to program output {output_id}',
+				lambda: self._web.bind_relay(self._controller_id, 0, self.PROGRAM_ID, output_id), changes)
+		for _ in range(2):
+			self._command_and_check('Unbind relay 0',
+				lambda: self._web.unbind_relay(self._controller_id, 0),
+				{('relay', 0): UNDEFINED_MAPPING, ('output', 0): UNDEFINED_MAPPING,
+					('output', 1): UNDEFINED_MAPPING})
