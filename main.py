@@ -69,8 +69,17 @@ def initArgParser(program_license, argv=None):
 	parser.add_argument(      '--can-worker', action='store_true', help='internal parallel CAN worker mode')
 	parser.add_argument(      '--can-gui-child', action='store_true', help='internal parallel CAN GUI coordinator mode')
 	parser.add_argument(      '--preset'  , nargs='?'                 , default=None     , help='load specific preset on controller startup')
-	
-	return parser.parse_args(argv)
+	parser.add_argument('--web-url', help='embedded controller origin, e.g. http://192.168.1.50; enables web tests')
+	parser.add_argument('--web-login', default='admin', help='embedded web login (default: admin)')
+	parser.add_argument('--web-password-env', default='BRS_WEB_PASSWORD', help='password environment variable (fallback: admin)')
+	parser.add_argument('--web-timeout', type=float, default=10.0, help='HTTP timeout in seconds (default: 10)')
+	args = parser.parse_args(argv)
+	if args.web_url:
+		if args.can_ports or args.udp_ports or args.can_worker or args.can_gui_child:
+			parser.error('Web tests currently support only a single controller session')
+		if args.debug or not 1 <= int(args.id) <= 255:
+			parser.error('Web tests require --id 1..255 and do not support --debug')
+	return args
 
 def getProgramLicense():
 	program_version = "v%s" % __version__
