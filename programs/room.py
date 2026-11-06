@@ -40,6 +40,9 @@ class Room(Program):
 
 	def init_gui_parameters(self):
 		self._parameters['max_power']= GuiParameter(1, 'Мощность', 0, 10, 1, 'кВт')
+		self._parameters['volume'] = GuiParameter(150, 'Объём помещения', 1, 3000, 1, 'м³')
+		self._parameters['thermal_capacity'] = GuiParameter(3000, 'Теплоёмкость помещения', 1, 50000, 100, 'кДж/К')
+		self._parameters['humidity_generation'] = GuiParameter(1, 'Прирост влажности без вентиляции', 0, 50, 0.1, '%/ч')
 	
 	def __init__(self, params):
 		'''
@@ -53,16 +56,23 @@ class Room(Program):
 	def set_temperature(self, value): self.get_temperature().set_value(value)
 
 	def getRoomTemperatureSourceList(self):
+		return [self.get_preset_setting(parameter_id) for parameter_id in (
+			snc.RoomDeviceParameterId.RESPONSIBLE_CIRCUIT_1,
+			snc.RoomDeviceParameterId.RESPONSIBLE_CIRCUIT_2,
+			snc.RoomDeviceParameterId.RESPONSIBLE_CIRCUIT_3,
+		)]
+
+	def get_preset_setting(self, parameter_id, default=0):
 		preset = self.get_preset()
-		settings = preset.getSettings().get()
-		
-		circuitList = [0, 0, 0]
-		
-		for setting in settings:
-			if setting.get_program_type() == snc.ProgramType.ROOM_DEVICE:
-				parameterId = setting.get_parameter_id()
-				if   parameterId == snc.RoomDeviceParameterId['RESPONSIBLE_CIRCUIT_1']: circuitList[0] = setting.get_value()
-				elif parameterId == snc.RoomDeviceParameterId['RESPONSIBLE_CIRCUIT_2']: circuitList[1] = setting.get_value()
-				elif parameterId == snc.RoomDeviceParameterId['RESPONSIBLE_CIRCUIT_3']: circuitList[2] = setting.get_value()
-		return circuitList
+		settings = preset.getSettings() if preset is not None else None
+		if settings is not None:
+			for setting in settings.get():
+				if (setting.get_program_type() == snc.ProgramType.ROOM_DEVICE
+					and setting.get_parameter_id() == parameter_id
+					and setting.get_value() is not None):
+					return setting.get_value()
+		return default
+
+	def get_ventilation_id(self):
+		return self.get_preset_setting(snc.RoomDeviceParameterId.VENTILATION_CIRCUIT)
 	

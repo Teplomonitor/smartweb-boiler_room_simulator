@@ -12,11 +12,17 @@ class Simulator(object):
 		self._valve_position = 0.0
 		self._valve_update_time = time.monotonic()
 		self._valve_command_conflict = False
+		self._ventilation_load = None
 		
 		self._roomTemp = 24
 		self.set_temperature(20)
 		self.set_backward_temperature(20)
 		self.set_backward_temperature2(20)
+
+	def set_ventilation_load(self, ventilation):
+		if self._ventilation_load is not None and self._ventilation_load is not ventilation:
+			raise ValueError(f'Circuit {self._program.get_id()} serves more than one ventilation unit')
+		self._ventilation_load = ventilation
 
 	def getOat(self):
 		oat = self._control.getOat()
@@ -110,6 +116,8 @@ class Simulator(object):
 		if self.get_pump_state() == 0:
 			return 0
 
+		if self._ventilation_load is not None:
+			return max(0.0, self._ventilation_load.get_water_power())
 		return self.getValveState()*self.get_max_power()
 
 	def get_flow(self):
@@ -140,6 +148,8 @@ class Simulator(object):
 		return temp
 	
 	def compute_backward_temperature2(self):
+		if self._ventilation_load is not None:
+			return self._ventilation_load.get_return_temperature()
 		temp       = self.get_backward_temperature2()
 		roomTemp   = self.getRoomTemp()
 		oat        = self.getOat()

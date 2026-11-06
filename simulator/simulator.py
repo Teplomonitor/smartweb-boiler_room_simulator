@@ -22,6 +22,7 @@ import simulator.swimmingPool
 import simulator.virtualController
 import simulator.alarm
 import simulator.double_pump
+import simulator.ventilation
 import smartnet.constants as snc
 
 BROADCAST_ID = 0
@@ -41,6 +42,7 @@ simulatorType = {
 	snc.ProgramType.VIRTUAL_CONTROLLER: simulator.virtualController.Simulator,
 	snc.ProgramType.ALARM            : simulator.alarm           .Simulator,
 	snc.ProgramType.DOUBLE_PUMP      : simulator.double_pump     .Simulator,
+	snc.ProgramType.VENTILATION      : simulator.ventilation     .Simulator,
 }
 
 consumerTypesList = [
@@ -139,6 +141,7 @@ class Simulator(threading.Thread):
 		self._simList        = []
 		self._roomList       = []
 		self._heatingCircuitList = []
+		self._ventilation_list = []
 		self._consumersList  = []
 		self._generatorsList = []
 		self._cascadeList    = []
@@ -200,12 +203,36 @@ class Simulator(threading.Thread):
 			if program.get_type() == snc.ProgramType.ROOM_DEVICE    : self._roomList.append(sim)
 			if program.get_type() == snc.ProgramType.HEATING_CIRCUIT: self._heatingCircuitList.append(sim)
 			if program.get_type() == snc.ProgramType.CASCADE_MANAGER: self._cascadeList.append(sim)
+			if program.get_type() == snc.ProgramType.VENTILATION: self._ventilation_list.append(sim)
 
+		self._bind_ventilation()
 		self._collector = simulator.collector.Simulator(self)
 		gui = self._controllerHost.get_gui()
 		if gui:
 			gui.add_collector(self._collector)
 		self._simulator_ready = True
+
+	def _bind_ventilation(self):
+		ventilation_ids = {model._program.get_id() for model in self._ventilation_list}
+		for room in self._roomList:
+			ventilation_id = room._program.get_ventilation_id()
+			if ventilation_id and ventilation_id not in ventilation_ids:
+				raise ValueError(f'Room {room._program.get_id()}: ventilation {ventilation_id} does not exist')
+		for model in self._ventilation_list:
+			model.bind(self._roomList, self._heatingCircuitList)
+		if self._ventilation_list:
+			# Preserve legacy ordering otherwise; only defer ventilation and its
+			# rooms so that physics is independent of preset program order.
+			def priority(model):
+				if model._program.get_type() == snc.ProgramType.VENTILATION:
+					return 1
+				if model._program.get_type() == snc.ProgramType.ROOM_DEVICE and model._program.get_ventilation_id():
+					return 2
+				return 0
+			self._simList.sort(key=priority)
+
+	def get_ventilation_list(self):
+		return self._ventilation_list
 
 	def getControllersIOList (self): return self._controllerIo
 	def getConsumerList      (self): return self._consumersList

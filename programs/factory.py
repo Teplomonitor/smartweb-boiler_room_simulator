@@ -19,6 +19,7 @@ from programs.virtualController import VirtualController as ProgramVirtualContro
 from programs.virtual_outdoor import VirtualOutdoor
 from programs.alarm           import Alarm           as ProgramAlarm
 from programs.double_pump     import DoublePump
+from programs.ventilation     import Ventilation
 
 import smartnet.constants as snc
 
@@ -37,6 +38,7 @@ programCreator = {
 		snc.ProgramType.VIRTUAL_CONTROLLER : ProgramVirtualController,
 		snc.ProgramType.ALARM              : ProgramAlarm,
 		snc.ProgramType.DOUBLE_PUMP        : DoublePump,
+		snc.ProgramType.VENTILATION        : Ventilation,
 }
 
 def createProgram(preset):

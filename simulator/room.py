@@ -6,11 +6,17 @@ class Simulator(object):
 		self._program    = program
 		self._preset     = self._program.get_preset()
 		self._control    = control
+		self._ventilation = None
 
 		self.set_temperature(20)
 		
 		self._roomSourceList = self._program.getRoomTemperatureSourceList()
 
+	def set_ventilation(self, ventilation):
+		if self._ventilation is not None and self._ventilation is not ventilation:
+			raise ValueError(f'Room {self._program.get_id()} already has ventilation')
+		self._ventilation = ventilation
+		self._program.get_input_channel('humidity').set_value(50.0)
 
 	def getOat(self):
 		oat = self._control.getOat()
@@ -58,6 +64,8 @@ class Simulator(object):
 		return self.getSourcePower(1)
 	
 	def getAdditionalSourcePower(self):
+		if self._ventilation is not None:
+			return 0
 		return self.getSourcePower(2)
 
 	def getFloorTemperature(self):
@@ -67,6 +75,8 @@ class Simulator(object):
 		return self.getSourceTemperature(1)
 	
 	def getAdditionalSourceTemperature(self):
+		if self._ventilation is not None:
+			return self.get_temperature()
 		return self.getSourceTemperature(2)
 
 	def getHeating(self):
@@ -97,9 +107,14 @@ class Simulator(object):
 	def compute_temperature(self):
 		temp = self.get_temperature()
 		temp = temp + (self.getHeating() + self.getCooling())*0.0005
+		if self._ventilation is not None:
+			temp += self._ventilation.room_temperature_change(temp)
 		temp = limit(-10, temp, 50)
 
 		return temp
 
 	def run(self):
 		self.set_temperature(self.compute_temperature())
+		if self._ventilation is not None:
+			humidity = self._program.get_input_channel('humidity')
+			humidity.set_value(self._ventilation.room_humidity(humidity.get_value()))

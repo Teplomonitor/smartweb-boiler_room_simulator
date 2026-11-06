@@ -144,6 +144,8 @@ class RoomSettings(object):
 			source_1 = None,
 			source_2 = None,
 			source_3 = None,
+			ventilation = None,
+			required_humidity = None,
 			):
 
 		self._sourceList = [
@@ -151,13 +153,22 @@ class RoomSettings(object):
 			source_2,
 			source_3,
 			]
+		self._ventilation = ventilation
+		self._required_humidity = required_humidity
 
 	def get(self):
-		return [
+		settings = [
 				RemoteControlParameter(snc.ProgramType.ROOM_DEVICE, snc.RoomDeviceParameterId.RESPONSIBLE_CIRCUIT_1, self._sourceList[0]),
 				RemoteControlParameter(snc.ProgramType.ROOM_DEVICE, snc.RoomDeviceParameterId.RESPONSIBLE_CIRCUIT_2, self._sourceList[1]),
 				RemoteControlParameter(snc.ProgramType.ROOM_DEVICE, snc.RoomDeviceParameterId.RESPONSIBLE_CIRCUIT_3, self._sourceList[2]),
 			]
+		for parameter_id, value in (
+			(snc.RoomDeviceParameterId.VENTILATION_CIRCUIT, self._ventilation),
+			(snc.RoomDeviceParameterId.REQUIRED_HUMIDITY, self._required_humidity),
+		):
+			if value is not None:
+				settings.append(RemoteControlParameter(snc.ProgramType.ROOM_DEVICE, parameter_id, value))
+		return settings
 		
 	def getSourceList(self):
 		return self._sourceList
