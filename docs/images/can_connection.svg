@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="700" viewBox="0 0 1400 700">
+<rect width="1400" height="700" fill="white"/>
+<text x="700" y="60" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="32" font-weight="bold" fill="#253449">BRS: подключение через USB–CAN</text>
+<rect x="40" y="230" width="320" height="190" rx="18" fill="#eef5fc" stroke="#174b79" stroke-width="3"/>
+<text x="200" y="306.0" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">Компьютер</text>
+<text x="200" y="344.0" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">BoilerRoomSimulator</text>
+<rect x="450" y="230" width="310" height="190" rx="18" fill="#eef5fc" stroke="#174b79" stroke-width="3"/>
+<text x="605" y="306.0" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">USB–CAN</text>
+<text x="605" y="344.0" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">адаптер</text>
+<rect x="1030" y="230" width="330" height="190" rx="18" fill="#eef5fc" stroke="#174b79" stroke-width="3"/>
+<text x="1195" y="306.0" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">Контроллер</text>
+<text x="1195" y="344.0" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">SmartWeb</text>
+<polyline points="360,325 450,325" fill="none" stroke="#174b79" stroke-width="4"/>
+<polyline points="372,317 360,325 372,333" fill="none" stroke="#174b79" stroke-width="4"/>
+<polyline points="438,317 450,325 438,333" fill="none" stroke="#174b79" stroke-width="4"/>
+<text x="405" y="285" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">USB</text>
+<polyline points="760,290 1030,290" fill="none" stroke="#db7d22" stroke-width="4"/>
+<polyline points="760,355 1030,355" fill="none" stroke="#168c78" stroke-width="4"/>
+<text x="895" y="266" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#b35b10">CANH</text>
+<text x="895" y="388" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#168c78">CANL</text>
+<polyline points="780,290 780,310" fill="none" stroke="#174b79" stroke-width="4"/>
+<polyline points="780,335 780,355" fill="none" stroke="#174b79" stroke-width="4"/>
+<rect x="773" y="310" width="14" height="25" fill="white" stroke="#174b79" stroke-width="3"/>
+<polyline points="1010,290 1010,310" fill="none" stroke="#174b79" stroke-width="4"/>
+<polyline points="1010,335 1010,355" fill="none" stroke="#174b79" stroke-width="4"/>
+<rect x="1003" y="310" width="14" height="25" fill="white" stroke="#174b79" stroke-width="3"/>
+<text x="745" y="160" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">120 Ом: конец шины</text>
+<text x="1110" y="160" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">120 Ом: конец шины</text>
+<polyline points="780,180 780,230" fill="none" stroke="#174b79" stroke-width="4" stroke-dasharray="10 8"/>
+<polyline points="1010,180 1010,230" fill="none" stroke="#174b79" stroke-width="4" stroke-dasharray="10 8"/>
+<polyline points="605,420 605,475 1195,475 1195,420" fill="none" stroke="#64748b" stroke-width="4" stroke-dasharray="10 8"/>
+<text x="900" y="510" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">GND — по документации устройств и типу развязки</text>
+<text x="700" y="590" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">Скорость в GS-USB-профилях BRS: 20 000 бит/с</text>
+<text x="700" y="630" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">Встроенные терминаторы учитываются; всего два. Питание и распиновка не показаны.</text>
+</svg>

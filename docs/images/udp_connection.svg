@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="700" viewBox="0 0 1400 700">
+<rect width="1400" height="700" fill="white"/>
+<text x="700" y="60" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="32" font-weight="bold" fill="#253449">BRS: подключение через CAN-over-UDP</text>
+<rect x="40" y="240" width="320" height="180" rx="18" fill="#eef5fc" stroke="#174b79" stroke-width="3"/>
+<text x="200" y="292.0" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">Компьютер</text>
+<text x="200" y="330.0" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">BoilerRoomSimulator</text>
+<text x="200" y="368.0" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">CAN: virtual</text>
+<rect x="535" y="240" width="330" height="180" rx="18" fill="#eef5fc" stroke="#174b79" stroke-width="3"/>
+<text x="700" y="292.0" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">Локальная сеть</text>
+<text x="700" y="330.0" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">роутер / коммутатор</text>
+<text x="700" y="368.0" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">или сеть хост ↔ ВМ</text>
+<rect x="1040" y="240" width="320" height="180" rx="18" fill="#eef5fc" stroke="#174b79" stroke-width="3"/>
+<text x="1200" y="292.0" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">SmartWeb</text>
+<text x="1200" y="330.0" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">контроллер или Qt</text>
+<text x="1200" y="368.0" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">CAN-over-UDP bridge</text>
+<polyline points="360,330 535,330" fill="none" stroke="#174b79" stroke-width="4"/>
+<polyline points="372,322 360,330 372,338" fill="none" stroke="#174b79" stroke-width="4"/>
+<polyline points="523,322 535,330 523,338" fill="none" stroke="#174b79" stroke-width="4"/>
+<polyline points="865,330 1040,330" fill="none" stroke="#174b79" stroke-width="4"/>
+<polyline points="877,322 865,330 877,338" fill="none" stroke="#174b79" stroke-width="4"/>
+<polyline points="1028,322 1040,330 1028,338" fill="none" stroke="#174b79" stroke-width="4"/>
+<text x="445" y="285" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">Ethernet / Wi-Fi</text>
+<text x="950" y="285" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">Ethernet / Wi-Fi</text>
+<text x="700" y="160" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">UDP-порт совпадает с обеих сторон: например, 31987</text>
+<text x="700" y="490" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">Включить мост на SmartWeb; разрешить UDP в брандмауэре ПК</text>
+<text x="700" y="535" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">Обнаружение требует доступности широковещательных пакетов</text>
+<text x="700" y="590" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">Независимые устройства: разные порты, например 31987 и 31988</text>
+<text x="700" y="635" text-anchor="middle" dominant-baseline="central" font-family="Arial,sans-serif" font-size="24" font-weight="normal" fill="#253449">Это транспорт CAN-сообщений, а не HTTP-доступ к веб-интерфейсу.</text>
+</svg>
