@@ -2,11 +2,12 @@
 
 from pathlib import Path
 from collections import deque
+from importlib.metadata import PackageNotFoundError, version
 import struct
 import time
 
 from can.util import load_config
-from consoleLog import print_error
+from consoleLog import print_error, print_log
 
 
 CAN_CONFIG = Path(__file__).resolve().parents[1] / 'can.ini'
@@ -39,6 +40,20 @@ def _short_frame_details(exc):
 def protect_gs_usb_receive(bus, profile, on_failure):
 	"""Discard occasional malformed USB frames; stop the session on a burst."""
 	device = bus.gs_usb
+	bus._brs_gs_usb = True
+	from gs_usb.constants import GS_CAN_MODE_HW_TIMESTAMP
+	flags = getattr(device, 'device_flags', None)
+	timestamp = bool(flags & GS_CAN_MODE_HW_TIMESTAMP) if isinstance(flags, int) else None
+	versions = {}
+	for package in ('python-can', 'gs-usb', 'pyusb'):
+		try:
+			versions[package] = version(package)
+		except PackageNotFoundError:
+			versions[package] = 'unknown'
+	print_log(f'CAN {profile}: GS-USB bus={getattr(device, "bus", None)} '
+		f'address={getattr(device, "address", None)} '
+		f'bitrate={getattr(bus, "_bitrate", None)} flags={flags!r} '
+		f'hw_timestamp={timestamp} versions={versions}')
 	read = device.read
 	errors = deque()
 	failed = False

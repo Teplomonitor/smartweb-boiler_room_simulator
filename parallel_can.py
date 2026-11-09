@@ -50,7 +50,7 @@ def run_worker(args):
 		while not app.stop_event.is_set() and not app.worker.ready_event.wait(0.2):
 			pass
 		if app.stop_event.is_set():
-			send_event({'type': 'error', 'error': repr(app.worker.error)})
+			send_event({'type': 'error', 'fatal': True, 'error': repr(app.worker.error)})
 			return 2
 		app.worker._scenario_thread.set_result_callback(
 			lambda result: send_event({'type': 'result', **result}))
@@ -71,6 +71,8 @@ def run_worker(args):
 				send_event({'type': 'accepted', 'scenario': command['scenario']})
 			else:
 				send_event({'type': 'error', 'error': 'Invalid worker command'})
+		if app.worker.error is not None:
+			send_event({'type': 'error', 'fatal': True, 'error': repr(app.worker.error)})
 		return 0 if app.worker.error is None else 2
 	finally:
 		if not app.shutdown():
@@ -381,7 +383,7 @@ def run_coordinator(args):
 				print(f"[{worker.context}] worker exited ({event['code']})", flush=True)
 			elif event['type'] == 'error':
 				print(f"[{worker.context}] {event['error']}", flush=True)
-				if event['error'].startswith('Worker output reader failed:'):
+				if event.get('fatal') or event['error'].startswith('Worker output reader failed:'):
 					worker.retiring = True
 					worker.ready = False
 					if worker.current:

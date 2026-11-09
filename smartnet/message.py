@@ -9,7 +9,42 @@ import time
 import threading
 
 import mainThread
+from consoleLog import print_error
 from smartnet.can_adapter import protect_gs_usb_receive, resolve_bus_config
+
+
+FRAME_LOG_INTERVAL = 10.0
+FRAME_LOG_SAMPLES = 3
+SEND_ATTEMPTS = 10
+SEND_RETRY_DELAY = 1.0
+
+
+class CanFrameDiagnostics:
+	"""Per-connection counters; never print one line per frame indefinitely."""
+	def __init__(self, context):
+		self.context = context
+		self.counts = {'standard': 0, 'remote': 0, 'error': 0, 'fd': 0}
+		self.rejected = 0
+		self.accepted = 0
+		self.last_log = None
+
+	def reject(self, frame):
+		self.rejected += 1
+		self.counts['standard'] += not frame.is_extended_id
+		self.counts['remote'] += frame.is_remote_frame
+		self.counts['error'] += frame.is_error_frame
+		self.counts['fd'] += frame.is_fd
+		now = time.monotonic()
+		if (self.rejected > FRAME_LOG_SAMPLES and self.last_log is not None
+				and now - self.last_log < FRAME_LOG_INTERVAL):
+			return
+		self.last_log = now
+		print_error(f'CAN {self.context}: rejected frame '
+			f'ID=0x{frame.arbitration_id:08X} EXT={int(frame.is_extended_id)} '
+			f'RTR={int(frame.is_remote_frame)} ERR={int(frame.is_error_frame)} '
+			f'FD={int(frame.is_fd)} RX={int(frame.is_rx)} DLC={frame.dlc} '
+			f'data={bytes(frame.data).hex(" ")} timestamp={frame.timestamp:.6f}; '
+			f'rejected={self.rejected} accepted={self.accepted} counts={self.counts}')
 
 
 
@@ -47,6 +82,7 @@ def createBus(canConfig = None):
 	else:
 		config = resolve_bus_config(canConfig)
 	bus = can.Bus(**config)
+	bus._brs_can_context = canConfig
 	if config.get('interface') == 'gs_usb':
 		try:
 			protect_gs_usb_receive(bus, canConfig, mainThread.report_can_failure)
@@ -194,21 +230,33 @@ class Message(object):
 			txbus = bus
 		else:
 			txbus = CanBusInterface().get()
-		
+		application = getattr(mainThread, '_application', None)
+		stop_event = getattr(application, 'stop_event', None)
 		i = 0
 		while True:
+			if stop_event is not None and stop_event.is_set():
+				return None
 			try:
 				txbus.send(msg)
 				break
 			except can.CanError as e:
-				print(f"CAN error: {e}")
 				i += 1
-
-				if i >= 10:
-					print('fail to send')
+				context = getattr(txbus, '_brs_can_context', txbus.channel_info)
+				detail = f'{e!r}; cause={e.__cause__!r}'
+				if i == 1:
+					print_error(f'CAN {context}: send failed, retrying: {detail}')
+				if i >= SEND_ATTEMPTS:
+					error = RuntimeError(f'CAN {context}: send failed after {i} attempts: {detail}')
+					if getattr(txbus, '_brs_gs_usb', False):
+						mainThread.report_can_failure(error)
+					else:
+						print_error(str(error))
 					return None
-
-				time.sleep(1)
+				if stop_event is not None:
+					if stop_event.wait(SEND_RETRY_DELAY):
+						return None
+				else:
+					time.sleep(SEND_RETRY_DELAY)
 		
 		if responseFilter is None:
 			return None
@@ -241,12 +289,16 @@ class Message(object):
 		return msg
 
 	def parse(self, message):
-		if not message.is_extended_id or message.is_remote_frame:
-			print('wrong message type')
-			return
+		"""Return whether a classic extended data frame was decoded."""
+		if (message is None or not message.is_extended_id or message.is_remote_frame
+				or message.is_error_frame or message.is_fd):
+			self._programType = self._programId = self._functionId = self._requestFlag = None
+			self._data = None
+			return False
 		
 		self.parseHeader(message.arbitration_id)
 		self._data = message.data
+		return True
 	
 
 	@staticmethod
@@ -267,6 +319,8 @@ class CanListener(can.Listener):
 			return
 		
 		self._canbus   = CanBusInterface().get()
+		self._frame_diagnostics = CanFrameDiagnostics(
+			getattr(self._canbus, '_brs_can_context', self._canbus.channel_info))
 		try:
 			self._notifier = can.Notifier(self._canbus, [self])
 		except BaseException:
@@ -314,10 +368,10 @@ class CanListener(can.Listener):
 			return
 
 		msg = Message()
-		msg.parse(message)
-
-		if msg is None:
+		if not msg.parse(message):
+			self._frame_diagnostics.reject(message)
 			return
+		self._frame_diagnostics.accepted += 1
 		
 		with CanListener._listeners_lock:
 			listeners = tuple(CanListener._listeners)

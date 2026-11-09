@@ -116,7 +116,8 @@ class debug_thread(can.Listener):
 #		print(f"db: {message.arbitration_id:08X} - {' '.join(format(x, '02x') for x in message.data)}")
 
 		msg = sm.Message()
-		msg.parse(message)
+		if not msg.parse(message):
+			return
 
 		if programsResetFilter(msg):
 			msg.setRequestFlag(snc.RequestFlag.RESPONSE)

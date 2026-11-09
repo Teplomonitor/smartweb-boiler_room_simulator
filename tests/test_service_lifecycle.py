@@ -41,6 +41,7 @@ class TestCanLifecycle(unittest.TestCase):
 
 	def test_listener_can_unsubscribe_inside_callback(self):
 		listener = object.__new__(message.CanListener)
+		listener._frame_diagnostics = message.CanFrameDiagnostics('test')
 		subscriber = Mock()
 		subscriber.on_can_message_received.side_effect = (
 			lambda msg: message.CanListener.unsubscribe(subscriber))
