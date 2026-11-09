@@ -152,7 +152,7 @@ class WorkerConsole(wx.Frame):
 
 	def on_close(self, event):
 		# Hiding a monitor must not stop a test or destroy its log cursor.
-		if self.GetParent().running and event.CanVeto():
+		if event.CanVeto():
 			self.Hide()
 			event.Veto()
 		else:
@@ -175,6 +175,8 @@ class ParallelCanFrame(wx.Frame):
 		self.process = None
 		self.running = False
 		self.stopping = False
+		self.close_requested = False
+		self.closing = False
 		self.reader = None
 		self.lines = queue.Queue()
 		self.monitors = []
@@ -380,13 +382,27 @@ class ParallelCanFrame(wx.Frame):
 				end = datetime.now() + timedelta(seconds=remaining)
 				self.eta_label.SetLabel(f'Примерное окончание: {end:%d.%m.%Y %H:%M:%S}')
 
+	def live_monitors(self):
+		# wx wrappers can outlive their native windows, including forced closes.
+		self.monitors = [monitor for monitor in self.monitors
+			if monitor and not monitor.IsBeingDeleted()]
+		return self.monitors
+
+	def destroy_monitors(self):
+		monitors = self.live_monitors()
+		self.monitors = []
+		for monitor in monitors:
+			monitor.Destroy()
+
 	def show_consoles(self, event):
-		for monitor in self.monitors:
+		if self.closing:
+			return
+		for monitor in self.live_monitors():
 			monitor.Show()
 			monitor.Raise()
 
 	def start(self, event):
-		if self.running:
+		if self.running or self.close_requested or self.closing:
 			return
 		contexts = [name for index, name in enumerate(self.context_names)
 			if self.context_list.IsChecked(index)]
@@ -421,8 +437,7 @@ class ParallelCanFrame(wx.Frame):
 		self.update_progress()
 		self.console.Clear()
 		self.save_settings()
-		for monitor in self.monitors:
-			monitor.Destroy()
+		self.destroy_monitors()
 		self.monitors = [WorkerConsole(self, context, index)
 			for index, context in enumerate([*contexts, *(f'udp_{port}' for port in
 				validate_udp_ports(ports))])]
@@ -459,6 +474,8 @@ class ParallelCanFrame(wx.Frame):
 			append_console(self.console, f'Unable to request stop: {exc}\n')
 
 	def poll(self, event):
+		if self.closing:
+			return
 		for _ in range(250):
 			try:
 				line = self.lines.get_nowait()
@@ -477,10 +494,10 @@ class ParallelCanFrame(wx.Frame):
 			append_console(self.console, line)
 			if line.startswith('Parallel CAN run: '):
 				self.run_dir = Path(line.removeprefix('Parallel CAN run: ').strip())
-				for monitor in self.monitors:
+				for monitor in self.live_monitors():
 					monitor.log_path = (self.run_dir /
 						f'worker_{monitor.index}_{monitor.context}' / 'console.txt')
-		for monitor in self.monitors:
+		for monitor in self.live_monitors():
 			try:
 				monitor.read_log()
 			except OSError as exc:
@@ -514,21 +531,24 @@ class ParallelCanFrame(wx.Frame):
 			self.select_all_button.Enable()
 			self.clear_all_button.Enable()
 			self.save_settings()
+			if self.close_requested:
+				self.Close()
 
 	def on_close(self, event):
+		if self.closing:
+			return
 		if self.running:
+			self.close_requested = True
 			self.stop(None)
 			if event.CanVeto():
-				wx.MessageBox('Waiting for workers to stop. Close again after cleanup.',
-					'Parallel CAN/UDP', wx.OK | wx.ICON_INFORMATION, parent=self)
 				event.Veto()
 				return
+		self.closing = True
 		error = self.save_settings()
 		if error:
 			wx.MessageBox(error, 'Parallel CAN/UDP', wx.OK | wx.ICON_WARNING, parent=self)
 		self.timer.Stop()
-		for monitor in self.monitors:
-			monitor.Destroy()
+		self.destroy_monitors()
 		self.Destroy()
 
 

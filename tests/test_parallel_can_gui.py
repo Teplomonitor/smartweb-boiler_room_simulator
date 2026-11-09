@@ -158,7 +158,10 @@ class TestParallelCanGui(unittest.TestCase):
 				state = {'results': [{'scenario': frame.scenario_paths[0], 'result': 'FAIL'}],
 					'workers': [], 'pending': []}
 				frame.lines.put(parallel_can.COORDINATOR_STATE_PREFIX + json.dumps(state) + '\n')
-				frame.poll(None)
+				frame.close_requested = True
+				with patch.object(frame, 'Close') as close:
+					frame.poll(None)
+				close.assert_called_once_with()
 				self.assertEqual(frame.progress_label.GetLabel(), 'Завершено: 3 из 5')
 				self.assertEqual(frame.progress_gauge.GetValue(), 3)
 				self.assertIn('Неудачно: 2 (FAIL: 1, ERROR: 1)', frame.summary_label.GetLabel())
@@ -233,6 +236,8 @@ class TestParallelCanGui(unittest.TestCase):
 			frame.timer.Stop()
 			frame.reader.join()
 			frame.running = False
+			frame.monitors[0].Destroy()
+			wx.Yield()
 			second = Mock(stdout=io.StringIO(''), stdin=io.StringIO())
 			with patch('gui.parallel_can.subprocess.Popen', return_value=second):
 				frame.start(None)
@@ -335,9 +340,12 @@ class TestParallelCanGui(unittest.TestCase):
 			frame.running = True
 			event = Mock()
 			event.CanVeto.return_value = True
-			with patch.object(frame, 'stop') as stop, patch('gui.parallel_can.wx.MessageBox'):
+			with patch.object(frame, 'stop') as stop, patch('gui.parallel_can.wx.MessageBox') as message:
 				frame.on_close(event)
 			stop.assert_called_once_with(None)
+			message.assert_not_called()
+			self.assertTrue(frame.close_requested)
+			self.assertFalse(frame.closing)
 			event.Veto.assert_called_once()
 			self.assertFalse(self.settings_path.exists())
 		finally:
@@ -426,6 +434,53 @@ class TestParallelCanGui(unittest.TestCase):
 			self.assertEqual(mixed[mixed.index('--udp-ports') + 1], '31987')
 			with self.assertRaises(ValueError):
 				build_command([], ['a.py'], ['31987', '31987'])
+
+	def test_console_close_hides_and_preserves_log_after_run(self):
+		frame = ParallelCanFrame()
+		try:
+			monitor = WorkerConsole(frame, 'canable0', 0)
+			frame.monitors = [monitor]
+			monitor.console.SetValue('saved log\n')
+			monitor.offset = 42
+			for running in (True, False):
+				frame.running = running
+				frame.show_consoles(None)
+				self.assertTrue(monitor.IsShown())
+				monitor.Close()
+				wx.Yield()
+				self.assertTrue(monitor)
+				self.assertFalse(monitor.IsShown())
+				frame.show_consoles(None)
+				self.assertTrue(monitor.IsShown())
+				self.assertEqual(monitor.console.GetValue(), 'saved log\n')
+				self.assertEqual(monitor.offset, 42)
+		finally:
+			frame.running = False
+			frame.Destroy()
+
+	def test_deleted_consoles_are_ignored_and_cleanup_is_idempotent(self):
+		frame = ParallelCanFrame()
+		try:
+			deleted = WorkerConsole(frame, 'canable0', 0)
+			live = WorkerConsole(frame, 'udp_31987', 1)
+			frame.monitors = [deleted, live]
+			deleted.Close(force=True)
+			wx.Yield()
+			self.assertFalse(deleted)
+			frame.show_consoles(None)
+			self.assertEqual(frame.monitors, [live])
+			with patch.object(live, 'Destroy', wraps=live.Destroy) as destroy:
+				frame.destroy_monitors()
+				frame.destroy_monitors()
+				destroy.assert_called_once_with()
+			self.assertEqual(frame.monitors, [])
+			with patch.object(frame, 'Destroy', wraps=frame.Destroy) as destroy:
+				frame.on_close(Mock())
+				frame.on_close(Mock())
+				destroy.assert_called_once_with()
+		finally:
+			if frame and not frame.IsBeingDeleted():
+				frame.Destroy()
 
 	def test_window_follows_worker_log_and_coordinator_output(self):
 		app = wx.GetApp() or wx.App(False)

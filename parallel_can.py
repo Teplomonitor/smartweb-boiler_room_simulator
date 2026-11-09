@@ -47,8 +47,17 @@ def run_worker(args):
 	app = Application(args)
 	try:
 		app.start()
+		pending_commands = []
 		while not app.stop_event.is_set() and not app.worker.ready_event.wait(0.2):
-			pass
+			while True:
+				try:
+					command = commands.get_nowait()
+				except queue.Empty:
+					break
+				if command.get('type') == 'stop':
+					app.request_stop()
+					return 0 if app.worker.error is None else 2
+				pending_commands.append(command)
 		if app.stop_event.is_set():
 			send_event({'type': 'error', 'fatal': True, 'error': repr(app.worker.error)})
 			return 2
@@ -61,7 +70,7 @@ def run_worker(args):
 			app.worker._controller.get_program_list())})
 		while not app.stop_event.is_set():
 			try:
-				command = commands.get(timeout=0.2)
+				command = pending_commands.pop(0) if pending_commands else commands.get(timeout=0.2)
 			except queue.Empty:
 				continue
 			if command.get('type') == 'stop':

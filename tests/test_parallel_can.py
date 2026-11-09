@@ -217,6 +217,32 @@ class TestParallelCan(unittest.TestCase):
 		worker._scenario_thread.start_scenario.assert_called_once_with('one.py')
 		app.shutdown.assert_called_once()
 
+	def test_worker_can_stop_before_controller_is_ready(self):
+		for data in ('{"type": "stop"}\n', ''):
+			with self.subTest(data=data):
+				worker = Mock(error=None)
+				# Bound the test even if startup accidentally stops consuming commands.
+				worker.ready_event.wait.side_effect = [False, False, True]
+				app = Mock(worker=worker)
+				app.stop_event = threading.Event()
+				app.request_stop.side_effect = app.stop_event.set
+				commands_read = threading.Event()
+				commands = queue.Queue()
+				put_command = commands.put
+				def capture_command(command):
+					put_command(command)
+					commands_read.set()
+				app.start.side_effect = lambda: self.assertTrue(commands_read.wait(2))
+				with patch.object(parallel_can, 'Application', return_value=app), \
+					patch.object(parallel_can.queue, 'Queue', return_value=commands), \
+					patch.object(commands, 'put', side_effect=capture_command), \
+					patch('sys.stdin', io.StringIO(data)), patch('sys.stdout', io.StringIO()) as output:
+					self.assertEqual(parallel_can.run_worker(None), 0)
+				app.request_stop.assert_called_once_with()
+				app.shutdown.assert_called_once_with()
+				worker._scenario_thread.set_result_callback.assert_not_called()
+				self.assertEqual(output.getvalue(), '')
+
 	def test_dispatches_next_scenario_to_free_worker(self):
 		assignments = []
 		class FakeWorker:
