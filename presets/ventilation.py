@@ -40,7 +40,7 @@ def make_presets(supply_exhaust=False, analog=True):
 		ProgramPreset(snc.ProgramType.VENTILATION,
 			'PROGRAM_SCHEME_1' if supply_exhaust else 'PROGRAM_SCHEME_0',
 			VENTILATION_ID, 'Вентиляция', None,
-			[sensor(0, 124) if supply_exhaust else None, sensor(6), sensor(7),
+			[sensor(0, 124) if supply_exhaust else None, sensor(0, 125), sensor(1, 125),
 				sensor(1, 124) if supply_exhaust else None], outputs),
 		ProgramPreset(snc.ProgramType.HEATING_CIRCUIT, 'CIRCUIT_MIXED', CIRCUIT_ID,
 			'Контур калорифера', HeatingCircuitSettings(source=BOILER_ID,
@@ -53,5 +53,5 @@ def make_presets(supply_exhaust=False, analog=True):
 		ProgramPreset(snc.ProgramType.OUTDOOR_SENSOR, 'DEFAULT', OUTDOOR_ID,
 			'Улица', None, [sensor(5)], []),
 	]
-	controllers = [ControllerPreset('SWK_1', host, f'SWK_{host}') for host in (123, 124)]
+	controllers = [ControllerPreset('SWK_1', host, f'SWK_{host}') for host in (123, 124, 125)]
 	return programs, controllers

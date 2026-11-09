@@ -309,13 +309,15 @@ class VentilationTests(unittest.TestCase):
 			for analog in (False, True):
 				presets, controllers = make_presets(supply_exhaust, analog)
 				validate_program_presets(presets)
-				self.assertEqual(len(controllers), 2)
+				self.assertEqual([controller.get_id() for controller in controllers], [123, 124, 125])
 				room = next(p for p in presets if p.get_id() == ROOM_ID)
 				values = {p.get_parameter_id(): p.get_value() for p in room.getSettings().get()}
 				self.assertEqual(values[snc.RoomDeviceParameterId.VENTILATION_CIRCUIT], VENTILATION_ID)
 				self.assertEqual(values[snc.RoomDeviceParameterId.RESPONSIBLE_CIRCUIT_3], CIRCUIT_ID)
 				vent = next(p for p in presets if p.get_id() == VENTILATION_ID)
 				self.assertTrue(vent.get_inputs()[1] and vent.get_inputs()[2])
+				self.assertEqual([(mapping.get_host_id(), mapping.get_channel_id())
+					for mapping in vent.get_inputs()[1:3]], [(125, 0), (125, 1)])
 				self.assertEqual(vent.get_inputs()[0] is not None, supply_exhaust)
 				self.assertEqual(vent.get_inputs()[3] is not None, supply_exhaust)
 		self.program.set_scheme(1)
@@ -325,6 +327,33 @@ class VentilationTests(unittest.TestCase):
 		self.program.set_scheme(99)
 		with self.assertRaises(ValueError):
 			self.program.is_supply_exhaust()
+
+	def test_all_preset_channels_fit_declared_controllers(self):
+		from controllers.controller_io import ControllerIO
+
+		for supply_exhaust in (False, True):
+			for analog in (False, True):
+				with self.subTest(supply_exhaust=supply_exhaust, analog=analog):
+					presets, controller_presets = make_presets(supply_exhaust, analog)
+					controllers = {}
+					with patch('controllers.controller_io.sm.Message.send'):
+						for preset in controller_presets:
+							controller = ControllerIO(preset.get_id(), preset.get_type(), preset.get_title())
+							self.addCleanup(controller.clear)
+							controllers[controller.get_id()] = controller
+					used_channels = set()
+					for program in presets:
+						for kind, mappings in (('input', program.get_inputs()), ('output', program.get_outputs())):
+							for mapping in mappings:
+								if mapping is None:
+									continue
+								controller = controllers[mapping.get_host_id()]
+								validate = (controller.validate_input_channel if kind == 'input'
+									else controller.validate_output_channel)
+								validate(mapping.get_channel_id())
+								channel = (kind, mapping.get_host_id(), mapping.get_channel_id())
+								self.assertNotIn(channel, used_channels)
+								used_channels.add(channel)
 
 	def test_empty_room_settings_and_legacy_settings_are_supported(self):
 		preset = ProgramPreset(snc.ProgramType.ROOM_DEVICE, 'DEFAULT', 99, 'empty', None, [], [])
