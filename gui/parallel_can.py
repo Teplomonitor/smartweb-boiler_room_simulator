@@ -24,6 +24,24 @@ from scenario.scenario import get_scenario_dir
 ROOT = Path(__file__).resolve().parents[1]
 SETTINGS_PATH = ROOT / 'parallel_can_settings.json'
 MAX_CONSOLE_CHARS = 200_000
+RESULT_STATUS_PRIORITY = {'OK': 0, 'NOT_RUN': 1, 'INTERRUPTED': 2, 'FAIL': 3, 'ERROR': 4}
+
+
+def scenario_result_statuses(results):
+	"""A scenario is OK only when every reported checklist item is OK."""
+	statuses = {}
+	for result in results:
+		path = result.get('scenario')
+		status = result.get('result')
+		if not isinstance(path, str) or not path or not isinstance(status, str):
+			continue
+		# An unknown result must not turn a partially successful scenario into OK.
+		if status not in RESULT_STATUS_PRIORITY:
+			status = 'ERROR'
+		previous = statuses.get(path, 'OK')
+		if RESULT_STATUS_PRIORITY[status] >= RESULT_STATUS_PRIORITY[previous]:
+			statuses[path] = status
+	return statuses
 
 
 def result_counts(results):
@@ -163,6 +181,8 @@ class ParallelCanFrame(wx.Frame):
 		self.run_dir = None
 		self.run_total = 0
 		self.run_estimates = {}
+		self.scenario_statuses = {}
+		self.run_scenario_keys = set()
 		self.state = None
 		self.state_received_at = None
 		self.timer = wx.Timer(self)
@@ -180,17 +200,21 @@ class ParallelCanFrame(wx.Frame):
 		sizer.Add(self.udp_ports_input, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 6)
 		sizer.Add(wx.StaticText(panel, label='Scenarios (one, several, or all):'), 0, wx.ALL, 6)
 		self.scenario_paths = select_scenarios('all')
-		base = get_scenario_dir()
-		labels = [scenario_label(path, include_path=True, scenario_dir=base)
+		base = Path(get_scenario_dir()).resolve()
+		self.scenario_keys = {path: Path(path).resolve().relative_to(base).as_posix()
+			for path in self.scenario_paths}
+		self.scenario_labels = [scenario_label(path, include_path=True, scenario_dir=base)
 			for path in self.scenario_paths]
-		self.scenario_list = wx.CheckListBox(panel, choices=labels, style=wx.LB_HSCROLL)
+		self.scenario_list = wx.CheckListBox(panel, choices=self.scenario_labels, style=wx.LB_HSCROLL)
+		self.scenario_list.SetToolTip('Отметка — результат последнего запуска каждого сценария. '
+			'Галочки автоматически не снимаются.')
 		sizer.Add(self.scenario_list, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 6)
 		self.scenario_list.Bind(wx.EVT_CHECKLISTBOX, self.update_selection)
 		self.selection_label = wx.StaticText(panel, label='')
 		sizer.Add(self.selection_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 6)
-		buttons = wx.BoxSizer(wx.HORIZONTAL)
+		buttons = wx.WrapSizer(wx.HORIZONTAL)
 		for label, handler in (('Select all', self.select_all),
-			('Clear all', self.clear_all), ('Start', self.start),
+			('Clear all', self.clear_all), ('Снять галочки с OK', self.clear_ok), ('Start', self.start),
 			('Stop', self.stop), ('Show consoles', self.show_consoles)):
 			button = wx.Button(panel, label=label)
 			button.Bind(wx.EVT_BUTTON, handler)
@@ -203,7 +227,8 @@ class ParallelCanFrame(wx.Frame):
 				self.select_all_button = button
 			if label == 'Clear all':
 				self.clear_all_button = button
-		buttons.AddStretchSpacer()
+			if label == 'Снять галочки с OK':
+				self.clear_ok_button = button
 		sizer.Add(buttons, 0, wx.EXPAND | wx.ALL, 4)
 		self.progress_label = wx.StaticText(panel, label='Завершено: 0 из 0')
 		sizer.Add(self.progress_label, 0, wx.LEFT | wx.RIGHT, 6)
@@ -221,6 +246,7 @@ class ParallelCanFrame(wx.Frame):
 		self.Bind(wx.EVT_TIMER, self.poll, self.timer)
 		self.Bind(wx.EVT_CLOSE, self.on_close)
 		self.restore_settings()
+		self.refresh_scenario_labels()
 		self.update_selection()
 
 	def restore_settings(self):
@@ -242,6 +268,12 @@ class ParallelCanFrame(wx.Frame):
 			for index, path in enumerate(self.scenario_paths):
 				relative = Path(path).resolve().relative_to(base).as_posix()
 				self.scenario_list.Check(index, relative in scenarios)
+		statuses = settings.get('scenario_statuses', {})
+		if isinstance(statuses, dict):
+			for key in self.scenario_keys.values():
+				status = statuses.get(key)
+				if isinstance(status, str) and status in RESULT_STATUS_PRIORITY:
+					self.scenario_statuses[key] = status
 
 	def save_settings(self):
 		base = Path(get_scenario_dir()).resolve()
@@ -252,6 +284,9 @@ class ParallelCanFrame(wx.Frame):
 			'scenarios': [Path(path).resolve().relative_to(base).as_posix()
 				for index, path in enumerate(self.scenario_paths)
 				if self.scenario_list.IsChecked(index)],
+			# Transient states cannot resume after closing the dashboard.
+			'scenario_statuses': {key: {'PENDING': 'NOT_RUN', 'RUNNING': 'INTERRUPTED'}.get(status, status)
+				for key, status in self.scenario_statuses.items()},
 		}
 		try:
 			save_settings(SETTINGS_PATH, settings)
@@ -271,14 +306,54 @@ class ParallelCanFrame(wx.Frame):
 			self.scenario_list.Check(index, False)
 		self.update_selection()
 
+	def clear_ok(self, event):
+		if self.running:
+			return
+		for index, path in enumerate(self.scenario_paths):
+			if self.scenario_statuses.get(self.scenario_keys[path]) == 'OK':
+				self.scenario_list.Check(index, False)
+		self.update_selection()
+
+	def refresh_scenario_labels(self):
+		for index, path in enumerate(self.scenario_paths):
+			status = self.scenario_statuses.get(self.scenario_keys[path])
+			label = f'[{status}] {self.scenario_labels[index]}' if status else self.scenario_labels[index]
+			if self.scenario_list.GetString(index) != label:
+				checked = self.scenario_list.IsChecked(index)
+				self.scenario_list.SetString(index, label)
+				self.scenario_list.Check(index, checked)
+		self.update_selection()
+
+	def update_scenario_statuses(self, results, final=False):
+		if self.state and not final:
+			for worker in self.state.get('workers', []):
+				key = self.scenario_keys.get(worker.get('scenario'))
+				if key is not None:
+					self.scenario_statuses[key] = 'RUNNING'
+		for path, status in scenario_result_statuses(results).items():
+			key = self.scenario_keys.get(path)
+			if key is not None:
+				self.scenario_statuses[key] = status
+		if final:
+			for key in self.run_scenario_keys:
+				status = self.scenario_statuses.get(key)
+				if status in ('PENDING', 'RUNNING'):
+					self.scenario_statuses[key] = 'INTERRUPTED' if status == 'RUNNING' else 'NOT_RUN'
+		self.refresh_scenario_labels()
+
 	def update_selection(self, event=None):
 		selected = sum(self.scenario_list.IsChecked(index)
 			for index in range(self.scenario_list.GetCount()))
 		self.selection_label.SetLabel(f'Выбрано сценариев: {selected}')
+		self.clear_ok_button.Enable(not self.running and any(
+			self.scenario_list.IsChecked(index)
+			and self.scenario_statuses.get(self.scenario_keys[path]) == 'OK'
+			for index, path in enumerate(self.scenario_paths)))
 
 	def update_progress(self, final=False, results=None):
 		if results is None:
 			results = self.state.get('results', []) if self.state else []
+		self.update_scenario_statuses(results, final=final)
 		counts = result_counts(results)
 		completed = counts['OK'] + counts['FAIL'] + counts['ERROR']
 		self.progress_gauge.SetRange(max(1, self.run_total))
@@ -334,6 +409,9 @@ class ParallelCanFrame(wx.Frame):
 		self.run_dir = None
 		self.run_total = len(scenarios)
 		self.run_estimates = {}
+		self.run_scenario_keys = {self.scenario_keys[path] for path in scenarios}
+		for key in self.run_scenario_keys:
+			self.scenario_statuses[key] = 'PENDING'
 		for path in scenarios:
 			_, _, estimate = read_scenario_details(path)
 			self.run_estimates[path] = (estimate + PRESET_LOADING_ESTIMATE_SECONDS
@@ -435,6 +513,7 @@ class ParallelCanFrame(wx.Frame):
 			self.scenario_list.Enable()
 			self.select_all_button.Enable()
 			self.clear_all_button.Enable()
+			self.save_settings()
 
 	def on_close(self, event):
 		if self.running:

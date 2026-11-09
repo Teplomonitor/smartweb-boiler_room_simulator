@@ -14,7 +14,7 @@ import wx
 
 import parallel_can
 from gui.parallel_can import (ParallelCanFrame, WorkerConsole, build_command, can_contexts,
-	estimate_remaining, result_counts)
+	estimate_remaining, result_counts, scenario_result_statuses)
 from scenario.metadata import (PRESET_LOADING_ESTIMATE_SECONDS, format_estimated_duration,
 	read_scenario_details)
 
@@ -55,14 +55,97 @@ class TestParallelCanGui(unittest.TestCase):
 		self.assertEqual(estimate_remaining({'workers': [state['workers'][0]], 'pending': []},
 			estimates, age=100), 20)
 
+	def test_scenario_status_requires_all_checklist_items_to_pass(self):
+		results = [{'scenario': 'a.py', 'result': 'FAIL'},
+			{'scenario': 'a.py', 'result': 'OK'},
+			{'scenario': 'b.py', 'result': 'OK'},
+			{'scenario': 'b.py', 'result': 'OK'},
+			{'scenario': 'c.py', 'result': 'OK'},
+			{'scenario': 'c.py', 'result': 'ERROR'},
+			{'scenario': 'd.py', 'result': 'INTERRUPTED'},
+			{'scenario': 'e.py', 'result': 'NOT_RUN'},
+			{'scenario': 'f.py', 'result': 'unknown'},
+			{'scenario': 'f.py', 'result': 'OK'},
+			{'result': 'OK'}, {'scenario': None, 'result': 'OK'}]
+		expected = {'a.py': 'FAIL', 'b.py': 'OK', 'c.py': 'ERROR',
+			'd.py': 'INTERRUPTED', 'e.py': 'NOT_RUN', 'f.py': 'ERROR'}
+		self.assertEqual(scenario_result_statuses(results), expected)
+		self.assertEqual(scenario_result_statuses(list(reversed(results))), expected)
+
+	def test_scenario_status_labels_preserve_checks_paths_and_estimates(self):
+		frame = ParallelCanFrame()
+		try:
+			paths = list(frame.scenario_paths)
+			labels = [frame.scenario_list.GetString(i) for i in range(6)]
+			for index in (0, 2, 4):
+				frame.scenario_list.Check(index, True)
+			statuses = ('OK', 'FAIL', 'ERROR', 'INTERRUPTED', 'NOT_RUN')
+			results = [{'scenario': paths[i], 'result': status} for i, status in enumerate(statuses)]
+			results.append({'scenario': 'unknown.py', 'result': 'OK'})
+			frame.update_progress(results=results)
+			frame.update_progress(results=results)  # Prefixes must not accumulate.
+			for index, status in enumerate(statuses):
+				self.assertEqual(frame.scenario_list.GetString(index), f'[{status}] {labels[index]}')
+			self.assertEqual(frame.scenario_list.GetString(5), labels[5])
+			self.assertEqual(frame.scenario_paths, paths)
+			self.assertEqual([frame.scenario_list.IsChecked(i) for i in range(6)],
+				[True, False, True, False, True, False])
+			self.assertTrue(frame.clear_ok_button.IsEnabled())
+		finally:
+			frame.Destroy()
+
+	def test_clear_ok_only_unchecks_successful_scenarios(self):
+		frame = ParallelCanFrame()
+		try:
+			statuses = ('OK', 'FAIL', 'ERROR', 'INTERRUPTED', 'NOT_RUN', None, 'OK')
+			for index, status in enumerate(statuses):
+				frame.scenario_list.Check(index, index != 6)
+				if status is not None:
+					frame.scenario_statuses[frame.scenario_keys[frame.scenario_paths[index]]] = status
+			frame.refresh_scenario_labels()
+			before = dict(frame.scenario_statuses)
+			frame.running = True
+			frame.update_selection()
+			self.assertFalse(frame.clear_ok_button.IsEnabled())
+			frame.clear_ok(None)
+			self.assertTrue(frame.scenario_list.IsChecked(0))
+			frame.running = False
+			frame.clear_ok(None)
+			self.assertEqual([frame.scenario_list.IsChecked(i) for i in range(7)],
+				[False, True, True, True, True, True, False])
+			self.assertEqual(frame.selection_label.GetLabel(), 'Выбрано сценариев: 5')
+			self.assertEqual(frame.scenario_statuses, before)
+			self.assertFalse(frame.clear_ok_button.IsEnabled())
+		finally:
+			frame.running = False
+			frame.Destroy()
+
+	def test_failed_start_keeps_previous_results_and_selection(self):
+		frame = ParallelCanFrame()
+		try:
+			frame.udp_ports_input.SetValue('31987')
+			frame.scenario_list.Check(0, True)
+			key = frame.scenario_keys[frame.scenario_paths[0]]
+			frame.scenario_statuses[key] = 'OK'
+			frame.refresh_scenario_labels()
+			with patch('gui.parallel_can.subprocess.Popen', side_effect=OSError('unavailable')), \
+				patch('gui.parallel_can.wx.MessageBox'):
+				frame.start(None)
+			self.assertEqual(frame.scenario_statuses[key], 'OK')
+			self.assertTrue(frame.scenario_list.IsChecked(0))
+			self.assertTrue(frame.clear_ok_button.IsEnabled())
+			self.assertFalse(frame.running)
+		finally:
+			frame.Destroy()
+
 	def test_progress_reconciles_final_results_after_stop(self):
 		app = wx.GetApp() or wx.App(False)
 		frame = ParallelCanFrame()
 		try:
 			with tempfile.TemporaryDirectory() as temp_dir:
 				root = Path(temp_dir)
-				results = [{'result': value} for value in
-					('OK', 'FAIL', 'ERROR', 'INTERRUPTED', 'NOT_RUN')]
+				results = [{'scenario': frame.scenario_paths[index], 'result': value}
+					for index, value in enumerate(('OK', 'FAIL', 'ERROR', 'INTERRUPTED', 'NOT_RUN'))]
 				(root / 'results.json').write_text(json.dumps(results), encoding='utf-8')
 				frame.run_total = 5
 				frame.run_dir = root
@@ -72,7 +155,8 @@ class TestParallelCanGui(unittest.TestCase):
 				frame.process.poll.return_value = 2
 				frame.reader = Mock()
 				frame.reader.is_alive.return_value = False
-				state = {'results': results[:2], 'workers': [], 'pending': []}
+				state = {'results': [{'scenario': frame.scenario_paths[0], 'result': 'FAIL'}],
+					'workers': [], 'pending': []}
 				frame.lines.put(parallel_can.COORDINATOR_STATE_PREFIX + json.dumps(state) + '\n')
 				frame.poll(None)
 				self.assertEqual(frame.progress_label.GetLabel(), 'Завершено: 3 из 5')
@@ -81,6 +165,10 @@ class TestParallelCanGui(unittest.TestCase):
 				self.assertIn('Прервано: 1 | Не выполнено: 1', frame.summary_label.GetLabel())
 				self.assertNotIn(parallel_can.COORDINATOR_STATE_PREFIX, frame.console.GetValue())
 				self.assertFalse(frame.running)
+				self.assertTrue(frame.scenario_list.GetString(0).startswith('[OK] '))
+				self.assertTrue(frame.scenario_list.GetString(4).startswith('[NOT_RUN] '))
+				saved = json.loads(self.settings_path.read_text(encoding='utf-8'))
+				self.assertEqual(saved['scenario_statuses'][frame.scenario_keys[frame.scenario_paths[0]]], 'OK')
 		finally:
 			frame.Destroy()
 			self.assertIsNotNone(app)
@@ -94,18 +182,26 @@ class TestParallelCanGui(unittest.TestCase):
 			frame.process = Mock(stdin=io.StringIO(), returncode=2)
 			frame.process.poll.return_value = None
 			frame.reader = Mock()
-			state = {'results': [{'result': 'FAIL'}], 'pending': ['pending'],
-				'workers': [{'ready': True, 'scenario': 'running', 'elapsed': 20}]}
+			completed, running, pending = frame.scenario_paths[:3]
+			frame.run_estimates = {running: 100, pending: 50}
+			frame.run_scenario_keys = {frame.scenario_keys[path] for path in (completed, running, pending)}
+			frame.scenario_statuses = {key: 'PENDING' for key in frame.run_scenario_keys}
+			state = {'results': [{'scenario': completed, 'result': 'FAIL'}], 'pending': [pending],
+				'workers': [{'ready': True, 'scenario': running, 'elapsed': 20}]}
 			frame.lines.put(parallel_can.COORDINATOR_STATE_PREFIX + json.dumps(state) + '\n')
 			frame.poll(None)
 			self.assertEqual(frame.progress_gauge.GetValue(), 1)
 			self.assertEqual(frame.progress_label.GetLabel(), 'Завершено: 1 из 3')
 			self.assertIn('Примерное окончание:', frame.eta_label.GetLabel())
+			self.assertTrue(frame.scenario_list.GetString(1).startswith('[RUNNING] '))
 			frame.process.poll.return_value = 2
 			frame.reader.is_alive.return_value = False
 			frame.poll(None)
 			self.assertIn('Итоговый файл недоступен', frame.eta_label.GetLabel())
 			self.assertIn('Неудачно: 1', frame.summary_label.GetLabel())
+			self.assertTrue(frame.scenario_list.GetString(0).startswith('[FAIL] '))
+			self.assertTrue(frame.scenario_list.GetString(1).startswith('[INTERRUPTED] '))
+			self.assertTrue(frame.scenario_list.GetString(2).startswith('[NOT_RUN] '))
 		finally:
 			frame.running = False
 			frame.Destroy()
@@ -116,6 +212,9 @@ class TestParallelCanGui(unittest.TestCase):
 		try:
 			frame.udp_ports_input.SetValue('31987')
 			frame.scenario_list.Check(0, True)
+			selected_key = frame.scenario_keys[frame.scenario_paths[0]]
+			other_key = frame.scenario_keys[frame.scenario_paths[1]]
+			frame.scenario_statuses.update({selected_key: 'OK', other_key: 'OK'})
 			frame.update_selection()
 			self.assertIn('1', frame.selection_label.GetLabel())
 			process = Mock()
@@ -125,6 +224,9 @@ class TestParallelCanGui(unittest.TestCase):
 				frame.start(None)
 			self.assertEqual(frame.progress_label.GetLabel(), 'Завершено: 0 из 1')
 			self.assertFalse(frame.select_all_button.IsEnabled())
+			self.assertFalse(frame.clear_ok_button.IsEnabled())
+			self.assertTrue(frame.scenario_list.GetString(0).startswith('[PENDING] '))
+			self.assertTrue(frame.scenario_list.GetString(1).startswith('[OK] '))
 			frame.state = {'results': [{'result': 'FAIL'}]}
 			frame.update_progress()
 			self.assertEqual(frame.progress_gauge.GetValue(), 1)
@@ -136,6 +238,8 @@ class TestParallelCanGui(unittest.TestCase):
 				frame.start(None)
 			self.assertEqual(frame.progress_gauge.GetValue(), 0)
 			self.assertIn('Неудачно: 0', frame.summary_label.GetLabel())
+			self.assertEqual(frame.scenario_statuses[selected_key], 'PENDING')
+			self.assertEqual(frame.scenario_statuses[other_key], 'OK')
 		finally:
 			frame.timer.Stop()
 			frame.running = False
@@ -166,10 +270,12 @@ class TestParallelCanGui(unittest.TestCase):
 			frame.context_list.Check(len(frame.context_names) - 1, True)
 			frame.udp_ports_input.SetValue('31987, 31988')
 			frame.scenario_list.Check(len(frame.scenario_paths) - 1, True)
+			frame.scenario_statuses[frame.scenario_keys[scenario]] = 'OK'
 			frame.on_close(Mock())
 			settings = json.loads(self.settings_path.read_text(encoding='utf-8'))
 			settings['contexts'].append('removed_context')
 			settings['scenarios'].append('removed_scenario.py')
+			settings['scenario_statuses']['removed_scenario.py'] = 'OK'
 			self.settings_path.write_text(json.dumps(settings), encoding='utf-8')
 			with patch('gui.parallel_can.can_contexts', return_value=list(reversed(frame.context_names))), \
 				patch('gui.parallel_can.select_scenarios', return_value=list(reversed(frame.scenario_paths))):
@@ -180,6 +286,11 @@ class TestParallelCanGui(unittest.TestCase):
 				self.assertEqual(restored.udp_ports_input.GetValue(), '31987, 31988')
 				self.assertEqual([path for i, path in enumerate(restored.scenario_paths)
 					if restored.scenario_list.IsChecked(i)], [scenario])
+				index = restored.scenario_paths.index(scenario)
+				self.assertTrue(restored.scenario_list.GetString(index).startswith('[OK] '))
+				self.assertEqual(restored.scenario_statuses, {restored.scenario_keys[scenario]: 'OK'})
+				restored.clear_ok(None)
+				self.assertFalse(restored.scenario_list.IsChecked(index))
 			finally:
 				restored.Destroy()
 		finally:
@@ -246,7 +357,7 @@ class TestParallelCanGui(unittest.TestCase):
 	def test_invalid_settings_fields_are_ignored(self):
 		app = wx.GetApp() or wx.App(False)
 		self.settings_path.write_text(json.dumps({'contexts': None, 'udp_ports': [],
-			'scenarios': 'all'}), encoding='utf-8')
+			'scenarios': 'all', 'scenario_statuses': []}), encoding='utf-8')
 		frame = ParallelCanFrame()
 		try:
 			self.assertEqual(frame.udp_ports_input.GetValue(), '')
@@ -254,9 +365,36 @@ class TestParallelCanGui(unittest.TestCase):
 				for i in range(frame.context_list.GetCount())))
 			self.assertFalse(any(frame.scenario_list.IsChecked(i)
 				for i in range(frame.scenario_list.GetCount())))
+			self.assertEqual(frame.scenario_statuses, {})
 		finally:
 			frame.Destroy()
 			self.assertIsNotNone(app)
+
+	def test_invalid_saved_statuses_are_ignored(self):
+		frame = ParallelCanFrame()
+		try:
+			keys = list(frame.scenario_keys.values())[:3]
+		finally:
+			frame.Destroy()
+		self.settings_path.write_text(json.dumps({'scenario_statuses': {
+			keys[0]: [], keys[1]: 'RUNNING', keys[2]: 'unexpected'}}), encoding='utf-8')
+		restored = ParallelCanFrame()
+		try:
+			self.assertEqual(restored.scenario_statuses, {})
+		finally:
+			restored.Destroy()
+
+	def test_transient_statuses_are_saved_as_unfinished(self):
+		frame = ParallelCanFrame()
+		try:
+			keys = list(frame.scenario_keys.values())[:3]
+			frame.scenario_statuses.update(dict(zip(keys, ('PENDING', 'RUNNING', 'FAIL'))))
+			frame.save_settings()
+			self.assertEqual(json.loads(self.settings_path.read_text(encoding='utf-8'))['scenario_statuses'],
+				dict(zip(keys, ('NOT_RUN', 'INTERRUPTED', 'FAIL'))))
+			self.assertEqual(frame.scenario_statuses[keys[0]], 'PENDING')
+		finally:
+			frame.Destroy()
 
 	def test_command_uses_existing_cli_dispatch(self):
 		with patch('gui.parallel_can.select_scenarios', return_value=['a.py']):

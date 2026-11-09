@@ -18,9 +18,12 @@ class WaitingWorker(threading.Thread):
 		super().__init__(name='test worker', daemon=True)
 		self.stop_event = stop_event
 		self.error = None
+		self.cleanup_complete = False
+		self.args = args
 
 	def run(self):
 		self.stop_event.wait()
+		self.cleanup_complete = True
 
 
 class TestApplicationLifecycle(unittest.TestCase):
@@ -109,6 +112,62 @@ class TestApplicationLifecycle(unittest.TestCase):
 		worker = self.make_worker()
 		self.assertIsNone(worker.ident)
 		self.assertFalse(worker.is_alive())
+
+	def interactive_application(self):
+		self.args.gui = True
+		self.args.interactive_connection = True
+		gui = Mock()
+		app = self.make_application(gui_factory=Mock(return_value=gui))
+		app.start()
+		return app, gui
+
+	def test_interactive_start_waits_for_connect(self):
+		app, gui = self.interactive_application()
+		self.assertIsNone(app.worker)
+		self.assertFalse(self.runtime.taskEnable())
+		gui.configure_connection.assert_called_once_with(app)
+		self.assertTrue(app.shutdown())
+		gui.stop.assert_called_once()
+
+	def test_interactive_disconnect_keeps_window_and_reconnects(self):
+		from connection_settings import DEFAULT_SETTINGS
+		app, gui = self.interactive_application()
+		app.connect(dict(DEFAULT_SETTINGS, controller_id=123, transport='udp', udp_port=32000))
+		first = app.worker
+		self.assertEqual((first.args.id, first.args.can, first.args.udp), (123, 'virtual', 32000))
+		self.assertTrue(first.keep_gui_open)
+		with self.assertRaises(RuntimeError):
+			app.connect(DEFAULT_SETTINGS)
+		app.disconnect()
+		first.join(2)
+		self.assertFalse(first.is_alive())
+		self.assertFalse(app.closing)
+		gui.stop.assert_not_called()
+		with patch.object(self.runtime, 'reset_connection_services') as reset:
+			app.connect(dict(DEFAULT_SETTINGS, can_context='canable0'))
+			reset.assert_called_once()
+		self.assertIsNot(app.worker, first)
+		self.assertEqual((app.worker.args.can, app.worker.args.udp), ('canable0', 0))
+		self.assertTrue(self.runtime.taskEnable())
+
+	def test_interactive_reconnect_refuses_incomplete_cleanup(self):
+		from connection_settings import DEFAULT_SETTINGS
+		app, gui = self.interactive_application()
+		app.connect(DEFAULT_SETTINGS)
+		app.disconnect()
+		app.worker.join(2)
+		app.worker.cleanup_complete = False
+		with self.assertRaisesRegex(RuntimeError, 'ресурсы'):
+			app.connect(DEFAULT_SETTINGS)
+		gui.stop.assert_not_called()
+
+	def test_interactive_worker_cleanup_does_not_stop_gui(self):
+		worker = self.make_worker()
+		worker.keep_gui_open = True
+		worker._guiThread = Mock()
+		worker.clear()
+		worker._guiThread.stop.assert_not_called()
+		self.assertTrue(worker.cleanup_complete)
 
 	def test_command_line_scenario_starts_after_worker_is_ready(self):
 		self.args.scenario = 'test.py'

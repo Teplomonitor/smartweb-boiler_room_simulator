@@ -11,6 +11,7 @@ except ImportError:
 
 import main
 import config
+from connection_settings import can_contexts, load_settings, save_settings
 
 from gui.parameter import GuiParameterApi  as GuiParameterApi
 from gui.parameter import GuiInputChannel  as GuiInputChannel
@@ -136,7 +137,7 @@ class MainFrame ( wx.Frame ):
 			loadPresetSubmenu.Append( presetMenuItem )
 			self.Bind( wx.EVT_MENU, presetItem.onPresetSelect, id = presetMenuItem.GetId() )
 
-		self.m_menu1.AppendSubMenu( loadPresetSubmenu, _(u"Load preset") )
+		self._presets_menu_item = self.m_menu1.AppendSubMenu( loadPresetSubmenu, _(u"Load preset") )
 		
 	def addScenarioMenu(self):
 		def addScenarioItem(submenu, scenarioTitle, scenarioDir = None, label = None):
@@ -184,7 +185,7 @@ class MainFrame ( wx.Frame ):
 		startScenarioSubmenu.AppendSeparator()
 		addScenarioItem(startScenarioSubmenu, 'Stop')
 		
-		self.m_menu1.AppendSubMenu( startScenarioSubmenu, _(u"Scenario") )
+		self._scenarios_menu_item = self.m_menu1.AppendSubMenu( startScenarioSubmenu, _(u"Scenario") )
 
 	def onScenarioSelection(self, event):
 		scenario_paths = sc.get_scenario_files_list()
@@ -259,8 +260,13 @@ class MainFrame ( wx.Frame ):
 		self.m_menu1.Append( self.m_menuItem2 )
 
 		self.m_menubar1.Append( self.m_menu1, _(u"File") )
+		config_menu = wx.Menu()
+		self._connection_menu_item = config_menu.Append(wx.ID_ANY, 'Подключение…')
+		self.m_menubar1.Append(config_menu, 'Config')
+		self.Bind(wx.EVT_MENU, self.on_connection_config, id=self._connection_menu_item.GetId())
 
 		self.SetMenuBar( self.m_menubar1 )
+		self.m_menubar1.EnableTop(1, False)
 		self.scenarioStatusBar = self.CreateStatusBar(2)
 		self.scenarioStatusBar.SetStatusWidths([-1, 220])
 		self.set_scenario_status_now('idle')
@@ -361,6 +367,9 @@ class MainFrame ( wx.Frame ):
 
 	def __init__( self, parent , guithread, profile='main'):
 		self._profile = profile
+		self._connection_app = None
+		self.connection_dialog = None
+		self._completed_worker = None
 		self._config = config.ConfigParserInstance()
 		self._scenario_status = 'idle'
 		self._scenario_title = ''
@@ -379,6 +388,157 @@ class MainFrame ( wx.Frame ):
 		self._collector_flow_labels = {}
 		self._collector_timer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.on_collector_timer, self._collector_timer)
+		self._connection_timer = wx.Timer(self)
+		self.Bind(wx.EVT_TIMER, self.update_connection, self._connection_timer)
+
+	def create_connection_dialog(self):
+		self.connection_dialog = wx.Dialog(self, title='Настройки подключения',
+			style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+		dialog = self.connection_dialog
+		self.connection_panel = wx.Panel(dialog)
+		panel = self.connection_panel
+		layout = wx.BoxSizer(wx.VERTICAL)
+		fields = wx.FlexGridSizer(0, 2, panel.FromDIP(6), panel.FromDIP(12))
+		fields.AddGrowableCol(1, 1)
+		self.controller_id_ctrl = wx.TextCtrl(panel, value='0', size=(110, -1))
+		self.controller_id_ctrl.SetToolTip('0 — автоматический поиск; 1–255 — ID контроллера')
+		self.transport_ctrl = wx.Choice(panel, choices=['CAN', 'UDP'])
+		self.transport_ctrl.SetSelection(0)
+		self.can_context_ctrl = wx.ComboBox(panel, choices=can_contexts(), style=wx.CB_READONLY)
+		self.udp_port_ctrl = wx.TextCtrl(panel, value='31987', size=(110, -1))
+		for title, control in (
+				('ID контроллера:', self.controller_id_ctrl),
+				('Интерфейс:', self.transport_ctrl),
+				('Конфигурация CAN:', self.can_context_ctrl),
+				('UDP-порт:', self.udp_port_ctrl)):
+			label = wx.StaticText(panel, label=title)
+			fields.Add(label, 0, wx.EXPAND)
+			fields.Add(control, 0, wx.EXPAND)
+		layout.Add(fields, 0, wx.EXPAND | wx.ALL, panel.FromDIP(5))
+		buttons = wx.BoxSizer(wx.HORIZONTAL)
+		self.connect_button = wx.Button(panel, label='Подключить')
+		self.disconnect_button = wx.Button(panel, label='Отключить')
+		close_button = wx.Button(panel, wx.ID_CLOSE, label='Закрыть')
+		self.connection_status = wx.StaticText(panel, label='Не подключено', style=wx.ST_ELLIPSIZE_END)
+		buttons.Add(self.connect_button, 0, wx.RIGHT, 5)
+		buttons.Add(self.disconnect_button, 0, wx.RIGHT, 10)
+		buttons.AddStretchSpacer()
+		buttons.Add(close_button, 0)
+		layout.Add(buttons, 0, wx.EXPAND | wx.ALL, 5)
+		layout.Add(self.connection_status, 0, wx.EXPAND | wx.ALL, 5)
+		panel.SetSizer(layout)
+		dialog_sizer = wx.BoxSizer(wx.VERTICAL)
+		dialog_sizer.SetMinSize(wx.Size(dialog.FromDIP(480), -1))
+		dialog_sizer.Add(panel, 1, wx.EXPAND | wx.ALL, dialog.FromDIP(5))
+		dialog.SetSizerAndFit(dialog_sizer)
+		dialog.SetMinSize(dialog.GetSize())
+		dialog.SetEscapeId(wx.ID_CLOSE)
+		dialog.Bind(wx.EVT_CLOSE, self.on_connection_dialog_close)
+		close_button.Bind(wx.EVT_BUTTON, self.on_connection_dialog_close)
+		self.transport_ctrl.Bind(wx.EVT_CHOICE, self.update_connection)
+		self.connect_button.Bind(wx.EVT_BUTTON, self.on_connect)
+		self.disconnect_button.Bind(wx.EVT_BUTTON, self.on_disconnect)
+
+	def on_connection_config(self, event):
+		if self._connection_app is None or self._connection_app.closing:
+			return
+		self.update_connection()
+		if not self.connection_dialog.IsShown():
+			self.connection_dialog.CentreOnParent()
+			self.connection_dialog.Show()
+		self.connection_dialog.Raise()
+
+	def on_connection_dialog_close(self, event):
+		# Hiding configuration must not disconnect or discard the current form.
+		if isinstance(event, wx.CloseEvent):
+			if not event.CanVeto():
+				event.Skip()
+				return
+			event.Veto()
+		self.connection_dialog.Hide()
+
+	def configure_connection(self, application):
+		self._connection_app = application
+		self.create_connection_dialog()
+		settings = load_settings(self._config, self._profile)
+		self.controller_id_ctrl.SetValue(str(settings['controller_id']))
+		self.transport_ctrl.SetSelection(0 if settings['transport'] == 'can' else 1)
+		if self.can_context_ctrl.FindString(settings['can_context']) == wx.NOT_FOUND:
+			self.can_context_ctrl.Append(settings['can_context'])
+		self.can_context_ctrl.SetValue(settings['can_context'])
+		self.udp_port_ctrl.SetValue(str(settings['udp_port']))
+		self.m_menubar1.EnableTop(1, True)
+		self._connection_timer.Start(200)
+		self.update_connection()
+		self.Layout()
+		self.connection_panel.Layout()
+		self.connection_panel.Refresh()
+
+	def on_connect(self, event):
+		try:
+			settings = save_settings(self._config, self._profile, {
+				'controller_id': self.controller_id_ctrl.GetValue(),
+				'transport': 'can' if self.transport_ctrl.GetSelection() == 0 else 'udp',
+				'can_context': self.can_context_ctrl.GetValue(),
+				'udp_port': self.udp_port_ctrl.GetValue(),
+			})
+			self._connection_app.connect(settings)
+		except (ValueError, RuntimeError, OSError) as exc:
+			wx.MessageBox(str(exc), 'Ошибка подключения', wx.OK | wx.ICON_ERROR, parent=self.connection_dialog)
+		self.update_connection()
+
+	def on_disconnect(self, event):
+		if self.connection_busy():
+			return
+		self._connection_app.disconnect()
+		self.update_connection()
+
+	def connection_busy(self):
+		worker = self._connection_app.worker
+		scenario_thread = getattr(worker, '_scenario_thread', None)
+		return bool(self._preset_loading or getattr(worker, '_newPreset', None)
+			or self._scenario_status in ('preparing', 'running')
+			or getattr(scenario_thread, '_newScenario', None)
+			or getattr(scenario_thread, '_scenarioQueue', None)
+			or getattr(scenario_thread, '_currentScenario', None))
+
+	def update_connection(self, event=None):
+		application = self._connection_app
+		if application is None:
+			return
+		worker = application.worker
+		alive = worker is not None and worker.is_alive()
+		if application.closing:
+			if not alive:
+				self._connection_timer.Stop()
+				self._guithread.stop()
+			return
+		stopping = application.stop_event.is_set()
+		ready = alive and worker.ready_event.is_set() and not stopping
+		busy = self.connection_busy()
+		if worker is not None and not alive and worker is not self._completed_worker:
+			self._completed_worker = worker
+			self._guithread.ClearNow()
+		if alive:
+			status = 'Отключение…' if stopping else ('Подключено' if ready else 'Подключение…')
+		elif worker is not None and worker.error:
+			status = f'Ошибка: {worker.error}'
+		else:
+			status = 'Не подключено'
+		self.connection_status.SetLabel(status)
+		self.connection_status.SetToolTip(status)
+		can_reconnect = worker is None or worker.cleanup_complete
+		self.connect_button.Enable(not alive and can_reconnect)
+		self.disconnect_button.Enable(alive and not stopping and not busy)
+		self.controller_id_ctrl.Enable(not alive)
+		self.transport_ctrl.Enable(not alive)
+		is_can = self.transport_ctrl.GetSelection() == 0
+		self.can_context_ctrl.Enable(not alive and is_can)
+		self.udp_port_ctrl.Enable(not alive and not is_can)
+		self._presets_menu_item.Enable(ready and not busy)
+		self._scenarios_menu_item.Enable(ready and not self._preset_loading
+			and not getattr(worker, '_newPreset', None))
+		self.m_menuItem1.Enable(ready and not busy)
 		
 	def addInput(self, ProgramInputsBox, programInput):
 		inputTitle = programInput.get_title()
@@ -742,6 +902,9 @@ class guiThread():
 		
 	def run(self):
 		self._app.MainLoop()
+
+	def configure_connection(self, application):
+		self._ex.configure_connection(application)
 	
 
 

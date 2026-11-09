@@ -41,7 +41,23 @@ def report_can_failure(error):
 	if application is not None:
 		if application.worker is not None:
 			application.worker.error = application.worker.error or error
-		application.request_stop()
+		if getattr(application, 'interactive_connection', False):
+			application.disconnect()
+		else:
+			application.request_stop()
+
+
+def reset_connection_services():
+	"""Only called after the previous worker and all owned services have stopped."""
+	for service in (sm.CanListener, sm.CanBusInterface, udp.UdpCanBusInterface,
+			cc.Controller, ss.Simulator, scenario.ScenarioThread):
+		if 'instance' in service.__dict__:
+			delattr(service, 'instance')
+	with sm.CanListener._listeners_lock:
+		sm.CanListener._listeners.clear()
+	with udp.ip_list_lock:
+		udp.ip_list.clear()
+	udp.self_ip_list.clear()
 
 
 def MainThread(args=None):
@@ -107,6 +123,8 @@ class ApplicationWorker(threading.Thread):
 		self._udp_bridge = None
 		self.error = None
 		self.ready_event = threading.Event()
+		self.keep_gui_open = False
+		self.cleanup_complete = False
 
 		self.configParserInstance = config.ConfigParserInstance()
 		
@@ -202,7 +220,8 @@ class ApplicationWorker(threading.Thread):
 		controllerHost = cc.Controller(controllerId, self._guiThread)
 		self._controller = controllerHost
 		
-		controllerHost.initController(False, self._programPresetList)
+		if controllerHost.initController(False, self._programPresetList) is False:
+			raise RuntimeError('Controller initialization failed; check the selected preset')
 		if not self.taskEnable():
 			return
 		ctrlIo = ccio.initVirtualControllers(self._controllerIoList)
@@ -255,10 +274,12 @@ class ApplicationWorker(threading.Thread):
 
 	def clear(self):
 		# Use owned references only: cleanup must never create a service.
+		self.cleanup_complete = True
 		def cleanup(name, action):
 			try:
 				action()
 			except Exception as exc:
+				self.cleanup_complete = False
 				self.error = self.error or exc
 				print_error(f'Failed to stop {name}: {exc!r}')
 
@@ -285,7 +306,7 @@ class ApplicationWorker(threading.Thread):
 			cleanup('UDP bridge', self._udp_bridge.stop)
 		if self._can_listener:
 			cleanup('CAN listener', self._can_listener.close)
-		if self._guiThread:
+		if self._guiThread and not self.keep_gui_open:
 			cleanup('GUI', self._guiThread.stop)
 			
 	def loadPreset(self, newPreset, scenario=False):

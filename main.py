@@ -164,6 +164,7 @@ def main(argv=None): # IGNORE:C0111
 		program_license = getProgramLicense()
 		# Setup argument parser
 		args = initArgParser(program_license, argv)
+		args.interactive_connection = args.gui and not (sys.argv[1:] if argv is None else argv)
 		if args.scenarios and not (args.can_ports or args.udp_ports):
 			raise ValueError('--scenarios requires --can-ports or --udp-ports')
 		if args.can_ports or args.udp_ports:
