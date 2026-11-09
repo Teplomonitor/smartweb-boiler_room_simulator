@@ -76,6 +76,8 @@ class Simulator(object):
 	
 	def getAdditionalSourceTemperature(self):
 		if self._ventilation is not None:
+			# The third circuit heats the ventilation coil, not the room directly.
+			# Return room temperature to avoid counting that heat twice.
 			return self.get_temperature()
 		return self.getSourceTemperature(2)
 
@@ -108,6 +110,7 @@ class Simulator(object):
 		temp = self.get_temperature()
 		temp = temp + (self.getHeating() + self.getCooling())*0.0005
 		if self._ventilation is not None:
+			# Duct air heats or cools the room only while there is supply airflow.
 			temp += self._ventilation.room_temperature_change(temp)
 		temp = limit(-10, temp, 50)
 

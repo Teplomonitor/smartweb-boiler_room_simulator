@@ -234,6 +234,116 @@ class VentilationTests(unittest.TestCase):
 		self.assertEqual(self.room.getAdditionalSourceTemperature(), 60)
 		self.assertEqual(self.room.getAdditionalSourcePower(), 1)
 
+	def test_manual_duct_temperature_heats_and_cools_room_even_with_sensor_faults(self):
+		channel = self.program.get_input_channel('air_temperature')
+		channel.set_manual(True)
+		self.outdoor_temperature = 20.0  # Isolate ventilation from outdoor losses.
+		elapsed = 60
+		capacity = self.room_program.get_parameters()['thermal_capacity'].get_value() * 1000
+		for temperature in (50.0, 0.0, 20.0):
+			for fault in (None, 'open', 'short'):
+				with self.subTest(temperature=temperature, fault=fault):
+					self.room.set_temperature(20.0)
+					channel.set_value(temperature, manual=True)
+					if fault is not None:
+						channel.set_value(fault, manual=True)
+					self.advance(elapsed, update_room=True)
+					expected = thermal_step(20.0, temperature,
+						sum(self.model.air_flows()) * AIR_CAPACITY, capacity, elapsed)
+					self.assertAlmostEqual(self.room.get_temperature(), expected)
+					self.assertEqual(self.model.get_temperature(), temperature)
+					self.assertEqual(channel.get_value(), temperature)
+					self.assertEqual(channel.isOpen(), fault == 'open')
+					self.assertEqual(channel.isShort(), fault == 'short')
+
+	def test_manual_duct_temperature_has_no_room_effect_without_supply_airflow(self):
+		channel = self.program.get_input_channel('air_temperature')
+		channel.set_manual(True)
+		channel.set_value(50.0, manual=True)
+		self.outdoor_temperature = 20.0
+		for supply_exhaust in (False, True):
+			self.model._supply_exhaust = supply_exhaust
+			for stopped in ('fan_enable', 'supply_fan', 'outer_shutter', 'air_flow'):
+				with self.subTest(supply_exhaust=supply_exhaust, stopped=stopped):
+					self.set_output('fan_enable', 255)
+					self.set_output('supply_fan', 254)
+					self.set_output('outer_shutter', 254)
+					self.parameter('air_flow', 300)
+					if stopped == 'air_flow':
+						self.parameter('air_flow', 0)
+					else:
+						self.set_output(stopped, 0)
+					self.advance(60, update_room=True)
+					self.assertEqual(self.model.get_temperature(), 50.0)
+					self.assertEqual(self.model.room_temperature_change(20.0), 0)
+					self.assertEqual(self.room.get_temperature(), 20.0)
+
+	def test_manual_duct_room_heat_depends_on_fan_speed(self):
+		channel = self.program.get_input_channel('air_temperature')
+		channel.set_manual(True)
+		channel.set_value(50.0, manual=True)
+		self.advance(60)
+		full_speed_change = self.model.room_temperature_change(20.0)
+		self.set_output('supply_fan', 127)
+		self.advance(60)
+		half_speed_change = self.model.room_temperature_change(20.0)
+		self.assertGreater(half_speed_change, 0)
+		self.assertLess(half_speed_change, full_speed_change)
+
+	def test_automatic_duct_temperature_resumes_from_manual_temperature(self):
+		channel = self.program.get_input_channel('air_temperature')
+		channel.set_manual(True)
+		channel.set_value(50.0, manual=True)
+		with patch.object(self.model, 'update_duct_temperature',
+			wraps=self.model.update_duct_temperature) as update:
+			self.advance(60)
+			update.assert_not_called()
+			self.assertEqual(self.model.get_temperature(), 50.0)
+			channel.set_manual(False)
+			self.advance(1)
+			update.assert_called_once()
+		self.assertGreater(self.model.get_temperature(), 20.0)
+		self.assertLess(self.model.get_temperature(), 50.0)
+		self.assertEqual(channel.get_value(), self.model.get_temperature())
+
+	def test_automatic_duct_physics_is_independent_of_sensor_faults(self):
+		channel = self.program.get_input_channel('air_temperature')
+		self.advance(60)
+		expected_air = self.model.get_temperature()
+		expected_return = self.model.get_return_temperature()
+		expected_change = self.model.room_temperature_change(20.0)
+		for fault in ('open', 'short'):
+			with self.subTest(fault=fault):
+				self.model._air_temperature = 20.0
+				self.model._return_temperature = 20.0
+				channel.set_value(fault)
+				self.advance(60)
+				self.assertEqual(self.model.get_temperature(), expected_air)
+				self.assertEqual(self.model.get_return_temperature(), expected_return)
+				self.assertEqual(self.model.room_temperature_change(20.0), expected_change)
+				self.assertEqual(channel.isOpen(), fault == 'open')
+				self.assertEqual(channel.isShort(), fault == 'short')
+
+	def test_invalid_manual_duct_values_retain_last_physical_temperature(self):
+		channel = self.program.get_input_channel('air_temperature')
+		channel.set_manual(True)
+		channel.set_value(50.0, manual=True)
+		self.advance(60)
+		for value in (None, float('nan'), float('inf'), -float('inf'), 'invalid'):
+			with self.subTest(value=value):
+				channel.set_value(value, manual=True)
+				self.advance(60)
+				self.assertEqual(self.model.get_temperature(), 50.0)
+				self.assertTrue(math.isfinite(self.model.room_temperature_change(20.0)))
+
+	def test_manual_duct_override_at_zero_elapsed_time(self):
+		channel = self.program.get_input_channel('air_temperature')
+		channel.set_manual(True)
+		channel.set_value(50.0, manual=True)
+		self.advance(0)
+		self.assertEqual(self.model.get_temperature(), 50.0)
+		self.assertEqual(self.model.room_temperature_change(20.0), 0)
+
 	def test_manual_inputs_and_alarm_contacts_survive_steps(self):
 		for name, value in (('return_temperature', 3), ('air_temperature', 65)):
 			channel = self.program.get_input_channel(name)

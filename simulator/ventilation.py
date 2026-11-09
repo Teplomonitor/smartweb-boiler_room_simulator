@@ -156,6 +156,11 @@ class Simulator:
 		now = time.monotonic()
 		self._elapsed = max(0.0, now - self._last_update)
 		self._last_update = now
+		air_channel = self._program.get_input_channel('air_temperature')
+		if air_channel.isManual():
+			# Manual input is a scenario override of the physical temperature.
+			# Open/short only affects measurement, never this physical state.
+			self._air_temperature = finite_value(air_channel.get_value(), self._air_temperature)
 		if self._room is None or self._elapsed == 0:
 			return
 		room_temperature = finite_value(self._room.get_temperature(), 20.0)
@@ -190,7 +195,8 @@ class Simulator:
 		coil_power = coil_conductance * (mean_return - inlet)
 		electric_power = self.output('heater') * self.parameter('electric_power') * 1000.0
 		# Stagnant air still heats up; never suppress a bad controller command.
-		self.update_duct_temperature(inlet, room_temperature, air_conductance, coil_power + electric_power)
+		if air_channel.isAuto():
+			self.update_duct_temperature(inlet, room_temperature, air_conductance, coil_power + electric_power)
 		self.publish_temperature('return_temperature', self._return_temperature)
 		self.publish_temperature('air_temperature', self._air_temperature)
 
