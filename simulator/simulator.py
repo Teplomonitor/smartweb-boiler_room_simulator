@@ -1,8 +1,10 @@
 
 import time
 import threading
+import traceback
 
 import mainThread
+from consoleLog import print_error, print_log
 
 import simulator.sensorReport  as ssr
 from smartnet.channelMapping import ChannelMapping    as ChannelMapping
@@ -139,6 +141,7 @@ class Simulator(threading.Thread):
 		self._controllerHost = None
 		self._controllerIo   = []
 		self._simList        = []
+		self._program_simulator_faults = {}
 		self._roomList       = []
 		self._heatingCircuitList = []
 		self._ventilation_list = []
@@ -287,7 +290,16 @@ class Simulator(threading.Thread):
 				if sim._program.get_preset().is_virtual():
 					sim._program.record_publish_error(error)
 				else:
-					print('prg sim fault')
+					fault = (type(error), str(error))
+					if self._program_simulator_faults.get(sim) != fault:
+						self._program_simulator_faults[sim] = fault
+						print_error(f'prg sim fault: id={sim._program.get_id()}, '
+							f'type={sim._program.get_type()}, '
+							f'{type(error).__name__}: {error}\n{traceback.format_exc()}')
+			else:
+				if self._program_simulator_faults.pop(sim, None) is not None:
+					print_log(f'Program simulator recovered: id={sim._program.get_id()}, '
+						f'type={sim._program.get_type()}')
 			
 	def runVirtualControllers(self):
 		with self._state_lock:

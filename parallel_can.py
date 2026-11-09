@@ -144,15 +144,18 @@ class CanWorker:
 		self.process.stdin.flush()
 
 	def stop(self):
-		if self.process.poll() is not None:
+		if (self.process.poll() is not None or self.process.stdin is None
+				or self.process.stdin.closed):
 			return
 		try:
 			self.send({'type': 'stop'})
-		except (BrokenPipeError, OSError):
+		except (OSError, ValueError):
 			pass
 		finally:
-			if self.process.stdin:
+			try:
 				self.process.stdin.close()
+			except (OSError, ValueError):
+				pass
 
 	def join(self):
 		try:
@@ -402,8 +405,9 @@ def run_coordinator(args):
 					print(f'[{free.context}] starting {Path(path).name}', flush=True)
 					try:
 						free.send({'type': 'run', 'scenario': path})
-					except (BrokenPipeError, OSError) as exc:
+					except (OSError, ValueError) as exc:
 						free.ready = False
+						free.retiring = True
 						results.append({**result_target(free.context), 'scenario': path,
 							'result': 'ERROR', 'error': repr(exc)})
 						free.current = None
@@ -413,7 +417,7 @@ def run_coordinator(args):
 			results.append({'scenario': path, 'result': 'NOT_RUN'})
 		if unassigned:
 			print(f'{len(unassigned)} scenarios not run: no controllers available', flush=True)
-		return 0 if results and all(r['result'] == 'OK' for r in results) else 2
+		exit_code = 0 if results and all(r['result'] == 'OK' for r in results) else 2
 	except KeyboardInterrupt:
 		for worker in workers:
 			if worker.current:
@@ -435,12 +439,18 @@ def run_coordinator(args):
 		previous_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
 		try:
 			print('Stopping workers and writing results; please wait...', flush=True)
-			for worker in workers:
-				worker.stop()
-			for worker in workers:
-				worker.join()
+			for action in ('stop', 'join'):
+				for worker in workers:
+					try:
+						getattr(worker, action)()
+					except Exception as exc:
+						exit_code = 2
+						print(f'[{worker.context}] worker {action} failed: {exc!r}', flush=True)
 		finally:
-			(run_dir / 'results.json').write_text(
-				json.dumps(results, ensure_ascii=False, indent=2), encoding='utf-8')
-			send_state()
-			signal.signal(signal.SIGINT, previous_handler)
+			try:
+				(run_dir / 'results.json').write_text(
+					json.dumps(results, ensure_ascii=False, indent=2), encoding='utf-8')
+				send_state()
+			finally:
+				signal.signal(signal.SIGINT, previous_handler)
+	return exit_code

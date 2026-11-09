@@ -96,6 +96,7 @@ def loadPresetNow(preset, scenario=False):
 		ioSimulator.reloadConfig(controllerHost, ctrlIo)
 		
 		main_thread.setCurrentPreset(preset)
+		controllerHost.set_scenario_preset(preset if scenario else None)
 		return True
 	except Exception as exc:
 		main_thread._preset_error = exc
@@ -220,11 +221,15 @@ class ApplicationWorker(threading.Thread):
 		controllerHost = cc.Controller(controllerId, self._guiThread)
 		self._controller = controllerHost
 		
-		if controllerHost.initController(False, self._programPresetList) is False:
-			raise RuntimeError('Controller initialization failed; check the selected preset')
+		preset_matches = controllerHost.initController(False, self._programPresetList) is not False
 		if not self.taskEnable():
 			return
-		ctrlIo = ccio.initVirtualControllers(self._controllerIoList)
+		if preset_matches:
+			ctrlIo = ccio.initVirtualControllers(self._controllerIoList)
+		else:
+			consoleLog.print_log('Startup preset does not match; the scenario will load its own preset')
+			controllerHost.clear()
+			ctrlIo = []
 		ioSimulator.reloadConfig(controllerHost, ctrlIo)
 		if not self.taskEnable():
 			return

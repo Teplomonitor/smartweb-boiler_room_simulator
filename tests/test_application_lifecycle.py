@@ -204,6 +204,49 @@ class TestApplicationLifecycle(unittest.TestCase):
 		self.assertTrue(worker._taskStopEvent.is_set())
 		listener.close.assert_called_once()
 
+	def test_startup_preset_mismatch_keeps_session_ready_without_virtual_io(self):
+		for parallel, selection in ((False, 'none'), (False, 'test.py'), (True, 'none')):
+			with self.subTest(parallel=parallel, scenario=selection):
+				self.args.can_worker = parallel
+				self.args.scenario = selection
+				worker = self.make_worker()
+				worker._programPresetList = [object()]
+				worker._controllerIoList = [object()]
+				controller = Mock()
+				controller.initController.return_value = False
+				with (patch.object(self.runtime.sm, 'CanListener'),
+						patch.object(self.runtime.ctrlSearch, 'findOnlineController', return_value=123),
+						patch.object(self.runtime.ss, 'Simulator') as simulator,
+						patch.object(self.runtime.cc, 'Controller', return_value=controller),
+						patch.object(self.runtime.ccio, 'initVirtualControllers') as virtual_io,
+						patch.object(self.runtime.scenario, 'ScenarioThread') as scenario_thread,
+						patch.object(self.runtime.scenario, 'start_scenario') as start):
+					worker.initSimulator()
+				self.assertTrue(worker.ready_event.is_set())
+				self.assertFalse(worker._taskStopEvent.is_set())
+				self.assertIsNone(worker.error)
+				controller.clear.assert_called_once()
+				virtual_io.assert_not_called()
+				simulator.return_value.reloadConfig.assert_called_once_with(controller, [])
+				scenario_thread.assert_called_once_with(controller, simulator.return_value)
+				if selection != 'none':
+					start.assert_called_once_with(selection)
+				else:
+					start.assert_not_called()
+
+	def test_controller_initialization_exception_is_not_a_preset_mismatch(self):
+		worker = self.make_worker()
+		with (patch.object(self.runtime.sm, 'CanListener'),
+				patch.object(self.runtime.ctrlSearch, 'findOnlineController', return_value=123),
+				patch.object(self.runtime.ss, 'Simulator'),
+				patch.object(self.runtime.cc, 'Controller') as controller,
+				patch.object(self.runtime.ccio, 'initVirtualControllers') as virtual_io):
+			controller.return_value.initController.side_effect = OSError('CAN disconnected')
+			with self.assertRaisesRegex(OSError, 'CAN disconnected'):
+				worker.initSimulator()
+		self.assertFalse(worker.ready_event.is_set())
+		virtual_io.assert_not_called()
+
 	def test_cleanup_joins_users_before_clearing_state_and_transports(self):
 		worker = self.make_worker()
 		events = []

@@ -288,7 +288,10 @@ class Scenario(object):
 				raise RuntimeError('Controller is missing required programs for a preset-free scenario')
 			self._startTime = time.time()
 			return
-		if self.force_preset_load():
+		# Matching program types do not prove that bindings and settings match.
+		# A saved profile is not evidence that this session applied the preset.
+		if (self.force_preset_load()
+				or self._controllerHost.get_scenario_preset() != self.get_default_preset()):
 			controller_is_configured = False
 		else:
 			self._activate_virtual_outdoor()

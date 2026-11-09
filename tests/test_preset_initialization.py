@@ -109,6 +109,7 @@ class PresetInitializationTests(unittest.TestCase):
 		self.worker.setCurrentPreset.assert_not_called()
 		simulator.return_value.clear.assert_called()
 		controller.return_value.clear.assert_called()
+		controller.return_value.set_scenario_preset.assert_not_called()
 
 	def test_failed_simulator_reload_rejects_partially_loaded_preset(self):
 		path = Path(__file__).resolve().parents[1] / 'mainThread.py'
@@ -144,7 +145,32 @@ class PresetInitializationTests(unittest.TestCase):
 					loaded = controller.return_value.initController.call_args.args[1][0]
 					self.assertEqual(loaded.is_virtual(), virtual)
 					self.assertEqual(loaded.get_id(), outdoor.get_id())
+					controller.return_value.set_scenario_preset.assert_called_once_with(
+						preset_name if scenario else None)
 		self.assertFalse(outdoor.is_virtual())
+
+	def test_controller_clear_invalidates_scenario_preset(self):
+		from controllers.controller import Controller
+		controller = object.__new__(Controller)
+		controller._programList = []
+		controller._gui = None
+		controller.set_scenario_preset('snowmelter')
+		self.assertEqual(controller.get_scenario_preset(), 'snowmelter')
+		controller.clear()
+		self.assertIsNone(controller.get_scenario_preset())
+
+	def test_controller_reset_precedes_installing_scenario_programs(self):
+		from controllers.controller import Controller
+		controller = object.__new__(Controller)
+		controller._programList = []
+		controller._gui = None
+		program = ProgramPreset(snc.ProgramType.SNOWMELT, 'DEFAULT', 101, 'snow', None, [], [])
+		events = []
+		controller.resetConfig = Mock(side_effect=lambda: events.append('reset') or True)
+		controller.makeNewProgram = Mock(side_effect=lambda preset: events.append(preset) or True)
+		with patch('controllers.controller.time.sleep'):
+			self.assertTrue(controller.initController(True, [program]))
+		self.assertEqual(events, ['reset', program])
 
 	def test_scenario_always_reloads_same_preset(self):
 		from mainThread import ApplicationWorker
@@ -223,6 +249,33 @@ class PresetInitializationTests(unittest.TestCase):
 				patch.object(scenarios.main, 'load_preset_succeeded', return_value=True)):
 			obj.init_scenario()
 		obj._controllerHost.get_program_list.return_value[0].disable_gui_control.assert_called_once()
+
+	def test_different_or_unknown_preset_loads_even_when_program_types_match(self):
+		for previous in (None, 'another_preset'):
+			with self.subTest(previous=previous):
+				obj = self.make_scenario()
+				obj.force_preset_load = lambda: False
+				obj._controllerHost.get_scenario_preset.return_value = previous
+				obj.init_program_list.return_value = True
+				obj._controllerHost.get_program_list.return_value = [Mock()]
+				with (patch.object(scenarios.main, 'loadPreset') as load,
+						patch.object(scenarios.main, 'loadPresetDone', return_value=True),
+						patch.object(scenarios.main, 'load_preset_succeeded', return_value=True)):
+					obj.init_scenario()
+				load.assert_called_once_with('invalid', scenario=True)
+				# Program matching is checked only after applying the correct preset.
+				obj.init_program_list.assert_called_once_with({'snow': 1})
+
+	def test_confirmed_matching_scenario_preset_can_be_reused(self):
+		obj = self.make_scenario()
+		obj.force_preset_load = lambda: False
+		obj._controllerHost.get_scenario_preset.return_value = 'invalid'
+		obj.init_program_list.return_value = True
+		obj._controllerHost.get_program_list.return_value = [Mock()]
+		with patch.object(scenarios.main, 'loadPreset') as load:
+			obj.init_scenario()
+		load.assert_not_called()
+		obj.init_program_list.assert_called_once_with({'snow': 1})
 
 	def test_construction_error_reported_with_checklist_id(self):
 		thread = object.__new__(scenarios.ScenarioThread)

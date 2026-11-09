@@ -395,6 +395,91 @@ class TestParallelCan(unittest.TestCase):
 			self.assertEqual(command[command.index('--udp') + 1], '31987')
 			self.assertEqual(worker.log_dir.name, 'worker_1_udp_31987')
 
+	def test_worker_stop_is_safe_with_closed_or_broken_stdin(self):
+		for failure in (None, BrokenPipeError('pipe closed'), ValueError('closed file')):
+			with self.subTest(failure=failure):
+				worker = object.__new__(parallel_can.CanWorker)
+				worker.process = Mock(stdin=io.StringIO())
+				worker.process.poll.return_value = None
+				worker.send = Mock(side_effect=failure)
+				worker.stop()
+				worker.stop()
+				self.assertTrue(worker.process.stdin.closed)
+				worker.send.assert_called_once_with({'type': 'stop'})
+		worker = object.__new__(parallel_can.CanWorker)
+		worker.process = Mock(stdin=io.StringIO())
+		worker.process.poll.return_value = None
+		worker.process.stdin.close()
+		worker.send = Mock()
+		worker.stop()
+		worker.send.assert_not_called()
+
+	def test_all_workers_failing_startup_can_be_stopped_twice(self):
+		workers = []
+		class FailedWorker(parallel_can.CanWorker):
+			def __init__(self, context, index, args, run_dir, events):
+				self.context = context
+				self.current = None
+				self.ready = False
+				self.retiring = False
+				self.process = Mock(stdin=io.StringIO())
+				self.process.poll.return_value = None
+				self.join = Mock()
+				workers.append(self)
+				events.put((self, {'type': 'error', 'fatal': True, 'error': 'Controller not found'}))
+
+		args = SimpleNamespace(udp_ports=['31987', '31988'], udp=0,
+			debug=False, gui=False, scenario='all')
+		with tempfile.TemporaryDirectory() as temp_dir:
+			run_dir = Path(temp_dir)
+			with (patch.object(parallel_can, 'CanWorker', FailedWorker),
+					patch.object(parallel_can, 'select_scenarios', return_value=['a', 'b']),
+					patch.object(parallel_can.tempfile, 'mkdtemp', return_value=str(run_dir))):
+				self.assertEqual(parallel_can.run_coordinator(args), 2)
+			results = json.loads((run_dir / 'results.json').read_text(encoding='utf-8'))
+		self.assertEqual(results, [{'scenario': path, 'result': 'NOT_RUN'} for path in ('a', 'b')])
+		for worker in workers:
+			self.assertTrue(worker.process.stdin.closed)
+			worker.join.assert_called_once()
+
+	def test_shutdown_failure_does_not_skip_other_workers_or_results(self):
+		for failure_stage in ('stop', 'join'):
+			with self.subTest(stage=failure_stage):
+				workers = []
+				class FakeWorker:
+					def __init__(self, context, index, args, run_dir, events):
+						self.context = context
+						self.current = None
+						self.ready = False
+						self.retiring = False
+						self.process = Mock()
+						self.process.poll.return_value = None
+						self.events = events
+						self.stop = Mock()
+						self.join = Mock()
+						if index == 0:
+							getattr(self, failure_stage).side_effect = ValueError('closed file')
+						workers.append(self)
+						events.put((self, {'type': 'ready'}))
+
+					def send(self, command):
+						self.events.put((self, {'type': 'result', 'result': 'OK',
+							'checklistId': command['scenario'], 'duration': 1.0}))
+
+				args = SimpleNamespace(udp_ports=['31987', '31988'], udp=0,
+					debug=False, gui=False, scenario='all')
+				with tempfile.TemporaryDirectory() as temp_dir:
+					run_dir = Path(temp_dir)
+					with (patch.object(parallel_can, 'CanWorker', FakeWorker),
+							patch.object(parallel_can, 'select_scenarios', return_value=['a', 'b']),
+							patch.object(parallel_can.tempfile, 'mkdtemp', return_value=str(run_dir))):
+						self.assertEqual(parallel_can.run_coordinator(args), 2)
+					results = json.loads((run_dir / 'results.json').read_text(encoding='utf-8'))
+				self.assertEqual([result['result'] for result in results], ['OK', 'OK'])
+				for worker in workers:
+					worker.stop.assert_called_once()
+					worker.join.assert_called_once()
+
 	def test_bad_console_encoding_does_not_hide_worker_events(self):
 		script = "import sys; sys.stdout.buffer.write(b'\\xcd\\n@@BRS_CAN@@{\"type\":\"ready\"}\\n'); sys.stdout.buffer.flush()"
 		spawn = subprocess.Popen

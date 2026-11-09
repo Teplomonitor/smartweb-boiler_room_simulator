@@ -37,6 +37,7 @@ class Controller(object):
 		self._activeProgramsList = []
 		self._programList = []
 		self._virtual_outdoor_preset = None
+		self._scenario_preset = None
 		self._controllerId = controllerId
 		self._gui = gui
 		self._last_entry = None
@@ -50,6 +51,7 @@ class Controller(object):
 		self._activeProgramsList = []
 		self._programList = []
 		self._virtual_outdoor_preset = None
+		self._scenario_preset = None
 		
 		if self._gui:
 			self._gui.clear()
@@ -110,6 +112,13 @@ class Controller(object):
 
 	def get_virtual_outdoor_preset(self):
 		return self._virtual_outdoor_preset
+
+	def get_scenario_preset(self):
+		return self._scenario_preset
+
+	def set_scenario_preset(self, preset):
+		"""Record only a fully applied preset, not the saved profile preference."""
+		self._scenario_preset = preset
 		
 	def addProgramFromPreset(self, program):
 		prg = pf.createProgram(program)
